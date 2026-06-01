@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caisse — Arche de Mallo</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  .split-layout { display: grid; grid-template-columns: 380px 1fr; gap: 14px; align-items: start; }
+  .form-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 18px 20px; position: sticky; top: 60px; }
+  .form-card-title { font-size: 12px; font-weight: 600; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .form-card-title i { color: var(--orange); }
+  .form-group { margin-bottom: 10px; }
+  .form-label { display: block; font-size: 10px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .form-label.req::after { content: ' *'; color: var(--red); }
+  .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .montant-toggle { display: flex; gap: 4px; margin-bottom: 10px; }
+  .toggle-btn { flex: 1; padding: 6px; border-radius: var(--radius-sm); border: 0.5px solid var(--border-mid); background: transparent; font-family: 'DM Sans',sans-serif; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+  .toggle-btn.credit { border-color: var(--green); color: var(--green); }
+  .toggle-btn.credit.active { background: var(--green); color: white; }
+  .toggle-btn.debit  { border-color: var(--red);   color: var(--red);   }
+  .toggle-btn.debit.active  { background: var(--red);   color: white; }
+  .source-toggle { display: flex; gap: 4px; margin-bottom: 10px; }
+  .src-btn { flex:1; padding:5px; border-radius: var(--radius-sm); border: 0.5px solid var(--border-mid); background: transparent; font-size:11px; cursor:pointer; font-family:'DM Sans',sans-serif; transition: all 0.15s; color: var(--text-2); }
+  .src-btn.active { background: var(--brown-mid); color: white; border-color: var(--brown-mid); }
+  .drive-picker { display: flex; gap: 6px; align-items: center; }
+  .drive-picker input { flex: 1; }
+  .btn-drive { display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; border-radius: var(--radius-sm); border: 0.5px solid var(--border-mid); background: var(--surface-2); color: var(--text-2); font-size: 11px; cursor: pointer; white-space: nowrap; font-family: 'DM Sans',sans-serif; }
+  .btn-drive:hover { background: var(--warm); }
+  .btn-form-actions { display: flex; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 0.5px solid var(--border); }
+  .success-toast { position: fixed; bottom: 20px; right: 20px; background: var(--green); color: white; padding: 10px 18px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; z-index: 999; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-md); animation: slideIn 0.25s ease; }
+  @keyframes slideIn { from { transform: translateY(20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+
+  /* Liste opérations */
+  .list-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .list-head { padding: 12px 16px; border-bottom: 0.5px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .list-title { font-size: 12px; font-weight: 600; }
+  .list-filters { display: flex; gap: 6px; }
+  .f-select { font-size: 11px; padding: 4px 8px; border-radius: var(--radius-sm); border: 0.5px solid var(--border-mid); background: var(--surface); color: var(--text-2); font-family:'DM Sans',sans-serif; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  thead th { text-align:left; font-size:9px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:0.6px; padding:8px 10px; border-bottom:0.5px solid var(--border); background:var(--surface-2); }
+  tbody td { padding:7px 10px; border-bottom:0.5px solid var(--border); vertical-align:middle; }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody tr:hover { background: var(--cream); }
+  .r { text-align: right; font-variant-numeric: tabular-nums; }
+  .amount-c { color: var(--green); font-weight: 500; }
+  .amount-d { color: var(--red);   font-weight: 500; }
+  .pdf-btn { color:var(--blue); background:none; border:none; cursor:pointer; font-size:13px; padding:0 2px; }
+  .flag-btn { background:none; border:none; cursor:pointer; color:var(--text-3); font-size:13px; padding:0 2px; }
+  .flag-btn.on { color: var(--orange); }
+  .flag-comment-cell { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; color: var(--amber); cursor: pointer; }
+  .empty-row td { text-align:center; padding:32px; color:var(--text-3); }
+  .spinner { display:inline-block; animation:spin 1s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* Modal flag */
+  .modal-overlay { position:fixed; inset:0; background:rgba(61,43,31,0.35); z-index:200; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(2px); }
+  .modal { background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow-md); width:420px; max-width:95vw; }
+  .modal-header { padding:14px 18px; border-bottom:0.5px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  .modal-title { font-size:13px; font-weight:600; }
+  .modal-close { background:none; border:none; font-size:18px; color:var(--text-3); cursor:pointer; }
+  .modal-body { padding:18px; }
+  .modal-footer { padding:12px 18px; border-top:0.5px solid var(--border); display:flex; justify-content:flex-end; gap:8px; }
+</style>
+</head>
+<body>
+<aside class="sidebar" id="sidebar"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title"><i class="ti ti-cash" style="color:var(--orange)"></i> Caisse — Saisie</div>
+    <div class="topbar-right">
+      <span style="font-size:11px;color:var(--text-3);" id="topbar-periode"></span>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <div class="split-layout">
+
+      <!-- FORMULAIRE DE SAISIE -->
+      <div>
+        <div class="form-card">
+          <div class="form-card-title"><i class="ti ti-plus"></i> Nouvelle opération</div>
+
+          <!-- Source : Caisse 1 / Caisse 2 -->
+          <div class="form-group">
+            <label class="form-label">Source</label>
+            <div class="source-toggle">
+              <button class="src-btn active" id="src-c1" onclick="setSource('C1')">Caisse 1</button>
+              <button class="src-btn"        id="src-c2" onclick="setSource('C2')">Caisse 2</button>
+            </div>
+          </div>
+
+          <!-- Sens : Crédit / Débit -->
+          <div class="form-group">
+            <label class="form-label">Sens</label>
+            <div class="montant-toggle">
+              <button class="toggle-btn credit active" id="btn-credit" onclick="setSens('credit')"><i class="ti ti-arrow-down-left"></i> Entrée (crédit)</button>
+              <button class="toggle-btn debit"         id="btn-debit"  onclick="setSens('debit')"><i class="ti ti-arrow-up-right"></i> Sortie (débit)</button>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label req">Date</label>
+              <input type="date" id="f-date">
+            </div>
+            <div class="form-group">
+              <label class="form-label req">Montant (€)</label>
+              <input type="number" id="f-montant" step="0.01" min="0" placeholder="0,00">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label req">Libellé</label>
+            <input type="text" id="f-libelle" placeholder="Nom, description courte">
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label req">Type de mouvement</label>
+              <select id="f-type">
+                <option value="">— Choisir —</option>
+                <option>Adoption</option>
+                <option>Don</option>
+                <option>Adhésion</option>
+                <option>Événement</option>
+                <option>Dépense alimentaire</option>
+                <option>Dépense vétérinaire</option>
+                <option>Dépense matériel</option>
+                <option>Dépense autre</option>
+                <option>Remboursement</option>
+                <option>Divers</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mode règlement</label>
+              <select id="f-reglement">
+                <option value="">— Choisir —</option>
+                <option>Espèces</option>
+                <option>Chèque</option>
+                <option>Virement</option>
+                <option>CB</option>
+                <option>PayPal</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Description / commentaire</label>
+            <input type="text" id="f-description" placeholder="Précisions, contexte…">
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Nom du chat</label>
+              <input type="text" id="f-chat" placeholder="Si adoption">
+            </div>
+            <div class="form-group">
+              <label class="form-label">N° reçu</label>
+              <input type="text" id="f-recu">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Facture PDF (Drive)</label>
+            <div class="drive-picker">
+              <input type="text" id="f-facture-id" placeholder="ID ou lien Google Drive">
+              <button class="btn-drive" onclick="openDrivePicker()"><i class="ti ti-brand-google-drive"></i> Choisir</button>
+            </div>
+            <div style="font-size:10px;color:var(--text-3);margin-top:3px;">Dossier : Arche/Factures/{{année}}/</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Période</label>
+            <select id="f-periode"></select>
+          </div>
+
+          <!-- Erreur -->
+          <div id="form-error" class="hidden" style="color:var(--red);font-size:11px;padding:6px 0;"></div>
+
+          <div class="btn-form-actions">
+            <button class="btn btn-primary" style="flex:1" onclick="submitForm()">
+              <i class="ti ti-device-floppy"></i> Enregistrer
+            </button>
+            <button class="btn btn-secondary" onclick="resetForm()">
+              <i class="ti ti-refresh"></i> Vider
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- LISTE DES OPÉRATIONS -->
+      <div>
+        <div class="list-card">
+          <div class="list-head">
+            <div class="list-title">Opérations caisse</div>
+            <div class="list-filters">
+              <select class="f-select" id="fl-source" onchange="renderTable()">
+                <option value="">Caisse 1 + 2</option>
+                <option value="C1">Caisse 1</option>
+                <option value="C2">Caisse 2</option>
+              </select>
+              <select class="f-select" id="fl-type" onchange="renderTable()">
+                <option value="">Tous types</option>
+                <option>Adoption</option>
+                <option>Don</option>
+                <option>Adhésion</option>
+                <option>Événement</option>
+                <option>Dépense alimentaire</option>
+                <option>Dépense vétérinaire</option>
+                <option>Dépense matériel</option>
+                <option>Dépense autre</option>
+              </select>
+              <select class="f-select" id="fl-flag" onchange="renderTable()">
+                <option value="">Toutes lignes</option>
+                <option value="flagged">À vérifier</option>
+              </select>
+            </div>
+          </div>
+          <div id="table-wrap"><div style="padding:32px;text-align:center;color:var(--text-3)"><i class="ti ti-loader-2 spinner"></i> Chargement…</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FLAG -->
+<div class="modal-overlay hidden" id="modal-flag">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title"><i class="ti ti-flag" style="color:var(--orange)"></i> Annoter la ligne</span>
+      <button class="modal-close" onclick="closeFlag()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--text-2);margin-bottom:12px;" id="flag-info"></div>
+      <div class="form-group">
+        <label class="form-label">Commentaire / info à vérifier</label>
+        <textarea id="flag-comment" rows="3" placeholder="Ex: Vérifier chèque n°1234, attendre justificatif…"></textarea>
+      </div>
+      <div style="margin-top:10px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;">
+          <input type="checkbox" id="flag-checked" style="width:15px;height:15px;accent-color:var(--orange);">
+          Marquer comme vérifié (résoudre)
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeFlag()">Annuler</button>
+      <button class="btn btn-primary btn-sm"   onclick="saveFlag()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script src="sheets.js"></script>
+<script src="sidebar.js"></script>
+<script>
+// ============================================================
+//  ÉTAT
+// ============================================================
+let allRows    = [];
+let activeSens = 'credit';
+let activeSrc  = 'C1';
+let flagTarget = null;
+
+// ============================================================
+//  INIT
+// ============================================================
+Auth.requireAuth(async () => {
+  await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
+  Sidebar.build('caisse');
+
+  // Remplir sélecteur période
+  const periodes = Sheets.getPeriodes();
+  const selPer   = document.getElementById('f-periode');
+  const activePer = Sidebar.getActivePeriode();
+  periodes.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p; opt.textContent = p;
+    if (p === activePer) opt.selected = true;
+    selPer.appendChild(opt);
+  });
+  document.getElementById('topbar-periode').textContent = activePer;
+  document.getElementById('f-date').value = Sheets.todayISO();
+
+  await loadData();
+});
+
+async function loadData() {
+  allRows = await Sheets.getCaisseOperations();
+  Sidebar.setLastUpdate();
+  renderTable();
+}
+
+function onPeriodeChange(p) {
+  document.getElementById('f-periode').value = p;
+  document.getElementById('topbar-periode').textContent = p;
+  renderTable();
+}
+
+// ============================================================
+//  FORMULAIRE
+// ============================================================
+function setSource(src) {
+  activeSrc = src;
+  document.getElementById('src-c1').classList.toggle('active', src === 'C1');
+  document.getElementById('src-c2').classList.toggle('active', src === 'C2');
+}
+
+function setSens(sens) {
+  activeSens = sens;
+  document.getElementById('btn-credit').classList.toggle('active', sens === 'credit');
+  document.getElementById('btn-debit').classList.toggle('active',  sens === 'debit');
+}
+
+function resetForm() {
+  ['f-date','f-montant','f-libelle','f-description','f-chat','f-recu','f-facture-id'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = id === 'f-date' ? Sheets.todayISO() : '';
+  });
+  document.getElementById('f-type').selectedIndex = 0;
+  document.getElementById('f-reglement').selectedIndex = 0;
+  document.getElementById('form-error').classList.add('hidden');
+  setSens('credit');
+  setSource('C1');
+}
+
+async function submitForm() {
+  const err = document.getElementById('form-error');
+  err.classList.add('hidden');
+
+  const date     = document.getElementById('f-date').value;
+  const montant  = parseFloat(document.getElementById('f-montant').value);
+  const libelle  = document.getElementById('f-libelle').value.trim();
+  const type_mvt = document.getElementById('f-type').value;
+  const periode  = document.getElementById('f-periode').value;
+
+  if (!date)         { showErr('La date est obligatoire.'); return; }
+  if (!montant || montant <= 0) { showErr('Le montant doit être supérieur à 0.'); return; }
+  if (!libelle)      { showErr('Le libellé est obligatoire.'); return; }
+  if (!type_mvt)     { showErr('Le type de mouvement est obligatoire.'); return; }
+
+  const op = {
+    source:      activeSrc,
+    date:        Sheets.normalizeDate(date),
+    libelle,
+    debit:       activeSens === 'debit'  ? montant : '',
+    credit:      activeSens === 'credit' ? montant : '',
+    periode,
+    type_mvt,
+    description: document.getElementById('f-description').value.trim(),
+    nom:         libelle,
+    nom_chat:    document.getElementById('f-chat').value.trim(),
+    reglement:   document.getElementById('f-reglement').value,
+    num_recu:    document.getElementById('f-recu').value.trim(),
+    lien_facture:document.getElementById('f-facture-id').value.trim(),
+  };
+
+  const btn = document.querySelector('.btn-primary');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader-2 spinner"></i> Enregistrement…';
+
+  try {
+    await Sheets.saveCaisseOperation(op);
+    showToast('Opération enregistrée !');
+    resetForm();
+    await loadData();
+  } catch(e) {
+    showErr('Erreur : ' + (e.message || 'Impossible d\'enregistrer'));
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-device-floppy"></i> Enregistrer';
+  }
+}
+
+function showErr(msg) {
+  const el = document.getElementById('form-error');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+// ============================================================
+//  TABLE
+// ============================================================
+function renderTable() {
+  const activePer = Sidebar.getActivePeriode();
+  const srcFilter  = document.getElementById('fl-source')?.value || '';
+  const typeFilter = document.getElementById('fl-type')?.value   || '';
+  const flagFilter = document.getElementById('fl-flag')?.value   || '';
+  const cc = Sheets.cols.caisse;
+
+  let rows = allRows.filter(r => r[cc.periode] === activePer);
+  if (srcFilter)  rows = rows.filter(r => r[cc.source] === srcFilter || (srcFilter === 'C1' && r[cc.source] !== 'C2'));
+  if (typeFilter) rows = rows.filter(r => r[cc.type_mvt] === typeFilter);
+  if (flagFilter === 'flagged') rows = rows.filter(r => r[cc.flag_check] === 'TRUE');
+
+  rows = [...rows].reverse(); // plus récent en premier
+
+  if (!rows.length) {
+    document.getElementById('table-wrap').innerHTML = `<table><thead><tr>${thds()}</tr></thead><tbody><tr class="empty-row"><td colspan="9">Aucune opération pour cette période</td></tr></tbody></table>`;
+    return;
+  }
+
+  const trs = rows.map((r, i) => {
+    const realIdx = allRows.length - 1 - i;
+    const flagged = r[cc.flag_check] === 'TRUE';
+    const comment = r[cc.flag_comment] || '';
+    const pdfBtn  = r[cc.lien_facture]
+      ? `<button class="pdf-btn" onclick="Sheets.openFacture('${r[cc.lien_facture]}')" title="Voir la facture"><i class="ti ti-file-type-pdf"></i></button>`
+      : '';
+    const src = r[cc.source] === 'C2' ? '<span class="chip chip-caisse2">Caisse 2</span>' : '<span class="chip chip-caisse1">Caisse 1</span>';
+    return `<tr>
+      <td style="color:var(--text-3)">${r[cc.date]||''}</td>
+      <td>${src}</td>
+      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r[cc.libelle]||''}</td>
+      <td><span class="chip chip-${chipType(r[cc.type_mvt])}">${r[cc.type_mvt]||''}</span></td>
+      <td class="r amount-d">${r[cc.debit]  ? Sheets.formatMoney(r[cc.debit])  : ''}</td>
+      <td class="r amount-c">${r[cc.credit] ? Sheets.formatMoney(r[cc.credit]) : ''}</td>
+      <td class="r">${pdfBtn}</td>
+      <td class="r">
+        <button class="flag-btn ${flagged?'on':''}" onclick="openFlag(${realIdx},'${escH(r[cc.libelle])}','${escH(comment)}',${flagged})" title="Annoter">
+          <i class="ti ti-flag${flagged?'-filled':''}"></i>
+        </button>
+      </td>
+      <td style="max-width:100px;" class="flag-comment-cell" onclick="openFlag(${realIdx},'${escH(r[cc.libelle])}','${escH(comment)}',${flagged})">${comment}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('table-wrap').innerHTML = `
+    <table>
+      <thead><tr>${thds()}</tr></thead>
+      <tbody>${trs}</tbody>
+    </table>`;
+}
+
+function thds() {
+  return `<th>Date</th><th>Source</th><th>Libellé</th><th>Type</th><th class="r">Débit</th><th class="r">Crédit</th><th class="r">PDF</th><th class="r">🔍</th><th>Commentaire</th>`;
+}
+
+function chipType(t) {
+  if (!t) return 'depense';
+  const l = t.toLowerCase();
+  if (l.includes('adopt'))  return 'adoption';
+  if (l.includes('don'))    return 'don';
+  if (l.includes('adh'))    return 'adhesion';
+  if (l.includes('vén') || l.includes('ment')) return 'evenement';
+  return 'depense';
+}
+
+// ============================================================
+//  DRIVE PICKER
+// ============================================================
+function openDrivePicker() {
+  // Google Drive Picker API — nécessite scope drive.file
+  if (!window.google || !google.picker) {
+    // Charger le picker si pas encore fait
+    gapi.load('picker', () => showDrivePicker());
+    return;
+  }
+  showDrivePicker();
+}
+
+function showDrivePicker() {
+  const token = gapi.client.getToken();
+  if (!token) return;
+  const picker = new google.picker.PickerBuilder()
+    .addView(new google.picker.DocsView(google.picker.ViewId.PDFS))
+    .setOAuthToken(token.access_token)
+    .setCallback(pickerCallback)
+    .build();
+  picker.setVisible(true);
+}
+
+function pickerCallback(data) {
+  if (data.action === google.picker.Action.PICKED) {
+    const file = data.docs[0];
+    document.getElementById('f-facture-id').value = file.id;
+  }
+}
+
+// ============================================================
+//  MODAL FLAG
+// ============================================================
+function openFlag(rowIndex, libelle, existingComment, isFlagged) {
+  flagTarget = { rowIndex, isFlagged };
+  document.getElementById('flag-info').textContent    = `Ligne : ${libelle}`;
+  document.getElementById('flag-comment').value        = existingComment || '';
+  document.getElementById('flag-checked').checked      = isFlagged;
+  document.getElementById('modal-flag').classList.remove('hidden');
+}
+function closeFlag() {
+  document.getElementById('modal-flag').classList.add('hidden');
+  flagTarget = null;
+}
+async function saveFlag() {
+  if (flagTarget === null) return;
+  const comment   = document.getElementById('flag-comment').value.trim();
+  const isChecked = !document.getElementById('flag-checked').checked; // coché = résolu = plus flaggé
+  try {
+    await Sheets.updateFlag('Caisse', flagTarget.rowIndex, isChecked, comment);
+    closeFlag();
+    await loadData();
+    showToast('Annotation enregistrée');
+  } catch(e) {
+    alert('Erreur : ' + e.message);
+  }
+}
+
+// ============================================================
+//  TOAST
+// ============================================================
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'success-toast';
+  t.innerHTML = `<i class="ti ti-check"></i> ${msg}`;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+function escH(s) { return String(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+</script>
+</body>
+</html>

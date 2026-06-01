@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tableau de bord — Arche de Mallo</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  /* ---- TOPBAR PERIOD PICKER ---- */
+  .period-picker { display: flex; gap: 4px; flex-wrap: wrap; }
+  .period-btn {
+    font-size: 11px; padding: 4px 10px; border-radius: var(--radius-sm);
+    border: 0.5px solid var(--border-mid); background: transparent;
+    color: var(--text-2); cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .period-btn:hover { background: var(--warm); }
+  .period-btn.active { background: var(--orange); color: white; border-color: var(--orange); }
+
+  /* ---- METRIC CARDS ---- */
+  .metrics-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 14px; }
+  .metric-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
+  .metric-label { font-size: 9px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .metric-value { font-size: 20px; font-weight: 600; line-height: 1.1; }
+  .metric-sub { font-size: 10px; color: var(--text-3); margin-top: 4px; }
+  .v-green  { color: var(--green); }
+  .v-blue   { color: var(--blue); }
+  .v-orange { color: var(--orange); }
+  .v-red    { color: var(--red); }
+
+  /* ---- FLUX MENSUELS ---- */
+  .flux-wrap { margin-bottom: 14px; }
+  .flux-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+  .flux-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
+  .flux-name { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-2); margin-bottom: 8px; }
+  .flux-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 3px 0; }
+  .flux-row:first-of-type { border-bottom: 0.5px solid var(--border); padding-bottom: 6px; margin-bottom: 3px; }
+  .flux-row-label { color: var(--text-3); font-size: 11px; }
+  .flux-in  { font-weight: 600; color: var(--green); }
+  .flux-out { color: var(--red); }
+  .flux-net { font-weight: 500; }
+
+  /* ---- OPÉRATIONS RÉCENTES ---- */
+  .ops-wrap { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .ops-head { padding: 12px 16px; border-bottom: 0.5px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .ops-title { font-size: 12px; font-weight: 600; }
+  .ops-filters { display: flex; gap: 6px; align-items: center; }
+  .filter-select { font-size: 11px; padding: 4px 8px; border-radius: var(--radius-sm); border: 0.5px solid var(--border-mid); background: var(--surface); color: var(--text-2); font-family: 'DM Sans',sans-serif; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  thead th { text-align: left; font-size: 9px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.6px; padding: 8px 12px; border-bottom: 0.5px solid var(--border); background: var(--surface-2); }
+  tbody td { padding: 7px 12px; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--cream); }
+  th.r, td.r { text-align: right; font-variant-numeric: tabular-nums; }
+  .amount-credit { color: var(--green); font-weight: 500; }
+  .amount-debit  { color: var(--red);   font-weight: 500; }
+  .pdf-btn { display: inline-flex; align-items: center; gap: 3px; color: var(--blue); cursor: pointer; font-size: 11px; background: none; border: none; padding: 0; }
+  .pdf-btn:hover { text-decoration: underline; }
+  .flag-btn { background: none; border: none; cursor: pointer; color: var(--text-3); font-size: 14px; padding: 0 2px; }
+  .flag-btn.flagged { color: var(--orange); }
+  .ops-empty { padding: 32px; text-align: center; color: var(--text-3); font-size: 12px; }
+  .ops-footer { padding: 10px 16px; border-top: 0.5px solid var(--border); text-align: right; }
+  .link-all { font-size: 11px; color: var(--orange); cursor: pointer; text-decoration: none; }
+  .link-all:hover { text-decoration: underline; }
+
+  /* ---- SPINNER ---- */
+  .spinner-wrap { padding: 40px; text-align: center; color: var(--text-3); }
+  .spinner { display: inline-block; animation: spin 1s linear infinite; font-size: 22px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---- MODAL FLAG ---- */
+  .modal-overlay { position: fixed; inset:0; background: rgba(61,43,31,0.35); z-index:200; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(2px); }
+  .modal { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-md); width:420px; max-width:95vw; }
+  .modal-header { padding:14px 18px; border-bottom:0.5px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  .modal-title { font-size:13px; font-weight:600; }
+  .modal-close { background:none; border:none; font-size:18px; color:var(--text-3); cursor:pointer; line-height:1; }
+  .modal-body { padding:18px; }
+  .modal-footer { padding:12px 18px; border-top:0.5px solid var(--border); display:flex; justify-content:flex-end; gap:8px; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar"></aside>
+
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-title">Tableau de bord</div>
+    <div class="topbar-right">
+      <span style="font-size:11px;color:var(--text-3);margin-right:6px;">Visualiser :</span>
+      <div class="period-picker" id="period-picker"></div>
+    </div>
+  </div>
+
+  <!-- CONTENU -->
+  <div class="page-content" id="page-content">
+    <div class="spinner-wrap"><i class="ti ti-loader-2 spinner"></i><br><br>Chargement des données…</div>
+  </div>
+</div>
+
+<!-- MODAL FLAG -->
+<div class="modal-overlay hidden" id="modal-flag">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title"><i class="ti ti-flag" style="color:var(--orange)"></i> Annoter la ligne</span>
+      <button class="modal-close" onclick="closeFlag()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--text-2);margin-bottom:12px;" id="flag-line-info"></div>
+      <div class="form-group">
+        <label class="form-label">Commentaire / information à vérifier</label>
+        <textarea id="flag-comment-input" rows="3" placeholder="Ex: Vérifier le chèque n°1234, attendre justificatif…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeFlag()">Annuler</button>
+      <button class="btn btn-primary btn-sm" onclick="saveFlag()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script src="sheets.js"></script>
+<script src="sidebar.js"></script>
+<script>
+// ============================================================
+//  ÉTAT
+// ============================================================
+let allCaisse  = [];
+let allBanque  = [];
+let caisse1Ph  = [];
+let caisse2Ph  = [];
+let activePer  = '';
+let flagTarget = null; // { source, rowIndex, libelle }
+
+// ============================================================
+//  INIT
+// ============================================================
+Auth.requireAuth(async (user) => {
+  await loadGapiSheets();
+  Sidebar.build('dashboard');
+  activePer = Sidebar.getActivePeriode();
+  buildPeriodPicker();
+  await loadData();
+});
+
+async function loadGapiSheets() {
+  await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
+}
+
+// ============================================================
+//  CHARGEMENT DONNÉES
+// ============================================================
+async function loadData() {
+  showSpinner();
+  try {
+    [allCaisse, allBanque, caisse1Ph, caisse2Ph] = await Promise.all([
+      Sheets.getCaisseOperations(),
+      Sheets.getBanqueOperations(),
+      Sheets.getCaissePhysique(1),
+      Sheets.getCaissePhysique(2),
+    ]);
+    Sidebar.setLastUpdate();
+    renderDashboard();
+  } catch(e) {
+    showError('Impossible de charger les données. Vérifiez votre connexion.');
+    console.error(e);
+  }
+}
+
+// ---- Rappel si la période change depuis la sidebar ----
+function onPeriodeChange(p) {
+  activePer = p;
+  buildPeriodPicker();
+  renderDashboard();
+}
+
+// ============================================================
+//  RENDER
+// ============================================================
+function renderDashboard() {
+  const content = document.getElementById('page-content');
+
+  // Filtrer par période
+  const caisseRows = allCaisse.filter(r => r[Sheets.cols.caisse.periode] === activePer);
+  const banqueRows = allBanque.filter(r => r[Sheets.cols.banque.periode]  === activePer);
+
+  // --- Soldes caisses physiques (dernier comptage) ---
+  const lastC1 = caisse1Ph.length > 0 ? caisse1Ph[caisse1Ph.length - 1] : null;
+  const lastC2 = caisse2Ph.length > 0 ? caisse2Ph[caisse2Ph.length - 1] : null;
+  const soldC1 = lastC1 ? parseFloat(lastC1[Sheets.cols.caissePhysique.total]) || 0 : 0;
+  const soldC2 = lastC2 ? parseFloat(lastC2[Sheets.cols.caissePhysique.total]) || 0 : 0;
+  const dateC1 = lastC1 ? lastC1[Sheets.cols.caissePhysique.mois] : '—';
+  const dateC2 = lastC2 ? lastC2[Sheets.cols.caissePhysique.mois] : '—';
+
+  // --- Solde banque (dernière ligne) ---
+  const lastBq = banqueRows.length > 0 ? banqueRows[banqueRows.length - 1] : null;
+  const soldBq = lastBq ? parseFloat(lastBq[Sheets.cols.banque.solde]) || 0 : 0;
+
+  // --- Flux du mois en cours ---
+  const moisCourant = getCurrentMois();
+  const fluxC   = calcFlux(caisseRows, 'caisse', moisCourant);
+  const fluxBq  = calcFlux(banqueRows, 'banque',  moisCourant);
+
+  // Séparer caisse1 et caisse2
+  const c1rows = caisseRows.filter(r => ['C1','C'].includes(r[Sheets.cols.caisse.source]));
+  const c2rows = caisseRows.filter(r => r[Sheets.cols.caisse.source] === 'C2');
+  const fluxC1 = calcFluxRows(c1rows, 'caisse', moisCourant);
+  const fluxC2 = calcFluxRows(c2rows, 'caisse', moisCourant);
+
+  // --- Adoptions du mois ---
+  const adoptions = caisseRows.filter(r => {
+    const type = (r[Sheets.cols.caisse.type_mvt] || '').toLowerCase();
+    return type.includes('adopt') && rowInMonth(r[Sheets.cols.caisse.date], moisCourant);
+  }).length;
+
+  // --- 20 dernières opérations (toutes sources) ----
+  const recent = buildRecentOps(caisseRows, banqueRows);
+
+  content.innerHTML = `
+    <!-- MÉTRIQUES -->
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-label">Solde banque</div>
+        <div class="metric-value v-blue">${Sheets.formatMoney(soldBq)}</div>
+        <div class="metric-sub">Période ${activePer}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Solde Caisse 1</div>
+        <div class="metric-value v-green">${Sheets.formatMoney(soldC1)}</div>
+        <div class="metric-sub">Vérifié : ${dateC1}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Solde Caisse 2</div>
+        <div class="metric-value v-green">${Sheets.formatMoney(soldC2)}</div>
+        <div class="metric-sub">Vérifié : ${dateC2}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Adoptions — ${moisCourant}</div>
+        <div class="metric-value v-orange">${adoptions}</div>
+        <div class="metric-sub">Ce mois</div>
+      </div>
+    </div>
+
+    <!-- FLUX MENSUELS -->
+    <div class="flux-wrap">
+      <div style="font-size:11px;font-weight:600;margin-bottom:8px;color:var(--text-2);">
+        <i class="ti ti-calendar-stats" style="color:var(--orange)"></i>
+        Flux — ${moisCourant}
+      </div>
+      <div class="flux-grid">
+        ${renderFluxCard('Banque', fluxBq)}
+        ${renderFluxCard('Caisse 1', fluxC1)}
+        ${renderFluxCard('Caisse 2', fluxC2)}
+      </div>
+    </div>
+
+    <!-- OPÉRATIONS RÉCENTES -->
+    <div class="ops-wrap">
+      <div class="ops-head">
+        <div class="ops-title">Dernières opérations</div>
+        <div class="ops-filters">
+          <select class="filter-select" id="filter-source" onchange="filterOps()">
+            <option value="">Toutes les sources</option>
+            <option value="banque">Banque</option>
+            <option value="caisse1">Caisse 1</option>
+            <option value="caisse2">Caisse 2</option>
+          </select>
+          <select class="filter-select" id="filter-type" onchange="filterOps()">
+            <option value="">Tous les types</option>
+            <option value="Adoption">Adoption</option>
+            <option value="Don">Don</option>
+            <option value="Dépense">Dépense</option>
+            <option value="Événement">Événement</option>
+            <option value="Adhésion">Adhésion</option>
+          </select>
+        </div>
+      </div>
+      ${renderOpsTable(recent)}
+      <div class="ops-footer">
+        <a class="link-all" href="caisse.html">Voir toutes les opérations →</a>
+      </div>
+    </div>`;
+}
+
+function renderFluxCard(name, flux) {
+  const net     = flux.entrees - flux.sorties;
+  const netCls  = net >= 0 ? 'v-green' : 'v-red';
+  return `
+    <div class="flux-card">
+      <div class="flux-name">${name}</div>
+      <div class="flux-row">
+        <span class="flux-row-label">Entrées</span>
+        <span class="flux-in">${Sheets.formatMoney(flux.entrees)}</span>
+      </div>
+      <div class="flux-row">
+        <span class="flux-row-label">Sorties</span>
+        <span class="flux-out">${flux.sorties > 0 ? '−' : ''}${Sheets.formatMoney(flux.sorties)}</span>
+      </div>
+      <div class="flux-row" style="margin-top:4px;border-top:0.5px solid var(--border);padding-top:6px;">
+        <span class="flux-row-label" style="font-weight:500;">Net</span>
+        <span class="flux-net ${netCls}">${net >= 0 ? '+' : '−'}${Sheets.formatMoney(Math.abs(net))}</span>
+      </div>
+    </div>`;
+}
+
+function renderOpsTable(rows) {
+  if (!rows.length) return `<div class="ops-empty"><i class="ti ti-inbox"></i><br>Aucune opération pour cette période</div>`;
+  const trs = rows.map((op, i) => {
+    const flagClass = op.flagged ? 'flagged' : '';
+    const pdfBtn    = op.lienFacture
+      ? `<button class="pdf-btn" onclick="Sheets.openFacture('${op.lienFacture}')"><i class="ti ti-file-type-pdf"></i></button>`
+      : '';
+    return `
+      <tr data-source="${op.source}" data-type="${op.type}">
+        <td style="color:var(--text-3)">${op.date}</td>
+        <td><span class="chip chip-${op.sourceChip}">${op.sourceLabel}</span></td>
+        <td>${op.libelle}</td>
+        <td><span class="chip chip-${op.typeChip}">${op.type}</span></td>
+        <td style="color:var(--text-3);font-size:10px;">${op.description}</td>
+        <td class="r amount-debit">${op.debit ? Sheets.formatMoney(op.debit) : ''}</td>
+        <td class="r amount-credit">${op.credit ? Sheets.formatMoney(op.credit) : ''}</td>
+        <td class="r">${pdfBtn}</td>
+        <td class="r">
+          <button class="flag-btn ${flagClass}" onclick="openFlag('${op.source}',${op.rowIndex},'${escHtml(op.libelle)}','${escHtml(op.flagComment || '')}')" title="Annoter">
+            <i class="ti ti-flag${op.flagged ? '-filled' : ''}"></i>
+          </button>
+        </td>
+      </tr>`;
+  }).join('');
+
+  return `
+    <table id="ops-table">
+      <thead>
+        <tr>
+          <th>Date</th><th>Source</th><th>Libellé</th><th>Type</th><th>Description</th>
+          <th class="r">Débit</th><th class="r">Crédit</th><th class="r">PDF</th><th class="r">🔍</th>
+        </tr>
+      </thead>
+      <tbody id="ops-tbody">${trs}</tbody>
+    </table>`;
+}
+
+// ============================================================
+//  FILTRES OPÉRATIONS
+// ============================================================
+function filterOps() {
+  const srcFilter  = document.getElementById('filter-source').value;
+  const typeFilter = document.getElementById('filter-type').value;
+  document.querySelectorAll('#ops-tbody tr').forEach(tr => {
+    const src  = tr.dataset.source;
+    const type = tr.dataset.type;
+    const srcOk  = !srcFilter  || src  === srcFilter;
+    const typeOk = !typeFilter || type === typeFilter;
+    tr.style.display = srcOk && typeOk ? '' : 'none';
+  });
+}
+
+// ============================================================
+//  MODAL FLAG "À VÉRIFIER"
+// ============================================================
+function openFlag(source, rowIndex, libelle, existingComment) {
+  flagTarget = { source, rowIndex };
+  document.getElementById('flag-line-info').textContent = `Ligne : ${libelle}`;
+  document.getElementById('flag-comment-input').value    = existingComment || '';
+  document.getElementById('modal-flag').classList.remove('hidden');
+}
+function closeFlag() {
+  document.getElementById('modal-flag').classList.add('hidden');
+  flagTarget = null;
+}
+async function saveFlag() {
+  if (!flagTarget) return;
+  const comment   = document.getElementById('flag-comment-input').value.trim();
+  const sheetName = flagTarget.source === 'banque' ? 'Banque' : 'Caisse';
+  try {
+    await Sheets.updateFlag(sheetName, flagTarget.rowIndex, true, comment);
+    closeFlag();
+    await loadData();
+  } catch(e) {
+    alert('Erreur lors de l\'enregistrement : ' + e.message);
+  }
+}
+
+// ============================================================
+//  PERIOD PICKER (topbar)
+// ============================================================
+function buildPeriodPicker() {
+  const periodes = Sheets.getPeriodes();
+  const picker   = document.getElementById('period-picker');
+  if (!picker) return;
+  picker.innerHTML = periodes.map(p => `
+    <button class="period-btn ${p === activePer ? 'active' : ''}" onclick="selectPeriod('${p}')">${p}</button>
+  `).join('');
+}
+function selectPeriod(p) {
+  activePer = p;
+  Sidebar.setPeriode(p);
+  buildPeriodPicker();
+  renderDashboard();
+}
+
+// ============================================================
+//  HELPERS
+// ============================================================
+function calcFlux(rows, type, mois) {
+  return calcFluxRows(rows, type, mois);
+}
+
+function calcFluxRows(rows, type, mois) {
+  const colDate   = type === 'caisse' ? Sheets.cols.caisse.date   : Sheets.cols.banque.date;
+  const colDebit  = type === 'caisse' ? Sheets.cols.caisse.debit  : Sheets.cols.banque.debit;
+  const colCredit = type === 'caisse' ? Sheets.cols.caisse.credit : Sheets.cols.banque.credit;
+  let entrees = 0, sorties = 0;
+  rows.forEach(r => {
+    if (!rowInMonth(r[colDate], mois)) return;
+    entrees += parseFloat(r[colCredit]) || 0;
+    sorties += parseFloat(r[colDebit])  || 0;
+  });
+  return { entrees, sorties };
+}
+
+function rowInMonth(dateStr, moisLabel) {
+  if (!dateStr || !moisLabel) return false;
+  const d = parseDateFR(dateStr);
+  if (!d) return false;
+  const label = d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  return label.toLowerCase() === moisLabel.toLowerCase();
+}
+
+function getCurrentMois() {
+  return new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+}
+
+function parseDateFR(str) {
+  if (!str) return null;
+  const s = String(str);
+  const parts = s.split(/[\/\-]/);
+  if (parts.length === 3) {
+    if (parts[0].length === 4) return new Date(parts[0], parts[1]-1, parts[2]);
+    return new Date(parts[2], parts[1]-1, parts[0]);
+  }
+  return null;
+}
+
+function buildRecentOps(caisseRows, banqueRows) {
+  const cc = Sheets.cols.caisse;
+  const cb = Sheets.cols.banque;
+
+  const cOps = caisseRows.map((r, i) => ({
+    date:        r[cc.date]         || '',
+    libelle:     r[cc.libelle]      || '',
+    description: r[cc.description]  || '',
+    type:        r[cc.type_mvt]     || '',
+    typeChip:    chipType(r[cc.type_mvt]),
+    debit:       r[cc.debit]        || '',
+    credit:      r[cc.credit]       || '',
+    source:      'caisse' + (r[cc.source] === 'C2' ? '2' : '1'),
+    sourceLabel: r[cc.source] === 'C2' ? 'Caisse 2' : 'Caisse 1',
+    sourceChip:  r[cc.source] === 'C2' ? 'caisse2'  : 'caisse1',
+    lienFacture: r[cc.lien_facture] || '',
+    flagged:     r[cc.flag_check]   === 'TRUE',
+    flagComment: r[cc.flag_comment] || '',
+    rowIndex:    i,
+    _date:       parseDateFR(r[cc.date]),
+  }));
+
+  const bOps = banqueRows.map((r, i) => ({
+    date:        r[cb.date]         || '',
+    libelle:     r[cb.libelle]      || '',
+    description: r[cb.description]  || '',
+    type:        r[cb.type_mvt]     || '',
+    typeChip:    chipType(r[cb.type_mvt]),
+    debit:       r[cb.debit]        || '',
+    credit:      r[cb.credit]       || '',
+    source:      'banque',
+    sourceLabel: 'Banque',
+    sourceChip:  'banque',
+    lienFacture: r[cb.lien_facture] || '',
+    flagged:     r[cb.flag_check]   === 'TRUE',
+    flagComment: r[cb.flag_comment] || '',
+    rowIndex:    i,
+    _date:       parseDateFR(r[cb.date]),
+  }));
+
+  return [...cOps, ...bOps]
+    .filter(o => o._date)
+    .sort((a, b) => b._date - a._date)
+    .slice(0, 20);
+}
+
+function chipType(type) {
+  if (!type) return 'depense';
+  const t = type.toLowerCase();
+  if (t.includes('adopt'))    return 'adoption';
+  if (t.includes('don'))      return 'don';
+  if (t.includes('adh'))      return 'adhesion';
+  if (t.includes('ment') || t.includes('event') || t.includes('évén')) return 'evenement';
+  return 'depense';
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+function showSpinner() {
+  document.getElementById('page-content').innerHTML =
+    `<div class="spinner-wrap"><i class="ti ti-loader-2 spinner"></i><br><br>Chargement des données…</div>`;
+}
+function showError(msg) {
+  document.getElementById('page-content').innerHTML =
+    `<div class="spinner-wrap" style="color:var(--red)"><i class="ti ti-alert-circle" style="font-size:24px"></i><br><br>${msg}</div>`;
+}
+</script>
+</body>
+</html>
