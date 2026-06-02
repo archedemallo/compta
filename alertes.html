@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Journal & Alertes — Arche de Mallo</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
+  .stat-card { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius); padding:12px 14px; }
+  .stat-label { font-size:9px; color:var(--text-3); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
+  .stat-value { font-size:20px; font-weight:600; }
+  .stat-sub   { font-size:10px; color:var(--text-3); margin-top:3px; }
+
+  .journal-card { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+  .journal-head { padding:12px 16px; border-bottom:0.5px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+  .journal-title { font-size:12px; font-weight:600; }
+  .filters { display:flex; gap:6px; flex-wrap:wrap; }
+  .f-select { font-size:11px; padding:4px 8px; border-radius:var(--radius-sm); border:0.5px solid var(--border-mid); background:var(--surface); color:var(--text-2); font-family:'DM Sans',sans-serif; }
+  .f-input  { font-size:11px; padding:4px 10px; border-radius:var(--radius-sm); border:0.5px solid var(--border-mid); background:var(--surface); color:var(--text); font-family:'DM Sans',sans-serif; width:160px; }
+
+  table { width:100%; border-collapse:collapse; font-size:11px; }
+  thead th { text-align:left; font-size:9px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:0.6px; padding:7px 12px; border-bottom:0.5px solid var(--border); background:var(--surface-2); }
+  tbody td { padding:7px 12px; border-bottom:0.5px solid var(--border); vertical-align:middle; }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody tr:hover { background:var(--cream); }
+
+  .action-badge { display:inline-flex; align-items:center; gap:4px; font-size:9px; font-weight:600; padding:2px 7px; border-radius:10px; }
+  .a-ajout  { background:var(--green-bg);  color:var(--green); }
+  .a-modif  { background:var(--amber-bg);  color:var(--amber); }
+  .a-suppr  { background:var(--red-bg);    color:var(--red);   }
+  .a-import { background:var(--blue-bg);   color:var(--blue);  }
+
+  .onglet-badge { font-size:9px; padding:2px 6px; border-radius:8px; background:var(--surface-2); color:var(--text-2); border:0.5px solid var(--border); }
+
+  .non-admin-row { background:rgba(201,107,42,0.04); }
+  .non-admin-row td:first-child { border-left:3px solid var(--orange); }
+
+  .alert-section { margin-bottom:14px; }
+  .alert-item { display:flex; align-items:flex-start; gap:12px; padding:12px 14px; background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-sm); margin-bottom:6px; }
+  .alert-item.unread { border-left:3px solid var(--orange); background:rgba(201,107,42,0.03); }
+  .alert-icon { font-size:18px; color:var(--orange); flex-shrink:0; margin-top:1px; }
+  .alert-body { flex:1; }
+  .alert-title { font-size:12px; font-weight:500; margin-bottom:2px; }
+  .alert-detail { font-size:11px; color:var(--text-3); }
+  .alert-time { font-size:10px; color:var(--text-3); white-space:nowrap; flex-shrink:0; }
+  .alert-actions { display:flex; gap:6px; margin-top:6px; }
+
+  .empty { padding:32px; text-align:center; color:var(--text-3); font-size:12px; }
+  .spinner { display:inline-block; animation:spin 1s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg);} }
+
+  .tabs { display:flex; gap:2px; margin-bottom:14px; border-bottom:0.5px solid var(--border); }
+  .tab { padding:8px 16px; font-size:12px; cursor:pointer; color:var(--text-3); border-bottom:2px solid transparent; margin-bottom:-1px; font-family:'DM Sans',sans-serif; background:none; border-top:none; border-left:none; border-right:none; transition:all 0.15s; }
+  .tab.active { color:var(--orange); border-bottom-color:var(--orange); font-weight:500; }
+  .tab:hover { color:var(--text); }
+</style>
+</head>
+<body>
+<aside class="sidebar" id="sidebar"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title"><i class="ti ti-bell" style="color:var(--orange)"></i> Journal & Alertes</div>
+    <div class="topbar-right">
+      <button class="btn btn-secondary btn-sm" onclick="loadData()">
+        <i class="ti ti-refresh"></i> Actualiser
+      </button>
+    </div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Total modifications</div>
+        <div class="stat-value" id="stat-total">—</div>
+        <div class="stat-sub">Toutes périodes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Ajouts</div>
+        <div class="stat-value" style="color:var(--green)" id="stat-ajouts">—</div>
+        <div class="stat-sub">Nouvelles saisies</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Modifications</div>
+        <div class="stat-value" style="color:var(--amber)" id="stat-modifs">—</div>
+        <div class="stat-sub">Annotations, corrections</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Saisies non-admin</div>
+        <div class="stat-value" style="color:var(--orange)" id="stat-nonadmin">—</div>
+        <div class="stat-sub">À vérifier</div>
+      </div>
+    </div>
+
+    <!-- ONGLETS -->
+    <div class="tabs">
+      <button class="tab active" id="tab-alertes" onclick="switchTab('alertes')">
+        <i class="ti ti-bell"></i> Alertes saisies externes
+        <span id="badge-alertes-count" style="display:none;margin-left:6px;background:var(--orange);color:white;font-size:9px;padding:1px 5px;border-radius:10px;"></span>
+      </button>
+      <button class="tab" id="tab-journal" onclick="switchTab('journal')">
+        <i class="ti ti-list"></i> Journal complet
+      </button>
+    </div>
+
+    <!-- SECTION ALERTES -->
+    <div id="section-alertes">
+      <div id="alertes-wrap">
+        <div class="empty"><i class="ti ti-loader-2 spinner"></i><br><br>Chargement…</div>
+      </div>
+    </div>
+
+    <!-- SECTION JOURNAL -->
+    <div id="section-journal" style="display:none;">
+      <div class="journal-card">
+        <div class="journal-head">
+          <div class="journal-title">Journal des modifications</div>
+          <div class="filters">
+            <input class="f-input" type="text" id="f-search" placeholder="Rechercher…" oninput="filterJournal()">
+            <select class="f-select" id="f-action" onchange="filterJournal()">
+              <option value="">Toutes actions</option>
+              <option value="AJOUT">Ajout</option>
+              <option value="MODIF">Modification</option>
+              <option value="SUPPRESSION">Suppression</option>
+              <option value="IMPORT">Import</option>
+            </select>
+            <select class="f-select" id="f-onglet" onchange="filterJournal()">
+              <option value="">Tous les onglets</option>
+              <option value="Caisse">Caisse</option>
+              <option value="Banque">Banque</option>
+              <option value="Caisse1_physique">Caisse 1 physique</option>
+              <option value="Caisse2_physique">Caisse 2 physique</option>
+            </select>
+            <select class="f-select" id="f-admin" onchange="filterJournal()">
+              <option value="">Tous utilisateurs</option>
+              <option value="OUI">Administrateur</option>
+              <option value="NON">Autre utilisateur</option>
+            </select>
+          </div>
+        </div>
+        <div id="journal-wrap">
+          <div class="empty"><i class="ti ti-loader-2 spinner"></i><br><br>Chargement…</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script src="sheets.js"></script>
+<script src="sidebar.js"></script>
+<script>
+let journalRows = [];
+let activeTab   = 'alertes';
+
+Auth.requireAuth(async () => {
+  await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
+  Sidebar.build('alertes');
+  await loadData();
+});
+
+async function loadData() {
+  try {
+    journalRows = await Sheets.getJournal(200);
+    Sidebar.setLastUpdate();
+    updateStats();
+    renderAlertes();
+    renderJournal();
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+// ============================================================
+//  STATS
+// ============================================================
+function updateStats() {
+  const cj = Sheets.cols.journal;
+  const total    = journalRows.length;
+  const ajouts   = journalRows.filter(r => r[cj.action] === 'AJOUT').length;
+  const modifs   = journalRows.filter(r => r[cj.action] === 'MODIF').length;
+  const nonadmin = journalRows.filter(r => r[cj.is_admin] === 'NON').length;
+
+  document.getElementById('stat-total').textContent    = total;
+  document.getElementById('stat-ajouts').textContent   = ajouts;
+  document.getElementById('stat-modifs').textContent   = modifs;
+  document.getElementById('stat-nonadmin').textContent = nonadmin;
+
+  // Badge sidebar
+  Sidebar.setBadgeAlertes(nonadmin);
+
+  // Badge onglet alertes
+  const badge = document.getElementById('badge-alertes-count');
+  if (nonadmin > 0) {
+    badge.textContent = nonadmin;
+    badge.style.display = 'inline';
+  }
+}
+
+// ============================================================
+//  ALERTES (saisies non-admin)
+// ============================================================
+function renderAlertes() {
+  const cj   = Sheets.cols.journal;
+  const wrap = document.getElementById('alertes-wrap');
+  const alertes = journalRows.filter(r => r[cj.is_admin] === 'NON');
+
+  if (!alertes.length) {
+    wrap.innerHTML = `
+      <div style="background:var(--green-bg);border:0.5px solid rgba(59,109,17,0.2);border-radius:var(--radius);padding:20px 24px;display:flex;align-items:center;gap:12px;">
+        <i class="ti ti-check" style="font-size:20px;color:var(--green);"></i>
+        <div>
+          <div style="font-size:13px;font-weight:500;color:var(--green);">Aucune saisie en attente</div>
+          <div style="font-size:11px;color:var(--text-3);margin-top:2px;">Toutes les opérations ont été saisies par l'administrateur.</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const items = alertes.map((r, i) => `
+    <div class="alert-item unread" id="alert-${i}">
+      <i class="ti ti-user-exclamation alert-icon"></i>
+      <div class="alert-body">
+        <div class="alert-title">${r[cj.user_name] || r[cj.user_email] || 'Utilisateur inconnu'} — ${r[cj.action] || ''} dans ${r[cj.onglet] || ''}</div>
+        <div class="alert-detail">${r[cj.detail] || '—'}</div>
+        <div class="alert-actions">
+          <button class="btn btn-secondary btn-sm" onclick="markRead(${i})">
+            <i class="ti ti-check"></i> Marquer comme vu
+          </button>
+          <a href="${r[cj.onglet]==='Banque'?'banque.html':'caisse.html'}" class="btn btn-primary btn-sm">
+            <i class="ti ti-arrow-right"></i> Voir dans ${r[cj.onglet] || 'Caisse'}
+          </a>
+        </div>
+      </div>
+      <div class="alert-time">${r[cj.timestamp] || ''}</div>
+    </div>`).join('');
+
+  wrap.innerHTML = `
+    <div style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:12px;font-weight:500;">${alertes.length} saisie(s) externe(s) à vérifier</span>
+      <button class="btn btn-secondary btn-sm" onclick="markAllRead()"><i class="ti ti-checks"></i> Tout marquer comme vu</button>
+    </div>
+    <div class="alert-section">${items}</div>`;
+}
+
+function markRead(i) {
+  const el = document.getElementById('alert-' + i);
+  if (el) {
+    el.classList.remove('unread');
+    el.style.opacity = '0.5';
+    el.querySelector('.alert-actions').innerHTML = '<span style="font-size:10px;color:var(--green);"><i class="ti ti-check"></i> Vu</span>';
+  }
+}
+
+function markAllRead() {
+  document.querySelectorAll('.alert-item').forEach((el, i) => markRead(i));
+}
+
+// ============================================================
+//  JOURNAL COMPLET
+// ============================================================
+function renderJournal() {
+  filterJournal();
+}
+
+function filterJournal() {
+  const cj      = Sheets.cols.journal;
+  const search  = (document.getElementById('f-search')?.value  || '').toLowerCase();
+  const action  = document.getElementById('f-action')?.value   || '';
+  const onglet  = document.getElementById('f-onglet')?.value   || '';
+  const isAdmin = document.getElementById('f-admin')?.value    || '';
+
+  let rows = journalRows.filter(r => {
+    if (action  && r[cj.action]   !== action)  return false;
+    if (onglet  && r[cj.onglet]   !== onglet)  return false;
+    if (isAdmin && r[cj.is_admin] !== isAdmin)  return false;
+    if (search) {
+      const str = [r[cj.user_name], r[cj.user_email], r[cj.detail], r[cj.ligne_ref]].join(' ').toLowerCase();
+      if (!str.includes(search)) return false;
+    }
+    return true;
+  });
+
+  const wrap = document.getElementById('journal-wrap');
+  if (!rows.length) {
+    wrap.innerHTML = `<div class="empty">Aucune entrée correspondant aux filtres</div>`;
+    return;
+  }
+
+  const trs = rows.map(r => {
+    const isNonAdmin = r[cj.is_admin] === 'NON';
+    const actionCls  = { AJOUT:'a-ajout', MODIF:'a-modif', SUPPRESSION:'a-suppr', IMPORT:'a-import' }[r[cj.action]] || 'a-modif';
+    return `
+      <tr class="${isNonAdmin ? 'non-admin-row' : ''}">
+        <td style="color:var(--text-3);white-space:nowrap;font-size:10px;">${r[cj.timestamp]||'—'}</td>
+        <td>
+          <div style="font-size:11px;font-weight:500;">${r[cj.user_name]||'—'}</div>
+          <div style="font-size:10px;color:var(--text-3);">${r[cj.user_email]||''}</div>
+        </td>
+        <td><span class="action-badge ${actionCls}">${r[cj.action]||'—'}</span></td>
+        <td><span class="onglet-badge">${r[cj.onglet]||'—'}</span></td>
+        <td style="color:var(--text-2);font-size:10px;">${r[cj.ligne_ref]||'—'}</td>
+        <td style="color:var(--text-3);font-size:10px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r[cj.detail]||'—'}</td>
+        <td>${isNonAdmin ? '<span style="font-size:9px;color:var(--orange);font-weight:500;"><i class="ti ti-alert-triangle"></i> Externe</span>' : '<span style="font-size:9px;color:var(--text-3);">Admin</span>'}</td>
+      </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Date / Heure</th><th>Utilisateur</th><th>Action</th>
+          <th>Onglet</th><th>Référence</th><th>Détail</th><th>Rôle</th>
+        </tr>
+      </thead>
+      <tbody>${trs}</tbody>
+    </table>`;
+}
+
+// ============================================================
+//  ONGLETS
+// ============================================================
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tab-alertes').classList.toggle('active', tab === 'alertes');
+  document.getElementById('tab-journal').classList.toggle('active', tab === 'journal');
+  document.getElementById('section-alertes').style.display = tab === 'alertes' ? 'block' : 'none';
+  document.getElementById('section-journal').style.display = tab === 'journal' ? 'block' : 'none';
+}
+</script>
+</body>
+</html>

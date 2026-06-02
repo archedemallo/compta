@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configuration — Arche de Mallo</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  .config-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .config-card { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+  .config-head { padding:14px 16px; border-bottom:0.5px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  .config-title { font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; }
+  .config-title i { color:var(--orange); font-size:16px; }
+  .config-body { padding:14px 16px; }
+
+  /* Liste d'items */
+  .item-list { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+  .item-row { display:flex; align-items:center; gap:8px; padding:7px 10px; background:var(--surface-2); border:0.5px solid var(--border); border-radius:var(--radius-sm); }
+  .item-label { flex:1; font-size:12px; }
+  .item-badge { font-size:10px; padding:2px 6px; border-radius:8px; background:var(--orange); color:white; }
+  .item-del { background:none; border:none; cursor:pointer; color:var(--text-3); font-size:14px; padding:0 2px; transition:color 0.15s; }
+  .item-del:hover { color:var(--red); }
+  .item-edit { background:none; border:none; cursor:pointer; color:var(--text-3); font-size:14px; padding:0 2px; transition:color 0.15s; }
+  .item-edit:hover { color:var(--blue); }
+
+  /* Ajouter un item */
+  .add-row { display:flex; gap:8px; }
+  .add-row input { flex:1; }
+
+  /* Période spéciale */
+  .periode-row { display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--surface-2); border:0.5px solid var(--border); border-radius:var(--radius-sm); }
+  .periode-label { flex:1; font-size:13px; font-weight:500; }
+  .periode-active { font-size:10px; padding:2px 6px; border-radius:8px; background:var(--green-bg); color:var(--green); }
+
+  /* Utilisateurs */
+  .user-row { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--surface-2); border:0.5px solid var(--border); border-radius:var(--radius-sm); }
+  .user-avatar { width:32px; height:32px; border-radius:50%; background:var(--orange); display:flex; align-items:center; justify-content:center; color:white; font-size:12px; font-weight:600; flex-shrink:0; }
+  .user-info { flex:1; }
+  .user-email { font-size:12px; font-weight:500; }
+  .user-role { font-size:10px; color:var(--text-3); }
+  .role-badge { font-size:9px; padding:2px 6px; border-radius:8px; }
+  .role-admin { background:var(--orange); color:white; }
+  .role-reader { background:var(--blue-bg); color:var(--blue); }
+
+  /* Sheets config */
+  .config-field { margin-bottom:12px; }
+  .config-field label { display:block; font-size:10px; font-weight:600; color:var(--text-2); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
+  .config-field input { width:100%; }
+  .config-hint { font-size:10px; color:var(--text-3); margin-top:3px; }
+
+  /* Toast */
+  .success-toast { position:fixed; bottom:20px; right:20px; background:var(--green); color:white; padding:10px 18px; border-radius:var(--radius-sm); font-size:12px; font-weight:500; z-index:999; display:flex; align-items:center; gap:8px; box-shadow:var(--shadow-md); animation:slideIn 0.25s ease; }
+  @keyframes slideIn { from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1} }
+
+  /* Modal edit item */
+  .modal-overlay { position:fixed; inset:0; background:rgba(61,43,31,0.35); z-index:200; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(2px); }
+  .modal { background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow-md); width:380px; max-width:95vw; }
+  .modal-header { padding:14px 18px; border-bottom:0.5px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  .modal-title { font-size:13px; font-weight:600; }
+  .modal-close { background:none; border:none; font-size:18px; color:var(--text-3); cursor:pointer; }
+  .modal-body { padding:18px; }
+  .modal-footer { padding:12px 18px; border-top:0.5px solid var(--border); display:flex; justify-content:flex-end; gap:8px; }
+
+  .info-banner { background:var(--blue-bg); border:0.5px solid rgba(24,95,165,0.2); border-radius:var(--radius-sm); padding:10px 14px; font-size:12px; color:var(--blue); display:flex; gap:8px; margin-bottom:14px; }
+</style>
+</head>
+<body>
+<aside class="sidebar" id="sidebar"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title"><i class="ti ti-settings" style="color:var(--orange)"></i> Configuration</div>
+    <div class="topbar-right">
+      <span style="font-size:11px;color:var(--text-3);">Les modifications sont appliquées immédiatement</span>
+    </div>
+  </div>
+
+  <div class="page-content">
+
+    <div class="info-banner">
+      <i class="ti ti-info-circle" style="flex-shrink:0;font-size:16px;"></i>
+      <span>Les paramètres sont stockés localement sur ce navigateur. Si vous changez de PC, vous devrez les reconfigurer — ou exporter/importer le fichier de config.</span>
+    </div>
+
+    <div class="config-grid">
+
+      <!-- PÉRIODES -->
+      <div class="config-card">
+        <div class="config-head">
+          <div class="config-title"><i class="ti ti-calendar"></i> Périodes comptables</div>
+        </div>
+        <div class="config-body">
+          <div class="item-list" id="periodes-list"></div>
+          <div class="add-row">
+            <input type="text" id="new-periode" placeholder="Ex: 2026 - 2027">
+            <button class="btn btn-primary btn-sm" onclick="addPeriode()">
+              <i class="ti ti-plus"></i> Ajouter
+            </button>
+          </div>
+          <div style="margin-top:10px;font-size:10px;color:var(--text-3);">
+            Format : <code>AAAA - AAAA</code> (ex: 2026 - 2027)<br>
+            La période active est celle sélectionnée dans la sidebar.
+          </div>
+        </div>
+      </div>
+
+      <!-- TYPES DE MOUVEMENT -->
+      <div class="config-card">
+        <div class="config-head">
+          <div class="config-title"><i class="ti ti-tags"></i> Types de mouvement</div>
+        </div>
+        <div class="config-body">
+          <div class="item-list" id="types-list"></div>
+          <div class="add-row">
+            <input type="text" id="new-type" placeholder="Ex: Vente en ligne">
+            <button class="btn btn-primary btn-sm" onclick="addType()">
+              <i class="ti ti-plus"></i> Ajouter
+            </button>
+          </div>
+          <div style="margin-top:10px;font-size:10px;color:var(--text-3);">
+            Ces types apparaissent dans les formulaires Caisse et Banque.
+          </div>
+        </div>
+      </div>
+
+      <!-- MODES DE RÈGLEMENT -->
+      <div class="config-card">
+        <div class="config-head">
+          <div class="config-title"><i class="ti ti-credit-card"></i> Modes de règlement</div>
+        </div>
+        <div class="config-body">
+          <div class="item-list" id="reglements-list"></div>
+          <div class="add-row">
+            <input type="text" id="new-reglement" placeholder="Ex: Lydia, Sumeria…">
+            <button class="btn btn-primary btn-sm" onclick="addReglement()">
+              <i class="ti ti-plus"></i> Ajouter
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- UTILISATEURS -->
+      <div class="config-card">
+        <div class="config-head">
+          <div class="config-title"><i class="ti ti-users"></i> Utilisateurs autorisés</div>
+        </div>
+        <div class="config-body">
+          <div id="users-list"></div>
+          <div style="margin-top:12px;padding:10px;background:var(--amber-bg);border-radius:var(--radius-sm);font-size:11px;color:var(--amber);">
+            <i class="ti ti-alert-triangle"></i>
+            Pour modifier les utilisateurs autorisés, éditez le fichier <code>auth.js</code> sur GitHub (tableau <code>authorizedUsers</code>) puis redéployez.
+          </div>
+        </div>
+      </div>
+
+      <!-- CONFIG SHEETS & DRIVE -->
+      <div class="config-card" style="grid-column:1/-1;">
+        <div class="config-head">
+          <div class="config-title"><i class="ti ti-database"></i> Connexions — Google Sheets & Drive</div>
+          <button class="btn btn-primary btn-sm" onclick="saveSheetConfig()">
+            <i class="ti ti-device-floppy"></i> Enregistrer
+          </button>
+        </div>
+        <div class="config-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+            <div class="config-field">
+              <label>ID Google Sheets Compta</label>
+              <input type="text" id="cfg-sheets-id" placeholder="1y6yD4AohP7T10GE...">
+              <div class="config-hint">L'ID dans l'URL de votre Sheets compta (entre /d/ et /edit)</div>
+            </div>
+            <div class="config-field">
+              <label>ID Google Sheets Formulaires</label>
+              <input type="text" id="cfg-formulaires-id" placeholder="1y6yD4AohP7T10GE...">
+              <div class="config-hint">L'ID du Sheets qui reçoit les données des formulaires</div>
+            </div>
+            <div class="config-field">
+              <label>ID Dossier Drive Factures</label>
+              <input type="text" id="cfg-drive-id" placeholder="1BxiMVs0XRA5nFMd...">
+              <div class="config-hint">L'ID du dossier Comptabilite/Factures/ dans votre Drive</div>
+            </div>
+            <div class="config-field">
+              <label>URL Webhook Alertes (Apps Script)</label>
+              <input type="text" id="cfg-webhook" placeholder="https://script.google.com/macros/s/...">
+              <div class="config-hint">URL de déploiement de votre Apps Script pour les alertes email</div>
+            </div>
+            <div class="config-field">
+              <label>Email administrateur</label>
+              <input type="text" id="cfg-admin-email" placeholder="votre@email.com">
+              <div class="config-hint">Reçoit les alertes de saisie externe</div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;padding:10px;background:var(--green-bg);border-radius:var(--radius-sm);font-size:11px;color:var(--green);" id="sheets-status">
+            <i class="ti ti-loader-2" style="animation:spin 1s linear infinite;display:inline-block;"></i> Vérification de la connexion…
+          </div>
+        </div>
+      </div>
+
+      <!-- EXPORT / IMPORT CONFIG -->
+      <div class="config-card" style="grid-column:1/-1;">
+        <div class="config-head">
+          <div class="config-title"><i class="ti ti-file-export"></i> Export / Import de la configuration</div>
+        </div>
+        <div class="config-body">
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-secondary" onclick="exportConfig()">
+              <i class="ti ti-download"></i> Exporter la config (JSON)
+            </button>
+            <label class="btn btn-secondary" style="cursor:pointer;">
+              <i class="ti ti-upload"></i> Importer une config
+              <input type="file" accept=".json" onchange="importConfig(this)" style="display:none;">
+            </label>
+            <span style="font-size:11px;color:var(--text-3);">Utile pour transférer la config sur un autre PC</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDIT ITEM -->
+<div class="modal-overlay hidden" id="modal-edit-item">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="edit-item-title">Modifier</span>
+      <button class="modal-close" onclick="closeEditItem()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="config-field">
+        <label>Nouvelle valeur</label>
+        <input type="text" id="edit-item-input">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeEditItem()">Annuler</button>
+      <button class="btn btn-primary btn-sm"   onclick="saveEditItem()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script src="sheets.js"></script>
+<script src="sidebar.js"></script>
+<script>
+let editItemCtx = null; // { type, index }
+const currentPeriode = Sheets.getCurrentPeriode();
+
+Auth.requireAuth(async () => {
+  await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
+  Sidebar.build('config');
+  loadConfig();
+  renderUsers();
+  loadSheetConfig();
+  checkSheetsConnection();
+});
+
+// ============================================================
+//  RENDER
+// ============================================================
+function loadConfig() {
+  renderPeriodes();
+  renderTypes();
+  renderReglements();
+}
+
+function renderPeriodes() {
+  const periodes = Sheets.getPeriodes();
+  const list = document.getElementById('periodes-list');
+  list.innerHTML = periodes.map((p, i) => `
+    <div class="periode-row">
+      <span class="periode-label">${p}</span>
+      ${p === currentPeriode ? '<span class="periode-active">Période actuelle</span>' : ''}
+      ${periodes.length > 1 ? `<button class="item-del" onclick="deletePeriode(${i})" title="Supprimer"><i class="ti ti-trash"></i></button>` : ''}
+    </div>`).join('');
+}
+
+function renderTypes() {
+  const types = Sheets.getTypesMouvement();
+  const list  = document.getElementById('types-list');
+  list.innerHTML = types.map((t, i) => `
+    <div class="item-row">
+      <span class="item-label">${t}</span>
+      <button class="item-edit" onclick="openEditItem('type',${i},'${escH(t)}')" title="Modifier"><i class="ti ti-pencil"></i></button>
+      <button class="item-del"  onclick="deleteItem('type',${i})" title="Supprimer"><i class="ti ti-trash"></i></button>
+    </div>`).join('');
+}
+
+function renderReglements() {
+  const regs = Sheets.getModesReglement();
+  const list = document.getElementById('reglements-list');
+  list.innerHTML = regs.map((r, i) => `
+    <div class="item-row">
+      <span class="item-label">${r}</span>
+      <button class="item-edit" onclick="openEditItem('reglement',${i},'${escH(r)}')" title="Modifier"><i class="ti ti-pencil"></i></button>
+      <button class="item-del"  onclick="deleteItem('reglement',${i})" title="Supprimer"><i class="ti ti-trash"></i></button>
+    </div>`).join('');
+}
+
+function renderUsers() {
+  // Lire depuis auth.js (AUTH_CONFIG non accessible directement — afficher ce qui est connu)
+  const user = Auth.getUser();
+  const list = document.getElementById('users-list');
+  list.innerHTML = `
+    <div style="margin-bottom:8px;font-size:11px;color:var(--text-3);">Utilisateur connecté actuellement :</div>
+    <div class="user-row">
+      <div class="user-avatar">${(user?.name||'?').slice(0,2).toUpperCase()}</div>
+      <div class="user-info">
+        <div class="user-email">${user?.name || '—'}</div>
+        <div class="user-role">${user?.email || '—'}</div>
+      </div>
+      <span class="role-badge ${user?.isAdmin ? 'role-admin' : 'role-reader'}">${user?.isAdmin ? 'Administrateur' : 'Lecteur'}</span>
+    </div>`;
+}
+
+// ============================================================
+//  PÉRIODES
+// ============================================================
+function addPeriode() {
+  const input = document.getElementById('new-periode');
+  const val   = input.value.trim();
+  if (!val) return;
+  // Valider le format AAAA - AAAA
+  if (!/^\d{4}\s*-\s*\d{4}$/.test(val)) {
+    alert('Format invalide. Utilisez : 2026 - 2027'); return;
+  }
+  const periodes = Sheets.getPeriodes();
+  const formatted = val.replace(/\s*-\s*/, ' - ');
+  if (periodes.includes(formatted)) { alert('Cette période existe déjà.'); return; }
+  periodes.push(formatted);
+  Sheets.savePeriodes(periodes);
+  input.value = '';
+  renderPeriodes();
+  showToast('Période ajoutée !');
+}
+
+function deletePeriode(index) {
+  const periodes = Sheets.getPeriodes();
+  if (periodes.length <= 1) { alert('Vous devez conserver au moins une période.'); return; }
+  if (!confirm(`Supprimer la période "${periodes[index]}" ?`)) return;
+  periodes.splice(index, 1);
+  Sheets.savePeriodes(periodes);
+  renderPeriodes();
+  showToast('Période supprimée');
+}
+
+// ============================================================
+//  TYPES & RÈGLEMENTS
+// ============================================================
+function addType() {
+  const input = document.getElementById('new-type');
+  const val   = input.value.trim();
+  if (!val) return;
+  const types = Sheets.getTypesMouvement();
+  if (types.includes(val)) { alert('Ce type existe déjà.'); return; }
+  types.push(val);
+  Sheets.saveTypesMouvement(types);
+  input.value = '';
+  renderTypes();
+  showToast('Type ajouté !');
+}
+
+function addReglement() {
+  const input = document.getElementById('new-reglement');
+  const val   = input.value.trim();
+  if (!val) return;
+  const regs = Sheets.getModesReglement();
+  if (regs.includes(val)) { alert('Ce mode existe déjà.'); return; }
+  regs.push(val);
+  Sheets.saveModesReglement(regs);
+  input.value = '';
+  renderReglements();
+  showToast('Mode de règlement ajouté !');
+}
+
+function deleteItem(type, index) {
+  if (type === 'type') {
+    const types = Sheets.getTypesMouvement();
+    if (!confirm(`Supprimer "${types[index]}" ?`)) return;
+    types.splice(index, 1);
+    Sheets.saveTypesMouvement(types);
+    renderTypes();
+  } else {
+    const regs = Sheets.getModesReglement();
+    if (!confirm(`Supprimer "${regs[index]}" ?`)) return;
+    regs.splice(index, 1);
+    Sheets.saveModesReglement(regs);
+    renderReglements();
+  }
+  showToast('Supprimé');
+}
+
+// ============================================================
+//  EDIT ITEM MODAL
+// ============================================================
+function openEditItem(type, index, currentVal) {
+  editItemCtx = { type, index };
+  document.getElementById('edit-item-title').textContent = type === 'type' ? 'Modifier le type de mouvement' : 'Modifier le mode de règlement';
+  document.getElementById('edit-item-input').value = currentVal;
+  document.getElementById('modal-edit-item').classList.remove('hidden');
+  setTimeout(() => document.getElementById('edit-item-input').focus(), 50);
+}
+function closeEditItem() {
+  document.getElementById('modal-edit-item').classList.add('hidden');
+  editItemCtx = null;
+}
+function saveEditItem() {
+  if (!editItemCtx) return;
+  const val = document.getElementById('edit-item-input').value.trim();
+  if (!val) return;
+  const { type, index } = editItemCtx;
+  if (type === 'type') {
+    const types = Sheets.getTypesMouvement();
+    types[index] = val;
+    Sheets.saveTypesMouvement(types);
+    renderTypes();
+  } else {
+    const regs = Sheets.getModesReglement();
+    regs[index] = val;
+    Sheets.saveModesReglement(regs);
+    renderReglements();
+  }
+  closeEditItem();
+  showToast('Modifié !');
+}
+
+// ============================================================
+//  CONFIG SHEETS
+// ============================================================
+function loadSheetConfig() {
+  const cfg = JSON.parse(localStorage.getItem('arche_sheets_config') || '{}');
+  document.getElementById('cfg-sheets-id').value     = cfg.spreadsheetId    || Sheets.config.spreadsheetId    || '';
+  document.getElementById('cfg-formulaires-id').value= cfg.formulairesId    || Sheets.config.formulairesId    || '';
+  document.getElementById('cfg-drive-id').value      = cfg.facturesDriveId  || Sheets.config.facturesDriveId  || '';
+  document.getElementById('cfg-webhook').value       = cfg.webhookUrl        || '';
+  document.getElementById('cfg-admin-email').value   = cfg.adminEmail        || '';
+}
+
+function saveSheetConfig() {
+  const cfg = {
+    spreadsheetId:   document.getElementById('cfg-sheets-id').value.trim(),
+    formulairesId:   document.getElementById('cfg-formulaires-id').value.trim(),
+    facturesDriveId: document.getElementById('cfg-drive-id').value.trim(),
+    webhookUrl:      document.getElementById('cfg-webhook').value.trim(),
+    adminEmail:      document.getElementById('cfg-admin-email').value.trim(),
+  };
+  localStorage.setItem('arche_sheets_config', JSON.stringify(cfg));
+
+  // Mettre à jour Sheets.config dynamiquement
+  if (cfg.spreadsheetId)   Sheets.config.spreadsheetId   = cfg.spreadsheetId;
+  if (cfg.formulairesId)   Sheets.config.formulairesId   = cfg.formulairesId;
+  if (cfg.facturesDriveId) Sheets.config.facturesDriveId = cfg.facturesDriveId;
+
+  showToast('Configuration enregistrée !');
+  checkSheetsConnection();
+}
+
+async function checkSheetsConnection() {
+  const statusEl = document.getElementById('sheets-status');
+  const id = document.getElementById('cfg-sheets-id').value.trim() || Sheets.config.spreadsheetId;
+  if (!id || id.includes('VOTRE')) {
+    statusEl.style.background = 'var(--amber-bg)';
+    statusEl.style.color = 'var(--amber)';
+    statusEl.innerHTML = '<i class="ti ti-alert-triangle"></i> ID du Google Sheets non configuré. Renseignez-le ci-dessus.';
+    return;
+  }
+  try {
+    await gapi.client.sheets.spreadsheets.get({ spreadsheetId: id });
+    statusEl.style.background = 'var(--green-bg)';
+    statusEl.style.color = 'var(--green)';
+    statusEl.innerHTML = '<i class="ti ti-check"></i> Connexion au Google Sheets réussie !';
+  } catch(e) {
+    statusEl.style.background = 'var(--red-bg)';
+    statusEl.style.color = 'var(--red)';
+    statusEl.innerHTML = `<i class="ti ti-x"></i> Impossible de se connecter : ${e.message || 'Vérifiez l\'ID et les droits d\'accès.'}`;
+  }
+}
+
+// ============================================================
+//  EXPORT / IMPORT
+// ============================================================
+function exportConfig() {
+  const config = {
+    periodes:    Sheets.getPeriodes(),
+    types_mvt:   Sheets.getTypesMouvement(),
+    reglements:  Sheets.getModesReglement(),
+    sheets_cfg:  JSON.parse(localStorage.getItem('arche_sheets_config') || '{}'),
+    exported_at: new Date().toISOString(),
+  };
+  const blob = new Blob([JSON.stringify(config, null, 2)], { type:'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'arche_compta_config.json';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('Configuration exportée !');
+}
+
+function importConfig(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const cfg = JSON.parse(e.target.result);
+      if (cfg.periodes)   Sheets.savePeriodes(cfg.periodes);
+      if (cfg.types_mvt)  Sheets.saveTypesMouvement(cfg.types_mvt);
+      if (cfg.reglements) Sheets.saveModesReglement(cfg.reglements);
+      if (cfg.sheets_cfg) localStorage.setItem('arche_sheets_config', JSON.stringify(cfg.sheets_cfg));
+      loadConfig();
+      loadSheetConfig();
+      showToast('Configuration importée !');
+    } catch(err) {
+      alert('Fichier invalide : ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ============================================================
+//  HELPERS
+// ============================================================
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'success-toast';
+  t.innerHTML = `<i class="ti ti-check"></i> ${msg}`;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+function escH(s) { return String(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+</script>
+</body>
+</html>
