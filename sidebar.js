@@ -23,7 +23,10 @@ function buildSidebar(activePage) {
     { section: 'Partage' },
     { id: 'synthese',  label: 'Vue synthèse',       icon: 'ti-eye',            href: 'synthese.html' },
     { id: 'alertes',   label: 'Journal / Alertes',  icon: 'ti-bell',           href: 'alertes.html', badge: true },
-  ];
+
+    { section: 'Administration' },
+    { id: 'config',    label: 'Configuration',      icon: 'ti-settings',       href: 'config.html' },
+];
 
   // Options du sélecteur de période
   const periodeOptions = periodes.map(p =>
@@ -74,8 +77,18 @@ function buildSidebar(activePage) {
       <div class="sidebar-user">
         <div class="sidebar-avatar" id="sidebar-avatar">?</div>
         <span class="sidebar-username" id="sidebar-username">…</span>
-        <i class="ti ti-logout sidebar-logout" id="sidebar-logout" title="Déconnexion"></i>
       </div>
+      <button id="sidebar-logout" onclick="Auth.signOut()" style="
+        display:flex; align-items:center; justify-content:center; gap:8px;
+        width:100%; margin-top:10px; padding:8px 12px;
+        background:rgba(255,255,255,0.1); border:0.5px solid rgba(255,255,255,0.2);
+        border-radius:var(--radius-sm); color:var(--side-text); font-size:12px;
+        font-family:'DM Sans',sans-serif; font-weight:500; cursor:pointer;
+        transition:all 0.15s;
+      " onmouseover="this.style.background='rgba(255,255,255,0.2)'"
+         onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+        <i class="ti ti-logout" style="font-size:15px;"></i> Déconnexion
+      </button>
     </div>`;
 
   const sidebar = document.getElementById('sidebar');
