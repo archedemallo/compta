@@ -463,16 +463,49 @@ function calcStats(caisseRows, banqueRows, periode) {
 // ============================================================
 
 function getPeriodes() {
-  // Générer les périodes disponibles : de 2023-2024 à l'année en cours
-  const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth() + 1; // 1-12
-  // L'année assoc commence en septembre
+  // Lire depuis localStorage si déjà chargé (mis à jour par Config)
+  const stored = localStorage.getItem('arche_periodes');
+  if (stored) {
+    try { return JSON.parse(stored); } catch(e) {}
+  }
+  // Fallback : générer à partir de 2024-2025
+  const currentYear  = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
   const startAssocYear = currentMonth >= 9 ? currentYear : currentYear - 1;
   const periodes = [];
-  for (let y = 2023; y <= startAssocYear; y++) {
+  for (let y = 2024; y <= startAssocYear; y++) {
     periodes.push(`${y} - ${y + 1}`);
   }
   return periodes;
+}
+
+// Sauvegarder les périodes (appelé depuis config.html)
+function savePeriodes(periodes) {
+  localStorage.setItem('arche_periodes', JSON.stringify(periodes));
+}
+
+// Lire les types de mouvement depuis Config ou valeurs par défaut
+function getTypesMouvement() {
+  const stored = localStorage.getItem('arche_types_mvt');
+  if (stored) { try { return JSON.parse(stored); } catch(e) {} }
+  return [
+    'Adoption','Don','Adhésion','Événement',
+    'Dépense alimentaire','Dépense vétérinaire','Dépense matériel','Dépense autre',
+    'Remboursement','Virement interne','Remise chèques','Chèque émis','Divers'
+  ];
+}
+function saveTypesMouvement(types) {
+  localStorage.setItem('arche_types_mvt', JSON.stringify(types));
+}
+
+// Lire les modes de règlement depuis Config ou valeurs par défaut
+function getModesReglement() {
+  const stored = localStorage.getItem('arche_reglements');
+  if (stored) { try { return JSON.parse(stored); } catch(e) {} }
+  return ['Espèces','Chèque','Virement','CB','PayPal','Prélèvement','Autre'];
+}
+function saveModesReglement(modes) {
+  localStorage.setItem('arche_reglements', JSON.stringify(modes));
 }
 
 function getCurrentPeriode() {
@@ -481,7 +514,6 @@ function getCurrentPeriode() {
   const m = d.getMonth() + 1;
   return m >= 9 ? `${y} - ${y + 1}` : `${y - 1} - ${y}`;
 }
-
 // ============================================================
 // IMPORT RELEVÉ BANQUE
 // ============================================================
@@ -604,8 +636,13 @@ window.Sheets = {
 
   // Périodes
   getPeriodes,
+  savePeriodes,
   getCurrentPeriode,
-
+  getTypesMouvement,
+  saveTypesMouvement,
+  getModesReglement,
+  saveModesReglement,
+   
   // Drive
   openFacture,
   buildDrivePreviewUrl,
