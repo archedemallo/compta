@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Import relevé — Arche de Mallo</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  .steps{display:flex;gap:0;margin-bottom:20px;}
+  .step{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--surface);border:0.5px solid var(--border);font-size:12px;color:var(--text-3);flex:1;}
+  .step:first-child{border-radius:var(--radius-sm) 0 0 var(--radius-sm);}
+  .step:last-child{border-radius:0 var(--radius-sm) var(--radius-sm) 0;}
+  .step-num{width:22px;height:22px;border-radius:50%;background:var(--surface-2);border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;}
+  .step.active{background:var(--orange);color:white;border-color:var(--orange);}
+  .step.active .step-num{background:rgba(255,255,255,0.25);border-color:transparent;color:white;}
+  .step.done{background:var(--green-bg);color:var(--green);border-color:rgba(59,109,17,0.2);}
+  .step.done .step-num{background:var(--green);color:white;border-color:var(--green);}
+
+  .dropzone{border:2px dashed var(--border-mid);border-radius:var(--radius);padding:40px 20px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--surface);}
+  .dropzone:hover,.dropzone.drag-over{border-color:var(--orange);background:rgba(201,107,42,0.04);}
+
+  .mapping-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin-bottom:14px;}
+  .mapping-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;}
+  .form-group{display:flex;flex-direction:column;gap:4px;}
+  .form-label{font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;}
+  .form-label.req::after{content:' *';color:var(--red);}
+  .detected{font-size:10px;color:var(--green);margin-top:2px;}
+
+  .preview-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px;}
+  .preview-head{padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+
+  table{width:100%;border-collapse:collapse;font-size:11px;}
+  thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:7px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);position:sticky;top:0;z-index:1;}
+  tbody td{padding:6px 10px;border-bottom:0.5px solid var(--border);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  .r{text-align:right;font-variant-numeric:tabular-nums;}
+  .amount-c{color:var(--green);font-weight:500;}
+  .amount-d{color:var(--red);font-weight:500;}
+  .row-nouveau{background:rgba(59,109,17,0.04);}
+  .row-doublon{background:rgba(133,79,11,0.06);opacity:0.7;}
+  .status-badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:600;padding:2px 7px;border-radius:10px;white-space:nowrap;}
+  .s-nouveau{background:var(--green-bg);color:var(--green);}
+  .s-doublon{background:var(--amber-bg);color:var(--amber);}
+  .sel-sm{font-size:11px;padding:3px 6px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;width:100%;}
+  .inp-sm{font-size:11px;padding:3px 6px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);width:100%;font-family:'DM Sans',sans-serif;}
+
+  .actions-bar{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
+  .result-card{background:var(--green-bg);border:0.5px solid rgba(59,109,17,0.2);border-radius:var(--radius);padding:28px 24px;text-align:center;}
+  .spinner{display:inline-block;animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .success-toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:white;padding:10px 18px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;z-index:999;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-md);animation:slideIn 0.25s ease;}
+  @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+  .info-box{background:var(--blue-bg);border:0.5px solid rgba(24,95,165,0.15);border-radius:var(--radius-sm);padding:10px 14px;font-size:11px;color:var(--blue);margin-bottom:12px;}
+  .raw-preview-table{width:100%;border-collapse:collapse;font-size:10px;font-family:monospace;}
+  .raw-preview-table td,.raw-preview-table th{padding:3px 8px;border:0.5px solid var(--border);white-space:nowrap;}
+  .raw-preview-table th{background:var(--surface-2);font-weight:600;}
+  .raw-preview-table tr:nth-child(even){background:var(--cream);}
+  .col-highlight{background:rgba(201,107,42,0.12)!important;}
+</style>
+</head>
+<body>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title"><i class="ti ti-upload" style="color:var(--orange)"></i> Import relevé bancaire</div>
+    <div class="topbar-right"><span style="font-size:11px;color:var(--text-3);">CSV, XLS, XLSX</span></div>
+  </div>
+  <div class="page-content">
+    <div class="steps">
+      <div class="step active" id="step-1"><div class="step-num">1</div> Charger le fichier</div>
+      <div class="step"        id="step-2"><div class="step-num">2</div> Mapper les colonnes</div>
+      <div class="step"        id="step-3"><div class="step-num">3</div> Vérifier & sélectionner</div>
+      <div class="step"        id="step-4"><div class="step-num">4</div> Importer</div>
+    </div>
+
+    <!-- ÉTAPE 1 -->
+    <div id="s1">
+      <div class="dropzone" id="dropzone"
+           onclick="document.getElementById('file-input').click()"
+           ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+        <input type="file" id="file-input" accept=".csv,.xls,.xlsx,.txt" style="display:none" onchange="onFileSelect(this)">
+        <i class="ti ti-file-spreadsheet" style="font-size:40px;color:var(--text-3);display:block;margin-bottom:12px;"></i>
+        <div style="font-size:14px;font-weight:500;margin-bottom:6px;">Glissez votre relevé bancaire ici</div>
+        <div style="font-size:12px;color:var(--text-3);">ou cliquez pour sélectionner un fichier</div>
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
+          <span style="font-size:10px;padding:3px 8px;border-radius:8px;border:0.5px solid var(--border-mid);color:var(--text-3);">CSV</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:8px;border:0.5px solid var(--border-mid);color:var(--text-3);">XLS</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:8px;border:0.5px solid var(--border-mid);color:var(--text-3);">XLSX</span>
+        </div>
+      </div>
+      <div class="info-box" style="margin-top:14px;">
+        <strong>Crédit Agricole</strong> — le fichier est détecté automatiquement (colonne A = date, B = libellé, C = débit, D = crédit). Les lignes d'en-tête superflues sont ignorées automatiquement.
+      </div>
+    </div>
+
+    <!-- ÉTAPE 2 -->
+    <div id="s2" style="display:none;">
+      <div class="mapping-card">
+        <div style="font-size:12px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px;"><i class="ti ti-columns" style="color:var(--orange)"></i> Correspondance des colonnes</div>
+        <div class="mapping-grid">
+          <div class="form-group">
+            <label class="form-label req">Date</label>
+            <select id="map-date"></select>
+            <div id="det-date" class="detected hidden"><i class="ti ti-check"></i> Auto</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label req">Libellé</label>
+            <select id="map-libelle"></select>
+            <div id="det-libelle" class="detected hidden"><i class="ti ti-check"></i> Auto</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label req">Débit (ou montant)</label>
+            <select id="map-debit"></select>
+            <div id="det-debit" class="detected hidden"><i class="ti ti-check"></i> Auto</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Crédit (si séparé)</label>
+            <select id="map-credit"><option value="">— Ignorer —</option></select>
+            <div id="det-credit" class="detected hidden"><i class="ti ti-check"></i> Auto</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Solde</label>
+            <select id="map-solde"><option value="">— Ignorer —</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Lignes à ignorer en début</label>
+            <input type="number" id="map-skip" value="0" min="0" max="20" style="padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);font-size:12px;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Aperçu coloré -->
+      <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;overflow-x:auto;">
+        <div style="font-size:11px;font-weight:600;margin-bottom:8px;">Aperçu du fichier (10 premières lignes)</div>
+        <div id="raw-preview"></div>
+      </div>
+
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary" onclick="goStep(1)"><i class="ti ti-arrow-left"></i> Retour</button>
+        <button class="btn btn-primary"   onclick="processMapping()"><i class="ti ti-arrow-right"></i> Continuer</button>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 3 -->
+    <div id="s3" style="display:none;">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">
+        <label style="font-size:12px;font-weight:500;">Période :</label>
+        <select id="import-periode" style="font-size:12px;padding:5px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);font-family:'DM Sans',sans-serif;"></select>
+        <span style="font-size:11px;color:var(--text-3);">Les lignes importées seront affectées à cette période</span>
+      </div>
+
+      <div class="actions-bar">
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="checkbox" id="select-all" onchange="toggleAll(this.checked)" style="width:15px;height:15px;accent-color:var(--orange);">
+            Tout sélectionner
+          </label>
+          <span style="color:var(--text-3);">|</span>
+          <span id="sel-count" style="font-weight:500;">0 sélectionnée(s)</span>
+          <button class="btn btn-secondary btn-sm" onclick="selectNouveaux()"><i class="ti ti-sparkles"></i> Nouveaux seulement</button>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--green);"></div><span id="cnt-new">0</span> nouveaux
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--amber);margin-left:8px;"></div><span id="cnt-dup">0</span> doublons
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--border);margin-left:8px;"></div><span id="cnt-tot">0</span> total
+          </div>
+          <button class="btn btn-secondary" onclick="goStep(2)"><i class="ti ti-arrow-left"></i> Retour</button>
+          <button class="btn btn-primary"   onclick="goStep(4)" id="btn-go"><i class="ti ti-database-import"></i> Importer</button>
+        </div>
+      </div>
+
+      <div class="preview-card">
+        <div style="overflow-x:auto;max-height:520px;overflow-y:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:30px;"><input type="checkbox" id="th-chk" style="width:14px;height:14px;accent-color:var(--orange);" onchange="toggleAll(this.checked)"></th>
+                <th>Statut</th><th>Date</th><th>Libellé</th>
+                <th class="r">Débit</th><th class="r">Crédit</th><th class="r">Solde</th>
+                <th>Type mouvement</th><th>Type complémentaire</th><th>Description</th>
+              </tr>
+            </thead>
+            <tbody id="verify-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 4 -->
+    <div id="s4" style="display:none;">
+      <div id="prog-wrap" style="background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:40px;text-align:center;">
+        <i class="ti ti-loader-2 spinner" style="font-size:28px;color:var(--orange);"></i>
+        <div style="margin-top:16px;font-size:14px;font-weight:500;">Import en cours…</div>
+        <div style="font-size:12px;color:var(--text-3);margin-top:6px;" id="prog-text">Préparation…</div>
+        <div style="margin-top:16px;background:var(--surface-2);border-radius:4px;height:8px;overflow:hidden;">
+          <div id="prog-bar" style="height:8px;background:var(--orange);border-radius:4px;transition:width 0.3s;width:0%;"></div>
+        </div>
+      </div>
+      <div id="result-wrap" style="display:none;"></div>
+    </div>
+
+  </div>
+</div>
+<script src="auth.js"></script>
+<script src="sheets.js"></script>
+<script src="sidebar.js"></script>
+<script>
+let rawData=[], headers=[], importRows=[], existingRows=[];
+
+Auth.requireAuth(async()=>{
+  await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
+  Sidebar.build('import');
+  const per=Sheets.getPeriodes(), ap=Sidebar.getActivePeriode();
+  const sel=document.getElementById('import-periode');
+  per.forEach(p=>{ const o=document.createElement('option'); o.value=p; o.textContent=p; if(p===ap)o.selected=true; sel.appendChild(o); });
+  existingRows=await Sheets.getBanqueOperations();
+});
+
+function goStep(n){
+  [1,2,3,4].forEach(i=>{ const e=document.getElementById('step-'+i); e.classList.remove('active','done'); if(i<n)e.classList.add('done'); else if(i===n)e.classList.add('active'); });
+  ['s1','s2','s3','s4'].forEach((id,i)=>{ document.getElementById(id).style.display=(i+1===n?'block':'none'); });
+  if(n===4)startImport();
+}
+
+// ---- UPLOAD ----
+function onDragOver(e){e.preventDefault();document.getElementById('dropzone').classList.add('drag-over');}
+function onDragLeave(){document.getElementById('dropzone').classList.remove('drag-over');}
+function onDrop(e){e.preventDefault();document.getElementById('dropzone').classList.remove('drag-over');if(e.dataTransfer.files[0])readFile(e.dataTransfer.files[0]);}
+function onFileSelect(i){if(i.files[0])readFile(i.files[0]);}
+
+function readFile(file){
+  const ext=file.name.split('.').pop().toLowerCase();
+  const reader=new FileReader();
+  if(ext==='csv'||ext==='txt'){
+    reader.onload=e=>{parseCSV(e.target.result); goStep(2); buildMappingUI();};
+    reader.readAsText(file,'UTF-8');
+  } else {
+    reader.onload=e=>{
+      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',raw:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      rawData=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});
+      // Détecter et ignorer les lignes d'en-tête superflues (lignes avant celle qui contient "Date" ou "date")
+      const headerLineIdx=rawData.findIndex(r=>r.some(c=>String(c).toLowerCase().includes('date')));
+      if(headerLineIdx>0){
+        document.getElementById('map-skip').value=headerLineIdx;
+        headers=rawData[headerLineIdx]||[];
+      } else {
+        headers=rawData[0]||[];
+      }
+      goStep(2); buildMappingUI();
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+function parseCSV(text){
+  const first=text.split('\n')[0];
+  const sep=first.includes(';')?';':first.includes('\t')?'\t':',';
+  rawData=text.split('\n').filter(l=>l.trim()).map(line=>{
+    const cells=[]; let inQ=false,cell='';
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"')inQ=!inQ;
+      else if(c===sep&&!inQ){cells.push(cell.trim());cell='';}
+      else cell+=c;
+    }
+    cells.push(cell.trim()); return cells;
+  });
+  const hi=rawData.findIndex(r=>r.some(c=>String(c).toLowerCase().includes('date')));
+  headers=rawData[hi>=0?hi:0]||[];
+  if(hi>0)document.getElementById('map-skip').value=hi;
+}
+
+// ---- MAPPING UI ----
+function buildMappingUI(){
+  const selIds=['map-date','map-libelle','map-debit','map-credit','map-solde'];
+  selIds.forEach(id=>{
+    const s=document.getElementById(id);
+    const hasEmpty=id!=='map-date'&&id!=='map-libelle'&&id!=='map-debit';
+    s.innerHTML=hasEmpty?'<option value="">— Ignorer —</option>':'<option value="">— Choisir —</option>';
+    headers.forEach((h,i)=>{ s.innerHTML+=`<option value="${i}">${h||'Col '+(i+1)}</option>`; });
+  });
+  autoDetect();
+  buildRawPreview();
+}
+
+function autoDetect(){
+  const patterns={
+    date:    /^date$|^dat$|^jour$/i,
+    libelle: /lib[eé]ll[eé]|descri|op[eé]ration|motif|intitul|label/i,
+    debit:   /d[eé]bit|sortie|d[eé]p/i,
+    credit:  /cr[eé]dit|avoir|entr[eé]e/i,
+    solde:   /solde|balance/i,
+  };
+  Object.entries(patterns).forEach(([key,pat])=>{
+    const idx=headers.findIndex(h=>pat.test(String(h)));
+    if(idx>=0){
+      const s=document.getElementById('map-'+key);
+      if(s){s.value=idx; const d=document.getElementById('det-'+key); if(d)d.classList.remove('hidden');}
+    }
+  });
+}
+
+function buildRawPreview(){
+  const skip=parseInt(document.getElementById('map-skip').value)||0;
+  const preview=rawData.slice(skip, skip+10);
+  if(!preview.length){document.getElementById('raw-preview').innerHTML='<em>Aucune donnée</em>';return;}
+  const colDate=parseInt(document.getElementById('map-date').value)||0;
+  const colLib=parseInt(document.getElementById('map-libelle').value)||1;
+  const colDeb=parseInt(document.getElementById('map-debit').value)||2;
+  const colCre=document.getElementById('map-credit').value!==''?parseInt(document.getElementById('map-credit').value):-1;
+  const highlighted=[colDate,colLib,colDeb,colCre].filter(c=>c>=0);
+  const maxCols=Math.max(...preview.map(r=>r.length),1);
+  let html='<table class="raw-preview-table"><thead><tr><th>#</th>';
+  for(let i=0;i<maxCols;i++) html+=`<th class="${highlighted.includes(i)?'col-highlight':''}">${headers[i]||'Col '+(i+1)}</th>`;
+  html+='</tr></thead><tbody>';
+  preview.forEach((r,ri)=>{
+    html+=`<tr><td style="color:var(--text-3);">${skip+ri+1}</td>`;
+    for(let i=0;i<maxCols;i++) html+=`<td class="${highlighted.includes(i)?'col-highlight':''}">${escH(String(r[i]??''))}</td>`;
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  document.getElementById('raw-preview').innerHTML=html;
+}
+
+// ---- PROCESS MAPPING ----
+function processMapping(){
+  const colDate=parseInt(document.getElementById('map-date').value);
+  const colLib=parseInt(document.getElementById('map-libelle').value);
+  const colDeb=parseInt(document.getElementById('map-debit').value);
+  const colCre=document.getElementById('map-credit').value!==''?parseInt(document.getElementById('map-credit').value):-1;
+  const colSol=document.getElementById('map-solde').value!==''?parseInt(document.getElementById('map-solde').value):-1;
+  const skip=parseInt(document.getElementById('map-skip').value)||0;
+
+  if(isNaN(colDate)){alert('Veuillez sélectionner la colonne Date.');return;}
+  if(isNaN(colLib)){alert('Veuillez sélectionner la colonne Libellé.');return;}
+  if(isNaN(colDeb)){alert('Veuillez sélectionner la colonne Débit/Montant.');return;}
+
+  const dataRows=rawData.slice(skip+1).filter(r=>r.length>1&&r[colDate]!==''&&r[colDate]!==undefined);
+
+  importRows=dataRows.map(r=>{
+    const rawDate=String(r[colDate]??'');
+    const date=Sheets.normalizeDate(rawDate);
+    const rawLib=String(r[colLib]??'').trim();
+    // Si le libellé ressemble à une date, c'est un bug de mapping → ignorer
+    const libelle=rawLib.match(/^\d{5}(\.\d)?$/)||rawLib.match(/^\d{2}\/\d{2}\/\d{4}$/)?'':rawLib;
+    const rawDeb=parseFloat(String(r[colDeb]??'').replace(/\s/g,'').replace(',','.'))||0;
+    const rawCre=colCre>=0?parseFloat(String(r[colCre]??'').replace(/\s/g,'').replace(',','.'))||0:0;
+    let debit=0,credit=0;
+    if(colCre>=0){debit=rawDeb>0?rawDeb:0; credit=rawCre>0?rawCre:0;}
+    else{if(rawDeb<0)debit=Math.abs(rawDeb);else credit=rawDeb;}
+    const solde=colSol>=0?String(r[colSol]??'').replace(',','.').replace(/\s/g,''):'';
+    if(!date||(!debit&&!credit))return null;
+    const doublon=Sheets.detectDoublons([{date,debit:debit||'',credit:credit||'',montant:debit||credit}],existingRows)[0]?.doublon||false;
+    return {date,libelle:libelle||'(sans libellé)',debit:debit||'',credit:credit||'',solde,type_mvt:'',type_comp:'',description:'',statut:doublon?'doublon':'nouveau',selected:!doublon};
+  }).filter(Boolean);
+
+  renderVerify();
+  goStep(3);
+}
+
+// ---- RENDER VERIFY ----
+function renderVerify(){
+  const nv=importRows.filter(r=>r.statut==='nouveau').length;
+  const db=importRows.filter(r=>r.statut==='doublon').length;
+  document.getElementById('cnt-new').textContent=nv;
+  document.getElementById('cnt-dup').textContent=db;
+  document.getElementById('cnt-tot').textContent=importRows.length;
+
+  const types=Sheets.getTypesMouvement();
+  const typesComp=Sheets.getTypesComplementaires();
+  const topts='<option value="">— Choisir —</option>'+types.map(t=>`<option value="${escH(t)}">${t}</option>`).join('');
+  const ctopts='<option value="">—</option>'+typesComp.map(t=>`<option value="${escH(t)}">${t}</option>`).join('');
+
+  const trs=importRows.map((r,i)=>{
+    const cls=r.statut==='nouveau'?'row-nouveau':'row-doublon';
+    const badge=r.statut==='nouveau'
+      ?'<span class="status-badge s-nouveau"><i class="ti ti-sparkles"></i> Nouveau</span>'
+      :'<span class="status-badge s-doublon"><i class="ti ti-alert-triangle"></i> Doublon?</span>';
+    return `<tr class="${cls}">
+      <td><input type="checkbox" class="row-chk" data-i="${i}" ${r.selected?'checked':''} onchange="onSel(${i},this.checked)" style="width:14px;height:14px;accent-color:var(--orange);"></td>
+      <td>${badge}</td>
+      <td style="white-space:nowrap;color:var(--text-3);">${r.date}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escH(r.libelle)}">${r.libelle}</td>
+      <td class="r amount-d">${r.debit?fmt(r.debit):''}</td>
+      <td class="r amount-c">${r.credit?fmt(r.credit):''}</td>
+      <td class="r" style="color:var(--text-3);">${r.solde?fmt(r.solde):''}</td>
+      <td><select class="sel-sm" onchange="importRows[${i}].type_mvt=this.value">${topts}</select></td>
+      <td><select class="sel-sm" onchange="importRows[${i}].type_comp=this.value">${ctopts}</select></td>
+      <td><input type="text" class="inp-sm" placeholder="Précisions…" oninput="importRows[${i}].description=this.value"></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('verify-body').innerHTML=trs;
+
+  // Pré-sélectionner types auto-détectés
+  importRows.forEach((r,i)=>{
+    if(r.type_mvt){const s=document.querySelector(`tr:nth-child(${i+1}) .sel-sm`);if(s)s.value=r.type_mvt;}
+  });
+  updateSelCount();
+}
+
+function onSel(i,v){importRows[i].selected=v;updateSelCount();}
+function toggleAll(v){importRows.forEach((r,i)=>{r.selected=v;const c=document.querySelector(`[data-i="${i}"]`);if(c)c.checked=v;});document.getElementById('th-chk').checked=v;document.getElementById('select-all').checked=v;updateSelCount();}
+function selectNouveaux(){importRows.forEach((r,i)=>{r.selected=r.statut==='nouveau';const c=document.querySelector(`[data-i="${i}"]`);if(c)c.checked=r.selected;});updateSelCount();}
+function updateSelCount(){const n=importRows.filter(r=>r.selected).length;document.getElementById('sel-count').textContent=`${n} sélectionnée(s)`;document.getElementById('btn-go').disabled=n===0;}
+
+// ---- IMPORT ----
+async function startImport(){
+  const periode=document.getElementById('import-periode').value;
+  const selected=importRows.filter(r=>r.selected);
+  if(!selected.length){goStep(3);return;}
+  document.getElementById('prog-wrap').style.display='block';
+  document.getElementById('result-wrap').style.display='none';
+  let done=0,errors=0;
+  const BATCH=5;
+  for(let i=0;i<selected.length;i+=BATCH){
+    const batch=selected.slice(i,i+BATCH);
+    try{
+      const rows=batch.map(r=>{
+        const cb=Sheets.cols.banque;
+        const row=new Array(15).fill('');
+        row[cb.date]=r.date; row[cb.libelle]=r.libelle;
+        row[cb.debit]=r.debit||''; row[cb.credit]=r.credit||'';
+        row[cb.solde]=r.solde||''; row[cb.periode]=periode;
+        row[cb.type_mvt]=r.type_mvt||''; row[cb.type_comp]=r.type_comp||'';
+        row[cb.description]=r.description||'Import relevé';
+        row[cb.flag_check]='FALSE'; row[cb.flag_comment]='';
+        return row;
+      });
+      await Sheets.appendRows(Sheets.config.sheets.banque,rows);
+      done+=batch.length;
+    }catch(e){errors+=batch.length;console.error(e);}
+    const pct=Math.round((i+batch.length)/selected.length*100);
+    document.getElementById('prog-bar').style.width=pct+'%';
+    document.getElementById('prog-text').textContent=`${Math.min(i+BATCH,selected.length)} / ${selected.length} lignes importées…`;
+    await sleep(150);
+  }
+  await Sheets.logAction('IMPORT','Banque','Import relevé',`${done} lignes importées — ${errors} erreurs — ${periode}`);
+  document.getElementById('prog-wrap').style.display='none';
+  document.getElementById('result-wrap').style.display='block';
+  document.getElementById('result-wrap').innerHTML=`
+    <div class="result-card">
+      <i class="ti ti-circle-check" style="font-size:40px;color:var(--green);display:block;margin-bottom:12px;"></i>
+      <div style="font-size:16px;font-weight:600;color:var(--green);margin-bottom:8px;">Import réussi !</div>
+      <div style="font-size:12px;color:var(--text-2);">
+        <strong>${done}</strong> opération(s) importée(s) — Période : <strong>${periode}</strong>
+        ${errors>0?`<br><span style="color:var(--red)">${errors} erreur(s)</span>`:''}
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;">
+        <a href="banque.html" class="btn btn-primary"><i class="ti ti-building-bank"></i> Voir la banque</a>
+        <button class="btn btn-secondary" onclick="resetImport()"><i class="ti ti-upload"></i> Nouvel import</button>
+      </div>
+    </div>`;
+}
+
+function resetImport(){rawData=[];headers=[];importRows=[];document.getElementById('file-input').value='';goStep(1);}
+function fmt(v){if(!v&&v!==0)return'';return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// Rebuild preview quand on change les selects
+['map-date','map-libelle','map-debit','map-credit','map-skip'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el)el.addEventListener('change',()=>{if(rawData.length)buildRawPreview();});
+});
+</script>
+</body>
+</html>
