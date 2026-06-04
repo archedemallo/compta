@@ -7,303 +7,244 @@
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
-  .split-layout { display:grid; grid-template-columns:400px 1fr; gap:14px; align-items:start; }
-  .form-card { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius); padding:18px 20px; position:sticky; top:60px; }
-  .form-card-title { font-size:13px; font-weight:600; margin-bottom:14px; padding-bottom:10px; border-bottom:0.5px solid var(--border); display:flex; align-items:center; gap:8px; }
-  .form-card-title i { color:var(--orange); font-size:16px; }
-  .form-group { margin-bottom:10px; }
-  .form-label { display:block; font-size:11px; font-weight:600; color:var(--text-2); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
-  .form-label.req::after { content:' *'; color:var(--red); }
-  .form-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+  .kpi-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+  .kpi{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;}
+  .kpi-label{font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
+  .kpi-value{font-size:18px;font-weight:600;}
+  .kpi-sub{font-size:10px;color:var(--text-3);margin-top:2px;}
 
-  /* Toggle sens */
-  .sens-toggle { display:flex; gap:4px; margin-bottom:10px; }
-  .sens-btn { flex:1; padding:7px; border-radius:var(--radius-sm); border:0.5px solid var(--border-mid); background:transparent; font-family:'DM Sans',sans-serif; font-size:12px; cursor:pointer; transition:all 0.15s; }
-  .sens-btn.credit { border-color:var(--green); color:var(--green); }
-  .sens-btn.credit.active { background:var(--green); color:white; }
-  .sens-btn.debit  { border-color:var(--red);   color:var(--red);   }
-  .sens-btn.debit.active  { background:var(--red);   color:white; }
+  .list-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px;}
+  .list-head{padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+  .filters-bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .f-select{font-size:11px;padding:4px 8px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text-2);font-family:'DM Sans',sans-serif;}
+  .f-input{font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;width:130px;}
 
-  /* Type ops tabs */
-  .op-type-tabs { display:flex; gap:4px; margin-bottom:12px; flex-wrap:wrap; }
-  .op-tab { padding:5px 10px; border-radius:var(--radius-sm); border:0.5px solid var(--border-mid); background:transparent; font-size:11px; cursor:pointer; font-family:'DM Sans',sans-serif; color:var(--text-2); transition:all 0.15s; }
-  .op-tab.active { background:var(--brown-mid); color:white; border-color:var(--brown-mid); }
+  /* Solde banner */
+  .solde-banner{background:linear-gradient(135deg,var(--brown-mid) 0%,var(--brown-light) 100%);color:white;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-radius:var(--radius) var(--radius) 0 0;}
+  .solde-value{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;}
 
-  /* Sections spécifiques */
-  .cheque-section, .remise-section { background:var(--surface-2); border:0.5px solid var(--border); border-radius:var(--radius-sm); padding:12px; margin-bottom:10px; }
-  .section-label { font-size:10px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+  table{width:100%;border-collapse:collapse;font-size:11px;}
+  thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:7px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);cursor:pointer;white-space:nowrap;user-select:none;}
+  thead th:hover{background:var(--warm);}
+  thead th.sorted .sort-icon{color:var(--orange);opacity:1;}
+  thead th .sort-icon{font-size:10px;margin-left:3px;opacity:0.4;}
+  tbody td{padding:7px 10px;border-bottom:0.5px solid var(--border);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--cream);}
+  tbody tr.editing{background:rgba(201,107,42,0.06);outline:1px solid var(--orange);}
+  .r{text-align:right;font-variant-numeric:tabular-nums;}
+  .amount-c{color:var(--green);font-weight:500;} .amount-d{color:var(--red);font-weight:500;}
+  .pdf-btn,.flag-btn,.edit-btn,.del-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;}
+  .pdf-btn{color:var(--blue);} .edit-btn{color:var(--blue);} .del-btn{color:var(--red);}
+  .flag-btn{color:var(--text-3);} .flag-btn.on{color:var(--orange);}
+  .flag-comment-cell{max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:var(--amber);cursor:pointer;}
 
-  /* Statut chèque */
-  .statut-toggle { display:flex; gap:4px; }
-  .statut-btn { flex:1; padding:5px 8px; border-radius:var(--radius-sm); border:0.5px solid var(--border-mid); background:transparent; font-size:11px; cursor:pointer; font-family:'DM Sans',sans-serif; color:var(--text-2); transition:all 0.15s; }
-  .statut-btn.active { background:var(--blue); color:white; border-color:var(--blue); }
-  .statut-btn.encaisse.active { background:var(--green); border-color:var(--green); }
-  .statut-btn.annule.active   { background:var(--red);   border-color:var(--red);   }
-
-  /* Drive picker */
-  .drive-picker { display:flex; gap:6px; align-items:center; }
-  .drive-picker input { flex:1; }
-  .btn-drive { display:inline-flex; align-items:center; gap:4px; padding:6px 10px; border-radius:var(--radius-sm); border:0.5px solid var(--border-mid); background:var(--surface-2); color:var(--text-2); font-size:11px; cursor:pointer; white-space:nowrap; font-family:'DM Sans',sans-serif; }
-  .btn-drive:hover { background:var(--warm); }
-
-  .btn-form-actions { display:flex; gap:8px; margin-top:14px; padding-top:12px; border-top:0.5px solid var(--border); }
-
-  /* Liste */
-  .list-card { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius); overflow:hidden; }
-  .list-head { padding:12px 16px; border-bottom:0.5px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
-  .list-title { font-size:13px; font-weight:600; }
-  .list-filters { display:flex; gap:6px; flex-wrap:wrap; }
-  .f-select { font-size:11px; padding:4px 8px; border-radius:var(--radius-sm); border:0.5px solid var(--border-mid); background:var(--surface); color:var(--text-2); font-family:'DM Sans',sans-serif; }
-  .f-input  { font-size:11px; padding:4px 10px; border-radius:var(--radius-sm); border:0.5px solid var(--border-mid); background:var(--surface); color:var(--text); font-family:'DM Sans',sans-serif; width:140px; }
-
-  /* Solde banque */
-  .solde-banner { background:linear-gradient(135deg,var(--brown-mid) 0%,var(--brown-light) 100%); color:white; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; }
-  .solde-label { font-size:11px; opacity:0.7; }
-  .solde-value { font-size:22px; font-weight:600; font-variant-numeric:tabular-nums; }
-  .solde-sub   { font-size:10px; opacity:0.6; margin-top:2px; }
-
-  table { width:100%; border-collapse:collapse; font-size:11px; }
-  thead th { text-align:left; font-size:9px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:0.6px; padding:7px 10px; border-bottom:0.5px solid var(--border); background:var(--surface-2); }
-  tbody td { padding:7px 10px; border-bottom:0.5px solid var(--border); vertical-align:middle; }
-  tbody tr:last-child td { border-bottom:none; }
-  tbody tr:hover { background:var(--cream); }
-  .r { text-align:right; font-variant-numeric:tabular-nums; }
-  .amount-c { color:var(--green); font-weight:500; }
-  .amount-d { color:var(--red);   font-weight:500; }
-  .pdf-btn { color:var(--blue); background:none; border:none; cursor:pointer; font-size:13px; padding:0 2px; }
-  .flag-btn { background:none; border:none; cursor:pointer; color:var(--text-3); font-size:13px; padding:0 2px; }
-  .flag-btn.on { color:var(--orange); }
-  .edit-btn { background:none; border:none; cursor:pointer; color:var(--blue); font-size:13px; padding:0 2px; }
-  .del-btn  { background:none; border:none; cursor:pointer; color:var(--red);  font-size:13px; padding:0 2px; }
-  .cheque-badge { font-size:9px; padding:2px 5px; border-radius:8px; background:var(--blue-bg); color:var(--blue); }
-  .remise-badge { font-size:9px; padding:2px 5px; border-radius:8px; background:var(--purple-bg); color:var(--purple); }
-  .flag-comment-cell { max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; color:var(--amber); cursor:pointer; }
+  /* Formulaire en bas */
+  .form-section{background:var(--surface);border:0.5px solid var(--orange);border-radius:var(--radius);padding:18px 20px;}
+  .form-title{font-size:13px;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .form-title i{color:var(--orange);}
+  .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  .form-row-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;}
+  .form-row-5{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:10px;}
+  .form-group{display:flex;flex-direction:column;gap:4px;margin-bottom:0;}
+  .form-label{font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;}
+  .form-label.req::after{content:' *';color:var(--red);}
+  .op-tabs{display:flex;gap:4px;margin-bottom:12px;}
+  .op-tab{padding:5px 12px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:transparent;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--text-2);transition:all 0.15s;}
+  .op-tab.active{background:var(--brown-mid);color:white;border-color:var(--brown-mid);}
+  .sens-toggle{display:flex;gap:4px;}
+  .sens-btn{flex:1;padding:7px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:transparent;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all 0.15s;}
+  .sens-btn.credit{border-color:var(--green);color:var(--green);}
+  .sens-btn.credit.active{background:var(--green);color:white;}
+  .sens-btn.debit{border-color:var(--red);color:var(--red);}
+  .sens-btn.debit.active{background:var(--red);color:white;}
+  .special-section{background:var(--surface-2);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px;}
+  .special-label{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+  .drive-picker{display:flex;gap:6px;align-items:center;}
+  .drive-picker input{flex:1;}
+  .btn-drive{display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface-2);color:var(--text-2);font-size:11px;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;}
+  .form-actions{display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:0.5px solid var(--border);}
+  .edit-banner{background:rgba(201,107,42,0.08);border:0.5px solid var(--orange);border-radius:var(--radius-sm);padding:8px 12px;font-size:11px;color:var(--orange);display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
 
   /* Modals */
-  .modal-overlay { position:fixed; inset:0; background:rgba(61,43,31,0.35); z-index:200; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(2px); }
-  .modal { background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow-md); width:460px; max-width:95vw; max-height:90vh; overflow-y:auto; }
-  .modal-lg { width:600px; }
-  .modal-header { padding:14px 18px; border-bottom:0.5px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
-  .modal-title { font-size:13px; font-weight:600; }
-  .modal-close { background:none; border:none; font-size:18px; color:var(--text-3); cursor:pointer; }
-  .modal-body { padding:18px; }
-  .modal-footer { padding:12px 18px; border-top:0.5px solid var(--border); display:flex; justify-content:flex-end; gap:8px; }
-  .confirm-text { font-size:13px; color:var(--text); line-height:1.6; }
-  .confirm-detail { margin-top:10px; padding:10px; background:var(--red-bg); border-radius:var(--radius-sm); font-size:12px; color:var(--red); }
-
-  .success-toast { position:fixed; bottom:20px; right:20px; background:var(--green); color:white; padding:10px 18px; border-radius:var(--radius-sm); font-size:12px; font-weight:500; z-index:999; display:flex; align-items:center; gap:8px; box-shadow:var(--shadow-md); animation:slideIn 0.25s ease; }
-  @keyframes slideIn { from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1} }
-  .spinner { display:inline-block; animation:spin 1s linear infinite; }
-  @keyframes spin { to{transform:rotate(360deg);} }
+  .modal-overlay{position:fixed;inset:0;background:rgba(61,43,31,0.35);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
+  .modal{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-md);width:460px;max-width:95vw;}
+  .modal-header{padding:14px 18px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+  .modal-title{font-size:13px;font-weight:600;}
+  .modal-close{background:none;border:none;font-size:18px;color:var(--text-3);cursor:pointer;}
+  .modal-body{padding:18px;}
+  .modal-footer{padding:12px 18px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+  .confirm-detail{margin-top:10px;padding:10px;background:var(--red-bg);border-radius:var(--radius-sm);font-size:12px;color:var(--red);}
+  .success-toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:white;padding:10px 18px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;z-index:999;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-md);animation:slideIn 0.25s ease;}
+  @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .spinner{display:inline-block;animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .cheque-badge{font-size:9px;padding:2px 5px;border-radius:8px;background:var(--blue-bg);color:var(--blue);}
+  .remise-badge{font-size:9px;padding:2px 5px;border-radius:8px;background:var(--purple-bg);color:var(--purple);}
 </style>
 </head>
 <body>
 <aside class="sidebar" id="sidebar"></aside>
-
 <div class="main">
   <div class="topbar">
     <div class="topbar-title"><i class="ti ti-building-bank" style="color:var(--orange)"></i> Banque — Saisie</div>
-    <div class="topbar-right">
-      <span style="font-size:11px;color:var(--text-3);" id="topbar-periode"></span>
-    </div>
+    <div class="topbar-right"><span style="font-size:11px;color:var(--text-3);" id="topbar-per"></span></div>
   </div>
-
   <div class="page-content">
-    <div class="split-layout">
 
-      <!-- FORMULAIRE -->
+    <!-- KPIs -->
+    <div class="kpi-bar" id="kpi-bar"></div>
+
+    <!-- TABLEAU -->
+    <div class="solde-banner">
       <div>
-        <div class="form-card">
-          <div class="form-card-title"><i class="ti ti-plus"></i> <span id="form-mode-label">Nouvelle opération</span></div>
+        <div style="font-size:11px;opacity:0.7;">Solde banque — période <span id="solde-per"></span></div>
+        <div class="solde-value" id="solde-val">—</div>
+        <div style="font-size:10px;opacity:0.6;" id="solde-sub">Dernière opération : —</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:10px;opacity:0.7;">Chèques en attente</div>
+        <div style="font-size:20px;font-weight:600;" id="cheques-att">0</div>
+        <div style="font-size:10px;opacity:0.6;">Remises en attente : <span id="remises-att">0</span></div>
+      </div>
+    </div>
 
-          <!-- Type d'opération -->
-          <div class="form-group">
-            <label class="form-label">Type d'opération</label>
-            <div class="op-type-tabs">
-              <button class="op-tab active" id="optab-normal"  onclick="setOpType('normal')">Opération</button>
-              <button class="op-tab"        id="optab-cheque"  onclick="setOpType('cheque')"><i class="ti ti-writing"></i> Chèque émis</button>
-              <button class="op-tab"        id="optab-remise"  onclick="setOpType('remise')"><i class="ti ti-stack"></i> Remise chèques</button>
-            </div>
-          </div>
+    <div class="list-card" style="border-radius:0 0 var(--radius) var(--radius);border-top:none;">
+      <div class="list-head">
+        <div style="font-size:12px;font-weight:600;">Opérations bancaires</div>
+        <div class="filters-bar">
+          <input class="f-input" type="text" id="fl-search" placeholder="Rechercher…" oninput="renderTable()">
+          <select class="f-select" id="fl-type" onchange="renderTable()"><option value="">Tous types</option></select>
+          <select class="f-select" id="fl-type-comp" onchange="renderTable()"><option value="">Types comp.</option></select>
+          <select class="f-select" id="fl-sens" onchange="renderTable()">
+            <option value="">Débits + Crédits</option>
+            <option value="credit">Crédits seuls</option>
+            <option value="debit">Débits seuls</option>
+          </select>
+          <input class="f-input" type="date" id="fl-date-from" onchange="renderTable()" title="Du">
+          <input class="f-input" type="date" id="fl-date-to" onchange="renderTable()" title="Au">
+          <select class="f-select" id="fl-flag" onchange="renderTable()">
+            <option value="">Toutes lignes</option>
+            <option value="flagged">À vérifier</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" onclick="clearFilters()"><i class="ti ti-x"></i></button>
+        </div>
+      </div>
+      <div id="table-wrap" style="overflow-x:auto;max-height:480px;overflow-y:auto;">
+        <div style="padding:32px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>
+      </div>
+    </div>
 
-          <!-- Sens -->
-          <div class="form-group" id="sens-group">
-            <label class="form-label">Sens</label>
-            <div class="sens-toggle">
-              <button class="sens-btn credit active" id="btn-credit" onclick="setSens('credit')"><i class="ti ti-arrow-down-left"></i> Entrée (crédit)</button>
-              <button class="sens-btn debit"         id="btn-debit"  onclick="setSens('debit')"><i class="ti ti-arrow-up-right"></i> Sortie (débit)</button>
-            </div>
-          </div>
+    <!-- FORMULAIRE EN BAS -->
+    <div class="form-section">
+      <div class="form-title">
+        <span><i class="ti ti-plus"></i> <span id="form-mode-lbl">Nouvelle opération</span></span>
+        <button class="btn btn-secondary btn-sm" id="btn-cancel" onclick="cancelEdit()" style="display:none;"><i class="ti ti-x"></i> Annuler</button>
+      </div>
+      <div id="edit-banner" class="edit-banner" style="display:none;">
+        <span><i class="ti ti-pencil"></i> Mode modification — <strong id="edit-lbl"></strong></span>
+      </div>
 
-          <!-- Champs communs -->
-          <div class="form-row-2">
-            <div class="form-group">
-              <label class="form-label req">Date</label>
-              <input type="date" id="f-date">
-            </div>
-            <div class="form-group">
-              <label class="form-label req">Montant (€)</label>
-              <input type="number" id="f-montant" step="0.01" min="0" placeholder="0,00">
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label req">Libellé</label>
-            <input type="text" id="f-libelle" placeholder="Nom du tiers, description…">
-          </div>
-
-          <div class="form-row-2">
-            <div class="form-group">
-              <label class="form-label req">Type de mouvement</label>
-              <select id="f-type"></select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Description</label>
-              <input type="text" id="f-description" placeholder="Précisions…">
-            </div>
-          </div>
-
-          <!-- Section CHÈQUE ÉMIS -->
-          <div class="cheque-section hidden" id="cheque-section">
-            <div class="section-label"><i class="ti ti-writing" style="color:var(--blue)"></i> Chèque émis</div>
-            <div class="form-row-2">
-              <div class="form-group">
-                <label class="form-label req">N° de chèque</label>
-                <input type="text" id="f-num-cheque" placeholder="Ex: 1234567">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Statut</label>
-                <div class="statut-toggle">
-                  <button class="statut-btn active" id="st-emis"     onclick="setStatut('Émis')">Émis</button>
-                  <button class="statut-btn encaisse" id="st-encaisse" onclick="setStatut('Encaissé')">Encaissé</button>
-                  <button class="statut-btn annule"   id="st-annule"  onclick="setStatut('Annulé')">Annulé</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Section REMISE CHÈQUES -->
-          <div class="remise-section hidden" id="remise-section">
-            <div class="section-label"><i class="ti ti-stack" style="color:var(--purple)"></i> Remise de chèques</div>
-            <div class="form-row-2">
-              <div class="form-group">
-                <label class="form-label req">N° bordereau</label>
-                <input type="text" id="f-num-bordereau" placeholder="Ex: BRD-2026-001">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Nb de chèques</label>
-                <input type="number" id="f-nb-cheques" min="1" placeholder="Ex: 3">
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Détail (noms des donateurs)</label>
-              <textarea id="f-detail-remise" rows="2" placeholder="DUPONT 50€, MARTIN 30€…"></textarea>
-            </div>
-          </div>
-
-          <!-- Facture PDF -->
-          <div class="form-group" id="facture-group">
-            <label class="form-label">Facture / Justificatif PDF (Drive)</label>
-            <div class="drive-picker">
-              <input type="text" id="f-facture-id" placeholder="ID ou lien Google Drive">
-              <button class="btn-drive" onclick="openDrivePicker()"><i class="ti ti-brand-google-drive"></i> Choisir</button>
-            </div>
-            <div id="facture-preview" style="margin-top:4px;font-size:10px;color:var(--text-3);"></div>
-          </div>
-
-          <!-- Période -->
-          <div class="form-group">
-            <label class="form-label">Période</label>
-            <select id="f-periode"></select>
-          </div>
-
-          <div id="form-error" class="hidden" style="color:var(--red);font-size:11px;padding:6px 0;"></div>
-
-          <div class="btn-form-actions">
-            <button class="btn btn-primary" style="flex:1" id="btn-submit" onclick="submitForm()">
-              <i class="ti ti-device-floppy"></i> Enregistrer
-            </button>
-            <button class="btn btn-secondary" onclick="resetForm()">
-              <i class="ti ti-refresh"></i> Vider
-            </button>
-          </div>
+      <!-- Type d'opération -->
+      <div style="margin-bottom:12px;">
+        <div class="form-label" style="margin-bottom:6px;">Type d'opération</div>
+        <div class="op-tabs">
+          <button class="op-tab active" id="optab-normal"  onclick="setOpType('normal')">Opération</button>
+          <button class="op-tab"        id="optab-cheque"  onclick="setOpType('cheque')"><i class="ti ti-writing"></i> Encaisser un chèque</button>
+          <button class="op-tab"        id="optab-remise"  onclick="setOpType('remise')"><i class="ti ti-stack"></i> Encaisser une remise</button>
         </div>
       </div>
 
-      <!-- LISTE -->
-      <div>
-        <!-- Solde banque -->
-        <div class="solde-banner" style="border-radius:var(--radius) var(--radius) 0 0;margin-bottom:0;">
-          <div>
-            <div class="solde-label">Solde banque — période <span id="solde-periode"></span></div>
-            <div class="solde-value" id="solde-value">—</div>
-            <div class="solde-sub" id="solde-sub">Dernière opération : —</div>
+      <!-- Champ sélection chèque en attente -->
+      <div class="special-section hidden" id="cheque-select-section">
+        <div class="special-label"><i class="ti ti-writing" style="color:var(--blue)"></i> Chèque à encaisser</div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label req">Sélectionner le chèque</label>
+            <select id="f-cheque-select" onchange="prefillFromCheque()">
+              <option value="">— Choisir un chèque en attente —</option>
+            </select>
           </div>
-          <div style="text-align:right;">
-            <div class="solde-label">Chèques en attente</div>
-            <div style="font-size:18px;font-weight:600;" id="cheques-attente">0</div>
-          </div>
-        </div>
-
-        <div class="list-card" style="border-radius:0 0 var(--radius) var(--radius);border-top:none;">
-          <div class="list-head">
-            <div class="list-title">Opérations bancaires</div>
-            <div class="list-filters">
-              <input class="f-input" type="text" id="fl-search" placeholder="Rechercher…" oninput="renderTable()">
-              <select class="f-select" id="fl-type" onchange="renderTable()">
-                <option value="">Tous types</option>
-              </select>
-              <select class="f-select" id="fl-sens" onchange="renderTable()">
-                <option value="">Débits + Crédits</option>
-                <option value="credit">Crédits seuls</option>
-                <option value="debit">Débits seuls</option>
-              </select>
-              <select class="f-select" id="fl-flag" onchange="renderTable()">
-                <option value="">Toutes lignes</option>
-                <option value="flagged">À vérifier</option>
-              </select>
-            </div>
-          </div>
-          <div id="table-wrap">
-            <div style="padding:32px;text-align:center;color:var(--text-3)"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>
-          </div>
+          <div id="cheque-preview" style="font-size:11px;color:var(--text-2);padding:6px;background:var(--blue-bg);border-radius:var(--radius-sm);display:none;align-self:end;"></div>
         </div>
       </div>
-    </div>
-  </div>
-</div>
 
-<!-- MODAL MODIFIER -->
-<div class="modal-overlay hidden" id="modal-edit">
-  <div class="modal modal-lg">
-    <div class="modal-header">
-      <span class="modal-title"><i class="ti ti-pencil" style="color:var(--blue)"></i> Modifier l'opération</span>
-      <button class="modal-close" onclick="closeEdit()">×</button>
-    </div>
-    <div class="modal-body" id="edit-body"></div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary btn-sm" onclick="closeEdit()">Annuler</button>
-      <button class="btn btn-primary btn-sm"   onclick="saveEdit()"><i class="ti ti-device-floppy"></i> Enregistrer</button>
-    </div>
-  </div>
-</div>
+      <!-- Champ sélection remise en attente -->
+      <div class="special-section hidden" id="remise-select-section">
+        <div class="special-label"><i class="ti ti-stack" style="color:var(--purple)"></i> Remise à encaisser</div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label req">Sélectionner la remise</label>
+            <select id="f-remise-select" onchange="prefillFromRemise()">
+              <option value="">— Choisir une remise en attente —</option>
+            </select>
+          </div>
+          <div id="remise-preview" style="font-size:11px;color:var(--text-2);padding:6px;background:var(--purple-bg);border-radius:var(--radius-sm);display:none;align-self:end;"></div>
+        </div>
+      </div>
 
-<!-- MODAL SUPPRIMER -->
-<div class="modal-overlay hidden" id="modal-delete">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title"><i class="ti ti-trash" style="color:var(--red)"></i> Supprimer l'opération</span>
-      <button class="modal-close" onclick="closeDelete()">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="confirm-text">Êtes-vous sûr de vouloir supprimer cette opération ?</div>
-      <div class="confirm-detail" id="delete-detail"></div>
-      <div style="margin-top:12px;font-size:11px;color:var(--text-3);">Cette action sera enregistrée dans le journal des modifications.</div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary btn-sm" onclick="closeDelete()">Annuler</button>
-      <button class="btn btn-danger btn-sm"    onclick="confirmDelete()"><i class="ti ti-trash"></i> Supprimer</button>
+      <!-- Sens (masqué pour chèque/remise) -->
+      <div class="form-row-3" style="margin-bottom:10px;" id="sens-row">
+        <div class="form-group">
+          <label class="form-label">Sens</label>
+          <div class="sens-toggle">
+            <button class="sens-btn credit active" id="btn-credit" onclick="setSens('credit')"><i class="ti ti-arrow-down-left"></i> Entrée</button>
+            <button class="sens-btn debit"         id="btn-debit"  onclick="setSens('debit')"><i class="ti ti-arrow-up-right"></i> Sortie</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label req">Date</label>
+          <input type="date" id="f-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Période</label>
+          <select id="f-per"></select>
+        </div>
+      </div>
+
+      <div class="form-row-5" style="margin-bottom:10px;">
+        <div class="form-group">
+          <label class="form-label req">Montant (€)</label>
+          <input type="number" id="f-montant" step="0.01" min="0" placeholder="0,00">
+        </div>
+        <div class="form-group">
+          <label class="form-label req">Libellé</label>
+          <input type="text" id="f-libelle" placeholder="Nom du tiers…">
+        </div>
+        <div class="form-group">
+          <label class="form-label req">Type mouvement</label>
+          <select id="f-type"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Type complémentaire</label>
+          <select id="f-type-comp"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <input type="text" id="f-desc" placeholder="Précisions…">
+        </div>
+      </div>
+
+      <div class="form-row-3" style="margin-bottom:10px;">
+        <div class="form-group">
+          <label class="form-label">Facture PDF (Drive)</label>
+          <div class="drive-picker">
+            <input type="text" id="f-facture" placeholder="ID Drive">
+            <button class="btn-drive" onclick="openDrivePicker()"><i class="ti ti-brand-google-drive"></i></button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Solde après opération (€)</label>
+          <input type="number" id="f-solde" step="0.01" placeholder="Optionnel">
+        </div>
+      </div>
+
+      <div id="form-err" class="hidden" style="color:var(--red);font-size:11px;padding:6px 0;"></div>
+      <div class="form-actions">
+        <button class="btn btn-primary" style="min-width:180px;" id="btn-submit" onclick="submitForm()"><i class="ti ti-device-floppy"></i> Enregistrer</button>
+        <button class="btn btn-secondary" onclick="resetForm()"><i class="ti ti-refresh"></i> Vider</button>
+      </div>
     </div>
   </div>
 </div>
@@ -311,27 +252,22 @@
 <!-- MODAL FLAG -->
 <div class="modal-overlay hidden" id="modal-flag">
   <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title"><i class="ti ti-flag" style="color:var(--orange)"></i> Annoter la ligne</span>
-      <button class="modal-close" onclick="closeFlag()">×</button>
-    </div>
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-flag" style="color:var(--orange)"></i> Annoter la ligne</span><button class="modal-close" onclick="closeFlag()">×</button></div>
     <div class="modal-body">
       <div style="font-size:12px;color:var(--text-2);margin-bottom:12px;" id="flag-info"></div>
-      <div class="form-group">
-        <label class="form-label">Commentaire / info à vérifier</label>
-        <textarea id="flag-comment" rows="3" placeholder="Ex: Attendre justificatif, vérifier n° chèque…"></textarea>
-      </div>
-      <div style="margin-top:10px;">
-        <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;">
-          <input type="checkbox" id="flag-resolved" style="width:15px;height:15px;accent-color:var(--orange);">
-          Marquer comme résolu (retirer le flag)
-        </label>
-      </div>
+      <div class="form-group"><label class="form-label">Commentaire</label><textarea id="flag-comment" rows="3" placeholder="Info à vérifier…"></textarea></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;margin-top:10px;"><input type="checkbox" id="flag-resolved" style="width:15px;height:15px;accent-color:var(--orange);"> Marquer comme résolu</label>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary btn-sm" onclick="closeFlag()">Annuler</button>
-      <button class="btn btn-primary btn-sm"   onclick="saveFlag()">Enregistrer</button>
-    </div>
+    <div class="modal-footer"><button class="btn btn-secondary btn-sm" onclick="closeFlag()">Annuler</button><button class="btn btn-primary btn-sm" onclick="saveFlag()">Enregistrer</button></div>
+  </div>
+</div>
+
+<!-- MODAL SUPPRIMER -->
+<div class="modal-overlay hidden" id="modal-del">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-trash" style="color:var(--red)"></i> Supprimer</span><button class="modal-close" onclick="closeDel()">×</button></div>
+    <div class="modal-body"><div style="font-size:12px;">Êtes-vous sûr de vouloir supprimer cette opération ?</div><div class="confirm-detail" id="del-detail"></div></div>
+    <div class="modal-footer"><button class="btn btn-secondary btn-sm" onclick="closeDel()">Annuler</button><button class="btn btn-danger btn-sm" onclick="confirmDel()"><i class="ti ti-trash"></i> Supprimer</button></div>
   </div>
 </div>
 
@@ -339,440 +275,309 @@
 <script src="sheets.js"></script>
 <script src="sidebar.js"></script>
 <script>
-// ============================================================
-//  ÉTAT
-// ============================================================
-let allRows    = [];
-let activeSens = 'credit';
-let activeOpType = 'normal';
-let activeStatut = 'Émis';
-let editTarget   = null;
-let deleteTarget = null;
-let flagTarget   = null;
-let isEditMode   = false;
+let allRows=[],allCheques=[],allRemises=[];
+let activeSens='credit',activeOpType='normal';
+let editIdx=null,flagTarget=null,delIdx=null;
+let sortCol=-1,sortAsc=true;
 
-// ============================================================
-//  INIT
-// ============================================================
-Auth.requireAuth(async () => {
+Auth.requireAuth(async()=>{
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
   Sidebar.build('banque');
-
-  // Remplir périodes
-  const periodes  = Sheets.getPeriodes();
-  const activePer = Sidebar.getActivePeriode();
-  const selPer    = document.getElementById('f-periode');
-  periodes.forEach(p => {
-    const opt = document.createElement('option');
-    opt.value = p; opt.textContent = p;
-    if (p === activePer) opt.selected = true;
-    selPer.appendChild(opt);
-  });
-
-  // Remplir types de mouvement
-  populateTypeSelect();
-
-  document.getElementById('topbar-periode').textContent = activePer;
-  document.getElementById('f-date').value = Sheets.todayISO();
-
+  const pers=Sheets.getPeriodes(),ap=Sidebar.getActivePeriode();
+  document.getElementById('topbar-per').textContent=ap;
+  document.getElementById('solde-per').textContent=ap;
+  const sp=document.getElementById('f-per');
+  pers.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;if(p===ap)o.selected=true;sp.appendChild(o);});
+  document.getElementById('f-date').value=Sheets.todayISO();
+  populateSelects();
   await loadData();
 });
 
-function populateTypeSelect() {
-  const types  = Sheets.getTypesMouvement();
-  const selType = document.getElementById('f-type');
-  const flType  = document.getElementById('fl-type');
-  selType.innerHTML = '<option value="">— Choisir —</option>';
-  flType.innerHTML  = '<option value="">Tous types</option>';
-  types.forEach(t => {
-    selType.innerHTML += `<option>${t}</option>`;
-    flType.innerHTML  += `<option>${t}</option>`;
-  });
+function populateSelects(){
+  const types=Sheets.getTypesMouvement(),typesC=Sheets.getTypesComplementaires();
+  const ft=document.getElementById('f-type'),fc=document.getElementById('f-type-comp');
+  const flt=document.getElementById('fl-type'),flc=document.getElementById('fl-type-comp');
+  ft.innerHTML='<option value="">— Choisir —</option>';fc.innerHTML='<option value="">—</option>';
+  flt.innerHTML='<option value="">Tous types</option>';flc.innerHTML='<option value="">Types comp.</option>';
+  types.forEach(t=>{ft.innerHTML+=`<option>${t}</option>`;flt.innerHTML+=`<option>${t}</option>`;});
+  typesC.forEach(t=>{fc.innerHTML+=`<option>${t}</option>`;flc.innerHTML+=`<option>${t}</option>`;});
 }
 
-async function loadData() {
-  allRows = await Sheets.getBanqueOperations();
+async function loadData(){
+  [allRows,allCheques,allRemises]=await Promise.all([
+    Sheets.getBanqueOperations(),
+    Sheets.getCheques('en_attente'),
+    Sheets.getRemises('en_attente'),
+  ]);
   Sidebar.setLastUpdate();
-  updateSoldeBanner();
-  renderTable();
+  updateSoldeBanner();renderKPIs();renderTable();
+  populateChequeSelect();populateRemiseSelect();
+}
+function onPeriodeChange(p){document.getElementById('f-per').value=p;document.getElementById('topbar-per').textContent=p;document.getElementById('solde-per').textContent=p;updateSoldeBanner();renderKPIs();renderTable();}
+
+function updateSoldeBanner(){
+  const cb=Sheets.cols.banque,per=Sidebar.getActivePeriode();
+  const rows=allRows.filter(r=>r[cb.periode]===per);
+  if(rows.length){const last=rows[rows.length-1];document.getElementById('solde-val').textContent=last[cb.solde]?fmt(last[cb.solde]):'—';document.getElementById('solde-sub').textContent=`Dernière op. : ${last[cb.date]||'—'}`;}
+  document.getElementById('cheques-att').textContent=allCheques.length;
+  document.getElementById('remises-att').textContent=allRemises.length;
 }
 
-function onPeriodeChange(p) {
-  document.getElementById('f-periode').value = p;
-  document.getElementById('topbar-periode').textContent = p;
-  updateSoldeBanner();
-  renderTable();
+function renderKPIs(){
+  const cb=Sheets.cols.banque,per=Sidebar.getActivePeriode();
+  const rows=allRows.filter(r=>r[cb.periode]===per);
+  const inn=rows.reduce((s,r)=>s+(parseFloat(r[cb.credit])||0),0);
+  const out=rows.reduce((s,r)=>s+(parseFloat(r[cb.debit])||0),0);
+  const adopts=rows.filter(r=>(r[cb.type_mvt]||'').toLowerCase().includes('adopt')).length;
+  const dons=rows.filter(r=>(r[cb.type_mvt]||'').toLowerCase().includes('don')).length;
+  document.getElementById('kpi-bar').innerHTML=`
+    <div class="kpi"><div class="kpi-label">Entrées période</div><div class="kpi-value" style="color:var(--green)">${fmt(inn)}</div><div class="kpi-sub">${rows.filter(r=>parseFloat(r[cb.credit])>0).length} opérations</div></div>
+    <div class="kpi"><div class="kpi-label">Sorties période</div><div class="kpi-value" style="color:var(--red)">${fmt(out)}</div><div class="kpi-sub">${rows.filter(r=>parseFloat(r[cb.debit])>0).length} opérations</div></div>
+    <div class="kpi"><div class="kpi-label">Adoptions</div><div class="kpi-value" style="color:var(--orange)">${adopts}</div><div class="kpi-sub">Cette période</div></div>
+    <div class="kpi"><div class="kpi-label">Dons</div><div class="kpi-value" style="color:var(--orange)">${dons}</div><div class="kpi-sub">Cette période</div></div>`;
 }
 
-// ============================================================
-//  SOLDE BANNER
-// ============================================================
-function updateSoldeBanner() {
-  const cb  = Sheets.cols.banque;
-  const per = Sidebar.getActivePeriode();
-  const rows = allRows.filter(r => r[cb.periode] === per);
-  document.getElementById('solde-periode').textContent = per;
-
-  if (rows.length) {
-    const last = rows[rows.length - 1];
-    const solde = parseFloat(last[cb.solde]) || 0;
-    document.getElementById('solde-value').textContent = fmt(solde);
-    document.getElementById('solde-sub').textContent   = `Dernière opération : ${last[cb.date] || '—'}`;
-  } else {
-    document.getElementById('solde-value').textContent = '—';
-  }
-
-  // Chèques en attente (émis non encaissés)
-  const enAttente = rows.filter(r => r[cb.statut_cheque] === 'Émis').length;
-  document.getElementById('cheques-attente').textContent = enAttente;
+function populateChequeSelect(){
+  const cc=Sheets.cols.cheque;
+  const s=document.getElementById('f-cheque-select');
+  s.innerHTML='<option value="">— Choisir un chèque en attente —</option>';
+  allCheques.forEach((r,i)=>{s.innerHTML+=`<option value="${i}">N°${r[cc.num_cheque]||'?'} — ${r[cc.beneficiaire]||'?'} — ${fmt(r[cc.montant])}</option>`;});
 }
 
-// ============================================================
-//  TYPE D'OPÉRATION
-// ============================================================
-function setOpType(type) {
-  activeOpType = type;
-  ['normal','cheque','remise'].forEach(t => {
-    document.getElementById('optab-' + t).classList.toggle('active', t === type);
-  });
-  document.getElementById('cheque-section').classList.toggle('hidden', type !== 'cheque');
-  document.getElementById('remise-section').classList.toggle('hidden', type !== 'remise');
-
-  // Chèque émis = toujours débit
-  if (type === 'cheque') { setSens('debit'); document.getElementById('sens-group').style.opacity = '0.5'; document.getElementById('sens-group').style.pointerEvents = 'none'; }
-  // Remise = toujours crédit
-  else if (type === 'remise') { setSens('credit'); document.getElementById('sens-group').style.opacity = '0.5'; document.getElementById('sens-group').style.pointerEvents = 'none'; }
-  else { document.getElementById('sens-group').style.opacity = '1'; document.getElementById('sens-group').style.pointerEvents = 'auto'; }
+function populateRemiseSelect(){
+  const cr=Sheets.cols.remise;
+  const s=document.getElementById('f-remise-select');
+  s.innerHTML='<option value="">— Choisir une remise en attente —</option>';
+  allRemises.forEach((r,i)=>{s.innerHTML+=`<option value="${i}">${r[cr.num_bordereau]||'BRD?'} — ${r[cr.nb_cheques]||0} chèque(s) — ${fmt(r[cr.montant_total])}</option>`;});
 }
 
-function setSens(sens) {
-  activeSens = sens;
-  document.getElementById('btn-credit').classList.toggle('active', sens === 'credit');
-  document.getElementById('btn-debit').classList.toggle('active',  sens === 'debit');
+function prefillFromCheque(){
+  const idx=parseInt(document.getElementById('f-cheque-select').value);
+  if(isNaN(idx)||idx<0)return;
+  const cc=Sheets.cols.cheque,r=allCheques[idx];
+  document.getElementById('f-montant').value=r[cc.montant]||'';
+  document.getElementById('f-libelle').value=`Chèque N°${r[cc.num_cheque]||''} — ${r[cc.beneficiaire]||''}`;
+  document.getElementById('f-type').value=r[cc.type_mvt]||'';
+  document.getElementById('f-type-comp').value=r[cc.type_comp]||'';
+  document.getElementById('f-desc').value=r[cc.description]||'';
+  setSens('debit');
+  const prev=document.getElementById('cheque-preview');
+  prev.style.display='block';
+  prev.innerHTML=`<strong>Émis le</strong> ${r[cc.date_emission]||'—'}<br><strong>Type</strong> ${r[cc.type_mvt]||'—'}`;
 }
 
-function setStatut(statut) {
-  activeStatut = statut;
-  document.getElementById('st-emis').classList.toggle('active',     statut === 'Émis');
-  document.getElementById('st-encaisse').classList.toggle('active', statut === 'Encaissé');
-  document.getElementById('st-annule').classList.toggle('active',   statut === 'Annulé');
+function prefillFromRemise(){
+  const idx=parseInt(document.getElementById('f-remise-select').value);
+  if(isNaN(idx)||idx<0)return;
+  const cr=Sheets.cols.remise,r=allRemises[idx];
+  document.getElementById('f-montant').value=r[cr.montant_total]||'';
+  document.getElementById('f-libelle').value=`Remise chèques BRD ${r[cr.num_bordereau]||''}`;
+  document.getElementById('f-type').value='Remise chèques';
+  setSens('credit');
+  const prev=document.getElementById('remise-preview');
+  prev.style.display='block';
+  prev.innerHTML=`<strong>${r[cr.nb_cheques]||0} chèque(s)</strong> — Total ${fmt(r[cr.montant_total])}<br>Bordereau : ${r[cr.num_bordereau]||'—'}`;
 }
 
-// ============================================================
-//  FORMULAIRE
-// ============================================================
-function resetForm(keepMode = false) {
-  ['f-date','f-montant','f-libelle','f-description','f-num-cheque','f-num-bordereau','f-nb-cheques','f-facture-id'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = id === 'f-date' ? Sheets.todayISO() : '';
-  });
-  const textarea = document.getElementById('f-detail-remise');
-  if (textarea) textarea.value = '';
-  document.getElementById('f-type').selectedIndex = 0;
-  document.getElementById('facture-preview').textContent = '';
-  document.getElementById('form-error').classList.add('hidden');
-  if (!keepMode) { setOpType('normal'); setSens('credit'); setStatut('Émis'); }
-  isEditMode = false;
-  editTarget = null;
-  document.getElementById('form-mode-label').textContent = 'Nouvelle opération';
-  document.getElementById('btn-submit').innerHTML = '<i class="ti ti-device-floppy"></i> Enregistrer';
+function setOpType(type){
+  activeOpType=type;
+  ['normal','cheque','remise'].forEach(t=>document.getElementById('optab-'+t).classList.toggle('active',t===type));
+  document.getElementById('cheque-select-section').classList.toggle('hidden',type!=='cheque');
+  document.getElementById('remise-select-section').classList.toggle('hidden',type!=='remise');
+  if(type==='cheque'){setSens('debit');document.getElementById('sens-row').style.opacity='0.6';document.getElementById('btn-credit').disabled=true;document.getElementById('btn-debit').disabled=true;}
+  else if(type==='remise'){setSens('credit');document.getElementById('sens-row').style.opacity='0.6';document.getElementById('btn-credit').disabled=true;document.getElementById('btn-debit').disabled=true;}
+  else{document.getElementById('sens-row').style.opacity='1';document.getElementById('btn-credit').disabled=false;document.getElementById('btn-debit').disabled=false;}
 }
 
-async function submitForm() {
-  const err = document.getElementById('form-error');
-  err.classList.add('hidden');
+function setSens(s){activeSens=s;document.getElementById('btn-credit').classList.toggle('active',s==='credit');document.getElementById('btn-debit').classList.toggle('active',s==='debit');}
 
-  const date    = document.getElementById('f-date').value;
-  const montant = parseFloat(document.getElementById('f-montant').value);
-  const libelle = document.getElementById('f-libelle').value.trim();
-  const type_mvt= document.getElementById('f-type').value;
-  const periode = document.getElementById('f-periode').value;
+// ---- TABLE ----
+function renderTable(){
+  const cb=Sheets.cols.banque,per=Sidebar.getActivePeriode();
+  const search=(document.getElementById('fl-search')?.value||'').toLowerCase();
+  const typeF=document.getElementById('fl-type')?.value||'';
+  const typeCompF=document.getElementById('fl-type-comp')?.value||'';
+  const sensF=document.getElementById('fl-sens')?.value||'';
+  const dateFrom=document.getElementById('fl-date-from')?.value||'';
+  const dateTo=document.getElementById('fl-date-to')?.value||'';
+  const flagF=document.getElementById('fl-flag')?.value||'';
 
-  if (!date)              { showErr('La date est obligatoire.'); return; }
-  if (!montant || montant <= 0) { showErr('Le montant doit être supérieur à 0.'); return; }
-  if (!libelle)           { showErr('Le libellé est obligatoire.'); return; }
-  if (!type_mvt)          { showErr('Le type de mouvement est obligatoire.'); return; }
-  if (activeOpType === 'cheque' && !document.getElementById('f-num-cheque').value.trim()) {
-    showErr('Le numéro de chèque est obligatoire.'); return;
-  }
-  if (activeOpType === 'remise' && !document.getElementById('f-num-bordereau').value.trim()) {
-    showErr('Le numéro de bordereau est obligatoire.'); return;
-  }
+  let rows=allRows.filter(r=>r[cb.periode]===per);
+  if(typeF)rows=rows.filter(r=>r[cb.type_mvt]===typeF);
+  if(typeCompF)rows=rows.filter(r=>r[cb.type_comp]===typeCompF);
+  if(sensF==='credit')rows=rows.filter(r=>parseFloat(r[cb.credit])>0);
+  if(sensF==='debit')rows=rows.filter(r=>parseFloat(r[cb.debit])>0);
+  if(dateFrom)rows=rows.filter(r=>dateToISO(r[cb.date])>=dateFrom);
+  if(dateTo)rows=rows.filter(r=>dateToISO(r[cb.date])<=dateTo);
+  if(flagF==='flagged')rows=rows.filter(r=>r[cb.flag_check]==='TRUE');
+  if(search)rows=rows.filter(r=>[r[cb.libelle],r[cb.type_mvt],r[cb.type_comp],r[cb.description]].join(' ').toLowerCase().includes(search));
 
-  const op = {
-    date:          Sheets.normalizeDate(date),
-    libelle,
-    debit:         activeSens === 'debit'  ? montant : '',
-    credit:        activeSens === 'credit' ? montant : '',
-    periode,
-    type_mvt,
-    description:   document.getElementById('f-description').value.trim(),
-    nom:           libelle,
-    num_cheque:    document.getElementById('f-num-cheque').value.trim(),
-    statut_cheque: activeOpType === 'cheque' ? activeStatut : '',
-    num_remise:    document.getElementById('f-num-bordereau').value.trim(),
-    num_facture:   '',
-    lien_facture:  document.getElementById('f-facture-id').value.trim(),
-  };
+  if(sortCol>=0){
+    rows=[...rows].sort((a,b)=>{
+      const va=String(a[sortCol]||''),vb=String(b[sortCol]||'');
+      const na=parseFloat(va),nb=parseFloat(vb);
+      const cmp=!isNaN(na)&&!isNaN(nb)?na-nb:va.localeCompare(vb,'fr');
+      return sortAsc?cmp:-cmp;
+    });
+  } else rows=[...rows].reverse();
 
-  const btn = document.getElementById('btn-submit');
-  btn.disabled = true;
-  btn.innerHTML = '<i class="ti ti-loader-2 spinner"></i> Enregistrement…';
+  if(!rows.length){document.getElementById('table-wrap').innerHTML='<div style="padding:32px;text-align:center;color:var(--text-3);font-size:12px;">Aucune opération pour les filtres sélectionnés</div>';return;}
 
-  try {
-    if (isEditMode && editTarget !== null) {
-      await updateBanqueRow(editTarget, op);
-      showToast('Opération modifiée !');
-    } else {
-      await Sheets.saveBanqueOperation(op);
-      showToast('Opération enregistrée !');
-    }
-    resetForm();
-    await loadData();
-  } catch(e) {
-    showErr('Erreur : ' + (e.message || 'Impossible d\'enregistrer'));
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<i class="ti ti-device-floppy"></i> Enregistrer';
-  }
-}
+  const sortIcon=col=>`<span class="sort-icon">${sortCol===col?(sortAsc?'↑':'↓'):'↕'}</span>`;
+  const mkTh=(label,col,cls='')=>`<th class="${sortCol===col?'sorted':''} ${cls}" onclick="setSort(${col})">${label}${sortIcon(col)}</th>`;
 
-// ============================================================
-//  TABLEAU
-// ============================================================
-function renderTable() {
-  const cb      = Sheets.cols.banque;
-  const per     = Sidebar.getActivePeriode();
-  const search  = (document.getElementById('fl-search')?.value || '').toLowerCase();
-  const typeF   = document.getElementById('fl-type')?.value  || '';
-  const sensF   = document.getElementById('fl-sens')?.value  || '';
-  const flagF   = document.getElementById('fl-flag')?.value  || '';
-
-  let rows = allRows.filter(r => r[cb.periode] === per);
-  if (typeF)              rows = rows.filter(r => r[cb.type_mvt] === typeF);
-  if (sensF === 'credit') rows = rows.filter(r => r[cb.credit] && parseFloat(r[cb.credit]) > 0);
-  if (sensF === 'debit')  rows = rows.filter(r => r[cb.debit]  && parseFloat(r[cb.debit])  > 0);
-  if (flagF === 'flagged') rows = rows.filter(r => r[cb.flag_check] === 'TRUE');
-  if (search) rows = rows.filter(r => [r[cb.libelle], r[cb.description], r[cb.num_cheque], r[cb.num_remise]].join(' ').toLowerCase().includes(search));
-
-  const reversed = [...rows].reverse();
-
-  if (!reversed.length) {
-    document.getElementById('table-wrap').innerHTML = `<div style="padding:32px;text-align:center;color:var(--text-3);font-size:12px;">Aucune opération pour cette période</div>`;
-    return;
-  }
-
-  const trs = reversed.map((r, i) => {
-    const realIdx  = allRows.indexOf(r);
-    const flagged  = r[cb.flag_check] === 'TRUE';
-    const comment  = r[cb.flag_comment] || '';
-    const pdfBtn   = r[cb.lien_facture]
-      ? `<button class="pdf-btn" onclick="Sheets.openFacture('${escH(r[cb.lien_facture])}')" title="Voir le justificatif"><i class="ti ti-file-type-pdf"></i></button>` : '';
-    const chequeBadge = r[cb.num_cheque]
-      ? `<span class="cheque-badge">N°${r[cb.num_cheque]}${r[cb.statut_cheque] ? ' — '+r[cb.statut_cheque] : ''}</span>` : '';
-    const remiseBadge = r[cb.num_remise]
-      ? `<span class="remise-badge">BRD ${r[cb.num_remise]}</span>` : '';
-
-    return `<tr>
+  const trs=rows.map(r=>{
+    const ri=allRows.indexOf(r);
+    const flagged=r[cb.flag_check]==='TRUE',comment=r[cb.flag_comment]||'';
+    const pdf=r[cb.lien_facture]?`<button class="pdf-btn" onclick="Sheets.openFacture('${escH(r[cb.lien_facture])}')" title="Voir"><i class="ti ti-file-type-pdf"></i></button>`:'';
+    const chqBadge=r[cb.ref_cheque]?`<span class="cheque-badge">CHQ</span>`:'';
+    const remBadge=r[cb.ref_remise]?`<span class="remise-badge">BRD</span>`:'';
+    return `<tr class="${editIdx===ri?'editing':''}">
       <td style="color:var(--text-3);white-space:nowrap;">${r[cb.date]||''}</td>
-      <td>
-        <div style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;">${r[cb.libelle]||''}</div>
-        <div style="display:flex;gap:4px;margin-top:2px;">${chequeBadge}${remiseBadge}</div>
+      <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escH(r[cb.libelle]||'')}">
+        <div>${r[cb.libelle]||''}</div>
+        <div style="display:flex;gap:3px;margin-top:2px;">${chqBadge}${remBadge}</div>
       </td>
       <td><span class="chip chip-${chipType(r[cb.type_mvt])}">${r[cb.type_mvt]||''}</span></td>
+      <td style="font-size:10px;color:var(--text-3);">${r[cb.type_comp]||''}</td>
       <td style="color:var(--text-3);font-size:10px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r[cb.description]||''}</td>
-      <td class="r amount-d">${r[cb.debit]  ? fmt(r[cb.debit])  : ''}</td>
-      <td class="r amount-c">${r[cb.credit] ? fmt(r[cb.credit]) : ''}</td>
-      <td class="r" style="color:var(--text-3);font-variant-numeric:tabular-nums;">${r[cb.solde] ? fmt(r[cb.solde]) : ''}</td>
-      <td class="r">${pdfBtn}</td>
+      <td class="r amount-d">${r[cb.debit]?fmt(r[cb.debit]):''}</td>
+      <td class="r amount-c">${r[cb.credit]?fmt(r[cb.credit]):''}</td>
+      <td class="r" style="color:var(--text-3);">${r[cb.solde]?fmt(r[cb.solde]):''}</td>
+      <td class="r">${pdf}</td>
       <td class="r" style="white-space:nowrap;">
-        <button class="edit-btn" onclick="openEdit(${realIdx})" title="Modifier"><i class="ti ti-pencil"></i></button>
-        <button class="del-btn"  onclick="openDelete(${realIdx})" title="Supprimer"><i class="ti ti-trash"></i></button>
-        <button class="flag-btn ${flagged?'on':''}" onclick="openFlag(${realIdx},'${escH(r[cb.libelle])}','${escH(comment)}',${flagged})" title="Annoter"><i class="ti ti-flag${flagged?'-filled':''}"></i></button>
+        <button class="edit-btn" onclick="openEdit(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>
+        <button class="del-btn"  onclick="openDel(${ri})"  title="Supprimer"><i class="ti ti-trash"></i></button>
+        <button class="flag-btn ${flagged?'on':''}" onclick="openFlag(${ri},'${escH(r[cb.libelle]||'')}','${escH(comment)}',${flagged})"><i class="ti ti-flag${flagged?'-filled':''}"></i></button>
       </td>
-      <td class="flag-comment-cell" onclick="openFlag(${realIdx},'${escH(r[cb.libelle])}','${escH(comment)}',${flagged})">${comment}</td>
+      <td class="flag-comment-cell" onclick="openFlag(${ri},'${escH(r[cb.libelle]||'')}','${escH(comment)}',${flagged})">${comment}</td>
     </tr>`;
   }).join('');
 
-  document.getElementById('table-wrap').innerHTML = `
+  document.getElementById('table-wrap').innerHTML=`
     <table>
       <thead><tr>
-        <th>Date</th><th>Libellé</th><th>Type</th><th>Description</th>
-        <th class="r">Débit</th><th class="r">Crédit</th><th class="r">Solde</th>
+        ${mkTh('Date',cb.date)}${mkTh('Libellé',cb.libelle)}${mkTh('Type',cb.type_mvt)}
+        ${mkTh('Type comp.',cb.type_comp)}${mkTh('Description',cb.description)}
+        ${mkTh('Débit',cb.debit,'r')}${mkTh('Crédit',cb.credit,'r')}${mkTh('Solde',cb.solde,'r')}
         <th class="r">PDF</th><th class="r">Actions</th><th>Commentaire</th>
       </tr></thead>
       <tbody>${trs}</tbody>
     </table>`;
 }
 
-// ============================================================
-//  MODIFIER
-// ============================================================
-function openEdit(rowIndex) {
-  const cb = Sheets.cols.banque;
-  const r  = allRows[rowIndex];
-  if (!r) return;
-  editTarget = rowIndex;
-  isEditMode = true;
+function setSort(col){if(sortCol===col)sortAsc=!sortAsc;else{sortCol=col;sortAsc=true;}renderTable();}
+function clearFilters(){['fl-search','fl-date-from','fl-date-to'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});['fl-type','fl-type-comp','fl-sens','fl-flag'].forEach(id=>{const e=document.getElementById(id);if(e)e.selectedIndex=0;});sortCol=-1;sortAsc=true;renderTable();}
 
-  // Pré-remplir le formulaire
-  document.getElementById('f-date').value        = r[cb.date]        || '';
-  document.getElementById('f-montant').value      = r[cb.credit] || r[cb.debit] || '';
-  document.getElementById('f-libelle').value      = r[cb.libelle]     || '';
-  document.getElementById('f-description').value  = r[cb.description] || '';
-  document.getElementById('f-type').value         = r[cb.type_mvt]    || '';
-  document.getElementById('f-num-cheque').value   = r[cb.num_cheque]  || '';
-  document.getElementById('f-num-bordereau').value= r[cb.num_remise]  || '';
-  document.getElementById('f-facture-id').value   = r[cb.lien_facture]|| '';
-
-  setSens(r[cb.credit] && parseFloat(r[cb.credit]) > 0 ? 'credit' : 'debit');
-  if (r[cb.num_cheque])  setOpType('cheque');
-  else if (r[cb.num_remise]) setOpType('remise');
-  else setOpType('normal');
-
-  if (r[cb.statut_cheque]) setStatut(r[cb.statut_cheque]);
-
-  document.getElementById('form-mode-label').textContent = 'Modifier l\'opération';
-  document.getElementById('btn-submit').innerHTML = '<i class="ti ti-device-floppy"></i> Enregistrer les modifications';
-
-  // Scroll vers le formulaire
-  document.querySelector('.form-card').scrollIntoView({ behavior:'smooth' });
+// ---- FORMULAIRE ----
+function resetForm(){
+  ['f-montant','f-libelle','f-desc','f-facture','f-solde'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('f-date').value=Sheets.todayISO();
+  document.getElementById('f-type').selectedIndex=0;document.getElementById('f-type-comp').selectedIndex=0;
+  document.getElementById('f-cheque-select').selectedIndex=0;document.getElementById('f-remise-select').selectedIndex=0;
+  document.getElementById('cheque-preview').style.display='none';document.getElementById('remise-preview').style.display='none';
+  document.getElementById('form-err').classList.add('hidden');
+  setOpType('normal');setSens('credit');cancelEdit();
 }
 
-async function updateBanqueRow(rowIndex, op) {
-  const cb       = Sheets.cols.banque;
-  const sheetRow = rowIndex + 2;
-  const values   = [
-    [op.date, op.libelle, op.debit||'', op.credit||'', '', op.periode,
-     op.type_mvt, op.description||'', op.nom||'', op.num_cheque||'',
-     op.statut_cheque||'', op.num_remise||'', op.num_facture||'', op.lien_facture||'']
-  ];
-  await Sheets.updateRange('Banque', sheetRow, 0, values);
-  await Sheets.logAction('MODIF', 'Banque', op.libelle, `Modifié le ${Sheets.todayFR()}`);
+function cancelEdit(){
+  editIdx=null;
+  document.getElementById('form-mode-lbl').textContent='Nouvelle opération';
+  document.getElementById('btn-submit').innerHTML='<i class="ti ti-device-floppy"></i> Enregistrer';
+  document.getElementById('btn-cancel').style.display='none';
+  document.getElementById('edit-banner').style.display='none';
+  renderTable();
 }
 
-function closeEdit() {
-  resetForm();
-  document.getElementById('modal-edit').classList.add('hidden');
+async function submitForm(){
+  const err=document.getElementById('form-err');err.classList.add('hidden');
+  const date=document.getElementById('f-date').value;
+  const montant=parseFloat(document.getElementById('f-montant').value);
+  const libelle=document.getElementById('f-libelle').value.trim();
+  const type_mvt=document.getElementById('f-type').value;
+  if(!date){showErr('La date est obligatoire.');return;}
+  if(!montant||montant<=0){showErr('Le montant doit être supérieur à 0.');return;}
+  if(!libelle){showErr('Le libellé est obligatoire.');return;}
+  if(!type_mvt){showErr('Le type de mouvement est obligatoire.');return;}
+  if(activeOpType==='cheque'&&document.getElementById('f-cheque-select').value===''){showErr('Sélectionnez un chèque à encaisser.');return;}
+  if(activeOpType==='remise'&&document.getElementById('f-remise-select').value===''){showErr('Sélectionnez une remise à encaisser.');return;}
+
+  const chqIdx=activeOpType==='cheque'?parseInt(document.getElementById('f-cheque-select').value):-1;
+  const remIdx=activeOpType==='remise'?parseInt(document.getElementById('f-remise-select').value):-1;
+
+  const op={
+    date,libelle,
+    debit:activeSens==='debit'?montant:'',credit:activeSens==='credit'?montant:'',
+    solde:document.getElementById('f-solde').value||'',
+    periode:document.getElementById('f-per').value,
+    type_mvt,type_comp:document.getElementById('f-type-comp').value,
+    description:document.getElementById('f-desc').value.trim(),
+    nom:libelle,
+    ref_cheque:chqIdx>=0?(allCheques[chqIdx][Sheets.cols.cheque.id]||''):'',
+    ref_remise:remIdx>=0?(allRemises[remIdx][Sheets.cols.remise.id]||''):'',
+    lien_facture:document.getElementById('f-facture').value.trim(),
+  };
+
+  const btn=document.getElementById('btn-submit');btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2 spinner"></i>';
+  try{
+    if(editIdx!==null){
+      const cb=Sheets.cols.banque,r=allRows[editIdx];
+      op.flag_check=r[cb.flag_check]||'FALSE';op.flag_comment=r[cb.flag_comment]||'';
+      await Sheets.updateBanqueOperation(editIdx,op);showToast('Opération modifiée !');
+    } else {
+      await Sheets.saveBanqueOperation(op);
+      // Encaisser le chèque/remise associé
+      if(chqIdx>=0) await Sheets.encaisserCheque(chqIdx,date,op.libelle);
+      if(remIdx>=0) await Sheets.encaisserRemise(remIdx,date,op.libelle);
+      showToast('Opération enregistrée !');
+    }
+    resetForm();await loadData();
+  }catch(e){showErr('Erreur : '+(e.message||'?'));}
+  finally{btn.disabled=false;btn.innerHTML='<i class="ti ti-device-floppy"></i> Enregistrer';}
 }
 
-// ============================================================
-//  SUPPRIMER
-// ============================================================
-function openDelete(rowIndex) {
-  const cb = Sheets.cols.banque;
-  const r  = allRows[rowIndex];
-  if (!r) return;
-  deleteTarget = rowIndex;
-  document.getElementById('delete-detail').innerHTML =
-    `<strong>${r[cb.date]||'—'}</strong> — ${r[cb.libelle]||'—'}<br>
-     ${r[cb.type_mvt]||''} — ${r[cb.credit] ? '+'+fmt(r[cb.credit]) : r[cb.debit] ? '−'+fmt(r[cb.debit]) : ''}`;
-  document.getElementById('modal-delete').classList.remove('hidden');
+// ---- MODIFIER ----
+function openEdit(ri){
+  const cb=Sheets.cols.banque,r=allRows[ri];editIdx=ri;
+  document.getElementById('f-date').value=r[cb.date]||'';
+  document.getElementById('f-montant').value=r[cb.credit]||r[cb.debit]||'';
+  document.getElementById('f-libelle').value=r[cb.libelle]||'';
+  document.getElementById('f-type').value=r[cb.type_mvt]||'';
+  document.getElementById('f-type-comp').value=r[cb.type_comp]||'';
+  document.getElementById('f-desc').value=r[cb.description]||'';
+  document.getElementById('f-facture').value=r[cb.lien_facture]||'';
+  document.getElementById('f-solde').value=r[cb.solde]||'';
+  setSens(r[cb.credit]&&parseFloat(r[cb.credit])>0?'credit':'debit');
+  setOpType('normal');
+  document.getElementById('form-mode-lbl').textContent='Modifier l\'opération';
+  document.getElementById('btn-submit').innerHTML='<i class="ti ti-device-floppy"></i> Enregistrer les modifications';
+  document.getElementById('btn-cancel').style.display='';
+  const banner=document.getElementById('edit-banner');banner.style.display='';
+  document.getElementById('edit-lbl').textContent=`${r[cb.date]||''} — ${r[cb.libelle]||''}`;
+  document.querySelector('.form-section').scrollIntoView({behavior:'smooth'});
+  renderTable();
 }
 
-function closeDelete() {
-  document.getElementById('modal-delete').classList.add('hidden');
-  deleteTarget = null;
-}
+// ---- SUPPRIMER ----
+function openDel(ri){delIdx=ri;const cb=Sheets.cols.banque,r=allRows[ri];document.getElementById('del-detail').innerHTML=`<strong>${r[cb.date]||'—'}</strong> — ${r[cb.libelle]||'—'}<br>${r[cb.type_mvt]||''} — ${r[cb.credit]?'+'+fmt(r[cb.credit]):r[cb.debit]?'−'+fmt(r[cb.debit]):''}`;document.getElementById('modal-del').classList.remove('hidden');}
+function closeDel(){document.getElementById('modal-del').classList.add('hidden');delIdx=null;}
+async function confirmDel(){if(delIdx===null)return;try{await Sheets.deleteRow(Sheets.config.sheets.banque,delIdx);closeDel();showToast('Supprimée');await loadData();}catch(e){alert('Erreur : '+e.message);}}
 
-async function confirmDelete() {
-  if (deleteTarget === null) return;
-  const cb  = Sheets.cols.banque;
-  const r   = allRows[deleteTarget];
-  const sheetRow = deleteTarget + 2;
+// ---- FLAG ----
+function openFlag(ri,lib,comment,isFlagged){flagTarget={ri,isFlagged};document.getElementById('flag-info').textContent=`Ligne : ${lib}`;document.getElementById('flag-comment').value=comment||'';document.getElementById('flag-resolved').checked=false;document.getElementById('modal-flag').classList.remove('hidden');}
+function closeFlag(){document.getElementById('modal-flag').classList.add('hidden');flagTarget=null;}
+async function saveFlag(){if(!flagTarget)return;const comment=document.getElementById('flag-comment').value.trim();const resolved=document.getElementById('flag-resolved').checked;try{await Sheets.updateFlag('Banque',flagTarget.ri,!resolved,comment);closeFlag();await loadData();showToast('Annotation enregistrée');}catch(e){alert('Erreur : '+e.message);}}
 
-  try {
-    // On vide la ligne (Google Sheets ne supprime pas vraiment les lignes via API simple)
-    const empty = [['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']];
-    await Sheets.updateRange('Banque', sheetRow, 0, empty);
-    await Sheets.logAction('SUPPRESSION', 'Banque', r[cb.libelle]||'—', `${r[cb.date]} — ${r[cb.credit]||r[cb.debit]}€`);
-    closeDelete();
-    showToast('Opération supprimée');
-    await loadData();
-  } catch(e) {
-    alert('Erreur : ' + e.message);
-  }
-}
+// ---- DRIVE ----
+function openDrivePicker(){gapi.load('picker',()=>{const t=gapi.client.getToken();if(!t)return;new google.picker.PickerBuilder().addView(new google.picker.DocsView()).setOAuthToken(t.access_token).setCallback(d=>{if(d.action===google.picker.Action.PICKED)document.getElementById('f-facture').value=d.docs[0].id;}).build().setVisible(true);});}
 
-// ============================================================
-//  FLAG
-// ============================================================
-function openFlag(rowIndex, libelle, existingComment, isFlagged) {
-  flagTarget = { rowIndex, isFlagged };
-  document.getElementById('flag-info').textContent      = `Ligne : ${libelle}`;
-  document.getElementById('flag-comment').value          = existingComment || '';
-  document.getElementById('flag-resolved').checked       = false;
-  document.getElementById('modal-flag').classList.remove('hidden');
-}
-function closeFlag() {
-  document.getElementById('modal-flag').classList.add('hidden');
-  flagTarget = null;
-}
-async function saveFlag() {
-  if (!flagTarget) return;
-  const comment    = document.getElementById('flag-comment').value.trim();
-  const isResolved = document.getElementById('flag-resolved').checked;
-  try {
-    await Sheets.updateFlag('Banque', flagTarget.rowIndex, !isResolved, comment);
-    closeFlag();
-    await loadData();
-    showToast('Annotation enregistrée');
-  } catch(e) { alert('Erreur : ' + e.message); }
-}
-
-// ============================================================
-//  DRIVE PICKER
-// ============================================================
-function openDrivePicker() {
-  gapi.load('picker', () => showDrivePicker());
-}
-function showDrivePicker() {
-  const token = gapi.client.getToken();
-  if (!token) return;
-  const picker = new google.picker.PickerBuilder()
-    .addView(new google.picker.DocsView())
-    .setOAuthToken(token.access_token)
-    .setCallback(data => {
-      if (data.action === google.picker.Action.PICKED) {
-        const file = data.docs[0];
-        document.getElementById('f-facture-id').value = file.id;
-        document.getElementById('facture-preview').innerHTML =
-          `<i class="ti ti-file" style="color:var(--blue)"></i> ${file.name}`;
-      }
-    }).build();
-  picker.setVisible(true);
-}
-
-// ============================================================
-//  HELPERS
-// ============================================================
-function chipType(t) {
-  if (!t) return 'depense';
-  const l = t.toLowerCase();
-  if (l.includes('adopt'))  return 'adoption';
-  if (l.includes('don'))    return 'don';
-  if (l.includes('adh'))    return 'adhesion';
-  if (l.includes('vén')||l.includes('ment')) return 'evenement';
-  if (l.includes('remise')) return 'banque';
-  if (l.includes('chèque')) return 'banque';
-  return 'depense';
-}
-function fmt(v) {
-  if (!v && v!==0) return '';
-  return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
-}
-function showErr(msg) {
-  const el = document.getElementById('form-error');
-  el.textContent = msg; el.classList.remove('hidden');
-}
-function showToast(msg) {
-  const t = document.createElement('div');
-  t.className = 'success-toast';
-  t.innerHTML = `<i class="ti ti-check"></i> ${msg}`;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 3000);
-}
-function escH(s) { return String(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+// ---- HELPERS ----
+function chipType(t){if(!t)return'depense';const l=t.toLowerCase();if(l.includes('adopt'))return'adoption';if(l.includes('don'))return'don';if(l.includes('adh'))return'adhesion';if(l.includes('vén')||l.includes('ment'))return'evenement';if(l.includes('remise')||l.includes('chèque'))return'banque';return'depense';}
+function fmt(v){if(!v&&v!==0)return'';return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
+function dateToISO(d){if(!d)return'';const p=String(d).split('/');if(p.length===3&&p[0].length===2)return`${p[2]}-${p[1]}-${p[0]}`;return d;}
+function showErr(m){const e=document.getElementById('form-err');e.textContent=m;e.classList.remove('hidden');}
+function showToast(m){const t=document.createElement('div');t.className='success-toast';t.innerHTML=`<i class="ti ti-check"></i> ${m}`;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
 </script>
 </body>
 </html>
