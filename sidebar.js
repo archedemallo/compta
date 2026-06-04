@@ -14,7 +14,9 @@ function buildSidebar(activePage) {
     { section: 'Comptabilité' },
     { id: 'caisse',    label: 'Caisse — saisie',    icon: 'ti-cash',           href: 'caisse.html' },
     { id: 'banque',    label: 'Banque — saisie',    icon: 'ti-building-bank',  href: 'banque.html' },
-    { id: 'import',    label: 'Import relevé',      icon: 'ti-upload',         href: 'import.html' },
+    { id: 'cheques',   label: 'Chèques & Remises',  icon: 'ti-writing',        href: 'cheques.html' },
+    { id: 'factures',  label: 'Factures',            icon: 'ti-file-invoice',   href: 'factures.html' },
+    { id: 'import',    label: 'Import relevé',       icon: 'ti-upload',         href: 'import.html' },
 
     { section: 'Caisses physiques' },
     { id: 'caisse1',   label: 'Caisse 1',           icon: 'ti-safe',           href: 'caisse-physique.html?n=1' },
@@ -26,7 +28,7 @@ function buildSidebar(activePage) {
 
     { section: 'Administration' },
     { id: 'config',    label: 'Configuration',      icon: 'ti-settings',       href: 'config.html' },
-];
+  ];
 
   // Options du sélecteur de période
   const periodeOptions = periodes.map(p =>
