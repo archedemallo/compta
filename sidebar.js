@@ -24,7 +24,7 @@ function buildSidebar(activePage) {
 
     { section: 'Partage' },
     { id: 'synthese',  label: 'Vue synthèse',       icon: 'ti-eye',            href: 'synthese.html' },
-    { id: 'alertes',   label: 'Journal / Alertes',  icon: 'ti-bell',           href: 'alertes.html', badge: true },
+    { id: 'alertes',   label: 'Journal / Alertes',  icon: 'ti-bell',           href: 'alertes.html', badge: true, adminOnly: true },
 
     { section: 'Administration' },
     { id: 'config',    label: 'Configuration',      icon: 'ti-settings',       href: 'config.html' },
@@ -39,6 +39,13 @@ function buildSidebar(activePage) {
   const navItems = nav.map(item => {
     if (item.section) {
       return `<div class="nav-section">${item.section}</div>`;
+    }
+    // Masquer les items admin si non-admin
+    if (item.adminOnly) {
+      try {
+        const user = Auth.getUser();
+        if (!user || !user.isAdmin) return '';
+      } catch(e) { return ''; }
     }
     const isActive = item.id === activePage;
     const badge    = item.badge ? `<span class="nav-badge" id="badge-alertes">0</span>` : '';
