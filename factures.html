@@ -15,15 +15,10 @@
   .form-label{display:block;font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
   .form-label.req::after{content:' *';color:var(--red);}
   .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .statut-toggle{display:flex;gap:4px;}
-  .st-btn{flex:1;padding:6px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:transparent;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--text-2);transition:all 0.15s;}
-  .st-btn.active-apay{background:var(--amber);color:white;border-color:var(--amber);}
-  .st-btn.active-pay{background:var(--green);color:white;border-color:var(--green);}
-  .st-btn.active-part{background:var(--blue);color:white;border-color:var(--blue);}
   .list-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;}
   .list-head{padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
   .list-title{font-size:13px;font-weight:600;}
-  .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+  .kpi-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
   .kpi{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;}
   .kpi-label{font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
   .kpi-value{font-size:18px;font-weight:600;}
@@ -72,12 +67,6 @@
             <div class="list-title">Liste des factures</div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
               <input class="f-input" type="text" id="fl-search" placeholder="Rechercher…" oninput="renderTable()">
-              <select class="f-select" id="fl-statut" onchange="renderTable()">
-                <option value="">Tous statuts</option>
-                <option value="a_payer">À payer</option>
-                <option value="payee">Payée</option>
-                <option value="partielle">Partielle</option>
-              </select>
               <select class="f-select" id="fl-cat" onchange="renderTable()">
                 <option value="">Toutes catégories</option>
               </select>
@@ -91,15 +80,6 @@
       <div>
         <div class="form-card">
           <div class="form-card-title"><i class="ti ti-plus"></i> <span id="form-mode-lbl">Nouvelle facture</span></div>
-
-          <div class="form-group">
-            <label class="form-label">Statut</label>
-            <div class="statut-toggle">
-              <button class="st-btn active-apay" id="st-apay"  onclick="setStatut('a_payer')">À payer</button>
-              <button class="st-btn"             id="st-pay"   onclick="setStatut('payee')">Payée</button>
-              <button class="st-btn"             id="st-part"  onclick="setStatut('partielle')">Partielle</button>
-            </div>
-          </div>
 
           <div class="form-group">
             <label class="form-label req">Fournisseur</label>
@@ -192,7 +172,7 @@
 <script src="sheets.js"></script>
 <script src="sidebar.js"></script>
 <script>
-let allRows=[],activeStatut='a_payer',editIdx=null,delIdx=null;
+let allRows=[],editIdx=null,delIdx=null;
 
 Auth.requireAuth(async()=>{
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
@@ -222,32 +202,21 @@ function onPeriodeChange(p){document.getElementById('topbar-per').textContent=p;
 
 function renderKPIs(){
   const cf=Sheets.cols.facture;
-  const apay=allRows.filter(r=>r[cf.statut]==='a_payer');
-  const pay=allRows.filter(r=>r[cf.statut]==='payee');
-  const totApay=apay.reduce((s,r)=>s+(parseFloat(r[cf.montant_ttc])||0),0);
-  const totPay=pay.reduce((s,r)=>s+(parseFloat(r[cf.montant_ttc])||0),0);
+  const total=allRows.reduce((s,r)=>s+(parseFloat(r[cf.montant_ttc])||0),0);
   document.getElementById('kpi-row').innerHTML=`
-    <div class="kpi"><div class="kpi-label">À payer</div><div class="kpi-value" style="color:var(--amber)">${fmt(totApay)}</div><div style="font-size:10px;color:var(--text-3);">${apay.length} facture(s)</div></div>
-    <div class="kpi"><div class="kpi-label">Payées (total)</div><div class="kpi-value" style="color:var(--green)">${fmt(totPay)}</div><div style="font-size:10px;color:var(--text-3);">${pay.length} facture(s)</div></div>
-    <div class="kpi"><div class="kpi-label">Total factures</div><div class="kpi-value">${allRows.length}</div></div>`;
+    <div class="kpi"><div class="kpi-label">Total factures</div><div class="kpi-value">${allRows.length}</div></div>
+    <div class="kpi"><div class="kpi-label">Total TTC</div><div class="kpi-value">${fmt(total)}</div></div>`;
 }
 
 function renderTable(){
   const cf=Sheets.cols.facture;
   const search=(document.getElementById('fl-search')?.value||'').toLowerCase();
-  const sf=document.getElementById('fl-statut')?.value||'';
   const catf=document.getElementById('fl-cat')?.value||'';
   let rows=allRows;
-  if(sf) rows=rows.filter(r=>r[cf.statut]===sf);
   if(catf) rows=rows.filter(r=>r[cf.categorie]===catf);
   if(search) rows=rows.filter(r=>[r[cf.fournisseur],r[cf.num_facture],r[cf.commentaire]].join(' ').toLowerCase().includes(search));
   rows=[...rows].reverse();
   if(!rows.length){document.getElementById('table-wrap').innerHTML='<div style="padding:32px;text-align:center;color:var(--text-3);font-size:12px;">Aucune facture</div>';return;}
-  const statutBadge=s=>({
-    'a_payer':'<span class="chip" style="background:var(--amber-bg);color:var(--amber);">À payer</span>',
-    'payee':  '<span class="chip" style="background:var(--green-bg);color:var(--green);">Payée</span>',
-    'partielle':'<span class="chip" style="background:var(--blue-bg);color:var(--blue);">Partielle</span>',
-  }[s]||s);
   const trs=rows.map((r,i)=>{
     const ri=allRows.indexOf(r);
     const pdf=r[cf.lien_pdf]?`<button class="pdf-btn" onclick="Sheets.openFacture('${escH(r[cf.lien_pdf])}')" title="Voir"><i class="ti ti-file-type-pdf"></i></button>`:'';
@@ -257,7 +226,6 @@ function renderTable(){
       <td style="color:var(--text-3);">${r[cf.num_facture]||'—'}</td>
       <td><span class="chip chip-${chipCat(r[cf.categorie])}">${r[cf.categorie]||'—'}</span></td>
       <td class="r" style="font-weight:500;">${fmt(r[cf.montant_ttc])}</td>
-      <td>${statutBadge(r[cf.statut])}</td>
       <td style="color:var(--text-3);">${r[cf.date_echeance]||'—'}</td>
       <td style="color:var(--text-3);">${r[cf.date_reglement]||'—'}</td>
       <td class="r">${pdf}</td>
@@ -267,22 +235,17 @@ function renderTable(){
       </td>
     </tr>`;
   }).join('');
-  document.getElementById('table-wrap').innerHTML=`<table><thead><tr><th>Date</th><th>Fournisseur</th><th>N°</th><th>Catégorie</th><th class="r">Montant TTC</th><th>Statut</th><th>Échéance</th><th>Règlement</th><th class="r">PDF</th><th class="r">Actions</th></tr></thead><tbody>${trs}</tbody></table>`;
+  document.getElementById('table-wrap').innerHTML=`<table><thead><tr><th>Date</th><th>Fournisseur</th><th>N°</th><th>Catégorie</th><th class="r">Montant TTC</th><th>Échéance</th><th>Règlement</th><th class="r">PDF</th><th class="r">Actions</th></tr></thead><tbody>${trs}</tbody></table>`;
 }
 
-function setStatut(s){
-  activeStatut=s;
-  ['apay','pay','part'].forEach(k=>document.getElementById('st-'+k).className='st-btn');
-  document.getElementById('st-'+{a_payer:'apay',payee:'pay',partielle:'part'}[s]).className='st-btn active-'+{a_payer:'apay',payee:'pay',partielle:'part'}[s];
-  document.getElementById('reglement-section').style.display=(s==='a_payer')?'none':'block';
-}
-
-function reset(keepEdit=false){
+function reset(){
   ['f-fourn','f-num','f-montant','f-date','f-echeance','f-date-reg','f-ref-pay','f-lien-pdf','f-comment'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=id==='f-date'?Sheets.todayISO():'';});
   document.getElementById('f-cat').selectedIndex=0;
   document.getElementById('f-mode-reg').selectedIndex=0;
   document.getElementById('form-err').classList.add('hidden');
-  if(!keepEdit){setStatut('a_payer');editIdx=null;document.getElementById('form-mode-lbl').textContent='Nouvelle facture';document.getElementById('btn-submit').innerHTML='<i class="ti ti-device-floppy"></i> Enregistrer';}
+  editIdx=null;
+  document.getElementById('form-mode-lbl').textContent='Nouvelle facture';
+  document.getElementById('btn-submit').innerHTML='<i class="ti ti-device-floppy"></i> Enregistrer';
 }
 
 async function submit(){
@@ -298,7 +261,7 @@ async function submit(){
     num_facture:document.getElementById('f-num').value.trim(),
     fournisseur:fourn,date_facture:date,
     date_echeance:document.getElementById('f-echeance').value,
-    montant_ttc:montant,categorie:cat,statut:activeStatut,
+    montant_ttc:montant,categorie:cat,
     date_reglement:document.getElementById('f-date-reg').value,
     mode_reglement:document.getElementById('f-mode-reg').value,
     ref_paiement:document.getElementById('f-ref-pay').value.trim(),
@@ -330,13 +293,12 @@ function openEdit(ri){
   document.getElementById('f-ref-pay').value=r[cf.ref_paiement]||'';
   document.getElementById('f-lien-pdf').value=r[cf.lien_pdf]||'';
   document.getElementById('f-comment').value=r[cf.commentaire]||'';
-  setStatut(r[cf.statut]||'a_payer');
   document.getElementById('form-mode-lbl').textContent='Modifier la facture';
   document.getElementById('btn-submit').innerHTML='<i class="ti ti-device-floppy"></i> Enregistrer les modifications';
   document.querySelector('.form-card').scrollIntoView({behavior:'smooth'});
 }
 
-function openDel(ri){delIdx=ri;const cf=Sheets.cols.facture,r=allRows[ri];document.getElementById('del-detail').innerHTML=`<strong>${r[cf.fournisseur]||'?'}</strong><br>${r[cf.date_facture]||''} — ${fmt(r[cf.montant_ttc])} — ${r[cf.statut]||''}`;document.getElementById('modal-del').classList.remove('hidden');}
+function openDel(ri){delIdx=ri;const cf=Sheets.cols.facture,r=allRows[ri];document.getElementById('del-detail').innerHTML=`<strong>${r[cf.fournisseur]||'?'}</strong><br>${r[cf.date_facture]||''} — ${fmt(r[cf.montant_ttc])}`;document.getElementById('modal-del').classList.remove('hidden');}
 function closeDel(){document.getElementById('modal-del').classList.add('hidden');delIdx=null;}
 async function confirmDel(){if(delIdx===null)return;try{await Sheets.deleteRow(Sheets.config.sheets.factures,delIdx);closeDel();showToast('Facture supprimée');await loadData();}catch(e){alert('Erreur : '+e.message);}}
 
