@@ -122,12 +122,11 @@ const COLS_FACTURE = {
   date_facture:  3,
   montant_ttc:   4,
   categorie:     5,
-  statut:        6,  // conservé dans le sheet même si non affiché dans l'UI
-  date_reglement:7,
-  mode_reglement:8,
-  lien_pdf:      9,
-  commentaire:   10,
-  periode:       11,
+  date_reglement:6,
+  mode_reglement:7,
+  lien_pdf:      8,
+  commentaire:   9,
+  periode:       10,
 };
 
 const COLS_CAISSE_PHYSIQUE = {
@@ -412,14 +411,13 @@ async function encaisserRemise(remiseRowIndex, dateBanque, refBanque) {
 // ---- SAUVEGARDER FACTURE ----
 async function saveFacture(facture) {
   const id  = facture.id || genId('FAC');
-  const row = new Array(12).fill('');
+  const row = new Array(11).fill('');
   row[COLS_FACTURE.id]            = id;
   row[COLS_FACTURE.num_facture]   = facture.num_facture   || '';
   row[COLS_FACTURE.fournisseur]   = facture.fournisseur   || '';
   row[COLS_FACTURE.date_facture]  = facture.date_facture  || '';
   row[COLS_FACTURE.montant_ttc]   = facture.montant_ttc   || '';
   row[COLS_FACTURE.categorie]     = facture.categorie     || '';
-  row[COLS_FACTURE.statut]        = '';
   row[COLS_FACTURE.date_reglement]= facture.date_reglement|| '';
   row[COLS_FACTURE.mode_reglement]= facture.mode_reglement|| '';
   row[COLS_FACTURE.lien_pdf]      = facture.lien_pdf      || '';
@@ -433,14 +431,13 @@ async function saveFacture(facture) {
 // ---- MODIFIER FACTURE ----
 async function updateFacture(rowIndex, facture) {
   const sheetRow = rowIndex + 2;
-  const row = new Array(12).fill('');
+  const row = new Array(11).fill('');
   row[COLS_FACTURE.id]            = facture.id            || '';
   row[COLS_FACTURE.num_facture]   = facture.num_facture   || '';
   row[COLS_FACTURE.fournisseur]   = facture.fournisseur   || '';
   row[COLS_FACTURE.date_facture]  = facture.date_facture  || '';
   row[COLS_FACTURE.montant_ttc]   = facture.montant_ttc   || '';
   row[COLS_FACTURE.categorie]     = facture.categorie     || '';
-  row[COLS_FACTURE.statut]        = '';
   row[COLS_FACTURE.date_reglement]= facture.date_reglement|| '';
   row[COLS_FACTURE.mode_reglement]= facture.mode_reglement|| '';
   row[COLS_FACTURE.lien_pdf]      = facture.lien_pdf      || '';
@@ -449,6 +446,7 @@ async function updateFacture(rowIndex, facture) {
   await updateRange(SHEETS_CONFIG.sheets.factures, sheetRow, 0, [row]);
   await logAction('MODIF', 'Factures', facture.fournisseur, `Modifié le ${todayFR()}`);
 }
+
 // ---- CAISSE PHYSIQUE ----
 async function saveCaissePhysique(numCaisse, comptage) {
   const sheet = numCaisse === 1 ? SHEETS_CONFIG.sheets.caisse1 : SHEETS_CONFIG.sheets.caisse2;
