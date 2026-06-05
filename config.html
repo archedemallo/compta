@@ -13,44 +13,38 @@
   .config-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;}
   .config-title i{color:var(--orange);font-size:16px;}
   .config-body{padding:14px 16px;}
-  .item-list{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;max-height:300px;overflow-y:auto;}
+  .item-list{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;max-height:280px;overflow-y:auto;}
   .item-row{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface-2);border:0.5px solid var(--border);border-radius:var(--radius-sm);}
   .item-label{flex:1;font-size:12px;}
   .item-del,.item-edit{background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;transition:color 0.15s;}
   .item-del{color:var(--text-3);} .item-del:hover{color:var(--red);}
   .item-edit{color:var(--text-3);} .item-edit:hover{color:var(--blue);}
-  .add-row{display:flex;gap:8px;}
-  .add-row input{flex:1;}
+  .add-row{display:flex;gap:8px;} .add-row input{flex:1;}
   .periode-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface-2);border:0.5px solid var(--border);border-radius:var(--radius-sm);}
   .periode-label{flex:1;font-size:13px;font-weight:500;}
   .periode-active{font-size:10px;padding:2px 6px;border-radius:8px;background:var(--green-bg);color:var(--green);}
   .user-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface-2);border:0.5px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;}
   .user-avatar{width:34px;height:34px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:600;flex-shrink:0;}
-  .user-info{flex:1;}
-  .user-email{font-size:12px;font-weight:500;}
-  .user-role{font-size:10px;color:var(--text-3);}
+  .user-info{flex:1;} .user-email{font-size:12px;font-weight:500;} .user-role{font-size:10px;color:var(--text-3);}
   .role-badge{font-size:10px;padding:2px 8px;border-radius:8px;}
-  .role-admin{background:var(--orange);color:white;}
-  .role-reader{background:var(--blue-bg);color:var(--blue);}
+  .role-admin{background:var(--orange);color:white;} .role-reader{background:var(--blue-bg);color:var(--blue);}
   .info-banner{background:var(--blue-bg);border:0.5px solid rgba(24,95,165,0.2);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--blue);display:flex;gap:8px;margin-bottom:14px;}
-  .warn-banner{background:var(--amber-bg);border:0.5px solid rgba(133,79,11,0.2);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--amber);display:flex;gap:8px;margin-bottom:10px;}
-  .success-banner{background:var(--green-bg);border:0.5px solid rgba(59,109,17,0.2);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--green);display:flex;gap:8px;}
-  .cfg-field{margin-bottom:12px;}
-  .cfg-field label{display:block;font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
-  .cfg-field input{width:100%;}
-  .cfg-hint{font-size:10px;color:var(--text-3);margin-top:3px;}
+  .warn-banner{background:var(--amber-bg);border:0.5px solid rgba(133,79,11,0.2);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--amber);display:flex;gap:8px;}
   .modal-overlay{position:fixed;inset:0;background:rgba(61,43,31,0.35);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
   .modal{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-md);width:380px;max-width:95vw;}
   .modal-header{padding:14px 18px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
   .modal-title{font-size:13px;font-weight:600;}
   .modal-close{background:none;border:none;font-size:18px;color:var(--text-3);cursor:pointer;}
-  .modal-body{padding:18px;}
-  .modal-footer{padding:12px 18px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+  .modal-body{padding:18px;} .modal-footer{padding:12px 18px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
   .success-toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:white;padding:10px 18px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;z-index:999;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-md);animation:slideIn 0.25s ease;}
   @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
-  .spinner{display:inline-block;animation:spin 1s linear infinite;}
-  @keyframes spin{to{transform:rotate(360deg);}}
   code{background:var(--surface-2);padding:2px 5px;border-radius:3px;font-size:10px;font-family:monospace;}
+
+  /* Soldes initiaux */
+  .solde-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  .solde-item{display:flex;flex-direction:column;gap:4px;}
+  .solde-label{font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;}
+  .solde-saved{font-size:10px;color:var(--green);margin-top:2px;}
 </style>
 </head>
 <body>
@@ -82,22 +76,15 @@
         </div>
       </div>
 
-      <!-- UTILISATEURS -->
+      <!-- UTILISATEURS (lus depuis auth.js) -->
       <div class="config-card">
         <div class="config-head"><div class="config-title"><i class="ti ti-users"></i> Utilisateurs autorisés</div></div>
         <div class="config-body">
           <div id="users-list"></div>
-          <div style="margin-top:12px;">
-            <div style="font-size:11px;font-weight:600;margin-bottom:8px;color:var(--text-2);">Ajouter un utilisateur</div>
-            <div style="display:grid;grid-template-columns:1fr 120px;gap:8px;margin-bottom:8px;">
-              <input type="email" id="new-user-email" placeholder="email@gmail.com">
-              <select id="new-user-role" style="padding:6px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);font-size:12px;font-family:'DM Sans',sans-serif;">
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-            <button class="btn btn-primary btn-sm" onclick="addUser()"><i class="ti ti-plus"></i> Ajouter</button>
+          <div class="warn-banner" style="margin-top:12px;">
+            <i class="ti ti-alert-triangle" style="flex-shrink:0;font-size:16px;"></i>
+            <span>Pour ajouter/supprimer un utilisateur, modifiez le tableau <code>authorizedUsers</code> dans <code>auth.js</code> sur GitHub et redéployez.</span>
           </div>
-          <div class="warn-banner" style="margin-top:12px;"><i class="ti ti-alert-triangle" style="flex-shrink:0;"></i><span>Après modification, mettez aussi à jour le tableau <code>authorizedUsers</code> dans <code>auth.js</code> sur GitHub pour que les changements soient permanents.</span></div>
         </div>
       </div>
 
@@ -125,18 +112,6 @@
         </div>
       </div>
 
-      <!-- TYPES COMPLÉMENTAIRES -->
-      <div class="config-card">
-        <div class="config-head"><div class="config-title"><i class="ti ti-tag"></i> Types complémentaires</div></div>
-        <div class="config-body">
-          <div class="item-list" id="types-comp-list"></div>
-          <div class="add-row">
-            <input type="text" id="new-type-comp" placeholder="Ex: Stérilisation">
-            <button class="btn btn-primary btn-sm" onclick="addItem('type-comp')"><i class="ti ti-plus"></i> Ajouter</button>
-          </div>
-        </div>
-      </div>
-
       <!-- MODES RÈGLEMENT -->
       <div class="config-card">
         <div class="config-head"><div class="config-title"><i class="ti ti-credit-card"></i> Modes de règlement</div></div>
@@ -149,66 +124,57 @@
         </div>
       </div>
 
-      <!-- CONNEXION GOOGLE SHEETS -->
-      <div class="config-card" style="grid-column:1/-1;">
+      <!-- SOLDES INITIAUX -->
+      <div class="config-card">
         <div class="config-head">
-          <div class="config-title"><i class="ti ti-database"></i> Connexion — Google Sheets & Drive</div>
-          <button class="btn btn-primary btn-sm" onclick="saveSheetConfig()"><i class="ti ti-device-floppy"></i> Enregistrer</button>
+          <div class="config-title"><i class="ti ti-wallet"></i> Soldes initiaux par période</div>
+          <button class="btn btn-primary btn-sm" onclick="saveSoldesInitiaux()"><i class="ti ti-device-floppy"></i> Enregistrer</button>
         </div>
         <div class="config-body">
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;">
-            <div class="cfg-field">
-              <label>ID Google Sheets Compta</label>
-              <input type="text" id="cfg-sheets-id" placeholder="1y6yD4AohP7T10GE7mmg…">
-              <div class="cfg-hint">URL Sheets : <code>…/spreadsheets/d/<strong>ID ICI</strong>/edit</code></div>
+          <div style="font-size:11px;color:var(--text-3);margin-bottom:12px;">Saisissez le solde de départ pour la première année. Il sera repris automatiquement d'une année à l'autre.</div>
+          <div style="margin-bottom:12px;">
+            <label style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:6px;display:block;">Période</label>
+            <select id="solde-periode" style="padding:6px 10px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);font-size:12px;font-family:'DM Sans',sans-serif;width:100%;" onchange="loadSoldesForPeriode()"></select>
+          </div>
+          <div class="solde-grid">
+            <div class="solde-item">
+              <label class="solde-label">Solde Banque (€)</label>
+              <input type="number" id="solde-banque" step="0.01" placeholder="0,00">
+              <span class="solde-saved hidden" id="saved-banque"><i class="ti ti-check"></i> Enregistré</span>
             </div>
-            <div class="cfg-field">
-              <label>ID Google Sheets Formulaires</label>
-              <input type="text" id="cfg-forms-id" placeholder="1y6yD4AohP7T10GE7mmg…">
-              <div class="cfg-hint">Sheets qui reçoit les données des formulaires</div>
+            <div class="solde-item">
+              <label class="solde-label">Solde Caisse 1 (€)</label>
+              <input type="number" id="solde-caisse1" step="0.01" placeholder="0,00">
+              <span class="solde-saved hidden" id="saved-caisse1"><i class="ti ti-check"></i> Enregistré</span>
             </div>
-            <div class="cfg-field">
-              <label>ID Dossier Drive Factures</label>
-              <input type="text" id="cfg-drive-id" placeholder="1BxiMVs0XRA5nFMd…">
-              <div class="cfg-hint">URL Drive : <code>…/drive/folders/<strong>ID ICI</strong></code></div>
-            </div>
-            <div class="cfg-field">
-              <label>URL Webhook Alertes (Apps Script)</label>
-              <input type="text" id="cfg-webhook" placeholder="https://script.google.com/macros/s/…/exec">
-              <div class="cfg-hint">Extensions → Apps Script → Déployer → URL</div>
-            </div>
-            <div class="cfg-field">
-              <label>Email administrateur</label>
-              <input type="email" id="cfg-admin-email" placeholder="votre@email.com">
-              <div class="cfg-hint">Reçoit les alertes de saisie externe</div>
-            </div>
-            <div class="cfg-field">
-              <label>Client ID Google OAuth</label>
-              <input type="text" id="cfg-client-id" placeholder="xxxxx.apps.googleusercontent.com">
-              <div class="cfg-hint">Google Cloud → Identifiants → votre client OAuth</div>
+            <div class="solde-item">
+              <label class="solde-label">Solde Caisse 2 (€)</label>
+              <input type="number" id="solde-caisse2" step="0.01" placeholder="0,00">
+              <span class="solde-saved hidden" id="saved-caisse2"><i class="ti ti-check"></i> Enregistré</span>
             </div>
           </div>
-          <div id="sheets-status">
-            <div class="warn-banner"><i class="ti ti-loader-2 spinner"></i> <span>Vérification de la connexion…</span></div>
-          </div>
-          <div style="margin-top:12px;padding:12px;background:var(--surface-2);border-radius:var(--radius-sm);font-size:11px;color:var(--text-2);">
-            <strong>Comment trouver les IDs ?</strong><br>
-            • <strong>Sheets Compta</strong> : Créez un nouveau Google Sheets, nommez-le "Arche_Compta", copiez l'ID dans l'URL<br>
-            • <strong>Drive Factures</strong> : Ouvrez le dossier Comptabilite/Factures dans Drive, copiez l'ID dans l'URL<br>
-            • <strong>Client ID</strong> : console.cloud.google.com → Identifiants → votre client OAuth 2.0<br>
-            • <strong>Webhook</strong> : Ouvrez votre Google Sheets → Extensions → Apps Script → Déployer → Gérer les déploiements → URL
+          <div style="margin-top:10px;font-size:10px;color:var(--text-3);">
+            Soldes actuellement enregistrés : <span id="soldes-summary">Chargement…</span>
           </div>
         </div>
       </div>
 
     </div>
+
+    <!-- STATUT CONNEXION GOOGLE SHEETS (toujours visible en bas) -->
+    <div style="margin-top:14px;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;">
+      <div style="font-size:12px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px;"><i class="ti ti-database" style="color:var(--orange)"></i> Statut connexion Google Sheets</div>
+      <div id="sheets-status"><div style="font-size:12px;color:var(--text-3);"><i class="ti ti-loader-2" style="animation:spin 1s linear infinite;display:inline-block;"></i> Vérification…</div></div>
+      <div style="margin-top:8px;font-size:10px;color:var(--text-3);">ID configuré dans <code>sheets.js</code> : <code id="sheets-id-display">—</code></div>
+    </div>
+
   </div>
 </div>
 
 <!-- MODAL EDIT -->
 <div class="modal-overlay hidden" id="modal-edit">
   <div class="modal">
-    <div class="modal-header"><span class="modal-title" id="modal-edit-title">Modifier</span><button class="modal-close" onclick="closeEdit()">×</button></div>
+    <div class="modal-header"><span class="modal-title">Modifier</span><button class="modal-close" onclick="closeEdit()">×</button></div>
     <div class="modal-body"><div style="display:flex;flex-direction:column;gap:4px;"><label style="font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;">Nouvelle valeur</label><input type="text" id="edit-input"></div></div>
     <div class="modal-footer"><button class="btn btn-secondary btn-sm" onclick="closeEdit()">Annuler</button><button class="btn btn-primary btn-sm" onclick="saveEdit()">Enregistrer</button></div>
   </div>
@@ -220,7 +186,7 @@
 <script>
 
 // ============================================================
-// LISTES PAR DÉFAUT (depuis vos captures)
+// LISTES PAR DÉFAUT
 // ============================================================
 const DEFAULT_TYPES = [
   '???','Adhésion','Adoption','AG Delclim','Amazon','Auchan','Autre','B&M',
@@ -230,7 +196,6 @@ const DEFAULT_TYPES = [
   'Solde antérieur','Subvention','Vente diverse','Versement Caisse',
   'Vétérinaire','Webador'
 ];
-
 const DEFAULT_DESCS = [
   '???','Abandon','Adhésion','Adoption','Alimentation','Amazon Remboursement',
   'Autre','Caisse de transport','Cloture adoption','Depot en banque','Dons',
@@ -242,19 +207,9 @@ const DEFAULT_DESCS = [
   'Territoire de Belfort','Travaux','Vente diverse','Vente Loto',
   'Vétérinaire','VIE ENERGY'
 ];
-
-const DEFAULT_TYPES_COMP = [
-  'Subvention','Parrainage','Vente en ligne','Collecte','Événement ponctuel',
-  'Urgence vétérinaire','Stérilisation','Vaccin','Médicaments','Matériel cage',
-  'Litière','Transport','Frais bancaires','Autre'
-];
-
 const DEFAULT_REGLEMENTS = ['Espèces','Chèque','Virement','CB','PayPal','Prélèvement','Autre'];
 
-// ============================================================
-// ÉTAT
-// ============================================================
-let editCtx = null; // { key, index }
+let editCtx = null;
 const currentPeriode = Sheets.getCurrentPeriode();
 
 // ============================================================
@@ -265,22 +220,19 @@ Auth.requireAuth(async () => {
   Sidebar.build('config');
   initDefaults();
   renderAll();
-  loadSheetConfig();
-  setTimeout(checkSheetsConnection, 500);
+  initSoldesInitiaux();
+  checkSheetsConnection();
 });
 
 function initDefaults() {
-  // Initialiser les listes si jamais elles sont vides
-  if (!localStorage.getItem('arche_types_mvt')) Sheets.saveTypesMouvement(DEFAULT_TYPES);
-  if (!localStorage.getItem('arche_types_desc')) saveDescs(DEFAULT_DESCS);
-  if (!localStorage.getItem('arche_types_comp')) Sheets.saveTypesComplementaires(DEFAULT_TYPES_COMP);
-  if (!localStorage.getItem('arche_reglements')) Sheets.saveModesReglement(DEFAULT_REGLEMENTS);
-  if (!localStorage.getItem('arche_periodes'))   Sheets.savePeriodes(['2024 - 2025','2025 - 2026']);
-  if (!localStorage.getItem('arche_users'))      saveUsers([{email:'',role:'admin',current:true}]);
+  if (!localStorage.getItem('arche_types_mvt'))  Sheets.saveTypesMouvement(DEFAULT_TYPES);
+  if (!localStorage.getItem('arche_types_desc'))  saveDescs(DEFAULT_DESCS);
+  if (!localStorage.getItem('arche_reglements'))  Sheets.saveModesReglement(DEFAULT_REGLEMENTS);
+  if (!localStorage.getItem('arche_periodes'))    Sheets.savePeriodes(['2024 - 2025','2025 - 2026']);
 }
 
 // ============================================================
-// DESCRIPTIONS (2ème liste)
+// DESCRIPTIONS
 // ============================================================
 function getDescs() {
   const s = localStorage.getItem('arche_types_desc');
@@ -289,15 +241,8 @@ function getDescs() {
 }
 function saveDescs(d) { localStorage.setItem('arche_types_desc', JSON.stringify(d)); }
 
-// ============================================================
-// UTILISATEURS
-// ============================================================
-function getUsers() {
-  const s = localStorage.getItem('arche_users');
-  if (s) { try { return JSON.parse(s); } catch(e) {} }
-  return [];
-}
-function saveUsers(u) { localStorage.setItem('arche_users', JSON.stringify(u)); }
+// Exposer getDescs globalement pour les autres pages
+window.getDescriptions = getDescs;
 
 // ============================================================
 // RENDER ALL
@@ -305,10 +250,9 @@ function saveUsers(u) { localStorage.setItem('arche_users', JSON.stringify(u)); 
 function renderAll() {
   renderPeriodes();
   renderUsers();
-  renderList('types',   Sheets.getTypesMouvement(),      'types-list',     'type');
-  renderList('descs',   getDescs(),                      'descs-list',     'desc');
-  renderList('comps',   Sheets.getTypesComplementaires(),'types-comp-list','type-comp');
-  renderList('regs',    Sheets.getModesReglement(),      'reglements-list','reglement');
+  renderList(Sheets.getTypesMouvement(), 'types-list', 'type');
+  renderList(getDescs(),                 'descs-list',  'desc');
+  renderList(Sheets.getModesReglement(), 'reglements-list', 'reglement');
 }
 
 function renderPeriodes() {
@@ -321,52 +265,34 @@ function renderPeriodes() {
     </div>`).join('');
 }
 
+// Lire les utilisateurs depuis AUTH_CONFIG (défini dans auth.js)
 function renderUsers() {
-  const user = Auth.getUser();
-  const users = getUsers();
-  // Toujours afficher l'utilisateur connecté
-  const connected = {email: user?.email||'', name: user?.name||'', role: user?.isAdmin?'admin':'reader', connected: true};
-  // Fusionner avec liste stockée (éviter doublons)
-  const allUsers = [connected, ...users.filter(u => u.email && u.email !== connected.email)];
+  const currentUser = Auth.getUser();
+  // AUTH_CONFIG est accessible car auth.js est chargé avant
+  const authorizedUsers = (typeof AUTH_CONFIG !== 'undefined' && AUTH_CONFIG.authorizedUsers) || [];
+  const adminEmail      = (typeof AUTH_CONFIG !== 'undefined' && AUTH_CONFIG.adminEmail)       || '';
 
-  document.getElementById('users-list').innerHTML = allUsers.map((u, i) => `
-    <div class="user-row">
-      <div class="user-avatar">${(u.name||u.email||'?').slice(0,2).toUpperCase()}</div>
+  const list = document.getElementById('users-list');
+  if (!authorizedUsers.length) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--text-3);">Aucun utilisateur configuré dans auth.js</div>';
+    return;
+  }
+  list.innerHTML = authorizedUsers.map(email => {
+    const isAdmin    = email === adminEmail;
+    const isCurrent  = email === currentUser?.email;
+    const initials   = email.slice(0, 2).toUpperCase();
+    return `<div class="user-row">
+      <div class="user-avatar" style="${isAdmin?'':'background:var(--blue);'}">${initials}</div>
       <div class="user-info">
-        <div class="user-email">${u.name||u.email||'—'}</div>
-        <div class="user-role">${u.email||''}</div>
+        <div class="user-email">${email} ${isCurrent ? '<span style="font-size:9px;background:var(--green-bg);color:var(--green);padding:1px 5px;border-radius:8px;">Vous</span>' : ''}</div>
+        <div class="user-role">${isAdmin ? 'Accès complet — peut tout voir et tout modifier' : 'Peut saisir des opérations — alertes envoyées à l\'admin'}</div>
       </div>
-      <span class="role-badge ${u.role==='admin'?'role-admin':'role-reader'}">${u.role==='admin'?'Administrateur':'Lecteur'}</span>
-      ${u.connected?'':` <button class="item-del" onclick="deleteUser(${i-1})" title="Supprimer"><i class="ti ti-trash"></i></button>`}
-    </div>`).join('');
+      <span class="role-badge ${isAdmin ? 'role-admin' : 'role-reader'}">${isAdmin ? 'Administrateur' : 'Éditeur'}</span>
+    </div>`;
+  }).join('');
 }
 
-function addUser() {
-  const email = document.getElementById('new-user-email').value.trim();
-  const role  = document.getElementById('new-user-role').value;
-  if (!email || !email.includes('@')) { alert('Email invalide.'); return; }
-  const users = getUsers();
-  if (users.find(u => u.email === email)) { alert('Cet utilisateur existe déjà.'); return; }
-  users.push({ email, role, name: email.split('@')[0] });
-  saveUsers(users);
-  document.getElementById('new-user-email').value = '';
-  renderUsers();
-  showToast('Utilisateur ajouté ! Pensez à mettre à jour auth.js sur GitHub.');
-}
-
-function deleteUser(idx) {
-  const users = getUsers();
-  if (!confirm(`Supprimer "${users[idx]?.email}" ?`)) return;
-  users.splice(idx, 1);
-  saveUsers(users);
-  renderUsers();
-  showToast('Supprimé');
-}
-
-// ============================================================
-// LISTES GÉNÉRIQUES
-// ============================================================
-function renderList(key, items, containerId, editKey) {
+function renderList(items, containerId, editKey) {
   document.getElementById(containerId).innerHTML = items.map((item, i) => `
     <div class="item-row">
       <span class="item-label">${item}</span>
@@ -375,9 +301,12 @@ function renderList(key, items, containerId, editKey) {
     </div>`).join('');
 }
 
+// ============================================================
+// AJOUT / SUPPRESSION
+// ============================================================
 function addItem(key) {
-  const inputId = { type:'new-type', desc:'new-desc', 'type-comp':'new-type-comp', reglement:'new-reglement' }[key];
-  const val = document.getElementById(inputId)?.value.trim();
+  const inputId = { type:'new-type', desc:'new-desc', reglement:'new-reglement' }[key];
+  const val     = document.getElementById(inputId)?.value.trim();
   if (!val) return;
   const { items, save, render } = getKeyHandlers(key);
   if (items.includes(val)) { alert('Cette valeur existe déjà.'); return; }
@@ -398,13 +327,38 @@ function deleteItem(key, index) {
 }
 
 function getKeyHandlers(key) {
-  const map = {
-    'type':      { items: Sheets.getTypesMouvement(),       save: Sheets.saveTypesMouvement,       render: i=>renderList('types',i,'types-list','type') },
-    'desc':      { items: getDescs(),                        save: saveDescs,                        render: i=>renderList('descs',i,'descs-list','desc') },
-    'type-comp': { items: Sheets.getTypesComplementaires(),  save: Sheets.saveTypesComplementaires,  render: i=>renderList('comps',i,'types-comp-list','type-comp') },
-    'reglement': { items: Sheets.getModesReglement(),        save: Sheets.saveModesReglement,        render: i=>renderList('regs',i,'reglements-list','reglement') },
-  };
-  return map[key];
+  return {
+    'type':      { items: Sheets.getTypesMouvement(), save: Sheets.saveTypesMouvement, render: i => renderList(i,'types-list','type') },
+    'desc':      { items: getDescs(),                 save: saveDescs,                 render: i => renderList(i,'descs-list','desc') },
+    'reglement': { items: Sheets.getModesReglement(), save: Sheets.saveModesReglement, render: i => renderList(i,'reglements-list','reglement') },
+  }[key];
+}
+
+function addPeriode() {
+  const val = document.getElementById('new-periode').value.trim();
+  if (!val) return;
+  if (!/^\d{4}\s*-\s*\d{4}$/.test(val)) { alert('Format invalide. Utilisez : 2026 - 2027'); return; }
+  const formatted = val.replace(/\s*-\s*/, ' - ');
+  const periodes  = Sheets.getPeriodes();
+  if (periodes.includes(formatted)) { alert('Cette période existe déjà.'); return; }
+  periodes.push(formatted);
+  Sheets.savePeriodes(periodes);
+  document.getElementById('new-periode').value = '';
+  renderPeriodes();
+  // Recharger le select des soldes
+  initSoldesInitiaux();
+  showToast('Période ajoutée !');
+}
+
+function deletePeriode(i) {
+  const periodes = Sheets.getPeriodes();
+  if (periodes.length <= 1) { alert('Vous devez conserver au moins une période.'); return; }
+  if (!confirm(`Supprimer "${periodes[i]}" ?`)) return;
+  periodes.splice(i, 1);
+  Sheets.savePeriodes(periodes);
+  renderPeriodes();
+  initSoldesInitiaux();
+  showToast('Période supprimée');
 }
 
 // ============================================================
@@ -412,7 +366,6 @@ function getKeyHandlers(key) {
 // ============================================================
 function openEdit(key, index, currentVal) {
   editCtx = { key, index };
-  document.getElementById('modal-edit-title').textContent = 'Modifier la valeur';
   document.getElementById('edit-input').value = currentVal;
   document.getElementById('modal-edit').classList.remove('hidden');
   setTimeout(() => document.getElementById('edit-input').focus(), 50);
@@ -431,74 +384,82 @@ function saveEdit() {
 }
 
 // ============================================================
-// PÉRIODES
+// SOLDES INITIAUX
 // ============================================================
-function addPeriode() {
-  const val = document.getElementById('new-periode').value.trim();
-  if (!val) return;
-  if (!/^\d{4}\s*-\s*\d{4}$/.test(val)) { alert('Format invalide. Utilisez : 2026 - 2027'); return; }
-  const formatted = val.replace(/\s*-\s*/, ' - ');
+function initSoldesInitiaux() {
   const periodes = Sheets.getPeriodes();
-  if (periodes.includes(formatted)) { alert('Cette période existe déjà.'); return; }
-  periodes.push(formatted);
-  Sheets.savePeriodes(periodes);
-  document.getElementById('new-periode').value = '';
-  renderPeriodes();
-  showToast('Période ajoutée !');
-}
-function deletePeriode(i) {
-  const periodes = Sheets.getPeriodes();
-  if (periodes.length <= 1) { alert('Vous devez conserver au moins une période.'); return; }
-  if (!confirm(`Supprimer "${periodes[i]}" ?`)) return;
-  periodes.splice(i, 1);
-  Sheets.savePeriodes(periodes);
-  renderPeriodes();
-  showToast('Période supprimée');
+  const sel      = document.getElementById('solde-periode');
+  const ap       = Sidebar.getActivePeriode();
+  sel.innerHTML  = periodes.map(p => `<option value="${p}" ${p===ap?'selected':''}>${p}</option>`).join('');
+  loadSoldesForPeriode();
+  renderSoldesSummary();
 }
 
-// ============================================================
-// CONFIG SHEETS
-// ============================================================
-function loadSheetConfig() {
-  const cfg = JSON.parse(localStorage.getItem('arche_sheets_config') || '{}');
-  document.getElementById('cfg-sheets-id').value    = cfg.spreadsheetId   || '';
-  document.getElementById('cfg-forms-id').value     = cfg.formulairesId   || '';
-  document.getElementById('cfg-drive-id').value     = cfg.facturesDriveId || '';
-  document.getElementById('cfg-webhook').value      = cfg.webhookUrl       || '';
-  document.getElementById('cfg-admin-email').value  = cfg.adminEmail       || '';
-  document.getElementById('cfg-client-id').value    = cfg.clientId         || '';
+function loadSoldesForPeriode() {
+  const per     = document.getElementById('solde-periode').value;
+  const soldes  = getSoldesInitiaux();
+  const s       = soldes[per] || {};
+  document.getElementById('solde-banque').value   = s.banque   || '';
+  document.getElementById('solde-caisse1').value  = s.caisse1  || '';
+  document.getElementById('solde-caisse2').value  = s.caisse2  || '';
+  ['banque','caisse1','caisse2'].forEach(k => document.getElementById('saved-'+k).classList.add('hidden'));
 }
 
-function saveSheetConfig() {
-  const cfg = {
-    spreadsheetId:   document.getElementById('cfg-sheets-id').value.trim(),
-    formulairesId:   document.getElementById('cfg-forms-id').value.trim(),
-    facturesDriveId: document.getElementById('cfg-drive-id').value.trim(),
-    webhookUrl:      document.getElementById('cfg-webhook').value.trim(),
-    adminEmail:      document.getElementById('cfg-admin-email').value.trim(),
-    clientId:        document.getElementById('cfg-client-id').value.trim(),
+function getSoldesInitiaux() {
+  try { return JSON.parse(localStorage.getItem('arche_soldes_initiaux') || '{}'); }
+  catch(e) { return {}; }
+}
+
+function saveSoldesInitiaux() {
+  const per     = document.getElementById('solde-periode').value;
+  const soldes  = getSoldesInitiaux();
+  soldes[per]   = {
+    banque:  parseFloat(document.getElementById('solde-banque').value)  || 0,
+    caisse1: parseFloat(document.getElementById('solde-caisse1').value) || 0,
+    caisse2: parseFloat(document.getElementById('solde-caisse2').value) || 0,
+    date:    new Date().toLocaleDateString('fr-FR'),
   };
-  localStorage.setItem('arche_sheets_config', JSON.stringify(cfg));
-  if (cfg.spreadsheetId) Sheets.config.spreadsheetId = cfg.spreadsheetId;
-  if (cfg.formulairesId) Sheets.config.formulairesId = cfg.formulairesId;
-  if (cfg.facturesDriveId) Sheets.config.facturesDriveId = cfg.facturesDriveId;
-  showToast('Configuration enregistrée !');
-  checkSheetsConnection();
+  localStorage.setItem('arche_soldes_initiaux', JSON.stringify(soldes));
+  ['banque','caisse1','caisse2'].forEach(k => document.getElementById('saved-'+k).classList.remove('hidden'));
+  renderSoldesSummary();
+  showToast('Soldes initiaux enregistrés !');
 }
 
+function renderSoldesSummary() {
+  const soldes = getSoldesInitiaux();
+  const parts  = Object.entries(soldes).map(([per, s]) =>
+    `<strong>${per}</strong> : Banque ${fmt(s.banque)} / C1 ${fmt(s.caisse1)} / C2 ${fmt(s.caisse2)}`
+  );
+  document.getElementById('soldes-summary').innerHTML = parts.length ? parts.join(' — ') : 'Aucun solde initial enregistré';
+}
+
+// Exposer getSoldesInitiaux pour les autres pages
+window.getSoldesInitiaux = getSoldesInitiaux;
+
+// ============================================================
+// STATUT CONNEXION GOOGLE SHEETS
+// ============================================================
 async function checkSheetsConnection() {
-  const statusEl = document.getElementById('sheets-status');
-  const id = document.getElementById('cfg-sheets-id').value.trim() || Sheets.config.spreadsheetId;
+  const statusEl  = document.getElementById('sheets-status');
+  const displayEl = document.getElementById('sheets-id-display');
+  const id        = Sheets.config.spreadsheetId;
+  displayEl.textContent = id || 'Non configuré';
+
   if (!id || id === 'VOTRE_SPREADSHEET_ID') {
-    statusEl.innerHTML = '<div class="warn-banner"><i class="ti ti-alert-triangle"></i> <span>ID du Google Sheets non configuré. Renseignez-le ci-dessus.</span></div>';
+    statusEl.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--amber-bg);border-radius:var(--radius-sm);font-size:12px;color:var(--amber);">
+      <i class="ti ti-alert-triangle"></i> Google Sheets non configuré. Renseignez l'ID dans <code>sheets.js</code> (ligne <code>spreadsheetId</code>).
+    </div>`;
     return;
   }
-  statusEl.innerHTML = '<div class="warn-banner"><i class="ti ti-loader-2 spinner"></i> <span>Connexion en cours…</span></div>';
   try {
     await gapi.client.sheets.spreadsheets.get({ spreadsheetId: id });
-    statusEl.innerHTML = '<div class="success-banner"><i class="ti ti-check"></i> <span>Connexion au Google Sheets réussie !</span></div>';
+    statusEl.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--green-bg);border:0.5px solid rgba(59,109,17,0.2);border-radius:var(--radius-sm);font-size:12px;color:var(--green);">
+      <i class="ti ti-circle-check"></i> <strong>Connexion au Google Sheets réussie !</strong> Les données sont accessibles.
+    </div>`;
   } catch(e) {
-    statusEl.innerHTML = `<div class="warn-banner"><i class="ti ti-x"></i> <span>Connexion impossible : ${e.result?.error?.message||'Vérifiez l\'ID et que le fichier est partagé avec votre compte.'}</span></div>`;
+    statusEl.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--red-bg);border-radius:var(--radius-sm);font-size:12px;color:var(--red);">
+      <i class="ti ti-x"></i> Connexion impossible : ${e.result?.error?.message||'Vérifiez l\'ID dans sheets.js et que le fichier est partagé avec votre compte Google.'}
+    </div>`;
   }
 }
 
@@ -507,27 +468,22 @@ async function checkSheetsConnection() {
 // ============================================================
 function exportConfig() {
   const cfg = {
-    version: 2,
+    version: 3,
     exported_at: new Date().toISOString(),
     periodes:    Sheets.getPeriodes(),
     types_mvt:   Sheets.getTypesMouvement(),
     types_desc:  getDescs(),
-    types_comp:  Sheets.getTypesComplementaires(),
     reglements:  Sheets.getModesReglement(),
-    users:       getUsers(),
-    sheets_cfg:  JSON.parse(localStorage.getItem('arche_sheets_config') || '{}'),
+    soldes:      getSoldesInitiaux(),
   };
-  const blob = new Blob([JSON.stringify(cfg, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(cfg,null,2)],{type:'application/json'}));
   a.download = `arche_config_${new Date().toLocaleDateString('fr-FR').replace(/\//g,'-')}.json`;
   a.click();
   showToast('Configuration exportée !');
 }
 
 function importConfig(input) {
-  const file = input.files[0];
-  if (!file) return;
   const reader = new FileReader();
   reader.onload = e => {
     try {
@@ -535,20 +491,20 @@ function importConfig(input) {
       if (cfg.periodes)   Sheets.savePeriodes(cfg.periodes);
       if (cfg.types_mvt)  Sheets.saveTypesMouvement(cfg.types_mvt);
       if (cfg.types_desc) saveDescs(cfg.types_desc);
-      if (cfg.types_comp) Sheets.saveTypesComplementaires(cfg.types_comp);
       if (cfg.reglements) Sheets.saveModesReglement(cfg.reglements);
-      if (cfg.users)      saveUsers(cfg.users);
-      if (cfg.sheets_cfg) { localStorage.setItem('arche_sheets_config', JSON.stringify(cfg.sheets_cfg)); loadSheetConfig(); }
+      if (cfg.soldes)     localStorage.setItem('arche_soldes_initiaux', JSON.stringify(cfg.soldes));
       renderAll();
-      showToast('Configuration importée avec succès !');
+      initSoldesInitiaux();
+      showToast('Configuration importée !');
     } catch(err) { alert('Fichier invalide : ' + err.message); }
   };
-  reader.readAsText(file);
+  reader.readAsText(input.files[0]);
 }
 
 // ============================================================
 // HELPERS
 // ============================================================
+function fmt(v) { if(!v&&v!==0)return'0,00 €';return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
 function showToast(m) { const t=document.createElement('div');t.className='success-toast';t.innerHTML=`<i class="ti ti-check"></i> ${m}`;document.body.appendChild(t);setTimeout(()=>t.remove(),3000); }
 function escH(s) { return String(s||'').replace(/'/g,"&#39;").replace(/"/g,'&quot;'); }
 </script>
