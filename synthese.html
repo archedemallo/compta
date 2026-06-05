@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Synthèse — Arche de Mallo</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  .readonly-banner{background:var(--blue-bg);color:var(--blue);font-size:11px;padding:7px 16px;display:flex;align-items:center;gap:8px;border-bottom:0.5px solid rgba(24,95,165,0.15);}
+  .period-picker{display:flex;gap:4px;flex-wrap:wrap;}
+  .period-btn{font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:transparent;color:var(--text-2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;}
+  .period-btn:hover{background:var(--warm);}
+  .period-btn.active{background:var(--orange);color:white;border-color:var(--orange);}
+
+  /* Navigation synthèse */
+  .synth-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:12px;border-bottom:0.5px solid var(--border);}
+  .synth-btn{font-size:11px;padding:5px 12px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:transparent;color:var(--text-2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;display:flex;align-items:center;gap:5px;}
+  .synth-btn:hover{background:var(--warm);}
+  .synth-btn.active{background:var(--brown-mid);color:white;border-color:var(--brown-mid);}
+
+  /* Cards */
+  .card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px;}
+  .card-head{padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+  .card-title{font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;}
+  .card-title i{color:var(--orange);}
+  .card-body{padding:14px 16px;}
+
+  /* KPI top */
+  .kpi-top{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
+  .kpi{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;}
+  .kpi-label{font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
+  .kpi-value{font-size:20px;font-weight:600;line-height:1.1;}
+  .kpi-sub{font-size:10px;color:var(--text-3);margin-top:3px;}
+  .v-green{color:var(--green);} .v-blue{color:var(--blue);} .v-orange{color:var(--orange);} .v-red{color:var(--red);}
+
+  /* Grid 2 colonnes */
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+
+  /* Flux mensuel */
+  .flux-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;}
+  .flux-name{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-2);margin-bottom:8px;}
+  .flux-line{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;}
+  .flux-line:not(:last-child){border-bottom:0.5px solid var(--border);padding-bottom:6px;margin-bottom:3px;}
+  .fl-label{color:var(--text-3);}
+  .fl-in{color:var(--green);font-weight:600;} .fl-out{color:var(--red);} .fl-net{font-weight:500;}
+
+  /* Tableaux */
+  table{width:100%;border-collapse:collapse;font-size:11px;}
+  thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:6px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);}
+  tbody td{padding:6px 10px;border-bottom:0.5px solid var(--border);}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--cream);}
+  .r{text-align:right;font-variant-numeric:tabular-nums;}
+  .amount-c{color:var(--green);font-weight:500;} .amount-d{color:var(--red);font-weight:500;}
+
+  /* Barres CSS */
+  .bar-row{display:grid;grid-template-columns:130px 1fr 80px;align-items:center;gap:10px;margin-bottom:8px;font-size:11px;}
+  .bar-label{color:var(--text-2);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bar-track{background:var(--surface-2);border-radius:3px;height:14px;overflow:hidden;}
+  .bar-fill{height:14px;border-radius:3px;transition:width 0.6s ease;}
+  .bar-value{font-variant-numeric:tabular-nums;text-align:right;font-size:10px;}
+  .bar-green{background:var(--green);} .bar-red{background:var(--red);opacity:0.8;}
+  .bar-orange{background:var(--orange);} .bar-blue{background:var(--blue);}
+
+  /* Rapprochement */
+  .rap-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:var(--radius-sm);margin-bottom:6px;font-size:12px;}
+  .rap-ok{background:var(--green-bg);} .rap-warn{background:var(--amber-bg);} .rap-err{background:var(--red-bg);}
+  .rap-label{font-weight:500;}
+  .rap-val{font-variant-numeric:tabular-nums;font-weight:600;}
+
+  /* Comparaison N vs N-1 */
+  .comp-row{display:grid;grid-template-columns:1fr 1fr 1fr 80px;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:11px;}
+  .comp-row:last-child{border-bottom:none;}
+  .comp-evol{font-size:10px;font-weight:600;text-align:right;}
+  .evol-pos{color:var(--green);} .evol-neg{color:var(--red);}
+
+  /* Saisie rapide */
+  .quick-entry{background:var(--surface);border:0.5px solid var(--orange);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;}
+  .qe-title{font-size:11px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+  .qe-title i{color:var(--orange);}
+  .qe-grid{display:grid;grid-template-columns:1fr 1fr 1fr 80px;gap:10px;align-items:end;}
+
+  .spinner{display:inline-block;animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .success-toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:white;padding:10px 18px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;z-index:999;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-md);animation:slideIn 0.25s ease;}
+  @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+  .loading-wrap{padding:48px;text-align:center;color:var(--text-3);}
+  canvas{max-height:280px;}
+</style>
+</head>
+<body>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main">
+  <div class="readonly-banner" id="readonly-banner">
+    <i class="ti ti-eye"></i>
+    <span>Vue synthèse — <strong id="user-role-lbl">Lecture seule</strong></span>
+    <span style="margin-left:auto;color:var(--text-3);font-size:10px;" id="last-update-banner">Chargement…</span>
+  </div>
+  <div class="topbar">
+    <div class="topbar-title">Synthèse comptable</div>
+    <div class="topbar-right">
+      <div class="period-picker" id="period-picker"></div>
+    </div>
+  </div>
+  <div class="page-content">
+
+    <!-- NAVIGATION SYNTHÈSES -->
+    <div class="synth-nav">
+      <button class="synth-btn active" onclick="showSection('vue-generale')"><i class="ti ti-chart-bar"></i> Vue générale</button>
+      <button class="synth-btn" onclick="showSection('flux-mensuels')"><i class="ti ti-calendar-stats"></i> Flux mensuels</button>
+      <button class="synth-btn" onclick="showSection('evolution')"><i class="ti ti-trending-up"></i> Évolution 12 mois</button>
+      <button class="synth-btn" onclick="showSection('repartition')"><i class="ti ti-chart-pie"></i> Répartition</button>
+      <button class="synth-btn" onclick="showSection('top-fournisseurs')"><i class="ti ti-building-store"></i> Top fournisseurs</button>
+      <button class="synth-btn" onclick="showSection('top-donateurs')"><i class="ti ti-heart"></i> Top donateurs</button>
+      <button class="synth-btn" onclick="showSection('adoptions')"><i class="ti ti-home"></i> Adoptions</button>
+      <button class="synth-btn" onclick="showSection('dons')"><i class="ti ti-coin"></i> Dons</button>
+      <button class="synth-btn" onclick="showSection('cheques-att')"><i class="ti ti-writing"></i> Chèques en attente</button>
+      <button class="synth-btn" onclick="showSection('remises-att')"><i class="ti ti-stack"></i> Remises en attente</button>
+      <button class="synth-btn" onclick="showSection('rapprochement')"><i class="ti ti-scale"></i> Rapprochement caisse</button>
+      <button class="synth-btn" onclick="showSection('depenses-cat')"><i class="ti ti-chart-bar-off"></i> Dépenses / catégorie</button>
+      <button class="synth-btn" onclick="showSection('comparaison')"><i class="ti ti-arrows-exchange"></i> N vs N-1</button>
+      <button class="synth-btn" onclick="showSection('tresorerie')"><i class="ti ti-cash"></i> Trésorerie prévisionnelle</button>
+      <button class="synth-btn" onclick="showSection('evenements')"><i class="ti ti-confetti"></i> Événements</button>
+      <button class="synth-btn" onclick="showSection('totaux-periode')"><i class="ti ti-sum"></i> Totaux période</button>
+      <button class="synth-btn" onclick="showSection('rapport-annuel')"><i class="ti ti-file-analytics"></i> Rapport annuel</button>
+      <button class="synth-btn" onclick="showSection('saisie-rapide')"><i class="ti ti-pencil"></i> Saisie rapide</button>
+    </div>
+
+    <!-- LOADING -->
+    <div id="global-loading" class="loading-wrap"><i class="ti ti-loader-2 spinner" style="font-size:28px;"></i><br><br>Chargement des données…</div>
+
+    <!-- CONTENU DYNAMIQUE -->
+    <div id="synth-content" style="display:none;"></div>
+
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script src="sheets.js"></script>
+<script src="sidebar.js"></script>
+<script>
+// ============================================================
+// ÉTAT GLOBAL
+// ============================================================
+let allCaisse=[],allBanque=[],allCheques=[],allRemises=[],allFactures=[];
+let caisse1Ph=[],caisse2Ph=[];
+let activePer='',activeSection='vue-generale';
+let charts={};
+
+// ============================================================
+// INIT
+// ============================================================
+Auth.requireAuth(async(user)=>{
+  await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
+  Sidebar.build('synthese');
+  activePer=Sidebar.getActivePeriode();
+  buildPeriodPicker();
+
+  if(Auth.isAdmin()){
+    document.getElementById('user-role-lbl').textContent='Administrateur';
+    document.getElementById('readonly-banner').style.background='var(--green-bg)';
+    document.getElementById('readonly-banner').style.color='var(--green)';
+  }
+
+  await loadData();
+});
+
+async function loadData(){
+  document.getElementById('global-loading').style.display='block';
+  document.getElementById('synth-content').style.display='none';
+  try{
+    [allCaisse,allBanque,allCheques,allRemises,allFactures,caisse1Ph,caisse2Ph]=await Promise.all([
+      Sheets.getCaisseOperations(),Sheets.getBanqueOperations(),
+      Sheets.getCheques(),Sheets.getRemises(),Sheets.getFactures(),
+      Sheets.getCaissePhysique(1),Sheets.getCaissePhysique(2),
+    ]);
+    const now=new Date().toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    document.getElementById('last-update-banner').textContent=`Mis à jour le ${now}`;
+    Sidebar.setLastUpdate();
+  }catch(e){console.error(e);}
+  document.getElementById('global-loading').style.display='none';
+  document.getElementById('synth-content').style.display='block';
+  renderSection(activeSection);
+}
+
+function onPeriodeChange(p){activePer=p;buildPeriodPicker();destroyCharts();renderSection(activeSection);}
+
+function buildPeriodPicker(){
+  const picker=document.getElementById('period-picker');
+  picker.innerHTML=Sheets.getPeriodes().map(p=>
+    `<button class="period-btn ${p===activePer?'active':''}" onclick="selectPer('${p}')">${p}</button>`
+  ).join('');
+}
+function selectPer(p){activePer=p;Sidebar.setPeriode(p);buildPeriodPicker();destroyCharts();renderSection(activeSection);}
+
+function showSection(id){
+  activeSection=id;
+  document.querySelectorAll('.synth-btn').forEach((b,i)=>{
+    const sections=['vue-generale','flux-mensuels','evolution','repartition','top-fournisseurs','top-donateurs','adoptions','dons','cheques-att','remises-att','rapprochement','depenses-cat','comparaison','tresorerie','evenements','totaux-periode','rapport-annuel','saisie-rapide'];
+    b.classList.toggle('active',sections[i]===id);
+  });
+  destroyCharts();
+  renderSection(id);
+}
+
+function destroyCharts(){Object.values(charts).forEach(c=>{try{c.destroy();}catch(e){}});charts={};}
+
+// ============================================================
+// DONNÉES FILTRÉES
+// ============================================================
+const cc=()=>Sheets.cols.caisse;
+const cb=()=>Sheets.cols.banque;
+const cp=()=>Sheets.cols.caissePhysique;
+
+function caisseRows(){return allCaisse.filter(r=>r[cc().periode]===activePer);}
+function banqueRows(){return allBanque.filter(r=>r[cb().periode]===activePer);}
+function c1rows(){return caisseRows().filter(r=>r[cc().source]!=='C2');}
+function c2rows(){return caisseRows().filter(r=>r[cc().source]==='C2');}
+
+function sum(rows,col){return rows.reduce((s,r)=>s+(parseFloat(r[col])||0),0);}
+function sumCredit(rows,col){return sum(rows,col);}
+
+function calcFlux(rows,colD,colC,moisLabel){
+  let inn=0,out=0;
+  rows.forEach(r=>{
+    if(moisLabel&&!rowInMonth(r[colD],moisLabel))return;
+    inn+=(parseFloat(r[colC])||0);
+    out+=(parseFloat(r[colD])||0);
+  });
+  return{in:inn,out};
+}
+
+function rowInMonth(dateStr,moisLabel){
+  const d=parseDateFR(String(dateStr||''));
+  if(!d)return false;
+  return d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}).toLowerCase()===moisLabel.toLowerCase();
+}
+
+function parseDateFR(s){
+  const p=s.split(/[\/\-]/);
+  if(p.length!==3)return null;
+  if(p[0].length===4)return new Date(p[0],p[1]-1,p[2]);
+  return new Date(p[2],p[1]-1,p[0]);
+}
+
+function getMoisCourant(){return new Date().toLocaleDateString('fr-FR',{month:'long',year:'numeric'});}
+
+function get12Mois(){
+  const mois=[];
+  const now=new Date();
+  for(let i=11;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    mois.push({label:d.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'}),full:d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}),date:d});
+  }
+  return mois;
+}
+
+// ============================================================
+// RENDER SECTION
+// ============================================================
+function renderSection(id){
+  const el=document.getElementById('synth-content');
+  switch(id){
+    case 'vue-generale':     el.innerHTML=renderVueGenerale();   break;
+    case 'flux-mensuels':    el.innerHTML=renderFluxMensuels();  break;
+    case 'evolution':        el.innerHTML=renderEvolution();     setTimeout(initEvolutionChart,50); break;
+    case 'repartition':      el.innerHTML=renderRepartition();   setTimeout(initRepartitionCharts,50); break;
+    case 'top-fournisseurs': el.innerHTML=renderTopFournisseurs(); break;
+    case 'top-donateurs':    el.innerHTML=renderTopDonateurs();  break;
+    case 'adoptions':        el.innerHTML=renderAdoptions();     setTimeout(initAdoptionsChart,50); break;
+    case 'dons':             el.innerHTML=renderDons();          setTimeout(initDonsChart,50); break;
+    case 'cheques-att':      el.innerHTML=renderChequesAtt();    break;
+    case 'remises-att':      el.innerHTML=renderRemisesAtt();    break;
+    case 'rapprochement':    el.innerHTML=renderRapprochement(); break;
+    case 'depenses-cat':     el.innerHTML=renderDepensesCat();   break;
+    case 'comparaison':      el.innerHTML=renderComparaison();   break;
+    case 'tresorerie':       el.innerHTML=renderTresorerie();    setTimeout(initTresoChart,50); break;
+    case 'evenements':       el.innerHTML=renderEvenements();    break;
+    case 'totaux-periode':   el.innerHTML=renderTotauxPeriode(); break;
+    case 'rapport-annuel':   el.innerHTML=renderRapportAnnuel(); break;
+    case 'saisie-rapide':    el.innerHTML=renderSaisieRapide();  break;
+  }
+}
+
+// ============================================================
+// 1. VUE GÉNÉRALE
+// ============================================================
+function renderVueGenerale(){
+  const mois=getMoisCourant();
+  const lastC1=caisse1Ph.length?caisse1Ph[caisse1Ph.length-1]:null;
+  const lastC2=caisse2Ph.length?caisse2Ph[caisse2Ph.length-1]:null;
+  const soldC1=lastC1?parseFloat(lastC1[cp().total])||0:0;
+  const soldC2=lastC2?parseFloat(lastC2[cp().total])||0:0;
+  const lastBq=banqueRows().length?banqueRows()[banqueRows().length-1]:null;
+  const soldBq=lastBq?parseFloat(lastBq[cb().solde])||0:0;
+
+  const bqF=calcFlux(banqueRows(),cb().debit,cb().credit,mois);
+  const c1F=calcFlux(c1rows(),cc().debit,cc().credit,mois);
+  const c2F=calcFlux(c2rows(),cc().debit,cc().credit,mois);
+
+  const adoptsMois=caisseRows().filter(r=>(r[cc().type_mvt]||'').toLowerCase().includes('adopt')&&rowInMonth(r[cc().date],mois)).length;
+  const donsMois=[...caisseRows(),...banqueRows()].filter(r=>{
+    const t=(r[cc().type_mvt]||r[cb().type_mvt]||'').toLowerCase();
+    const d=r[cc().date]||r[cb().date]||'';
+    return t.includes('don')&&rowInMonth(d,mois);
+  }).length;
+
+  const recent=[...caisseRows(),...banqueRows()].filter(r=>r[cc().date]||r[cb().date]).map(r=>({
+    date:r[cc().date]||r[cb().date]||'',libelle:r[cc().libelle]||r[cb().libelle]||'',
+    type:r[cc().type_mvt]||r[cb().type_mvt]||'',
+    credit:parseFloat(r[cc().credit]||r[cb().credit])||0,
+    debit:parseFloat(r[cc().debit]||r[cb().debit])||0,
+    src:r[cc().source]?'caisse':'banque',
+    srcLabel:r[cc().source]?(r[cc().source]==='C2'?'Caisse 2':'Caisse 1'):'Banque',
+    srcChip:r[cc().source]?(r[cc().source]==='C2'?'caisse2':'caisse1'):'banque',
+    _date:parseDateFR(String(r[cc().date]||r[cb().date]||'')),
+  })).filter(r=>r._date).sort((a,b)=>b._date-a._date).slice(0,15);
+
+  return `
+    <div class="kpi-top">
+      <div class="kpi"><div class="kpi-label">Solde banque</div><div class="kpi-value v-blue">${fmt(soldBq)}</div><div class="kpi-sub">Période ${activePer}</div></div>
+      <div class="kpi"><div class="kpi-label">Caisse 1</div><div class="kpi-value v-green">${fmt(soldC1)}</div><div class="kpi-sub">Dernier comptage</div></div>
+      <div class="kpi"><div class="kpi-label">Caisse 2</div><div class="kpi-value v-green">${fmt(soldC2)}</div><div class="kpi-sub">Dernier comptage</div></div>
+      <div class="kpi"><div class="kpi-label">Adoptions — ${mois.split(' ')[0]}</div><div class="kpi-value v-orange">${adoptsMois}</div><div class="kpi-sub">Ce mois</div></div>
+      <div class="kpi"><div class="kpi-label">Dons — ${mois.split(' ')[0]}</div><div class="kpi-value v-orange">${donsMois}</div><div class="kpi-sub">Ce mois</div></div>
+    </div>
+    <div class="grid-3" style="margin-bottom:14px;">
+      ${renderFluxCard('Banque',bqF)}
+      ${renderFluxCard('Caisse 1',c1F)}
+      ${renderFluxCard('Caisse 2',c2F)}
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title"><i class="ti ti-clock"></i> 15 dernières opérations</div></div>
+      <table><thead><tr><th>Date</th><th>Source</th><th>Libellé</th><th>Type</th><th class="r">Débit</th><th class="r">Crédit</th></tr></thead>
+      <tbody>${recent.map(r=>`<tr>
+        <td style="color:var(--text-3);white-space:nowrap;">${r.date}</td>
+        <td><span class="chip chip-${r.srcChip}">${r.srcLabel}</span></td>
+        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.libelle}</td>
+        <td><span class="chip chip-${chipType(r.type)}">${r.type}</span></td>
+        <td class="r amount-d">${r.debit?fmt(r.debit):''}</td>
+        <td class="r amount-c">${r.credit?fmt(r.credit):''}</td>
+      </tr>`).join('')}</tbody></table>
+    </div>`;
+}
+
+function renderFluxCard(name,flux){
+  const net=flux.in-flux.out;
+  return `<div class="flux-card">
+    <div class="flux-name">${name}</div>
+    <div class="flux-line"><span class="fl-label">Entrées</span><span class="fl-in">${fmt(flux.in)}</span></div>
+    <div class="flux-line"><span class="fl-label">Sorties</span><span class="fl-out">${flux.out>0?'−':''}${fmt(flux.out)}</span></div>
+    <div class="flux-line" style="margin-top:4px;border-top:0.5px solid var(--border);padding-top:6px;">
+      <span class="fl-label" style="font-weight:500;">Net</span>
+      <span class="fl-net" style="color:${net>=0?'var(--green)':'var(--red)'}">${net>=0?'+':'−'}${fmt(Math.abs(net))}</span>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// 2. FLUX MENSUELS
+// ============================================================
+function renderFluxMensuels(){
+  const mois12=get12Mois();
+  const rows=`<thead><tr><th>Mois</th><th class="r">Banque — Entrées</th><th class="r">Banque — Sorties</th><th class="r">C1 — Entrées</th><th class="r">C1 — Sorties</th><th class="r">C2 — Entrées</th><th class="r">C2 — Sorties</th></tr></thead>
+  <tbody>${mois12.map(m=>{
+    const bq=calcFlux(allBanque,cb().debit,cb().credit,m.full);
+    const c1=calcFlux(c1rows(),cc().debit,cc().credit,m.full);
+    const c2=calcFlux(c2rows(),cc().debit,cc().credit,m.full);
+    return `<tr>
+      <td style="font-weight:500;">${m.label}</td>
+      <td class="r amount-c">${bq.in?fmt(bq.in):''}</td><td class="r amount-d">${bq.out?fmt(bq.out):''}</td>
+      <td class="r amount-c">${c1.in?fmt(c1.in):''}</td><td class="r amount-d">${c1.out?fmt(c1.out):''}</td>
+      <td class="r amount-c">${c2.in?fmt(c2.in):''}</td><td class="r amount-d">${c2.out?fmt(c2.out):''}</td>
+    </tr>`;
+  }).join('')}</tbody>`;
+  return `<div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-calendar-stats"></i> Flux mensuels — 12 derniers mois</div></div><div style="overflow-x:auto;"><table>${rows}</table></div></div>`;
+}
+
+// ============================================================
+// 3. ÉVOLUTION 12 MOIS
+// ============================================================
+function renderEvolution(){
+  return `<div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-trending-up"></i> Évolution mensuelle — Entrées / Sorties Banque</div></div><div class="card-body"><canvas id="chart-evolution"></canvas></div></div>`;
+}
+function initEvolutionChart(){
+  const mois12=get12Mois();
+  const labels=mois12.map(m=>m.label);
+  const ins=mois12.map(m=>calcFlux(allBanque,cb().debit,cb().credit,m.full).in);
+  const outs=mois12.map(m=>calcFlux(allBanque,cb().debit,cb().credit,m.full).out);
+  const ctx=document.getElementById('chart-evolution');
+  if(!ctx)return;
+  charts.evolution=new Chart(ctx,{type:'bar',data:{labels,datasets:[
+    {label:'Entrées',data:ins,backgroundColor:'rgba(59,109,17,0.7)',borderColor:'rgb(59,109,17)',borderWidth:1},
+    {label:'Sorties',data:outs,backgroundColor:'rgba(153,60,29,0.6)',borderColor:'rgb(153,60,29)',borderWidth:1},
+  ]},options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true,ticks:{callback:v=>v.toLocaleString('fr-FR')+'€'}}}}});
+}
+
+// ============================================================
+// 4. RÉPARTITION
+// ============================================================
+function renderRepartition(){
+  return `<div class="grid-2">
+    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des entrées</div></div><div class="card-body"><canvas id="chart-entrees"></canvas></div></div>
+    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des sorties</div></div><div class="card-body"><canvas id="chart-sorties"></canvas></div></div>
+  </div>`;
+}
+function initRepartitionCharts(){
+  const allOps=[...caisseRows(),...banqueRows()];
+  const byType=(ops,colType,colMontant)=>{
+    const map={};
+    ops.forEach(r=>{const t=r[colType]||'Autre';const v=parseFloat(r[colMontant])||0;if(v>0)map[t]=(map[t]||0)+v;});
+    return Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  };
+  const entrees=byType(allOps,cc().type_mvt,cc().credit);
+  const sorties=byType(allOps,cc().type_mvt,cc().debit);
+  const colors=['#3B6D11','#c96b2a','#185FA5','#854F0B','#3C3489','#993C1D','#5c3d28','#8a7968'];
+  const mkChart=(id,data)=>{
+    const ctx=document.getElementById(id);if(!ctx)return;
+    charts[id]=new Chart(ctx,{type:'doughnut',data:{labels:data.map(d=>d[0]),datasets:[{data:data.map(d=>d[1]),backgroundColor:colors,borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,plugins:{legend:{position:'right'},tooltip:{callbacks:{label:c=>`${c.label}: ${fmt(c.raw)}`}}}}});
+  };
+  mkChart('chart-entrees',entrees);mkChart('chart-sorties',sorties);
+}
+
+// ============================================================
+// 5. TOP FOURNISSEURS
+// ============================================================
+function renderTopFournisseurs(){
+  const rows=[...caisseRows(),...banqueRows()].filter(r=>parseFloat(r[cc().debit]||r[cb().debit])>0);
+  const map={};
+  rows.forEach(r=>{const n=r[cc().nom]||r[cb().nom]||r[cc().libelle]||r[cb().libelle]||'Inconnu';const v=parseFloat(r[cc().debit]||r[cb().debit])||0;map[n]=(map[n]||0)+v;});
+  const top=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const max=top[0]?top[0][1]:1;
+  return `<div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-building-store"></i> Top 10 fournisseurs / bénéficiaires</div></div>
+  <div class="card-body">${top.map(([n,v],i)=>`
+    <div class="bar-row">
+      <div class="bar-label">${i+1}. ${n}</div>
+      <div class="bar-track"><div class="bar-fill bar-red" style="width:${Math.round(v/max*100)}%"></div></div>
+      <div class="bar-value amount-d">${fmt(v)}</div>
+    </div>`).join('')}</div></div>`;
+}
+
+// ============================================================
+// 6. TOP DONATEURS
+// ============================================================
+function renderTopDonateurs(){
+  const rows=[...caisseRows(),...banqueRows()].filter(r=>{const t=(r[cc().type_mvt]||r[cb().type_mvt]||'').toLowerCase();return t.includes('don');});
+  const map={};
+  rows.forEach(r=>{const n=r[cc().nom]||r[cb().nom]||r[cc().libelle]||r[cb().libelle]||'Anonyme';const v=parseFloat(r[cc().credit]||r[cb().credit])||0;map[n]=(map[n]||0)+v;});
+  const top=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const max=top[0]?top[0][1]:1;
+  return `<div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-heart"></i> Top 10 donateurs</div></div>
+  <div class="card-body">${top.length?top.map(([n,v],i)=>`
+    <div class="bar-row">
+      <div class="bar-label">${i+1}. ${n}</div>
+      <div class="bar-track"><div class="bar-fill bar-green" style="width:${Math.round(v/max*100)}%"></div></div>
+      <div class="bar-value amount-c">${fmt(v)}</div>
+    </div>`).join(''):'<div style="color:var(--text-3);font-size:12px;">Aucun don enregistré pour cette période</div>'}</div></div>`;
+}
+
+// ============================================================
+// 7. ADOPTIONS
+// ============================================================
+function renderAdoptions(){
+  return `<div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-home"></i> Suivi des adoptions — 12 mois</div></div><div class="card-body"><canvas id="chart-adoptions"></canvas></div></div>
+  <div class="card" style="margin-top:14px;"><div class="card-head"><div class="card-title"><i class="ti ti-list"></i> Détail des adoptions — période ${activePer}</div></div>
+  <table><thead><tr><th>Date</th><th>Libellé</th><th>Chat</th><th>Source</th><th class="r">Montant</th></tr></thead>
+  <tbody>${[...caisseRows(),...banqueRows()].filter(r=>(r[cc().type_mvt]||r[cb().type_mvt]||'').toLowerCase().includes('adopt'))
+    .sort((a,b)=>(parseDateFR(a[cc().date]||a[cb().date]||'')||0)-(parseDateFR(b[cc().date]||b[cb().date]||'')||0)*-1)
+    .map(r=>`<tr>
+      <td style="color:var(--text-3);">${r[cc().date]||r[cb().date]||'—'}</td>
+      <td>${r[cc().libelle]||r[cb().libelle]||'—'}</td>
+      <td style="color:var(--text-3);">${r[cc().nom_chat]||'—'}</td>
+      <td><span class="chip chip-${r[cc().source]?'caisse1':'banque'}">${r[cc().source]?('Caisse '+r[cc().source].replace('C','')):'Banque'}</span></td>
+      <td class="r amount-c">${fmt(r[cc().credit]||r[cb().credit])}</td>
+    </tr>`).join('')}</tbody></table></div>`;
+}
+function initAdoptionsChart(){
+  const mois12=get12Mois();
+  const counts=mois12.map(m=>([...allCaisse,...allBanque].filter(r=>{const t=(r[cc().type_mvt]||r[cb().type_mvt]||'').toLowerCase();const d=r[cc().date]||r[cb().date]||'';return t.includes('adopt')&&rowInMonth(d,m.full);}).length));
+  const ctx=document.getElementById('chart-adoptions');if(!ctx)return;
+  charts.adoptions=new Chart(ctx,{type:'line',data:{labels:mois12.map(m=>m.label),datasets:[{label:'Adoptions',data:counts,borderColor:'var(--orange)',backgroundColor:'rgba(201,107,42,0.1)',tension:0.3,fill:true}]},options:{responsive:true,scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+}
+
+// ============================================================
+// 8. DONS
+// ============================================================
+function renderDons(){
+  return `<div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-coin"></i> Suivi des dons — 12 mois</div></div><div class="card-body"><canvas id="chart-dons"></canvas></div></div>`;
+}
+function initDonsChart(){
+  const mois12=get12Mois();
+  const montants=mois12.map(m=>{
+    let tot=0;
+    [...allCaisse,...allBanque].forEach(r=>{const t=(r[cc().type_mvt]||r[cb().type_mvt]||'').toLowerCase();const d=r[cc().date]||r[cb().date]||'';const v=parseFloat(r[cc().credit]||r[cb().credit])||0;if(t.includes('don')&&rowInMonth(d,m.full))tot+=v;});
+    return tot;
+  });
+  const ctx=document.getElementById('chart-dons');if(!ctx)return;
+  charts.dons=new Chart(ctx,{type:'bar',data:{labels:mois12.map(m=>m.label),datasets:[{label:'Montant dons (€)',data:montants,backgroundColor:'rgba(59,109,17,0.7)',borderColor:'rgb(59,109,17)',borderWidth:1}]},options:{responsive:true,scales:{y:{beginAtZero:true,ticks:{callback:v=>v+'€'}}}}});
+}
+
+// ============================================================
+// 9. CHÈQUES EN ATTENTE
+// ============================================================
+function renderChequesAtt(){
+  const att=allCheques.filter(r=>r[Sheets.cols.cheque.statut]==='en_attente');
+  const tot=att.reduce((s,r)=>s+(parseFloat(r[Sheets.cols.cheque.montant])||0),0);
+  return `<div class="kpi-top" style="grid-template-columns:repeat(3,1fr);">
+    <div class="kpi"><div class="kpi-label">Chèques en attente</div><div class="kpi-value v-amber">${att.length}</div></div>
+    <div class="kpi"><div class="kpi-label">Montant total</div><div class="kpi-value v-orange">${fmt(tot)}</div></div>
+    <div class="kpi"><div class="kpi-label">Encaissés total</div><div class="kpi-value v-green">${allCheques.filter(r=>r[Sheets.cols.cheque.statut]==='encaisse').length}</div></div>
+  </div>
+  <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-writing"></i> Chèques en attente d'encaissement</div></div>
+  <table><thead><tr><th>Date émission</th><th>N° chèque</th><th>Bénéficiaire</th><th>Type</th><th class="r">Montant</th></tr></thead>
+  <tbody>${att.length?att.map(r=>`<tr>
+    <td style="color:var(--text-3);">${r[Sheets.cols.cheque.date_emission]||'—'}</td>
+    <td style="font-weight:500;">N°${r[Sheets.cols.cheque.num_cheque]||'—'}</td>
+    <td>${r[Sheets.cols.cheque.beneficiaire]||'—'}</td>
+    <td><span class="chip chip-${chipType(r[Sheets.cols.cheque.type_mvt])}">${r[Sheets.cols.cheque.type_mvt]||'—'}</span></td>
+    <td class="r amount-d">${fmt(r[Sheets.cols.cheque.montant])}</td>
+  </tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-3);">Aucun chèque en attente</td></tr>'}</tbody></table></div>`;
+}
+
+// ============================================================
+// 10. REMISES EN ATTENTE
+// ============================================================
+function renderRemisesAtt(){
+  const cr=Sheets.cols.remise;
+  const att=allRemises.filter(r=>r[cr.statut]==='en_attente');
+  const tot=att.reduce((s,r)=>s+(parseFloat(r[cr.montant_total])||0),0);
+  return `<div class="kpi-top" style="grid-template-columns:repeat(3,1fr);">
+    <div class="kpi"><div class="kpi-label">Remises en attente</div><div class="kpi-value v-orange">${att.length}</div></div>
+    <div class="kpi"><div class="kpi-label">Montant total</div><div class="kpi-value v-orange">${fmt(tot)}</div></div>
+    <div class="kpi"><div class="kpi-label">Encaissées total</div><div class="kpi-value v-green">${allRemises.filter(r=>r[cr.statut]==='encaissee').length}</div></div>
+  </div>
+  <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-stack"></i> Remises en attente</div></div>
+  <table><thead><tr><th>Date</th><th>N° bordereau</th><th class="r">Nb chèques</th><th class="r">Total</th></tr></thead>
+  <tbody>${att.length?att.map(r=>`<tr>
+    <td style="color:var(--text-3);">${r[cr.date_remise]||'—'}</td>
+    <td style="font-weight:500;">${r[cr.num_bordereau]||'—'}</td>
+    <td class="r">${r[cr.nb_cheques]||0}</td>
+    <td class="r amount-c">${fmt(r[cr.montant_total])}</td>
+  </tr>`).join(''):'<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-3);">Aucune remise en attente</td></tr>'}</tbody></table></div>`;
+}
+
+// ============================================================
+// 11. RAPPROCHEMENT CAISSE
+// ============================================================
+function renderRapprochement(){
+  const lastC1=caisse1Ph.length?caisse1Ph[caisse1Ph.length-1]:null;
+  const lastC2=caisse2Ph.length?caisse2Ph[caisse2Ph.length-1]:null;
+  const physC1=lastC1?parseFloat(lastC1[cp().total])||0:null;
+  const physC2=lastC2?parseFloat(lastC2[cp().total])||0:null;
+  const comptC1=sum(c1rows(),cc().credit)-sum(c1rows(),cc().debit);
+  const comptC2=sum(c2rows(),cc().credit)-sum(c2rows(),cc().debit);
+  const ecartC1=physC1!==null?physC1-comptC1:null;
+  const ecartC2=physC2!==null?physC2-comptC2:null;
+  const cls=(e)=>e===null?'':Math.abs(e)<0.01?'rap-ok':Math.abs(e)<10?'rap-warn':'rap-err';
+  return `<div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-scale"></i> Rapprochement caisse physique vs comptable</div></div>
+  <div class="card-body">
+    <div class="rap-row ${cls(ecartC1)}">
+      <div><div class="rap-label">Caisse 1</div><div style="font-size:10px;color:var(--text-3);">Comptable : ${fmt(comptC1)} — Physique : ${physC1!==null?fmt(physC1):'Non compté'} (${lastC1?lastC1[cp().mois]:'—'})</div></div>
+      <div class="rap-val" style="color:${ecartC1===null?'var(--text-3)':Math.abs(ecartC1)<0.01?'var(--green)':Math.abs(ecartC1)<10?'var(--amber)':'var(--red)'}">
+        ${ecartC1===null?'—':(ecartC1>=0?'+':'')+fmt(ecartC1)}
+      </div>
+    </div>
+    <div class="rap-row ${cls(ecartC2)}">
+      <div><div class="rap-label">Caisse 2</div><div style="font-size:10px;color:var(--text-3);">Comptable : ${fmt(comptC2)} — Physique : ${physC2!==null?fmt(physC2):'Non compté'} (${lastC2?lastC2[cp().mois]:'—'})</div></div>
+      <div class="rap-val" style="color:${ecartC2===null?'var(--text-3)':Math.abs(ecartC2)<0.01?'var(--green)':Math.abs(ecartC2)<10?'var(--amber)':'var(--red)'}">
+        ${ecartC2===null?'—':(ecartC2>=0?'+':'')+fmt(ecartC2)}
+      </div>
+    </div>
+    <div style="margin-top:12px;font-size:11px;color:var(--text-3);display:flex;gap:16px;">
+      <span><span style="display:inline-block;width:10px;height:10px;background:var(--green-bg);border:0.5px solid var(--green);border-radius:2px;margin-right:4px;"></span>Équilibré</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:var(--amber-bg);border:0.5px solid var(--amber);border-radius:2px;margin-right:4px;"></span>Écart mineur (&lt;10€)</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:var(--red-bg);border:0.5px solid var(--red);border-radius:2px;margin-right:4px;"></span>Écart important</span>
+    </div>
+  </div></div>`;
+}
+
+// ============================================================
+// 12. DÉPENSES PAR CATÉGORIE
+// ============================================================
+function renderDepensesCat(){
+  const allOps=[...caisseRows(),...banqueRows()].filter(r=>parseFloat(r[cc().debit]||r[cb().debit])>0);
+  const map={};
+  allOps.forEach(r=>{const t=r[cc().type_mvt]||r[cb().type_mvt]||'Autre';const v=parseFloat(r[cc().debit]||r[cb().debit])||0;map[t]=(map[t]||0)+v;});
+  const sorted=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  const total=sorted.reduce((s,[,v])=>s+v,0);
+  const max=sorted[0]?sorted[0][1]:1;
+  return `<div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-bar-off"></i> Dépenses par catégorie — ${activePer}</div><span style="font-size:11px;color:var(--text-3);">Total : ${fmt(total)}</span></div>
+  <div class="card-body">${sorted.map(([t,v])=>`
+    <div class="bar-row">
+      <div class="bar-label">${t}</div>
+      <div class="bar-track"><div class="bar-fill bar-red" style="width:${Math.round(v/max*100)}%"></div></div>
+      <div class="bar-value">${fmt(v)} <span style="color:var(--text-3);">(${Math.round(v/total*100)}%)</span></div>
+    </div>`).join('')}</div></div>`;
+}
+
+// ============================================================
+// 13. COMPARAISON N vs N-1
+// ============================================================
+function renderComparaison(){
+  const periodes=Sheets.getPeriodes();
+  const curIdx=periodes.indexOf(activePer);
+  const prevPer=curIdx>0?periodes[curIdx-1]:null;
+  const curC=caisseRows(),curB=banqueRows();
+  const prevC=prevPer?allCaisse.filter(r=>r[cc().periode]===prevPer):[];
+  const prevB=prevPer?allBanque.filter(r=>r[cb().periode]===prevPer):[];
+  const metrics=[
+    {label:'Entrées Banque',cur:sum(curB,cb().credit),prev:sum(prevB,cb().credit)},
+    {label:'Sorties Banque',cur:sum(curB,cb().debit),prev:sum(prevB,cb().debit)},
+    {label:'Entrées Caisse 1',cur:sum(curC.filter(r=>r[cc().source]!=='C2'),cc().credit),prev:sum(prevC.filter(r=>r[cc().source]!=='C2'),cc().credit)},
+    {label:'Entrées Caisse 2',cur:sum(curC.filter(r=>r[cc().source]==='C2'),cc().credit),prev:sum(prevC.filter(r=>r[cc().source]==='C2'),cc().credit)},
+    {label:'Dons',...calcDonsMetric(curC,curB,prevC,prevB)},
+    {label:'Adoptions (nb)',cur:[...curC,...curB].filter(r=>(r[cc().type_mvt]||r[cb().type_mvt]||'').toLowerCase().includes('adopt')).length,prev:[...prevC,...prevB].filter(r=>(r[cc().type_mvt]||r[cb().type_mvt]||'').toLowerCase().includes('adopt')).length,isCount:true},
+  ];
+  return `<div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-arrows-exchange"></i> Comparaison ${activePer} vs ${prevPer||'période précédente'}</div></div>
+  <table><thead><tr><th>Indicateur</th><th class="r">${activePer}</th><th class="r">${prevPer||'N-1'}</th><th class="r">Évolution</th></tr></thead>
+  <tbody>${metrics.map(m=>{
+    const evol=m.prev>0?(m.cur-m.prev)/m.prev*100:m.cur>0?100:0;
+    const sign=evol>=0?'+':'';
+    const cls=evol>=0?'evol-pos':'evol-neg';
+    return `<tr>
+      <td style="font-weight:500;">${m.label}</td>
+      <td class="r">${m.isCount?m.cur:fmt(m.cur)}</td>
+      <td class="r" style="color:var(--text-3);">${m.isCount?m.prev:fmt(m.prev)}</td>
+      <td class="r comp-evol"><span class="${cls}">${sign}${evol.toFixed(1)}%</span></td>
+    </tr>`;
+  }).join('')}</tbody></table></div>`;
+}
+function calcDonsMetric(cC,cB,pC,pB){
+  const isDon=r=>(r[cc().type_mvt]||r[cb().type_mvt]||'').toLowerCase().includes('don');
+  return{cur:sum(cC.filter(isDon),cc().credit)+sum(cB.filter(isDon),cb().credit),prev:sum(pC.filter(isDon),cc().credit)+sum(pB.filter(isDon),cb().credit)};
+}
+
+// ============================================================
+// 14. TRÉSORERIE PRÉVISIONNELLE
+// ============================================================
+function renderTresorerie(){
+  return `<div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-cash"></i> Trésorerie prévisionnelle — 3 prochains mois</div></div><div class="card-body"><canvas id="chart-treso"></canvas><div style="margin-top:12px;font-size:11px;color:var(--text-3);">Projection basée sur la moyenne des 3 derniers mois. Indicatif uniquement.</div></div></div>`;
+}
+function initTresoChart(){
+  const mois3past=get12Mois().slice(-3);
+  const avgIn=mois3past.reduce((s,m)=>s+calcFlux(allBanque,cb().debit,cb().credit,m.full).in,0)/3;
+  const avgOut=mois3past.reduce((s,m)=>s+calcFlux(allBanque,cb().debit,cb().credit,m.full).out,0)/3;
+  const now=new Date();
+  const future=[];
+  const lastBq=banqueRows().length?banqueRows()[banqueRows().length-1]:null;
+  let soldeCur=lastBq?parseFloat(lastBq[cb().solde])||0:0;
+  for(let i=1;i<=3;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()+i,1);
+    soldeCur+=avgIn-avgOut;
+    future.push({label:d.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'}),solde:Math.max(0,soldeCur)});
+  }
+  const past3=mois3past.map(m=>{let s=0;allBanque.filter(r=>rowInMonth(r[cb().date],m.full)).forEach(r=>s+=parseFloat(r[cb().credit]||0)-parseFloat(r[cb().debit]||0));return{label:m.label};});
+  const labels=[...mois3past.map(m=>m.label),...future.map(f=>f.label+' (prev.)')];
+  const actuals=mois3past.map(m=>calcFlux(allBanque,cb().debit,cb().credit,m.full).in-calcFlux(allBanque,cb().debit,cb().credit,m.full).out);
+  const projections=[...Array(3).fill(null),...future.map(f=>avgIn-avgOut)];
+  const ctx=document.getElementById('chart-treso');if(!ctx)return;
+  charts.treso=new Chart(ctx,{type:'bar',data:{labels,datasets:[
+    {label:'Réalisé (net)',data:[...actuals,...Array(3).fill(null)],backgroundColor:'rgba(59,109,17,0.7)'},
+    {label:'Prévision (net)',data:projections,backgroundColor:'rgba(201,107,42,0.5)',borderDash:[5,5]},
+  ]},options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{ticks:{callback:v=>v+'€'}}}}});
+}
+
+// ============================================================
+// 15. ÉVÉNEMENTS
+// ============================================================
+function renderEvenements(){
+  const allOps=[...caisseRows(),...banqueRows()].filter(r=>(r[cc().type_mvt]||r[cb().type_mvt]||'').toLowerCase().includes('vén')||(r[cc().type_mvt]||r[cb().type_mvt]||'').toLowerCase().includes('event'));
+  const map={};
+  allOps.forEach(r=>{const k=r[cc().description]||r[cb().description]||r[cc().libelle]||r[cb().libelle]||'Événement';const v=parseFloat(r[cc().credit]||r[cb().credit])||0;map[k]=(map[k]||0)+v;});
+  const sorted=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  return `<div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-confetti"></i> Recettes par événement — ${activePer}</div></div>
+  <table><thead><tr><th>Événement</th><th class="r">Recettes</th></tr></thead>
+  <tbody>${sorted.length?sorted.map(([e,v])=>`<tr><td>${e}</td><td class="r amount-c">${fmt(v)}</td></tr>`).join(''):'<tr><td colspan="2" style="text-align:center;padding:20px;color:var(--text-3);">Aucun événement pour cette période</td></tr>'}</tbody></table></div>`;
+}
+
+// ============================================================
+// 16. TOTAUX PÉRIODE
+// ============================================================
+function renderTotauxPeriode(){
+  const bqIn=sum(banqueRows(),cb().credit),bqOut=sum(banqueRows(),cb().debit);
+  const c1In=sum(c1rows(),cc().credit),c1Out=sum(c1rows(),cc().debit);
+  const c2In=sum(c2rows(),cc().credit),c2Out=sum(c2rows(),cc().debit);
+  return `<div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-sum"></i> Totaux — Période ${activePer}</div></div>
+  <table><thead><tr><th>Source</th><th class="r">Total entrées</th><th class="r">Total sorties</th><th class="r">Net</th><th class="r">Nb opérations</th></tr></thead>
+  <tbody>
+    <tr><td><span class="chip chip-banque">Banque</span></td><td class="r amount-c">${fmt(bqIn)}</td><td class="r amount-d">${fmt(bqOut)}</td><td class="r" style="font-weight:600;color:${bqIn-bqOut>=0?'var(--green)':'var(--red)'}">${fmt(bqIn-bqOut)}</td><td class="r">${banqueRows().length}</td></tr>
+    <tr><td><span class="chip chip-caisse1">Caisse 1</span></td><td class="r amount-c">${fmt(c1In)}</td><td class="r amount-d">${fmt(c1Out)}</td><td class="r" style="font-weight:600;color:${c1In-c1Out>=0?'var(--green)':'var(--red)'}">${fmt(c1In-c1Out)}</td><td class="r">${c1rows().length}</td></tr>
+    <tr><td><span class="chip chip-caisse2">Caisse 2</span></td><td class="r amount-c">${fmt(c2In)}</td><td class="r amount-d">${fmt(c2Out)}</td><td class="r" style="font-weight:600;color:${c2In-c2Out>=0?'var(--green)':'var(--red)'}">${fmt(c2In-c2Out)}</td><td class="r">${c2rows().length}</td></tr>
+    <tr style="background:var(--surface-2);font-weight:600;"><td>Total</td><td class="r amount-c">${fmt(bqIn+c1In+c2In)}</td><td class="r amount-d">${fmt(bqOut+c1Out+c2Out)}</td><td class="r" style="color:${(bqIn+c1In+c2In)-(bqOut+c1Out+c2Out)>=0?'var(--green)':'var(--red)'}">${fmt((bqIn+c1In+c2In)-(bqOut+c1Out+c2Out))}</td><td class="r">${banqueRows().length+c1rows().length+c2rows().length}</td></tr>
+  </tbody></table></div>`;
+}
+
+// ============================================================
+// 17. RAPPORT ANNUEL
+// ============================================================
+function renderRapportAnnuel(){
+  const bqIn=sum(banqueRows(),cb().credit),bqOut=sum(banqueRows(),cb().debit);
+  const c1In=sum(c1rows(),cc().credit),c1Out=sum(c1rows(),cc().debit);
+  const c2In=sum(c2rows(),cc().credit),c2Out=sum(c2rows(),cc().debit);
+  const totalIn=bqIn+c1In+c2In,totalOut=bqOut+c1Out+c2Out;
+  const adopts=[...caisseRows(),...banqueRows()].filter(r=>(r[cc().type_mvt]||r[cb().type_mvt]||'').toLowerCase().includes('adopt'));
+  const dons=[...caisseRows(),...banqueRows()].filter(r=>(r[cc().type_mvt]||r[cb().type_mvt]||'').toLowerCase().includes('don'));
+  const adh=[...caisseRows(),...banqueRows()].filter(r=>(r[cc().type_mvt]||r[cb().type_mvt]||'').toLowerCase().includes('adh'));
+  return `<div class="card">
+    <div class="card-head"><div class="card-title"><i class="ti ti-file-analytics"></i> Rapport annuel — ${activePer}</div>
+      <button class="btn btn-secondary btn-sm" onclick="window.print()"><i class="ti ti-printer"></i> Imprimer</button>
+    </div>
+    <div class="card-body">
+      <div style="font-size:16px;font-weight:600;margin-bottom:16px;color:var(--brown-mid);">L'Arche de Mallo — Résumé financier ${activePer}</div>
+      <div class="grid-2" style="margin-bottom:16px;">
+        <div><div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;margin-bottom:8px;">Recettes</div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:0.5px solid var(--border);">Dons<strong class="amount-c">${fmt(sum(dons.filter(r=>parseFloat(r[cc().credit]||r[cb().credit])>0),cc().credit)+sum(dons.filter(r=>parseFloat(r[cb().credit])>0),cb().credit))}</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:0.5px solid var(--border);">Adoptions<strong class="amount-c">${fmt(sum(adopts,cc().credit)+sum(adopts,cb().credit))}</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:0.5px solid var(--border);">Adhésions<strong class="amount-c">${fmt(sum(adh,cc().credit)+sum(adh,cb().credit))}</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;font-weight:600;"><span>Total recettes</span><span class="amount-c">${fmt(totalIn)}</span></div>
+        </div>
+        <div><div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;margin-bottom:8px;">Dépenses & résultat</div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:0.5px solid var(--border);">Total dépenses<strong class="amount-d">${fmt(totalOut)}</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:0.5px solid var(--border);">Résultat net<strong style="color:${totalIn-totalOut>=0?'var(--green)':'var(--red)'};font-weight:600;">${fmt(totalIn-totalOut)}</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:0.5px solid var(--border);">Nb adoptions<strong>${adopts.length}</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;">Nb adhésions<strong>${adh.length}</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// 18. SAISIE RAPIDE
+// ============================================================
+function renderSaisieRapide(){
+  const types=Sheets.getTypesMouvement();
+  const topts='<option value="">— Choisir —</option>'+types.map(t=>`<option>${t}</option>`).join('');
+  const msg=Auth.isAdmin()?'':`<div style="font-size:10px;color:var(--text-3);margin-top:6px;"><i class="ti ti-alert-triangle" style="color:var(--orange);"></i> Une alerte sera envoyée à l'administrateur</div>`;
+  return `<div class="quick-entry">
+    <div class="qe-title"><i class="ti ti-pencil"></i> Saisie rapide — Caisse 1</div>
+    <div class="qe-grid">
+      <div style="display:flex;flex-direction:column;gap:4px;"><label style="font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;">Libellé</label><input type="text" id="qe-lib" placeholder="Description…" style="padding:6px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);font-size:12px;font-family:'DM Sans',sans-serif;"></div>
+      <div style="display:flex;flex-direction:column;gap:4px;"><label style="font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;">Type</label><select id="qe-type" style="padding:6px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);font-size:12px;font-family:'DM Sans',sans-serif;">${topts}</select></div>
+      <div style="display:flex;flex-direction:column;gap:4px;"><label style="font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;">Montant (€)</label><input type="number" id="qe-mont" step="0.01" min="0" placeholder="0,00" style="padding:6px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);font-size:12px;font-family:'DM Sans',sans-serif;"></div>
+      <div style="display:flex;flex-direction:column;gap:4px;"><label style="font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;">&nbsp;</label><button class="btn btn-primary btn-sm" onclick="submitQuick()"><i class="ti ti-send"></i> Envoyer</button></div>
+    </div>
+    ${msg}
+  </div>`;
+}
+
+async function submitQuick(){
+  const lib=document.getElementById('qe-lib')?.value.trim();
+  const type=document.getElementById('qe-type')?.value;
+  const mont=parseFloat(document.getElementById('qe-mont')?.value);
+  if(!lib||!mont||mont<=0){alert('Libellé et montant obligatoires.');return;}
+  try{
+    await Sheets.saveCaisseOperation({source:'C1',date:Sheets.todayISO(),libelle:lib,credit:mont,debit:'',periode:activePer,type_mvt:type,description:'Saisie synthèse'});
+    document.getElementById('qe-lib').value='';document.getElementById('qe-mont').value='';
+    showToast('Opération envoyée !');
+    await loadData();
+  }catch(e){alert('Erreur : '+e.message);}
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function chipType(t){if(!t)return'depense';const l=t.toLowerCase();if(l.includes('adopt'))return'adoption';if(l.includes('don'))return'don';if(l.includes('adh'))return'adhesion';if(l.includes('vén')||l.includes('ment'))return'evenement';return'depense';}
+function fmt(v){if(!v&&v!==0)return'—';const n=parseFloat(v);if(isNaN(n))return'—';return n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
+function showToast(m){const t=document.createElement('div');t.className='success-toast';t.innerHTML=`<i class="ti ti-check"></i> ${m}`;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
+</script>
+</body>
+</html>
