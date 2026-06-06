@@ -434,16 +434,16 @@ function openEdit(ri){
   const nb=parseInt(r[cr.nb_cheques])||0;
   for(let i=0;i<nb;i++){
     addChequeRemise();
-    const base=cr.detail_start+i*7;
+    const base=cr.detail_start+i*8;          // ← 8 au lieu de 7
     const item=document.getElementById('cheques-remise-list').lastElementChild;
     item.querySelector('.rem-donateur').value   =r[base]  ||'';
     item.querySelector('.rem-montant').value    =r[base+1]||'';
-    item.querySelector('.rem-num-cheque').value =r[base+2]||'';
-    item.querySelector('.rem-type').value       =r[base+2]||'';
-    item.querySelector('.rem-desc').value       =r[base+3]||'';
-    item.querySelector('.rem-type-comp').value  =r[base+4]||'';
-    item.querySelector('.rem-nom-chat').value   =r[base+5]||'';
-    item.querySelector('.rem-recu-fiscal').value=r[base+6]||'';
+    item.querySelector('.rem-num-cheque').value =r[base+2]||'';  // ← base+2
+    item.querySelector('.rem-type').value       =r[base+3]||'';  // ← base+3
+    item.querySelector('.rem-desc').value       =r[base+4]||'';  // ← base+4
+    item.querySelector('.rem-type-comp').value  =r[base+5]||'';
+    item.querySelector('.rem-nom-chat').value   =r[base+6]||'';
+    item.querySelector('.rem-recu-fiscal').value=r[base+7]||'';
   }
   updateRemTotal();
   document.querySelector('.form-card').scrollIntoView({behavior:'smooth'});
