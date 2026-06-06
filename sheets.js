@@ -389,12 +389,15 @@ async function saveRemise(remise) {
   mainRow[COLS_REMISE.date_encaiss]  = '';
   mainRow[COLS_REMISE.ref_banque]    = '';
   // Détail chèques
-  remise.cheques.forEach((c, i) => {
-    const base = COLS_REMISE.detail_start + i * 4;
-    mainRow[base]     = c.type_mvt    || '';
-    mainRow[base + 1] = c.montant     || '';
-    mainRow[base + 2] = c.donateur    || '';
-    mainRow[base + 3] = c.description || '';
+ remise.cheques.forEach((c, i) => {
+    const base = COLS_REMISE.detail_start + i * 7;
+    mainRow[base]     = c.donateur     || '';
+    mainRow[base + 1] = c.montant      || '';
+    mainRow[base + 2] = c.type_mvt     || '';
+    mainRow[base + 3] = c.description  || '';
+    mainRow[base + 4] = c.type_comp    || '';
+    mainRow[base + 5] = c.nom_chat     || '';
+    mainRow[base + 6] = c.recu_fiscal  || '';
   });
   await appendRows(SHEETS_CONFIG.sheets.remises, [mainRow]);
   await logAction('AJOUT', 'Remises', id, `${remise.cheques.length} chèque(s) — ${mainRow[COLS_REMISE.montant_total]}€`);
