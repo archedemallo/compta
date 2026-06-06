@@ -96,6 +96,7 @@ const COLS_CHEQUE = {
   statut:       9,   // 'en_attente' / 'encaisse' / 'annule'
   date_encaiss: 10,
   ref_banque:   11,  // ligne banque associée
+  statut_banque:12, 
 };
 
 // Remises de chèques (onglet Remises)
@@ -157,7 +158,7 @@ async function readRange(spreadsheetId, range) {
 }
 
 async function readSheet(sheetName, spreadsheetId) {
-  return readRange(spreadsheetId || SHEETS_CONFIG.spreadsheetId, `${sheetName}!A:ZZ`);
+  return readRange(spreadsheetId || SHEETS_CONFIG.spreadsheetId, `${sheetName}!A:AZ`);
 }
 
 async function getCaisseOperations(periode) {
@@ -347,7 +348,7 @@ async function updateBanqueOperation(rowIndex, op) {
 // ---- SAUVEGARDER CHÈQUE ----
 async function saveCheque(cheque) {
   const id  = cheque.id || genId('CHQ');
-  const row = new Array(12).fill('');
+  const row = new Array(13).fill('');
   row[COLS_CHEQUE.id]            = id;
   row[COLS_CHEQUE.num_cheque]    = cheque.num_cheque    || '';
   row[COLS_CHEQUE.date_emission] = cheque.date_emission || '';
@@ -360,6 +361,7 @@ async function saveCheque(cheque) {
   row[COLS_CHEQUE.statut]        = 'en_attente';
   row[COLS_CHEQUE.date_encaiss]  = '';
   row[COLS_CHEQUE.ref_banque]    = '';
+  row[COLS_CHEQUE.statut_banque] = ''; 
   await appendRows(SHEETS_CONFIG.sheets.cheques, [row]);
   await logAction('AJOUT', 'Cheques', cheque.beneficiaire, `N°${cheque.num_cheque} — ${cheque.montant}€`);
   return id;
