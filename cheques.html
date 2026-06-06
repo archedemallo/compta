@@ -76,7 +76,9 @@
           <div class="list-card">
             <div class="list-head">
               <div style="font-size:12px;font-weight:600;">Chèques émis</div>
-              <div style="display:flex;gap:6px;">
+              <div style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center;">
+                <select class="f-select" id="fl-chq-per" onchange="renderChequesKPIs();renderChequesTable()"></select>
+                <input class="f-select" type="text" id="fl-chq-search" placeholder="Rechercher…" oninput="renderChequesTable()" style="padding:4px 8px;">
                 <select class="f-select" id="fl-chq-statut" onchange="renderChequesTable()">
                   <option value="">Tous statuts</option>
                   <option value="en_attente">En attente</option>
@@ -231,8 +233,9 @@ Auth.requireAuth(async()=>{
   Sidebar.build('cheques');
   const pers=Sheets.getPeriodes(),ap=Sidebar.getActivePeriode();
   document.getElementById('topbar-per').textContent=ap;
-  ['chq-per','rem-per'].forEach(id=>{
+  ['chq-per','rem-per','fl-chq-per'].forEach(id=>{
     const s=document.getElementById(id);
+    if(!s)return;
     pers.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;if(p===ap)o.selected=true;s.appendChild(o);});
   });
   document.getElementById('chq-date').value=Sheets.todayISO();
@@ -266,40 +269,49 @@ function switchTab(tab){
 // ============================================================
 function renderChequesKPIs(){
   const cc=Sheets.cols.cheque;
-  const att=allCheques.filter(r=>r[cc.statut]==='en_attente');
-  const enc=allCheques.filter(r=>r[cc.statut]==='encaisse');
+  const per=Sidebar.getActivePeriode();
+  const filtered=allCheques.filter(r=>r[cc.periode]===per);
+  const att=filtered.filter(r=>r[cc.statut]==='en_attente');
+  const enc=filtered.filter(r=>r[cc.statut]==='encaisse');
+  const payes=filtered.filter(r=>r[cc.statut_banque]==='paye').length;
   const totAtt=att.reduce((s,r)=>s+(parseFloat(r[cc.montant])||0),0);
+  const totTotal=filtered.reduce((s,r)=>s+(parseFloat(r[cc.montant])||0),0);
   document.getElementById('kpi-cheques').innerHTML=`
-    <div class="kpi"><div class="kpi-label">En attente</div><div class="kpi-value" style="color:var(--amber)">${fmt(totAtt)}</div><div style="font-size:10px;color:var(--text-3);">${att.length} chèque(s)</div></div>
-    <div class="kpi"><div class="kpi-label">Encaissés</div><div class="kpi-value" style="color:var(--green)">${enc.length}</div></div>
-    <div class="kpi"><div class="kpi-label">Total émis</div><div class="kpi-value">${allCheques.length}</div></div>`;
+    <div class="kpi"><div class="kpi-label">Chèques sur la période</div><div class="kpi-value">${filtered.length}</div><div style="font-size:10px;color:var(--text-3);margin-top:2px;">${payes} payé(s) — ${filtered.length-payes} en attente</div></div>
+    <div class="kpi"><div class="kpi-label">En attente encaissement</div><div class="kpi-value" style="color:var(--amber)">${fmt(totAtt)}</div><div style="font-size:10px;color:var(--text-3);">${att.length} chèque(s)</div></div>
+    <div class="kpi"><div class="kpi-label">Total TTC période</div><div class="kpi-value">${fmt(totTotal)}</div><div style="font-size:10px;color:var(--text-3);">${enc.length} encaissé(s)</div></div>`;
 }
 
 function renderChequesTable(){
   const cc=Sheets.cols.cheque;
   const sf=document.getElementById('fl-chq-statut')?.value||'';
-  let rows=sf?allCheques.filter(r=>r[cc.statut]===sf):[...allCheques];
-  rows=rows.reverse();
+  const sp=document.getElementById('fl-chq-per')?.value||'';
+  const ss=document.getElementById('fl-chq-search')?.value.toLowerCase()||'';
+  let rows=allCheques.filter(r=>(!sf||r[cc.statut]===sf)&&(!sp||r[cc.periode]===sp));
+  if(ss) rows=rows.filter(r=>[r[cc.num_cheque],r[cc.beneficiaire],r[cc.description],r[cc.type_mvt]].join(' ').toLowerCase().includes(ss));
+  rows=[...rows].reverse();
   if(!rows.length){document.getElementById('cheques-table-wrap').innerHTML='<div style="padding:24px;text-align:center;color:var(--text-3);font-size:12px;">Aucun chèque</div>';return;}
   const trs=rows.map(r=>{
     const ri=allCheques.indexOf(r);
     const s=r[cc.statut]||'';
     const badge=s==='en_attente'?'<span class="chip" style="background:var(--amber-bg);color:var(--amber);">En attente</span>':s==='encaisse'?'<span class="chip" style="background:var(--green-bg);color:var(--green);">Encaissé</span>':'<span class="chip" style="background:var(--red-bg);color:var(--red);">Annulé</span>';
     return `<tr>
-      <td style="color:var(--text-3);">${r[cc.date_emission]||'—'}</td>
+      <td style="color:var(--text-3);">${formatDate(r[cc.date_emission])}</td>
       <td style="font-weight:500;">N°${r[cc.num_cheque]||'—'}</td>
       <td>${r[cc.beneficiaire]||'—'}</td>
       <td><span class="chip chip-${chipType(r[cc.type_mvt])}">${r[cc.type_mvt]||'—'}</span></td>
+      <td style="color:var(--text-3);font-size:10px;">${r[cc.description]||'—'}</td>
       <td class="r" style="font-weight:500;">${fmt(r[cc.montant])}</td>
       <td>${badge}</td>
-      <td style="color:var(--text-3);font-size:10px;">${r[cc.date_encaiss]||''}</td>
+      <td style="color:var(--text-3);font-size:10px;">${formatDate(r[cc.date_encaiss])}</td>
+      <td style="text-align:center;"><input type="checkbox" disabled ${r[cc.statut_banque]==='paye'?'checked':''} style="width:14px;height:14px;accent-color:var(--green);"></td>
       <td class="r" style="white-space:nowrap;">
         ${s==='en_attente'?`<button class="edit-btn" onclick="openEditChq(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>`:''}
-        <button class="del-btn" onclick="openDel('cheque',${ri},'N°'+${JSON.stringify(r[cc.num_cheque]||'')}+' — '+${JSON.stringify(r[cc.beneficiaire]||'')}+' — '+${JSON.stringify(fmt(r[cc.montant]))})" title="Supprimer"><i class="ti ti-trash"></i></button>
+        <button class="del-btn" onclick="openDel('cheque',${ri},'N°'+${JSON.stringify(r[cc.num_cheque]||'')}+' — '+${JSON.stringify(r[cc.beneficiaire]||'')})" title="Supprimer"><i class="ti ti-trash"></i></button>
       </td>
     </tr>`;
   }).join('');
-  document.getElementById('cheques-table-wrap').innerHTML=`<table><thead><tr><th>Date</th><th>N° chèque</th><th>Bénéficiaire</th><th>Type</th><th class="r">Montant</th><th>Statut</th><th>Encaissé le</th><th class="r">Actions</th></tr></thead><tbody>${trs}</tbody></table>`;
+  document.getElementById('cheques-table-wrap').innerHTML=`<table><thead><tr><th>Date</th><th>N° chèque</th><th>Bénéficiaire</th><th>Type</th><th>Description</th><th class="r">Montant</th><th>Statut</th><th>Encaissé le</th><th style="text-align:center;">Payé</th><th class="r">Actions</th></tr></thead><tbody>${trs}</tbody></table>`;
 }
 
 function resetCheque(){
@@ -504,6 +516,15 @@ function fmt(v){if(!v&&v!==0)return'—';return parseFloat(v).toLocaleString('fr
 function showErrChq(m){const e=document.getElementById('chq-err');e.textContent=m;e.classList.remove('hidden');}
 function showErrRem(m){const e=document.getElementById('rem-err');e.textContent=m;e.classList.remove('hidden');}
 function showToast(m){const t=document.createElement('div');t.className='success-toast';t.innerHTML=`<i class="ti ti-check"></i> ${m}`;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
+
+  function formatDate(d){
+  if(!d)return'—';
+  const s=String(d).trim();
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(s))return s;
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)){const p=s.split('-');return`${p[2]}/${p[1]}/${p[0]}`;}
+  return s;
+}
+
 </script>
 </body>
 </html>
