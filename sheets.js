@@ -15,8 +15,8 @@ const SHEETS_CONFIG = {
     caisse2:      'Caisse2_physique',
     config:       'Config',
     journal:      'Journal',
-    cheques:      'Cheques',        // chèques émis en attente
-    remises:      'Remises_cheques',        // remises de chèques
+    cheques:      'Cheques',
+    remises:      'Remises_cheques',
     factures:     'Factures',
     import_hist:  'Import_historique',
   },
@@ -44,15 +44,15 @@ const SHEETS_CONFIG = {
 // ============================================================
 
 const COLS_CAISSE = {
-  source:       0,   // C1 / C2
+  source:       0,
   date:         1,
   libelle:      2,
   debit:        3,
   credit:       4,
   solde:        5,
   periode:      6,
-  type_mvt:     7,   // 1ère liste déroulante
-  type_comp:    8,   // 2ème liste déroulante (type complémentaire)
+  type_mvt:     7,
+  type_comp:    8,
   description:  9,
   nom:          10,
   reglement:    11,
@@ -71,20 +71,19 @@ const COLS_BANQUE = {
   credit:       3,
   solde:        4,
   periode:      5,
-  type_mvt:     6,   // 1ère liste déroulante
-  type_comp:    7,   // 2ème liste déroulante
+  type_mvt:     6,
+  type_comp:    7,
   description:  8,
   nom:          9,
-  ref_cheque:   10,  // référence chèque lié (si encaissement chèque)
-  ref_remise:   11,  // référence remise liée (si remise encaissée)
+  ref_cheque:   10,
+  ref_remise:   11,
   lien_facture: 12,
   flag_check:   13,
   flag_comment: 14,
 };
 
-// Chèques émis (onglet Cheques)
 const COLS_CHEQUE = {
-  id:           0,   // identifiant unique
+  id:           0,
   num_cheque:   1,
   date_emission:2,
   beneficiaire: 3,
@@ -93,28 +92,24 @@ const COLS_CHEQUE = {
   type_comp:    6,
   description:  7,
   periode:      8,
-  statut:       9,   // 'en_attente' / 'encaisse' / 'annule'
+  statut:       9,
   date_encaiss: 10,
-  ref_banque:   11,  // ligne banque associée
+  ref_banque:   11,
 };
 
-// Remises de chèques (onglet Remises)
 const COLS_REMISE = {
-  id:           0,   // identifiant unique (BRD-2026-001)
+  id:           0,
   date_remise:  1,
   num_bordereau:2,
   nb_cheques:   3,
   montant_total:4,
   periode:      5,
-  statut:       6,   // 'en_attente' / 'encaissee'
+  statut:       6,
   date_encaiss: 7,
   ref_banque:   8,
-  // Les chèques détaillés sont dans des colonnes dynamiques (9, 10, 11...)
-  // Format: cheque_1_type, cheque_1_montant, cheque_1_donateur, cheque_1_description ...
   detail_start: 9,
 };
 
-// Factures
 const COLS_FACTURE = {
   id:            0,
   num_facture:   1,
@@ -122,13 +117,13 @@ const COLS_FACTURE = {
   date_facture:  3,
   montant_ttc:   4,
   categorie:     5,
-  description:   6, 
+  description:   6,
   date_reglement:7,
   mode_reglement:8,
   lien_pdf:      9,
   commentaire:   10,
   periode:       11,
-  statut:        12, 
+  statut:        12,
 };
 
 const COLS_CAISSE_PHYSIQUE = {
@@ -243,7 +238,6 @@ async function updateRange(sheetName, startRow, startCol, values) {
 }
 
 async function deleteRow(sheetName, rowIndex) {
-  // Vider la ligne (l'API simple ne peut pas supprimer les lignes)
   const sheetRow  = rowIndex + 2;
   const emptyRow  = [new Array(30).fill('')];
   await updateRange(sheetName, sheetRow, 0, emptyRow);
@@ -365,7 +359,7 @@ async function saveCheque(cheque) {
   return id;
 }
 
-// ---- ENCAISSER UN CHÈQUE (lors d'une op banque) ----
+// ---- ENCAISSER UN CHÈQUE ----
 async function encaisserCheque(chequeRowIndex, dateBanque, refBanque) {
   const sheetRow = chequeRowIndex + 2;
   await updateCell(SHEETS_CONFIG.sheets.cheques, sheetRow, COLS_CHEQUE.statut,      'encaisse');
@@ -377,7 +371,6 @@ async function encaisserCheque(chequeRowIndex, dateBanque, refBanque) {
 // ---- SAUVEGARDER REMISE DE CHÈQUES ----
 async function saveRemise(remise) {
   const id  = remise.id || genId('BRD');
-  // Ligne principale remise
   const mainRow = new Array(9 + remise.cheques.length * 8).fill('');
   mainRow[COLS_REMISE.id]            = id;
   mainRow[COLS_REMISE.date_remise]   = remise.date_remise   || '';
@@ -388,8 +381,7 @@ async function saveRemise(remise) {
   mainRow[COLS_REMISE.statut]        = 'en_attente';
   mainRow[COLS_REMISE.date_encaiss]  = '';
   mainRow[COLS_REMISE.ref_banque]    = '';
-  // Détail chèques
- remise.cheques.forEach((c, i) => {
+  remise.cheques.forEach((c, i) => {
     const base = COLS_REMISE.detail_start + i * 8;
     mainRow[base]     = c.donateur    || '';
     mainRow[base + 1] = c.montant     || '';
@@ -414,6 +406,35 @@ async function encaisserRemise(remiseRowIndex, dateBanque, refBanque) {
   await logAction('MODIF', 'Remises', `Ligne ${remiseRowIndex+1}`, `Encaissée le ${dateBanque}`);
 }
 
+// ---- MODIFIER REMISE ----
+async function updateRemise(rowIndex, remise) {
+  const id = remise.id || genId('BRD');
+  const sheetRow = rowIndex + 2;
+  const mainRow = new Array(9 + remise.cheques.length * 8).fill('');
+  mainRow[COLS_REMISE.id]            = id;
+  mainRow[COLS_REMISE.date_remise]   = remise.date_remise   || '';
+  mainRow[COLS_REMISE.num_bordereau] = remise.num_bordereau || id;
+  mainRow[COLS_REMISE.nb_cheques]    = remise.cheques.length;
+  mainRow[COLS_REMISE.montant_total] = remise.cheques.reduce((s,c) => s + (parseFloat(c.montant)||0), 0);
+  mainRow[COLS_REMISE.periode]       = remise.periode || '';
+  mainRow[COLS_REMISE.statut]        = remise.statut  || 'en_attente';
+  mainRow[COLS_REMISE.date_encaiss]  = remise.date_encaiss || '';
+  mainRow[COLS_REMISE.ref_banque]    = remise.ref_banque    || '';
+  remise.cheques.forEach((c, i) => {
+    const base = COLS_REMISE.detail_start + i * 8;
+    mainRow[base]     = c.donateur    || '';
+    mainRow[base + 1] = c.montant     || '';
+    mainRow[base + 2] = c.num_cheque  || '';
+    mainRow[base + 3] = c.type_mvt    || '';
+    mainRow[base + 4] = c.description || '';
+    mainRow[base + 5] = c.type_comp   || '';
+    mainRow[base + 6] = c.nom_chat    || '';
+    mainRow[base + 7] = c.recu_fiscal || '';
+  });
+  await updateRange(SHEETS_CONFIG.sheets.remises, sheetRow, 0, [mainRow]);
+  await logAction('MODIF', 'Remises', id, `Modifié le ${todayFR()}`);
+}
+
 // ---- SAUVEGARDER FACTURE ----
 async function saveFacture(facture) {
   const id  = facture.id || genId('FAC');
@@ -430,7 +451,7 @@ async function saveFacture(facture) {
   row[COLS_FACTURE.lien_pdf]      = facture.lien_pdf      || '';
   row[COLS_FACTURE.commentaire]   = facture.commentaire   || '';
   row[COLS_FACTURE.periode]       = facture.periode       || '';
-  row[COLS_FACTURE.statut] = facture.statut || ''; 
+  row[COLS_FACTURE.statut]        = facture.statut        || '';
   await appendRows(SHEETS_CONFIG.sheets.factures, [row]);
   await logAction('AJOUT', 'Factures', facture.fournisseur, `${facture.montant_ttc}€`);
   return id;
@@ -452,7 +473,7 @@ async function updateFacture(rowIndex, facture) {
   row[COLS_FACTURE.lien_pdf]      = facture.lien_pdf      || '';
   row[COLS_FACTURE.commentaire]   = facture.commentaire   || '';
   row[COLS_FACTURE.periode]       = facture.periode       || '';
-  row[COLS_FACTURE.statut] = facture.statut || '';
+  row[COLS_FACTURE.statut]        = facture.statut        || '';
   await updateRange(SHEETS_CONFIG.sheets.factures, sheetRow, 0, [row]);
   await logAction('MODIF', 'Factures', facture.fournisseur, `Modifié le ${todayFR()}`);
 }
@@ -482,6 +503,42 @@ async function updateFlag(sheetName, rowIndex, isChecked, comment) {
   await updateCell(sheetName, sheetRow, colCheck,   isChecked ? 'TRUE' : 'FALSE');
   await updateCell(sheetName, sheetRow, colComment, comment || '');
   await logAction('MODIF', sheetName, `Ligne ${rowIndex+1}`, `Flag: ${isChecked}, Commentaire: ${comment}`);
+}
+
+// ============================================================
+// SOLDES INITIAUX
+// ============================================================
+
+/**
+ * Récupère le solde initial configuré pour une période et un compte.
+ * @param {string} periode  — ex: "2025 - 2026"
+ * @param {string} compte   — "banque" ou "caisse"
+ * @returns {number}
+ */
+function getSoldeInitial(periode, compte) {
+  try {
+    const cfg = JSON.parse(localStorage.getItem('arche_soldes_initiaux') || '{}');
+    return parseFloat(cfg?.[periode]?.[compte] || 0) || 0;
+  } catch(e) {
+    return 0;
+  }
+}
+
+/**
+ * Sauvegarde le solde initial pour une période et un compte.
+ * @param {string} periode  — ex: "2025 - 2026"
+ * @param {string} compte   — "banque" ou "caisse"
+ * @param {number} montant
+ */
+function saveSoldeInitial(periode, compte, montant) {
+  try {
+    const cfg = JSON.parse(localStorage.getItem('arche_soldes_initiaux') || '{}');
+    if (!cfg[periode]) cfg[periode] = {};
+    cfg[periode][compte] = parseFloat(montant) || 0;
+    localStorage.setItem('arche_soldes_initiaux', JSON.stringify(cfg));
+  } catch(e) {
+    console.warn('Impossible de sauvegarder le solde initial:', e);
+  }
 }
 
 // ============================================================
@@ -587,7 +644,6 @@ function saveModesReglement(m)   { localStorage.setItem('arche_reglements',  JSO
 function normalizeDate(dateStr) {
   if (!dateStr) return '';
   const s = String(dateStr).trim();
-  // Nombre Excel (ex: 45940) → date
   const num = parseFloat(s);
   if (!isNaN(num) && num > 40000 && num < 60000) {
     const d = new Date(Math.round((num - 25569) * 86400 * 1000));
@@ -652,6 +708,8 @@ window.Sheets = {
   saveRemise,           encaisserRemise, updateRemise,
   saveFacture,          updateFacture,
   updateFlag, appendRows, updateCell, updateRange, deleteRow,
+  // Soldes initiaux
+  getSoldeInitial, saveSoldeInitial,
   // Calculs
   calculerTotalCaisse, detectDoublons,
   // Paramètres
@@ -663,31 +721,3 @@ window.Sheets = {
   // Utilitaires
   formatMoney, normalizeDate, todayISO, todayFR, genId, openFacture,
 };
-
-async function updateRemise(rowIndex, remise) {
-  const id = allRemises?.[rowIndex]?.[COLS_REMISE.id] || remise.id || genId('BRD');
-  const sheetRow = rowIndex + 2;
-  const mainRow = new Array(9 + remise.cheques.length * 8).fill('');
-  mainRow[COLS_REMISE.id]            = id;
-  mainRow[COLS_REMISE.date_remise]   = remise.date_remise   || '';
-  mainRow[COLS_REMISE.num_bordereau] = remise.num_bordereau || id;
-  mainRow[COLS_REMISE.nb_cheques]    = remise.cheques.length;
-  mainRow[COLS_REMISE.montant_total] = remise.cheques.reduce((s,c) => s + (parseFloat(c.montant)||0), 0);
-  mainRow[COLS_REMISE.periode]       = remise.periode || '';
-  mainRow[COLS_REMISE.statut]        = remise.statut  || 'en_attente';
-  mainRow[COLS_REMISE.date_encaiss]  = remise.date_encaiss || '';
-  mainRow[COLS_REMISE.ref_banque]    = remise.ref_banque    || '';
-  remise.cheques.forEach((c, i) => {
-    const base = COLS_REMISE.detail_start + i * 8;
-    mainRow[base]     = c.donateur    || '';
-    mainRow[base + 1] = c.montant     || '';
-    mainRow[base + 2] = c.num_cheque  || '';
-    mainRow[base + 3] = c.type_mvt    || '';
-    mainRow[base + 4] = c.description || '';
-    mainRow[base + 5] = c.type_comp   || '';
-    mainRow[base + 6] = c.nom_chat    || '';
-    mainRow[base + 7] = c.recu_fiscal || '';
-  });
-  await updateRange(SHEETS_CONFIG.sheets.remises, sheetRow, 0, [mainRow]);
-  await logAction('MODIF', 'Remises', id, `Modifié le ${todayFR()}`);
-}
