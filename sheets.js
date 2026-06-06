@@ -128,6 +128,7 @@ const COLS_FACTURE = {
   lien_pdf:      9,
   commentaire:   10,
   periode:       11,
+  statut:        12, 
 };
 
 const COLS_CAISSE_PHYSIQUE = {
@@ -412,7 +413,7 @@ async function encaisserRemise(remiseRowIndex, dateBanque, refBanque) {
 // ---- SAUVEGARDER FACTURE ----
 async function saveFacture(facture) {
   const id  = facture.id || genId('FAC');
-  const row = new Array(12).fill('');
+  const row = new Array(13).fill('');
   row[COLS_FACTURE.id]            = id;
   row[COLS_FACTURE.num_facture]   = facture.num_facture   || '';
   row[COLS_FACTURE.fournisseur]   = facture.fournisseur   || '';
@@ -425,6 +426,7 @@ async function saveFacture(facture) {
   row[COLS_FACTURE.lien_pdf]      = facture.lien_pdf      || '';
   row[COLS_FACTURE.commentaire]   = facture.commentaire   || '';
   row[COLS_FACTURE.periode]       = facture.periode       || '';
+  row[COLS_FACTURE.statut] = facture.statut || ''; 
   await appendRows(SHEETS_CONFIG.sheets.factures, [row]);
   await logAction('AJOUT', 'Factures', facture.fournisseur, `${facture.montant_ttc}€`);
   return id;
@@ -433,7 +435,7 @@ async function saveFacture(facture) {
 // ---- MODIFIER FACTURE ----
 async function updateFacture(rowIndex, facture) {
   const sheetRow = rowIndex + 2;
-  const row = new Array(12).fill('');
+  const row = new Array(13).fill('');
   row[COLS_FACTURE.id]            = facture.id            || '';
   row[COLS_FACTURE.num_facture]   = facture.num_facture   || '';
   row[COLS_FACTURE.fournisseur]   = facture.fournisseur   || '';
@@ -446,6 +448,7 @@ async function updateFacture(rowIndex, facture) {
   row[COLS_FACTURE.lien_pdf]      = facture.lien_pdf      || '';
   row[COLS_FACTURE.commentaire]   = facture.commentaire   || '';
   row[COLS_FACTURE.periode]       = facture.periode       || '';
+  row[COLS_FACTURE.statut] = facture.statut || '';
   await updateRange(SHEETS_CONFIG.sheets.factures, sheetRow, 0, [row]);
   await logAction('MODIF', 'Factures', facture.fournisseur, `Modifié le ${todayFR()}`);
 }
