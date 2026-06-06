@@ -122,11 +122,12 @@ const COLS_FACTURE = {
   date_facture:  3,
   montant_ttc:   4,
   categorie:     5,
-  date_reglement:6,
-  mode_reglement:7,
-  lien_pdf:      8,
-  commentaire:   9,
-  periode:       10,
+  description:   6, 
+  date_reglement:7,
+  mode_reglement:8,
+  lien_pdf:      9,
+  commentaire:   10,
+  periode:       11,
 };
 
 const COLS_CAISSE_PHYSIQUE = {
