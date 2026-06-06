@@ -359,8 +359,6 @@ async function submitRemise(){
       remise.ref_banque   = existing[cr.ref_banque]   || '';
       await Sheets.updateRemise(editRemIdx, remise);
       editRemIdx = null;
-      document.getElementById('rem-submit-label')?.textContent && 
-        (document.getElementById('rem-submit-label').textContent = 'Enregistrer la remise');
       showToast('Remise modifiée !');
     } else {
       await Sheets.saveRemise(remise);
