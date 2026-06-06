@@ -18,14 +18,23 @@
   .list-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px;}
   .list-head{padding:12px 16px;border-bottom:0.5px solid var(--border);}
   .list-title{font-size:13px;font-weight:600;margin-bottom:8px;}
-  .filters-bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
-  .f-select{font-size:11px;padding:4px 8px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text-2);font-family:'DM Sans',sans-serif;}
-  .f-input{font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;width:120px;}
+
+  /* Barre de filtres sur 1 ligne compacte — style remise chèques */
+  .filters-bar{display:flex;gap:6px;flex-wrap:nowrap;align-items:center;overflow-x:auto;}
+  .filters-bar::-webkit-scrollbar{height:3px;}
+  .filters-bar::-webkit-scrollbar-thumb{background:rgba(61,43,31,0.2);border-radius:3px;}
+  .f-select{font-size:11px;padding:4px 8px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text-2);font-family:'DM Sans',sans-serif;white-space:nowrap;}
+  .f-input{font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;}
+  .f-input-search{width:130px;}
+  .f-input-date{width:118px;}
+
   .kpi-bar{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
   .kpi{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;}
   .kpi-label{font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
   .kpi-value{font-size:18px;font-weight:600;}
   .kpi-sub{font-size:10px;color:var(--text-3);margin-top:2px;}
+
+  /* Tableau — nouvelles colonnes */
   table{width:100%;border-collapse:collapse;font-size:11px;}
   thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:7px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);cursor:pointer;white-space:nowrap;user-select:none;}
   thead th:hover{background:var(--warm);}
@@ -41,7 +50,12 @@
   .flag-btn,.edit-btn,.del-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;}
   .edit-btn{color:var(--blue);} .del-btn{color:var(--red);}
   .flag-btn{color:var(--text-3);} .flag-btn.on{color:var(--orange);}
-  .flag-comment-cell{max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:var(--amber);cursor:pointer;}
+
+  /* Cellules tronquées */
+  .td-trunc{max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .td-trunc-sm{max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:var(--text-3);}
+
+  /* Formulaire — sens toggle */
   .sens-toggle{display:flex;gap:4px;}
   .sens-btn{flex:1;padding:7px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:transparent;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all 0.15s;}
   .sens-btn.credit{border-color:var(--green);color:var(--green);}
@@ -49,6 +63,8 @@
   .sens-btn.debit{border-color:var(--red);color:var(--red);}
   .sens-btn.debit.active{background:var(--red);color:white;}
   .form-actions{display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:0.5px solid var(--border);}
+
+  /* Modales */
   .modal-overlay{position:fixed;inset:0;background:rgba(61,43,31,0.35);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
   .modal{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-md);width:440px;max-width:95vw;}
   .modal-header{padding:14px 18px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
@@ -57,6 +73,8 @@
   .modal-body{padding:18px;}
   .modal-footer{padding:12px 18px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
   .confirm-detail{margin-top:10px;padding:10px;background:var(--red-bg);border-radius:var(--radius-sm);font-size:12px;color:var(--red);}
+
+  /* Toast / spinner */
   .success-toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:white;padding:10px 18px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;z-index:999;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-md);animation:slideIn 0.25s ease;}
   @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
   .spinner{display:inline-block;animation:spin 1s linear infinite;}
@@ -82,17 +100,18 @@
         <div class="list-card">
           <div class="list-head">
             <div class="list-title">Opérations — Caisse 1</div>
+            <!-- Filtres sur 1 ligne, style remise chèques -->
             <div class="filters-bar">
-              <input class="f-input" type="text" id="fl-search" placeholder="Rechercher…" oninput="renderTable()">
+              <select class="f-select" id="fl-per" onchange="onFilterPeriodeChange()"></select>
+              <input class="f-input f-input-search" type="text" id="fl-search" placeholder="Rechercher…" oninput="renderTable()">
               <select class="f-select" id="fl-type" onchange="renderTable()"><option value="">Tous types</option></select>
-              <select class="f-select" id="fl-type-comp" onchange="renderTable()"><option value="">Tous types comp.</option></select>
               <select class="f-select" id="fl-sens" onchange="renderTable()">
                 <option value="">Débits + Crédits</option>
-                <option value="credit">Crédits seuls</option>
-                <option value="debit">Débits seuls</option>
+                <option value="credit">Crédits</option>
+                <option value="debit">Débits</option>
               </select>
-              <input class="f-input" type="date" id="fl-date-from" onchange="renderTable()" title="Du">
-              <input class="f-input" type="date" id="fl-date-to" onchange="renderTable()" title="Au">
+              <input class="f-input f-input-date" type="date" id="fl-date-from" onchange="renderTable()" title="Du">
+              <input class="f-input f-input-date" type="date" id="fl-date-to" onchange="renderTable()" title="Au">
               <select class="f-select" id="fl-flag" onchange="renderTable()">
                 <option value="">Toutes lignes</option>
                 <option value="flagged">À vérifier</option>
@@ -117,6 +136,7 @@
             <span><i class="ti ti-pencil"></i> Modification — <strong id="edit-line-label"></strong></span>
           </div>
 
+          <!-- Sens -->
           <div class="form-group">
             <label class="form-label">Sens</label>
             <div class="sens-toggle">
@@ -124,6 +144,8 @@
               <button class="sens-btn debit"         id="btn-debit"  onclick="setSens('debit')"><i class="ti ti-arrow-up-right"></i> Sortie</button>
             </div>
           </div>
+
+          <!-- Période + Date + Montant -->
           <div class="form-group">
             <label class="form-label">Période</label>
             <select id="f-per"></select>
@@ -132,15 +154,32 @@
             <div class="form-group"><label class="form-label req">Date</label><input type="date" id="f-date"></div>
             <div class="form-group"><label class="form-label req">Montant (€)</label><input type="number" id="f-montant" step="0.01" min="0" placeholder="0,00"></div>
           </div>
+
+          <!-- Libellé -->
           <div class="form-group"><label class="form-label req">Libellé</label><input type="text" id="f-libelle" placeholder="Nom, description courte"></div>
-          <div class="form-row-2">
-            <div class="form-group"><label class="form-label req">Type mouvement</label><select id="f-type"></select></div>
-            <div class="form-group"><label class="form-label">Type complémentaire</label><select id="f-type-comp"></select></div>
+
+          <!-- 1. Type mouvement -->
+          <div class="form-group">
+            <label class="form-label req">Type mouvement</label>
+            <select id="f-type"></select>
           </div>
-          <div class="form-group"><label class="form-label">Description</label><input type="text" id="f-desc" placeholder="Précisions…"></div>
+
+          <!-- 2. Description (liste config) -->
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <select id="f-desc"></select>
+          </div>
+
+          <!-- 3. Libellé complémentaire (saisie libre) -->
+          <div class="form-group">
+            <label class="form-label">Libellé complémentaire</label>
+            <input type="text" id="f-type-comp" placeholder="Précisions libres…">
+          </div>
+
+          <!-- Nom du chat + N° reçu -->
           <div class="form-row-2">
             <div class="form-group"><label class="form-label">Nom du chat</label><input type="text" id="f-chat" placeholder="Si adoption"></div>
-            <div class="form-group"><label class="form-label">N° reçu</label><input type="text" id="f-recu"></div>
+            <div class="form-group"><label class="form-label">N° reçu fiscal</label><input type="text" id="f-recu"></div>
           </div>
 
           <div id="form-err" class="hidden" style="color:var(--red);font-size:11px;padding:6px 0;margin-top:4px;"></div>
@@ -188,10 +227,17 @@ const SOURCE='C1';
 Auth.requireAuth(async()=>{
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
   Sidebar.build('caisse');
-  const pers=Sheets.getPeriodes(),ap=Sidebar.getActivePeriode();
+  const pers=Sheets.getPeriodes(), ap=Sidebar.getActivePeriode();
   document.getElementById('topbar-per').textContent=ap;
+
+  // Remplir le select période du formulaire
   const sp=document.getElementById('f-per');
   pers.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;if(p===ap)o.selected=true;sp.appendChild(o);});
+
+  // Remplir le select période du filtre (style remise chèques)
+  const flp=document.getElementById('fl-per');
+  pers.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;if(p===ap)o.selected=true;flp.appendChild(o);});
+
   document.getElementById('f-date').value=Sheets.todayISO();
   populateSelects();
   await loadData();
@@ -199,15 +245,25 @@ Auth.requireAuth(async()=>{
 
 function populateSelects(){
   const types=Sheets.getTypesMouvement();
-  const typesC=Sheets.getTypesComplementaires();
-  const ft=document.getElementById('f-type'),fc=document.getElementById('f-type-comp');
-  const flt=document.getElementById('fl-type'),flc=document.getElementById('fl-type-comp');
+  // Descriptions depuis config (via window.getDescriptions si dispo, sinon Sheets.getDescriptions)
+  const descs=(typeof window.getDescriptions==='function')
+    ? window.getDescriptions()
+    : (typeof Sheets.getDescriptions==='function' ? Sheets.getDescriptions() : []);
+
+  // Type mouvement (formulaire)
+  const ft=document.getElementById('f-type');
   ft.innerHTML='<option value="">— Choisir —</option>';
-  fc.innerHTML='<option value="">—</option>';
+  types.forEach(t=>{ft.innerHTML+=`<option>${escH(t)}</option>`;});
+
+  // Description (formulaire) — liste config
+  const fd=document.getElementById('f-desc');
+  fd.innerHTML='<option value="">—</option>';
+  descs.forEach(d=>{fd.innerHTML+=`<option>${escH(d)}</option>`;});
+
+  // Filtre type mouvement
+  const flt=document.getElementById('fl-type');
   flt.innerHTML='<option value="">Tous types</option>';
-  flc.innerHTML='<option value="">Tous types comp.</option>';
-  types.forEach(t=>{ft.innerHTML+=`<option>${t}</option>`;flt.innerHTML+=`<option>${t}</option>`;});
-  typesC.forEach(t=>{fc.innerHTML+=`<option>${t}</option>`;flc.innerHTML+=`<option>${t}</option>`;});
+  types.forEach(t=>{flt.innerHTML+=`<option>${escH(t)}</option>`;});
 }
 
 async function loadData(){
@@ -217,14 +273,22 @@ async function loadData(){
   renderKPIs();renderTable();
 }
 
+// Appelé quand la sidebar change la période active
 function onPeriodeChange(p){
   document.getElementById('f-per').value=p;
+  document.getElementById('fl-per').value=p;
   document.getElementById('topbar-per').textContent=p;
   renderKPIs();renderTable();
 }
 
+// Appelé quand le filtre de période change dans la barre de filtres
+function onFilterPeriodeChange(){
+  renderKPIs();renderTable();
+}
+
 function renderKPIs(){
-  const cc=Sheets.cols.caisse,per=Sidebar.getActivePeriode();
+  const cc=Sheets.cols.caisse;
+  const per=document.getElementById('fl-per')?.value||Sidebar.getActivePeriode();
   const rows=allRows.filter(r=>r[cc.periode]===per);
   const sum=(arr,col)=>arr.reduce((s,r)=>s+(parseFloat(r[col])||0),0);
   const inn=sum(rows,cc.credit),out=sum(rows,cc.debit);
@@ -234,24 +298,23 @@ function renderKPIs(){
 }
 
 function renderTable(){
-  const cc=Sheets.cols.caisse,per=Sidebar.getActivePeriode();
+  const cc=Sheets.cols.caisse;
+  const per=document.getElementById('fl-per')?.value||Sidebar.getActivePeriode();
   const search=(document.getElementById('fl-search')?.value||'').toLowerCase();
   const typeF=document.getElementById('fl-type')?.value||'';
-  const typeCompF=document.getElementById('fl-type-comp')?.value||'';
   const sensF=document.getElementById('fl-sens')?.value||'';
   const dateFrom=document.getElementById('fl-date-from')?.value||'';
   const dateTo=document.getElementById('fl-date-to')?.value||'';
   const flagF=document.getElementById('fl-flag')?.value||'';
 
   let rows=allRows.filter(r=>r[cc.periode]===per);
-  if(typeF)rows=rows.filter(r=>r[cc.type_mvt]===typeF);
-  if(typeCompF)rows=rows.filter(r=>r[cc.type_comp]===typeCompF);
-  if(sensF==='credit')rows=rows.filter(r=>parseFloat(r[cc.credit])>0);
-  if(sensF==='debit')rows=rows.filter(r=>parseFloat(r[cc.debit])>0);
-  if(dateFrom)rows=rows.filter(r=>dateToISO(r[cc.date])>=dateFrom);
-  if(dateTo)rows=rows.filter(r=>dateToISO(r[cc.date])<=dateTo);
-  if(flagF==='flagged')rows=rows.filter(r=>r[cc.flag_check]==='TRUE');
-  if(search)rows=rows.filter(r=>[r[cc.libelle],r[cc.type_mvt],r[cc.type_comp],r[cc.description]].join(' ').toLowerCase().includes(search));
+  if(typeF) rows=rows.filter(r=>r[cc.type_mvt]===typeF);
+  if(sensF==='credit') rows=rows.filter(r=>parseFloat(r[cc.credit])>0);
+  if(sensF==='debit')  rows=rows.filter(r=>parseFloat(r[cc.debit])>0);
+  if(dateFrom) rows=rows.filter(r=>dateToISO(r[cc.date])>=dateFrom);
+  if(dateTo)   rows=rows.filter(r=>dateToISO(r[cc.date])<=dateTo);
+  if(flagF==='flagged') rows=rows.filter(r=>r[cc.flag_check]==='TRUE');
+  if(search) rows=rows.filter(r=>[r[cc.libelle],r[cc.type_mvt],r[cc.type_comp],r[cc.description]].join(' ').toLowerCase().includes(search));
 
   if(sortCol>=0){
     rows=[...rows].sort((a,b)=>{
@@ -270,49 +333,76 @@ function renderTable(){
   }
 
   const sortIcon=(col)=>`<span class="sort-icon">${sortCol===col?(sortAsc?'↑':'↓'):'↕'}</span>`;
+  const mkTh=(label,col,cls='')=>`<th class="${sortCol===col?'sorted':''} ${cls}" onclick="setSort(${col})">${label}${sortIcon(col)}</th>`;
+
+  /*
+   * Ordre colonnes demandé :
+   * Date / Libellé / Débit / Crédit / Type mouvement / Description / Libellé complémentaire / Nom du chat / N° reçu fiscal / Actions
+   * + colonne commentaire flag (discrète en fin)
+   */
   const trs=rows.map(r=>{
     const ri=allRows.indexOf(r);
     const flagged=r[cc.flag_check]==='TRUE';
     const comment=r[cc.flag_comment]||'';
+    // description = cc.description (ancienne colonne), type_comp = cc.type_comp (libellé complémentaire)
     return `<tr class="${editIdx===ri?'editing':''}">
       <td style="color:var(--text-3);white-space:nowrap;">${r[cc.date]||''}</td>
-      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escH(r[cc.libelle]||'')}">${r[cc.libelle]||''}</td>
-      <td><span class="chip chip-${chipType(r[cc.type_mvt])}">${r[cc.type_mvt]||''}</span></td>
-      <td style="font-size:10px;color:var(--text-3);">${r[cc.type_comp]||''}</td>
-      <td style="color:var(--text-3);font-size:10px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r[cc.description]||''}</td>
+      <td class="td-trunc" title="${escH(r[cc.libelle]||'')}">${r[cc.libelle]||''}</td>
       <td class="r amount-d">${r[cc.debit]?fmt(r[cc.debit]):''}</td>
       <td class="r amount-c">${r[cc.credit]?fmt(r[cc.credit]):''}</td>
+      <td><span class="chip chip-${chipType(r[cc.type_mvt])}">${r[cc.type_mvt]||''}</span></td>
+      <td class="td-trunc-sm" title="${escH(r[cc.description]||'')}">${r[cc.description]||''}</td>
+      <td class="td-trunc-sm" title="${escH(r[cc.type_comp]||'')}">${r[cc.type_comp]||''}</td>
+      <td style="font-size:10px;color:var(--text-3);">${r[cc.nom_chat]||''}</td>
+      <td style="font-size:10px;color:var(--text-3);">${r[cc.num_recu]||''}</td>
       <td class="r" style="white-space:nowrap;">
         <button class="edit-btn" onclick="openEdit(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>
-        <button class="del-btn"  onclick="openDel(${ri})" title="Supprimer"><i class="ti ti-trash"></i></button>
+        <button class="del-btn"  onclick="openDel(${ri})"  title="Supprimer"><i class="ti ti-trash"></i></button>
         <button class="flag-btn ${flagged?'on':''}" onclick="openFlag(${ri},'${escH(r[cc.libelle]||'')}','${escH(comment)}',${flagged})" title="Annoter"><i class="ti ti-flag${flagged?'-filled':''}"></i></button>
       </td>
-      <td class="flag-comment-cell" onclick="openFlag(${ri},'${escH(r[cc.libelle]||'')}','${escH(comment)}',${flagged})">${comment}</td>
+      <td style="max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:var(--amber);cursor:pointer;" onclick="openFlag(${ri},'${escH(r[cc.libelle]||'')}','${escH(comment)}',${flagged})">${comment}</td>
     </tr>`;
   }).join('');
 
-  const mkTh=(label,col,cls='')=>`<th class="${sortCol===col?'sorted':''} ${cls}" onclick="setSort(${col})">${label}${sortIcon(col)}</th>`;
   document.getElementById('table-wrap').innerHTML=`
     <table>
       <thead><tr>
-        ${mkTh('Date',cc.date)}${mkTh('Libellé',cc.libelle)}
-        ${mkTh('Type',cc.type_mvt)}${mkTh('Type comp.',cc.type_comp)}${mkTh('Description',cc.description)}
-        ${mkTh('Débit',cc.debit,'r')}${mkTh('Crédit',cc.credit,'r')}
-        <th class="r">Actions</th><th>Commentaire</th>
+        ${mkTh('Date',cc.date)}
+        ${mkTh('Libellé',cc.libelle)}
+        ${mkTh('Débit',cc.debit,'r')}
+        ${mkTh('Crédit',cc.credit,'r')}
+        ${mkTh('Type mouvement',cc.type_mvt)}
+        ${mkTh('Description',cc.description)}
+        ${mkTh('Libellé comp.',cc.type_comp)}
+        ${mkTh('Nom du chat',cc.nom_chat)}
+        ${mkTh('N° reçu',cc.num_recu)}
+        <th class="r">Actions</th>
+        <th>Commentaire</th>
       </tr></thead>
       <tbody>${trs}</tbody>
     </table>`;
 }
 
 function setSort(col){if(sortCol===col)sortAsc=!sortAsc;else{sortCol=col;sortAsc=true;}renderTable();}
-function clearFilters(){['fl-search','fl-date-from','fl-date-to'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});['fl-type','fl-type-comp','fl-sens','fl-flag'].forEach(id=>{const e=document.getElementById(id);if(e)e.selectedIndex=0;});sortCol=-1;sortAsc=true;renderTable();}
 
-function setSens(s){activeSens=s;document.getElementById('btn-credit').classList.toggle('active',s==='credit');document.getElementById('btn-debit').classList.toggle('active',s==='debit');}
+function clearFilters(){
+  ['fl-search','fl-date-from','fl-date-to'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['fl-type','fl-sens','fl-flag'].forEach(id=>{const e=document.getElementById(id);if(e)e.selectedIndex=0;});
+  sortCol=-1;sortAsc=true;renderTable();
+}
+
+function setSens(s){
+  activeSens=s;
+  document.getElementById('btn-credit').classList.toggle('active',s==='credit');
+  document.getElementById('btn-debit').classList.toggle('active',s==='debit');
+}
 
 function resetForm(){
-  ['f-date','f-montant','f-libelle','f-desc','f-chat','f-recu'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=id==='f-date'?Sheets.todayISO():'';});
+  ['f-date','f-montant','f-libelle','f-type-comp','f-chat','f-recu'].forEach(id=>{
+    const e=document.getElementById(id);if(e)e.value=id==='f-date'?Sheets.todayISO():'';
+  });
   document.getElementById('f-type').selectedIndex=0;
-  document.getElementById('f-type-comp').selectedIndex=0;
+  document.getElementById('f-desc').selectedIndex=0;
   document.getElementById('form-err').classList.add('hidden');
   cancelEdit();
 }
@@ -336,17 +426,20 @@ async function submitForm(){
   if(!montant||montant<=0){showErr('Le montant doit être supérieur à 0.');return;}
   if(!libelle){showErr('Le libellé est obligatoire.');return;}
   if(!type_mvt){showErr('Le type de mouvement est obligatoire.');return;}
+
   const op={
     source:SOURCE, date, libelle,
     debit:activeSens==='debit'?montant:'', credit:activeSens==='credit'?montant:'',
     periode:document.getElementById('f-per').value,
-    type_mvt, type_comp:document.getElementById('f-type-comp').value,
-    description:document.getElementById('f-desc').value.trim(),
+    type_mvt,
+    description:document.getElementById('f-desc').value,        // liste config
+    type_comp:document.getElementById('f-type-comp').value.trim(), // saisie libre
     nom:libelle, reglement:'Espèces',
     nom_chat:document.getElementById('f-chat').value.trim(),
     num_recu:document.getElementById('f-recu').value.trim(),
     lien_facture:'',
   };
+
   const btn=document.getElementById('btn-submit');btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2 spinner"></i>';
   try{
     if(editIdx!==null){
@@ -370,8 +463,8 @@ function openEdit(ri){
   document.getElementById('f-montant').value=r[cc.credit]||r[cc.debit]||'';
   document.getElementById('f-libelle').value=r[cc.libelle]||'';
   document.getElementById('f-type').value=r[cc.type_mvt]||'';
-  document.getElementById('f-type-comp').value=r[cc.type_comp]||'';
-  document.getElementById('f-desc').value=r[cc.description]||'';
+  document.getElementById('f-desc').value=r[cc.description]||'';       // Description
+  document.getElementById('f-type-comp').value=r[cc.type_comp]||'';    // Libellé complémentaire
   document.getElementById('f-chat').value=r[cc.nom_chat]||'';
   document.getElementById('f-recu').value=r[cc.num_recu]||'';
   setSens(r[cc.credit]&&parseFloat(r[cc.credit])>0?'credit':'debit');
@@ -413,6 +506,7 @@ async function saveFlag(){
   catch(e){alert('Erreur : '+e.message);}
 }
 
+// Helpers
 function chipType(t){if(!t)return'depense';const l=t.toLowerCase();if(l.includes('adopt'))return'adoption';if(l.includes('don'))return'don';if(l.includes('adh'))return'adhesion';return'depense';}
 function fmt(v){if(!v&&v!==0)return'';return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
 function dateToISO(d){if(!d)return'';const p=String(d).split('/');if(p.length===3&&p[0].length===2)return`${p[2]}-${p[1]}-${p[0]}`;return d;}
