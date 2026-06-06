@@ -7,15 +7,25 @@
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
-  /* Layout : tableau en haut, formulaire en bas */
+  .split-layout{display:grid;grid-template-columns:1fr 420px;gap:14px;align-items:start;}
+  .form-card{background:var(--surface);border:0.5px solid var(--orange);border-radius:var(--radius);padding:18px 20px;position:sticky;top:60px;}
+  .form-title{font-size:13px;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .form-title i{color:var(--orange);}
+  .form-group{margin-bottom:10px;}
+  .form-label{display:block;font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
+  .form-label.req::after{content:' *';color:var(--red);}
+  .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   .list-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px;}
   .list-head{padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
   .list-title{font-size:13px;font-weight:600;}
   .filters-bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
   .f-select{font-size:11px;padding:4px 8px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text-2);font-family:'DM Sans',sans-serif;}
   .f-input{font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;width:130px;}
-  .filter-sep{color:var(--border-mid);font-size:14px;}
-
+  .kpi-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+  .kpi{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;}
+  .kpi-label{font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
+  .kpi-value{font-size:18px;font-weight:600;}
+  .kpi-sub{font-size:10px;color:var(--text-3);margin-top:2px;}
   table{width:100%;border-collapse:collapse;font-size:11px;}
   thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:7px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);cursor:pointer;white-space:nowrap;user-select:none;}
   thead th:hover{background:var(--warm);}
@@ -32,26 +42,6 @@
   .pdf-btn{color:var(--blue);} .edit-btn{color:var(--blue);} .del-btn{color:var(--red);}
   .flag-btn{color:var(--text-3);} .flag-btn.on{color:var(--orange);}
   .flag-comment-cell{max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:var(--amber);cursor:pointer;}
-
-  /* Soldes kpi */
-  .kpi-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
-  .kpi{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;}
-  .kpi-label{font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
-  .kpi-value{font-size:18px;font-weight:600;}
-  .kpi-sub{font-size:10px;color:var(--text-3);margin-top:2px;}
-
-  /* Formulaire en bas */
-  .form-section{background:var(--surface);border:0.5px solid var(--orange);border-radius:var(--radius);padding:18px 20px;}
-  .form-title{font-size:13px;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;}
-  .form-title i{color:var(--orange);}
-  .form-grid{display:grid;gap:12px;}
-  .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
-  .form-row-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;}
-  .form-row-5{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:10px;}
-  .form-group{display:flex;flex-direction:column;gap:4px;}
-  .form-label{font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;}
-  .form-label.req::after{content:' *';color:var(--red);}
   .sens-toggle{display:flex;gap:4px;}
   .sens-btn{flex:1;padding:7px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:transparent;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all 0.15s;}
   .sens-btn.credit{border-color:var(--green);color:var(--green);}
@@ -65,8 +55,6 @@
   .drive-picker input{flex:1;}
   .btn-drive{display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface-2);color:var(--text-2);font-size:11px;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;}
   .form-actions{display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:0.5px solid var(--border);}
-
-  /* Modals */
   .modal-overlay{position:fixed;inset:0;background:rgba(61,43,31,0.35);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
   .modal{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-md);width:440px;max-width:95vw;}
   .modal-header{padding:14px 18px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
@@ -87,138 +75,109 @@
 <div class="main">
   <div class="topbar">
     <div class="topbar-title"><i class="ti ti-cash" style="color:var(--orange)"></i> Caisse — Saisie</div>
-    <div class="topbar-right">
-      <span style="font-size:11px;color:var(--text-3);" id="topbar-per"></span>
-    </div>
+    <div class="topbar-right"><span style="font-size:11px;color:var(--text-3);" id="topbar-per"></span></div>
   </div>
   <div class="page-content">
 
-    <!-- KPIs -->
     <div class="kpi-bar" id="kpi-bar"></div>
 
-    <!-- TABLEAU DES OPÉRATIONS -->
-    <div class="list-card">
-      <div class="list-head">
-        <div class="list-title">Opérations caisse</div>
-        <div class="filters-bar">
-          <input class="f-input" type="text" id="fl-search" placeholder="Rechercher…" oninput="renderTable()">
-          <select class="f-select" id="fl-source" onchange="renderTable()">
-            <option value="">Caisse 1 + 2</option>
-            <option value="C1">Caisse 1</option>
-            <option value="C2">Caisse 2</option>
-          </select>
-          <select class="f-select" id="fl-type" onchange="renderTable()">
-            <option value="">Tous types</option>
-          </select>
-          <select class="f-select" id="fl-type-comp" onchange="renderTable()">
-            <option value="">Tous types comp.</option>
-          </select>
-          <select class="f-select" id="fl-sens" onchange="renderTable()">
-            <option value="">Débits + Crédits</option>
-            <option value="credit">Crédits seuls</option>
-            <option value="debit">Débits seuls</option>
-          </select>
-          <input class="f-input" type="date" id="fl-date-from" onchange="renderTable()" title="Du">
-          <input class="f-input" type="date" id="fl-date-to" onchange="renderTable()" title="Au">
-          <select class="f-select" id="fl-flag" onchange="renderTable()">
-            <option value="">Toutes lignes</option>
-            <option value="flagged">À vérifier</option>
-          </select>
-          <button class="btn btn-secondary btn-sm" onclick="clearFilters()"><i class="ti ti-x"></i> Effacer</button>
-        </div>
-      </div>
-      <div id="table-wrap" style="overflow-x:auto;max-height:480px;overflow-y:auto;">
-        <div style="padding:32px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>
-      </div>
-    </div>
+    <div class="split-layout">
 
-    <!-- FORMULAIRE DE SAISIE EN BAS -->
-    <div class="form-section">
-      <div class="form-title">
-        <span><i class="ti ti-plus"></i> <span id="form-mode-lbl">Nouvelle opération</span></span>
-        <button class="btn btn-secondary btn-sm" id="btn-cancel-edit" onclick="cancelEdit()" style="display:none;"><i class="ti ti-x"></i> Annuler la modification</button>
-      </div>
-      <div id="edit-banner" class="edit-banner" style="display:none;">
-        <span><i class="ti ti-pencil"></i> Mode modification — ligne <strong id="edit-line-label"></strong></span>
-      </div>
-
-      <div class="form-row-3" style="margin-bottom:10px;">
-        <div class="form-group">
-          <label class="form-label">Source</label>
-          <div class="src-toggle">
-            <button class="src-btn active" id="src-c1" onclick="setSource('C1')">Caisse 1</button>
-            <button class="src-btn"        id="src-c2" onclick="setSource('C2')">Caisse 2</button>
+      <!-- GAUCHE : tableau -->
+      <div>
+        <div class="list-card">
+          <div class="list-head">
+            <div class="list-title">Opérations caisse</div>
+            <div class="filters-bar">
+              <input class="f-input" type="text" id="fl-search" placeholder="Rechercher…" oninput="renderTable()">
+              <select class="f-select" id="fl-source" onchange="renderTable()">
+                <option value="">Caisse 1 + 2</option>
+                <option value="C1">Caisse 1</option>
+                <option value="C2">Caisse 2</option>
+              </select>
+              <select class="f-select" id="fl-type" onchange="renderTable()"><option value="">Tous types</option></select>
+              <select class="f-select" id="fl-type-comp" onchange="renderTable()"><option value="">Tous types comp.</option></select>
+              <select class="f-select" id="fl-sens" onchange="renderTable()">
+                <option value="">Débits + Crédits</option>
+                <option value="credit">Crédits seuls</option>
+                <option value="debit">Débits seuls</option>
+              </select>
+              <input class="f-input" type="date" id="fl-date-from" onchange="renderTable()" title="Du">
+              <input class="f-input" type="date" id="fl-date-to" onchange="renderTable()" title="Au">
+              <select class="f-select" id="fl-flag" onchange="renderTable()">
+                <option value="">Toutes lignes</option>
+                <option value="flagged">À vérifier</option>
+              </select>
+              <button class="btn btn-secondary btn-sm" onclick="clearFilters()"><i class="ti ti-x"></i> Effacer</button>
+            </div>
           </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Sens</label>
-          <div class="sens-toggle">
-            <button class="sens-btn credit active" id="btn-credit" onclick="setSens('credit')"><i class="ti ti-arrow-down-left"></i> Entrée</button>
-            <button class="sens-btn debit"         id="btn-debit"  onclick="setSens('debit')"><i class="ti ti-arrow-up-right"></i> Sortie</button>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Période</label>
-          <select id="f-per"></select>
-        </div>
-      </div>
-
-      <div class="form-row-5">
-        <div class="form-group">
-          <label class="form-label req">Date</label>
-          <input type="date" id="f-date">
-        </div>
-        <div class="form-group">
-          <label class="form-label req">Montant (€)</label>
-          <input type="number" id="f-montant" step="0.01" min="0" placeholder="0,00">
-        </div>
-        <div class="form-group">
-          <label class="form-label req">Libellé</label>
-          <input type="text" id="f-libelle" placeholder="Nom, description courte">
-        </div>
-        <div class="form-group">
-          <label class="form-label req">Type mouvement</label>
-          <select id="f-type"></select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Type complémentaire</label>
-          <select id="f-type-comp"></select>
-        </div>
-      </div>
-
-      <div class="form-row-5" style="margin-top:10px;">
-        <div class="form-group">
-          <label class="form-label">Description</label>
-          <input type="text" id="f-desc" placeholder="Précisions…">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Mode règlement</label>
-          <select id="f-reglement"></select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Nom du chat</label>
-          <input type="text" id="f-chat" placeholder="Si adoption">
-        </div>
-        <div class="form-group">
-          <label class="form-label">N° reçu</label>
-          <input type="text" id="f-recu">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Facture PDF (Drive)</label>
-          <div class="drive-picker">
-            <input type="text" id="f-facture" placeholder="ID Drive">
-            <button class="btn-drive" onclick="openDrivePicker()"><i class="ti ti-brand-google-drive"></i></button>
+          <div id="table-wrap" style="overflow-x:auto;max-height:600px;overflow-y:auto;">
+            <div style="padding:32px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>
           </div>
         </div>
       </div>
 
-      <div id="form-err" class="hidden" style="color:var(--red);font-size:11px;padding:6px 0;margin-top:8px;"></div>
-      <div class="form-actions">
-        <button class="btn btn-primary" style="min-width:160px;" id="btn-submit" onclick="submitForm()">
-          <i class="ti ti-device-floppy"></i> Enregistrer
-        </button>
-        <button class="btn btn-secondary" onclick="resetForm()"><i class="ti ti-refresh"></i> Vider</button>
+      <!-- DROITE : formulaire sticky -->
+      <div>
+        <div class="form-card">
+          <div class="form-title">
+            <span><i class="ti ti-plus"></i> <span id="form-mode-lbl">Nouvelle opération</span></span>
+            <button class="btn btn-secondary btn-sm" id="btn-cancel-edit" onclick="cancelEdit()" style="display:none;"><i class="ti ti-x"></i> Annuler</button>
+          </div>
+          <div id="edit-banner" class="edit-banner" style="display:none;">
+            <span><i class="ti ti-pencil"></i> Modification — <strong id="edit-line-label"></strong></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Source</label>
+            <div class="src-toggle">
+              <button class="src-btn active" id="src-c1" onclick="setSource('C1')">Caisse 1</button>
+              <button class="src-btn"        id="src-c2" onclick="setSource('C2')">Caisse 2</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sens</label>
+            <div class="sens-toggle">
+              <button class="sens-btn credit active" id="btn-credit" onclick="setSens('credit')"><i class="ti ti-arrow-down-left"></i> Entrée</button>
+              <button class="sens-btn debit"         id="btn-debit"  onclick="setSens('debit')"><i class="ti ti-arrow-up-right"></i> Sortie</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Période</label>
+            <select id="f-per"></select>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group"><label class="form-label req">Date</label><input type="date" id="f-date"></div>
+            <div class="form-group"><label class="form-label req">Montant (€)</label><input type="number" id="f-montant" step="0.01" min="0" placeholder="0,00"></div>
+          </div>
+          <div class="form-group"><label class="form-label req">Libellé</label><input type="text" id="f-libelle" placeholder="Nom, description courte"></div>
+          <div class="form-row-2">
+            <div class="form-group"><label class="form-label req">Type mouvement</label><select id="f-type"></select></div>
+            <div class="form-group"><label class="form-label">Type complémentaire</label><select id="f-type-comp"></select></div>
+          </div>
+          <div class="form-group"><label class="form-label">Description</label><input type="text" id="f-desc" placeholder="Précisions…"></div>
+          <div class="form-row-2">
+            <div class="form-group"><label class="form-label">Mode règlement</label><select id="f-reglement"></select></div>
+            <div class="form-group"><label class="form-label">Nom du chat</label><input type="text" id="f-chat" placeholder="Si adoption"></div>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group"><label class="form-label">N° reçu</label><input type="text" id="f-recu"></div>
+            <div class="form-group"><label class="form-label">Facture PDF (Drive)</label>
+              <div class="drive-picker">
+                <input type="text" id="f-facture" placeholder="ID Drive">
+                <button class="btn-drive" onclick="openDrivePicker()"><i class="ti ti-brand-google-drive"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <div id="form-err" class="hidden" style="color:var(--red);font-size:11px;padding:6px 0;margin-top:4px;"></div>
+          <div class="form-actions">
+            <button class="btn btn-primary" style="flex:1;" id="btn-submit" onclick="submitForm()"><i class="ti ti-device-floppy"></i> Enregistrer</button>
+            <button class="btn btn-secondary" onclick="resetForm()"><i class="ti ti-refresh"></i> Vider</button>
+          </div>
+        </div>
       </div>
+
     </div>
   </div>
 </div>
@@ -285,9 +244,13 @@ async function loadData(){
   Sidebar.setLastUpdate();
   renderKPIs();renderTable();
 }
-function onPeriodeChange(p){document.getElementById('f-per').value=p;document.getElementById('topbar-per').textContent=p;renderKPIs();renderTable();}
 
-// ---- KPIs ----
+function onPeriodeChange(p){
+  document.getElementById('f-per').value=p;
+  document.getElementById('topbar-per').textContent=p;
+  renderKPIs();renderTable();
+}
+
 function renderKPIs(){
   const cc=Sheets.cols.caisse,per=Sidebar.getActivePeriode();
   const rows=allRows.filter(r=>r[cc.periode]===per);
@@ -303,7 +266,6 @@ function renderKPIs(){
     <div class="kpi"><div class="kpi-label">Caisse 2 — Net période</div><div class="kpi-value" style="color:${in2-out2>=0?'var(--green)':'var(--red)'}">${fmt(in2-out2)}</div></div>`;
 }
 
-// ---- TABLE ----
 function renderTable(){
   const cc=Sheets.cols.caisse,per=Sidebar.getActivePeriode();
   const search=(document.getElementById('fl-search')?.value||'').toLowerCase();
@@ -327,7 +289,6 @@ function renderTable(){
   if(flagF==='flagged')rows=rows.filter(r=>r[cc.flag_check]==='TRUE');
   if(search)rows=rows.filter(r=>[r[cc.libelle],r[cc.type_mvt],r[cc.type_comp],r[cc.description],r[cc.nom]].join(' ').toLowerCase().includes(search));
 
-  // Tri
   if(sortCol>=0){
     rows=[...rows].sort((a,b)=>{
       const va=String(a[sortCol]||''),vb=String(b[sortCol]||'');
@@ -370,7 +331,6 @@ function renderTable(){
     </tr>`;
   }).join('');
 
-  const cols=[cc.date,'src',cc.libelle,cc.type_mvt,cc.type_comp,cc.description,cc.debit,cc.credit];
   const mkTh=(label,col,cls='')=>`<th class="${sortCol===col?'sorted':''} ${cls}" onclick="setSort(${col})">${label}${sortIcon(col)}</th>`;
   document.getElementById('table-wrap').innerHTML=`
     <table>
@@ -387,7 +347,6 @@ function renderTable(){
 function setSort(col){if(sortCol===col)sortAsc=!sortAsc;else{sortCol=col;sortAsc=true;}renderTable();}
 function clearFilters(){['fl-search','fl-date-from','fl-date-to'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});['fl-source','fl-type','fl-type-comp','fl-sens','fl-flag'].forEach(id=>{const e=document.getElementById(id);if(e)e.selectedIndex=0;});sortCol=-1;sortAsc=true;renderTable();}
 
-// ---- FORMULAIRE ----
 function setSource(s){activeSrc=s;document.getElementById('src-c1').classList.toggle('active',s==='C1');document.getElementById('src-c2').classList.toggle('active',s==='C2');}
 function setSens(s){activeSens=s;document.getElementById('btn-credit').classList.toggle('active',s==='credit');document.getElementById('btn-debit').classList.toggle('active',s==='debit');}
 
@@ -420,7 +379,7 @@ async function submitForm(){
   if(!libelle){showErr('Le libellé est obligatoire.');return;}
   if(!type_mvt){showErr('Le type de mouvement est obligatoire.');return;}
   const op={
-    source:activeSrc,date:date,libelle,
+    source:activeSrc,date,libelle,
     debit:activeSens==='debit'?montant:'',credit:activeSens==='credit'?montant:'',
     periode:document.getElementById('f-per').value,
     type_mvt,type_comp:document.getElementById('f-type-comp').value,
@@ -444,7 +403,6 @@ async function submitForm(){
   finally{btn.disabled=false;btn.innerHTML='<i class="ti ti-device-floppy"></i> Enregistrer';}
 }
 
-// ---- MODIFIER ----
 function openEdit(ri){
   const cc=Sheets.cols.caisse,r=allRows[ri];editIdx=ri;
   document.getElementById('f-date').value=r[cc.date]||'';
@@ -464,24 +422,35 @@ function openEdit(ri){
   document.getElementById('btn-cancel-edit').style.display='';
   const banner=document.getElementById('edit-banner');banner.style.display='';
   document.getElementById('edit-line-label').textContent=`${r[cc.date]||''} — ${r[cc.libelle]||''}`;
-  document.querySelector('.form-section').scrollIntoView({behavior:'smooth'});
+  document.querySelector('.form-card').scrollIntoView({behavior:'smooth'});
   renderTable();
 }
 
-// ---- SUPPRIMER ----
-function openDel(ri){delIdx=ri;const cc=Sheets.cols.caisse,r=allRows[ri];document.getElementById('del-detail').innerHTML=`<strong>${r[cc.date]||'—'}</strong> — ${r[cc.libelle]||'—'}<br>${r[cc.type_mvt]||''} — ${r[cc.credit]?'+'+fmt(r[cc.credit]):r[cc.debit]?'−'+fmt(r[cc.debit]):''}`;document.getElementById('modal-del').classList.remove('hidden');}
+function openDel(ri){
+  delIdx=ri;
+  const cc=Sheets.cols.caisse,r=allRows[ri];
+  document.getElementById('del-detail').innerHTML=`<strong>${r[cc.date]||'—'}</strong> — ${r[cc.libelle]||'—'}<br>${r[cc.type_mvt]||''} — ${r[cc.credit]?'+'+fmt(r[cc.credit]):r[cc.debit]?'−'+fmt(r[cc.debit]):''}`;
+  document.getElementById('modal-del').classList.remove('hidden');
+}
 function closeDel(){document.getElementById('modal-del').classList.add('hidden');delIdx=null;}
-async function confirmDel(){if(delIdx===null)return;try{await Sheets.deleteRow(Sheets.config.sheets.caisse,delIdx);closeDel();showToast('Supprimée');await loadData();}catch(e){alert('Erreur : '+e.message);}}
+async function confirmDel(){
+  if(delIdx===null)return;
+  try{await Sheets.deleteRow(Sheets.config.sheets.caisse,delIdx);closeDel();showToast('Supprimée');await loadData();}
+  catch(e){alert('Erreur : '+e.message);}
+}
 
-// ---- FLAG ----
 function openFlag(ri,libelle,comment,isFlagged){flagTarget={ri,isFlagged};document.getElementById('flag-info').textContent=`Ligne : ${libelle}`;document.getElementById('flag-comment').value=comment||'';document.getElementById('flag-resolved').checked=false;document.getElementById('modal-flag').classList.remove('hidden');}
 function closeFlag(){document.getElementById('modal-flag').classList.add('hidden');flagTarget=null;}
-async function saveFlag(){if(!flagTarget)return;const comment=document.getElementById('flag-comment').value.trim();const resolved=document.getElementById('flag-resolved').checked;try{await Sheets.updateFlag('Caisse',flagTarget.ri,!resolved,comment);closeFlag();await loadData();showToast('Annotation enregistrée');}catch(e){alert('Erreur : '+e.message);}}
+async function saveFlag(){
+  if(!flagTarget)return;
+  const comment=document.getElementById('flag-comment').value.trim();
+  const resolved=document.getElementById('flag-resolved').checked;
+  try{await Sheets.updateFlag('Caisse',flagTarget.ri,!resolved,comment);closeFlag();await loadData();showToast('Annotation enregistrée');}
+  catch(e){alert('Erreur : '+e.message);}
+}
 
-// ---- DRIVE ----
 function openDrivePicker(){gapi.load('picker',()=>{const t=gapi.client.getToken();if(!t)return;new google.picker.PickerBuilder().addView(new google.picker.DocsView()).setOAuthToken(t.access_token).setCallback(d=>{if(d.action===google.picker.Action.PICKED)document.getElementById('f-facture').value=d.docs[0].id;}).build().setVisible(true);});}
 
-// ---- HELPERS ----
 function chipType(t){if(!t)return'depense';const l=t.toLowerCase();if(l.includes('adopt'))return'adoption';if(l.includes('don'))return'don';if(l.includes('adh'))return'adhesion';if(l.includes('vén')||l.includes('ment'))return'evenement';return'depense';}
 function fmt(v){if(!v&&v!==0)return'';return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
 function dateToISO(d){if(!d)return'';const p=String(d).split('/');if(p.length===3&&p[0].length===2)return`${p[2]}-${p[1]}-${p[0]}`;return d;}
