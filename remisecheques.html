@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Remises de chèques — Arche de Mallo</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  .split-layout{display:grid;grid-template-columns:1fr 420px;gap:14px;align-items:start;}
+  .form-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:18px 20px;position:sticky;top:60px;}
+  .form-card-title{font-size:13px;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px;}
+  .form-card-title i{color:var(--orange);}
+  .form-group{margin-bottom:10px;}
+  .form-label{display:block;font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
+  .form-label.req::after{content:' *';color:var(--red);}
+  .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  .list-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .list-head{padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:nowrap;gap:8px;}
+  .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+  .kpi{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;}
+  .kpi-label{font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
+  .kpi-value{font-size:18px;font-weight:600;}
+  .f-select{font-size:11px;padding:4px 8px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text-2);font-family:'DM Sans',sans-serif;}
+  .f-input{font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;}
+  table{width:100%;border-collapse:collapse;font-size:11px;}
+  thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:7px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);}
+  tbody td{padding:7px 10px;border-bottom:0.5px solid var(--border);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--cream);}
+  .r{text-align:right;font-variant-numeric:tabular-nums;}
+  .del-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;color:var(--red);}
+  .expand-btn{background:none;border:0.5px solid var(--border-mid);border-radius:4px;cursor:pointer;font-size:11px;padding:2px 6px;color:var(--text-2);font-family:'DM Sans',sans-serif;transition:all 0.15s;}
+  .expand-btn:hover{background:var(--cream);}
+  .expand-btn.open{background:var(--orange);color:white;border-color:var(--orange);}
+
+  /* Détail inline */
+  .detail-row td{padding:0!important;border-bottom:0.5px solid var(--border);}
+  .detail-inner{background:var(--surface-2);padding:10px 16px;border-top:0.5px solid var(--border);}
+  .detail-inner table{margin:0;}
+  .detail-inner thead th{background:var(--warm);font-size:9px;}
+  .detail-inner tbody td{padding:5px 8px;font-size:11px;}
+
+  /* Formulaire chèques remise */
+  .cheque-item{background:var(--surface-2);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px;}
+  .cheque-item-title{font-size:10px;font-weight:600;color:var(--orange);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+  .remove-cheque-btn{background:none;border:none;cursor:pointer;color:var(--red);font-size:14px;padding:0;}
+
+  /* Modal suppression */
+  .modal-overlay{position:fixed;inset:0;background:rgba(61,43,31,0.35);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
+  .modal{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-md);width:420px;max-width:95vw;}
+  .modal-header{padding:14px 18px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+  .modal-title{font-size:13px;font-weight:600;}
+  .modal-close{background:none;border:none;font-size:18px;color:var(--text-3);cursor:pointer;}
+  .modal-body{padding:18px;}
+  .modal-footer{padding:12px 18px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+  .confirm-detail{margin-top:10px;padding:10px;background:var(--red-bg);border-radius:var(--radius-sm);font-size:12px;color:var(--red);}
+  .success-toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:white;padding:10px 18px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;z-index:999;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-md);animation:slideIn 0.25s ease;}
+  @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .spinner{display:inline-block;animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .info-box{background:var(--blue-bg);border:0.5px solid rgba(24,95,165,0.15);border-radius:var(--radius-sm);padding:8px 12px;font-size:11px;color:var(--blue);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+</style>
+</head>
+<body>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title"><i class="ti ti-stack" style="color:var(--orange)"></i> Remises de chèques</div>
+    <div class="topbar-right"><span style="font-size:11px;color:var(--text-3);" id="topbar-per"></span></div>
+  </div>
+  <div class="page-content">
+
+    <div class="info-box"><i class="ti ti-info-circle"></i> Les remises de chèques n'apparaissent dans la banque qu'au moment où vous les encaissez via une opération bancaire.</div>
+
+    <div class="kpi-row" id="kpi-remises"></div>
+
+    <div class="split-layout">
+
+      <!-- LISTE -->
+      <div>
+        <div class="list-card">
+          <div class="list-head">
+            <div style="font-size:12px;font-weight:600;white-space:nowrap;">Remises de chèques</div>
+            <div style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center;">
+              <select class="f-select" id="fl-per" onchange="renderKPIs();renderTable()"></select>
+              <input class="f-input" type="text" id="fl-search" placeholder="Rechercher…" oninput="renderTable()" style="width:140px;">
+              <select class="f-select" id="fl-statut" onchange="renderTable()">
+                <option value="">Tous statuts</option>
+                <option value="en_attente">En attente</option>
+                <option value="encaissee">Encaissées</option>
+              </select>
+            </div>
+          </div>
+          <div id="table-wrap"><div style="padding:24px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i></div></div>
+        </div>
+      </div>
+
+      <!-- FORMULAIRE -->
+      <div>
+        <div class="form-card">
+          <div class="form-card-title"><i class="ti ti-plus"></i> Nouvelle remise de chèques</div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">N° bordereau</label>
+              <input type="text" id="rem-bordereau" placeholder="BRD-2026-001">
+            </div>
+            <div class="form-group">
+              <label class="form-label req">Date remise</label>
+              <input type="date" id="rem-date">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Période</label>
+            <select id="rem-per"></select>
+          </div>
+
+          <!-- Chèques -->
+          <div style="margin-top:12px;margin-bottom:8px;">
+            <div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+              <span>Chèques inclus</span>
+              <button class="btn btn-secondary btn-sm" onclick="addChequeRemise()"><i class="ti ti-plus"></i> Ajouter un chèque</button>
+            </div>
+            <div id="cheques-remise-list"></div>
+            <div style="margin-top:8px;padding:8px 12px;background:var(--surface-2);border-radius:var(--radius-sm);font-size:12px;display:flex;justify-content:space-between;">
+              <span style="color:var(--text-3);">Total remise :</span>
+              <strong id="rem-total">0,00 €</strong>
+            </div>
+          </div>
+
+          <div id="rem-err" class="hidden" style="color:var(--red);font-size:11px;padding:6px 0;"></div>
+          <div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);">
+            <button class="btn btn-primary" style="flex:1" onclick="submitRemise()"><i class="ti ti-device-floppy"></i> Enregistrer la remise</button>
+            <button class="btn btn-secondary" onclick="resetRemise()"><i class="ti ti-refresh"></i> Vider</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SUPPRIMER -->
+<div class="modal-overlay hidden" id="modal-del">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-trash" style="color:var(--red)"></i> Supprimer la remise</span><button class="modal-close" onclick="closeDel()">×</button></div>
+    <div class="modal-body"><div style="font-size:12px;">Êtes-vous sûr de vouloir supprimer cette remise ?</div><div class="confirm-detail" id="del-detail"></div></div>
+    <div class="modal-footer"><button class="btn btn-secondary btn-sm" onclick="closeDel()">Annuler</button><button class="btn btn-danger btn-sm" onclick="confirmDel()"><i class="ti ti-trash"></i> Supprimer</button></div>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script src="sheets.js"></script>
+<script src="sidebar.js"></script>
+<script>
+let allRemises=[], delIdx=null, chqCounter=0;
+// Stocke les ids des remises développées
+const openRows = new Set();
+
+Auth.requireAuth(async()=>{
+  await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
+  Sidebar.build('remisecheques');
+  const pers=Sheets.getPeriodes(), ap=Sidebar.getActivePeriode();
+  document.getElementById('topbar-per').textContent=ap;
+
+  // Peupler selects période
+  ['rem-per','fl-per'].forEach(id=>{
+    const s=document.getElementById(id);if(!s)return;
+    pers.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;if(p===ap)o.selected=true;s.appendChild(o);});
+  });
+
+  document.getElementById('rem-date').value=Sheets.todayISO();
+  addChequeRemise();
+  await loadData();
+});
+
+async function loadData(){
+  allRemises=await Sheets.getRemises();
+  Sidebar.setLastUpdate();
+  renderKPIs();
+  renderTable();
+}
+
+function onPeriodeChange(p){
+  document.getElementById('topbar-per').textContent=p;
+  renderKPIs();renderTable();
+}
+
+// ============================================================
+// KPIs
+// ============================================================
+function renderKPIs(){
+  const cr=Sheets.cols.remise;
+  const per=document.getElementById('fl-per')?.value||'';
+  const filtered=per?allRemises.filter(r=>r[cr.periode]===per):allRemises;
+  const att=filtered.filter(r=>r[cr.statut]==='en_attente');
+  const enc=filtered.filter(r=>r[cr.statut]==='encaissee');
+  const totAtt=att.reduce((s,r)=>s+(parseFloat(r[cr.montant_total])||0),0);
+  const totTotal=filtered.reduce((s,r)=>s+(parseFloat(r[cr.montant_total])||0),0);
+  document.getElementById('kpi-remises').innerHTML=`
+    <div class="kpi"><div class="kpi-label">Remises sur la période</div><div class="kpi-value">${filtered.length}</div><div style="font-size:10px;color:var(--text-3);margin-top:2px;">${enc.length} encaissée(s) — ${att.length} en attente</div></div>
+    <div class="kpi"><div class="kpi-label">En attente encaissement</div><div class="kpi-value" style="color:var(--amber)">${fmt(totAtt)}</div><div style="font-size:10px;color:var(--text-3);">${att.length} remise(s)</div></div>
+    <div class="kpi"><div class="kpi-label">Total TTC période</div><div class="kpi-value">${fmt(totTotal)}</div><div style="font-size:10px;color:var(--text-3);">${enc.length} encaissée(s)</div></div>`;
+}
+
+// ============================================================
+// TABLEAU
+// ============================================================
+function renderTable(){
+  const cr=Sheets.cols.remise;
+  const per=document.getElementById('fl-per')?.value||'';
+  const sf=document.getElementById('fl-statut')?.value||'';
+  const ss=document.getElementById('fl-search')?.value.toLowerCase()||'';
+  let rows=allRemises.filter(r=>(!per||r[cr.periode]===per)&&(!sf||r[cr.statut]===sf));
+  if(ss) rows=rows.filter(r=>[r[cr.num_bordereau],r[cr.montant_total]].join(' ').toLowerCase().includes(ss));
+  rows=[...rows].reverse();
+
+  if(!rows.length){
+    document.getElementById('table-wrap').innerHTML='<div style="padding:24px;text-align:center;color:var(--text-3);font-size:12px;">Aucune remise</div>';
+    return;
+  }
+
+  const trs=rows.map(r=>{
+    const ri=allRemises.indexOf(r);
+    const id=r[cr.id]||String(ri);
+    const s=r[cr.statut]||'';
+    const isOpen=openRows.has(id);
+    const badge=s==='en_attente'
+      ?'<span class="chip" style="background:var(--amber-bg);color:var(--amber);">En attente</span>'
+      :'<span class="chip" style="background:var(--green-bg);color:var(--green);">Encaissée</span>';
+
+    // Détail chèques
+    const nb=parseInt(r[cr.nb_cheques])||0;
+    let detailRows='';
+    for(let i=0;i<nb;i++){
+      const base=cr.detail_start+i*4;
+      detailRows+=`<tr>
+        <td>${r[base]||'—'}</td>
+        <td style="color:var(--text-3);">${r[base+1]||'—'}</td>
+        <td>${r[base+2]||'—'}</td>
+        <td style="color:var(--text-3);">${r[base+3]||'—'}</td>
+        <td class="r" style="font-weight:500;">${fmt(r[base+1])}</td>
+      </tr>`;
+    }
+    const detailHtml=`
+      <div class="detail-inner">
+        <table>
+          <thead><tr><th>Type</th><th>Type complémentaire</th><th>Donateur</th><th>Description</th><th class="r">Montant</th></tr></thead>
+          <tbody>${detailRows||'<tr><td colspan="5" style="color:var(--text-3);text-align:center;">Aucun détail</td></tr>'}</tbody>
+        </table>
+      </div>`;
+
+    return `
+      <tr>
+        <td><button class="expand-btn ${isOpen?'open':''}" onclick="toggleRow('${id}')">${isOpen?'−':'+'}</button></td>
+        <td style="color:var(--text-3);">${formatDate(r[cr.date_remise])}</td>
+        <td style="font-weight:500;">${r[cr.num_bordereau]||'—'}</td>
+        <td class="r">${nb} chèque(s)</td>
+        <td class="r" style="font-weight:500;">${fmt(r[cr.montant_total])}</td>
+        <td>${badge}</td>
+        <td style="color:var(--text-3);font-size:10px;">${formatDate(r[cr.date_encaiss])}</td>
+        <td class="r"><button class="del-btn" onclick="openDel(${ri},'BRD: ${escH(r[cr.num_bordereau]||'')} — ${escH(fmt(r[cr.montant_total]))}')"><i class="ti ti-trash"></i></button></td>
+      </tr>
+      <tr class="detail-row" id="detail-${id}" style="${isOpen?'':'display:none;'}">
+        <td colspan="8">${detailHtml}</td>
+      </tr>`;
+  }).join('');
+
+  document.getElementById('table-wrap').innerHTML=`
+    <table>
+      <thead><tr>
+        <th style="width:36px;"></th>
+        <th>Date</th><th>N° bordereau</th><th class="r">Nb chèques</th>
+        <th class="r">Total</th><th>Statut</th><th>Encaissée le</th><th class="r">Actions</th>
+      </tr></thead>
+      <tbody>${trs}</tbody>
+    </table>`;
+}
+
+function toggleRow(id){
+  if(openRows.has(id)){
+    openRows.delete(id);
+  } else {
+    openRows.add(id);
+  }
+  renderTable();
+}
+
+// ============================================================
+// FORMULAIRE REMISE
+// ============================================================
+function addChequeRemise(){
+  const id='chq-rem-'+chqCounter++;
+  const types=Sheets.getTypesMouvement();
+  const typesC=Sheets.getTypesComplementaires();
+  const descs=Sheets.getDescriptions();
+  const topts='<option value="">— Choisir —</option>'+types.map(t=>`<option>${escH(t)}</option>`).join('');
+  const ctopts='<option value="">—</option>'+typesC.map(t=>`<option>${escH(t)}</option>`).join('');
+  const dopts='<option value="">—</option>'+descs.map(d=>`<option>${escH(d)}</option>`).join('');
+  const nb=document.getElementById('cheques-remise-list').children.length+1;
+  const div=document.createElement('div');
+  div.className='cheque-item';div.id=id;
+  div.innerHTML=`
+    <div class="cheque-item-title">
+      <span>Chèque ${nb}</span>
+      <button class="remove-cheque-btn" onclick="removeChequeRemise('${id}')" title="Supprimer"><i class="ti ti-trash"></i></button>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label class="form-label req">Donateur / Nom</label><input type="text" class="rem-donateur" placeholder="Nom"></div>
+      <div class="form-group"><label class="form-label req">Montant (€)</label><input type="number" class="rem-montant" step="0.01" min="0" placeholder="0,00" oninput="updateRemTotal()"></div>
+    </div>
+    <div class="form-group"><label class="form-label req">Type mouvement</label><select class="rem-type">${topts}</select></div>
+    <div class="form-group"><label class="form-label">Type complémentaire</label><select class="rem-type-comp">${ctopts}</select></div>
+    <div class="form-group"><label class="form-label">Description</label><select class="rem-desc">${dopts}</select></div>`;
+  document.getElementById('cheques-remise-list').appendChild(div);
+  updateRemTotal();
+}
+
+function removeChequeRemise(id){
+  document.getElementById(id)?.remove();
+  updateRemTotal();
+  document.querySelectorAll('#cheques-remise-list .cheque-item-title span').forEach((el,i)=>el.textContent='Chèque '+(i+1));
+}
+
+function updateRemTotal(){
+  const total=[...document.querySelectorAll('.rem-montant')].reduce((s,i)=>s+(parseFloat(i.value)||0),0);
+  document.getElementById('rem-total').textContent=fmt(total);
+}
+
+function resetRemise(){
+  document.getElementById('rem-bordereau').value='';
+  document.getElementById('rem-date').value=Sheets.todayISO();
+  document.getElementById('rem-err').classList.add('hidden');
+  document.getElementById('cheques-remise-list').innerHTML='';
+  chqCounter=0;addChequeRemise();
+}
+
+async function submitRemise(){
+  const date=document.getElementById('rem-date').value;
+  if(!date){showErr('La date est obligatoire.');return;}
+  const items=[...document.querySelectorAll('#cheques-remise-list .cheque-item')];
+  if(!items.length){showErr('Ajoutez au moins un chèque.');return;}
+  const cheques=[];
+  for(const item of items){
+    const montant=parseFloat(item.querySelector('.rem-montant')?.value)||0;
+    if(!montant){showErr('Tous les montants sont obligatoires.');return;}
+    cheques.push({
+      donateur: item.querySelector('.rem-donateur')?.value.trim()||'',
+      montant,
+      type_mvt: item.querySelector('.rem-type')?.value||'',
+      type_comp:item.querySelector('.rem-type-comp')?.value||'',
+      description:item.querySelector('.rem-desc')?.value||'',
+    });
+  }
+  const remise={
+    num_bordereau:document.getElementById('rem-bordereau').value.trim(),
+    date_remise:Sheets.normalizeDate(date),
+    periode:document.getElementById('rem-per').value,
+    cheques,
+  };
+  try{
+    await Sheets.saveRemise(remise);
+    showToast('Remise enregistrée !');resetRemise();await loadData();
+  }catch(e){showErr('Erreur : '+(e.message||'?'));}
+}
+
+// ============================================================
+// SUPPRESSION
+// ============================================================
+function openDel(ri,detail){delIdx=ri;document.getElementById('del-detail').textContent=detail;document.getElementById('modal-del').classList.remove('hidden');}
+function closeDel(){document.getElementById('modal-del').classList.add('hidden');delIdx=null;}
+async function confirmDel(){
+  if(delIdx===null)return;
+  try{await Sheets.deleteRow(Sheets.config.sheets.remises,delIdx);closeDel();showToast('Remise supprimée');await loadData();}
+  catch(e){alert('Erreur : '+e.message);}
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function formatDate(d){if(!d)return'—';const s=String(d).trim();if(/^\d{2}\/\d{2}\/\d{4}$/.test(s))return s;if(/^\d{4}-\d{2}-\d{2}$/.test(s)){const p=s.split('-');return`${p[2]}/${p[1]}/${p[0]}`;}return s;}
+function fmt(v){if(!v&&v!==0)return'—';return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
+function showErr(m){const e=document.getElementById('rem-err');e.textContent=m;e.classList.remove('hidden');}
+function showToast(m){const t=document.createElement('div');t.className='success-toast';t.innerHTML=`<i class="ti ti-check"></i> ${m}`;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
+</script>
+</body>
+</html>
