@@ -65,7 +65,9 @@
         <div class="list-card">
           <div class="list-head">
             <div class="list-title">Liste des factures</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <div style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center;">
+              <select class="f-select" id="fl-per" onchange="renderTable()" style="width:120px;">
+              </select>
               <input class="f-input" type="text" id="fl-search" placeholder="Rechercher…" oninput="renderTable()">
               <select class="f-select" id="fl-cat" onchange="renderTable()">
                 <option value="">Toutes catégories</option>
@@ -172,6 +174,9 @@ Auth.requireAuth(async()=>{
   ['f-per'].forEach(id=>{const s=document.getElementById(id);pers.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;if(p===ap)o.selected=true;s.appendChild(o);});});
   document.getElementById('topbar-per').textContent=ap;
   document.getElementById('f-date').value=Sheets.todayISO();
+  const pers=Sheets.getPeriodes(),ap=Sidebar.getActivePeriode();
+  ['f-per','fl-per'].forEach(id=>{const s=document.getElementById(id);if(!s)return;pers.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;if(p===ap)o.selected=true;s.appendChild(o);});});
+  Et dans renderTable(), ajoutez le filtre période :
   const cats=Sheets.getTypesMouvement();
   const sc=document.getElementById('f-cat'), fl=document.getElementById('fl-cat');
   cats.forEach(c=>{sc.innerHTML+=`<option>${c}</option>`;fl.innerHTML+=`<option value="${c}">${c}</option>`;});
@@ -202,6 +207,9 @@ function renderKPIs(){
 
 function renderTable(){
   const cf=Sheets.cols.facture;
+  const perf=document.getElementById('fl-per')?.value||'';
+  let rows=allRows;
+  if(perf) rows=rows.filter(r=>r[cf.periode]===perf);
   const search=(document.getElementById('fl-search')?.value||'').toLowerCase();
   const catf=document.getElementById('fl-cat')?.value||'';
   let rows=allRows;
