@@ -157,7 +157,7 @@ async function readRange(spreadsheetId, range) {
 }
 
 async function readSheet(sheetName, spreadsheetId) {
-  return readRange(spreadsheetId || SHEETS_CONFIG.spreadsheetId, `${sheetName}!A:AZ`);
+  return readRange(spreadsheetId || SHEETS_CONFIG.spreadsheetId, `${sheetName}!A:CZ`);
 }
 
 async function getCaisseOperations(periode) {
