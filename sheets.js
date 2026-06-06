@@ -412,13 +412,14 @@ async function encaisserRemise(remiseRowIndex, dateBanque, refBanque) {
 // ---- SAUVEGARDER FACTURE ----
 async function saveFacture(facture) {
   const id  = facture.id || genId('FAC');
-  const row = new Array(11).fill('');
+  const row = new Array(12).fill('');
   row[COLS_FACTURE.id]            = id;
   row[COLS_FACTURE.num_facture]   = facture.num_facture   || '';
   row[COLS_FACTURE.fournisseur]   = facture.fournisseur   || '';
   row[COLS_FACTURE.date_facture]  = facture.date_facture  || '';
   row[COLS_FACTURE.montant_ttc]   = facture.montant_ttc   || '';
   row[COLS_FACTURE.categorie]     = facture.categorie     || '';
+  row[COLS_FACTURE.description]   = facture.description   || '';
   row[COLS_FACTURE.date_reglement]= facture.date_reglement|| '';
   row[COLS_FACTURE.mode_reglement]= facture.mode_reglement|| '';
   row[COLS_FACTURE.lien_pdf]      = facture.lien_pdf      || '';
@@ -432,13 +433,14 @@ async function saveFacture(facture) {
 // ---- MODIFIER FACTURE ----
 async function updateFacture(rowIndex, facture) {
   const sheetRow = rowIndex + 2;
-  const row = new Array(11).fill('');
+  const row = new Array(12).fill('');
   row[COLS_FACTURE.id]            = facture.id            || '';
   row[COLS_FACTURE.num_facture]   = facture.num_facture   || '';
   row[COLS_FACTURE.fournisseur]   = facture.fournisseur   || '';
   row[COLS_FACTURE.date_facture]  = facture.date_facture  || '';
   row[COLS_FACTURE.montant_ttc]   = facture.montant_ttc   || '';
   row[COLS_FACTURE.categorie]     = facture.categorie     || '';
+  row[COLS_FACTURE.description]   = facture.description   || '';
   row[COLS_FACTURE.date_reglement]= facture.date_reglement|| '';
   row[COLS_FACTURE.mode_reglement]= facture.mode_reglement|| '';
   row[COLS_FACTURE.lien_pdf]      = facture.lien_pdf      || '';
@@ -650,6 +652,7 @@ window.Sheets = {
   getTypesMouvement, saveTypesMouvement,
   getTypesComplementaires, saveTypesComplementaires,
   getModesReglement, saveModesReglement,
+  getDescriptions: () => { try { return JSON.parse(localStorage.getItem('arche_types_desc')||'[]'); } catch(e){ return []; } },
   // Utilitaires
   formatMoney, normalizeDate, todayISO, todayFR, genId, openFacture,
 };
