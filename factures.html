@@ -164,6 +164,7 @@
 <script src="auth.js"></script>
 <script src="sheets.js"></script>
 <script src="sidebar.js"></script>
+  
 <script>
 let allRows=[],editIdx=null,delIdx=null;
 
@@ -171,19 +172,16 @@ Auth.requireAuth(async()=>{
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
   Sidebar.build('factures');
   const pers=Sheets.getPeriodes(),ap=Sidebar.getActivePeriode();
-  ['f-per'].forEach(id=>{const s=document.getElementById(id);pers.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;if(p===ap)o.selected=true;s.appendChild(o);});});
+  ['f-per','fl-per'].forEach(id=>{const s=document.getElementById(id);if(!s)return;pers.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;if(p===ap)o.selected=true;s.appendChild(o);});});
   document.getElementById('topbar-per').textContent=ap;
   document.getElementById('f-date').value=Sheets.todayISO();
-  const pers=Sheets.getPeriodes(),ap=Sidebar.getActivePeriode();
-  ['f-per','fl-per'].forEach(id=>{const s=document.getElementById(id);if(!s)return;pers.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;if(p===ap)o.selected=true;s.appendChild(o);});});
-  Et dans renderTable(), ajoutez le filtre période :
   const cats=Sheets.getTypesMouvement();
   const sc=document.getElementById('f-cat'), fl=document.getElementById('fl-cat');
   cats.forEach(c=>{sc.innerHTML+=`<option>${c}</option>`;fl.innerHTML+=`<option value="${c}">${c}</option>`;});
-  const descs = Sheets.getDescriptions();
-  const sd = document.getElementById('f-desc');
-  sd.innerHTML = '<option value="">—</option>';
-  descs.forEach(d => sd.innerHTML += `<option>${d}</option>`);
+  const descs=Sheets.getDescriptions();
+  const sd=document.getElementById('f-desc');
+  sd.innerHTML='<option value="">—</option>';
+  descs.forEach(d=>sd.innerHTML+=`<option>${d}</option>`);
   const modes=Sheets.getModesReglement();
   const sm=document.getElementById('f-mode-reg');
   modes.forEach(m=>sm.innerHTML+=`<option>${m}</option>`);
@@ -208,11 +206,10 @@ function renderKPIs(){
 function renderTable(){
   const cf=Sheets.cols.facture;
   const perf=document.getElementById('fl-per')?.value||'';
-  let rows=allRows;
-  if(perf) rows=rows.filter(r=>r[cf.periode]===perf);
   const search=(document.getElementById('fl-search')?.value||'').toLowerCase();
   const catf=document.getElementById('fl-cat')?.value||'';
   let rows=allRows;
+  if(perf) rows=rows.filter(r=>r[cf.periode]===perf);
   if(catf) rows=rows.filter(r=>r[cf.categorie]===catf);
   if(search) rows=rows.filter(r=>[r[cf.fournisseur],r[cf.num_facture],r[cf.commentaire]].join(' ').toLowerCase().includes(search));
   rows=[...rows].reverse();
@@ -242,7 +239,7 @@ function renderTable(){
 function reset(){
   ['f-fourn','f-num','f-montant','f-date','f-date-reg','f-lien-pdf','f-comment'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=id==='f-date'?Sheets.todayISO():'';});
   document.getElementById('f-cat').selectedIndex=0;
-  document.getElementById('f-desc').selectedIndex = 0;
+  document.getElementById('f-desc').selectedIndex=0;
   document.getElementById('f-mode-reg').selectedIndex=0;
   document.getElementById('form-err').classList.add('hidden');
   editIdx=null;
@@ -264,7 +261,7 @@ async function submit(){
     date_facture:date,
     montant_ttc:montant,
     categorie:document.getElementById('f-cat').value,
-    description: document.getElementById('f-desc').value,
+    description:document.getElementById('f-desc').value,
     date_reglement:document.getElementById('f-date-reg').value,
     mode_reglement:document.getElementById('f-mode-reg').value,
     lien_pdf:document.getElementById('f-lien-pdf').value.trim(),
@@ -289,7 +286,7 @@ function openEdit(ri){
   document.getElementById('f-montant').value=r[cf.montant_ttc]||'';
   document.getElementById('f-date').value=r[cf.date_facture]||'';
   document.getElementById('f-cat').value=r[cf.categorie]||'';
-  document.getElementById('f-desc').value = r[cf.description] || '';
+  document.getElementById('f-desc').value=r[cf.description]||'';
   document.getElementById('f-date-reg').value=r[cf.date_reglement]||'';
   document.getElementById('f-mode-reg').value=r[cf.mode_reglement]||'';
   document.getElementById('f-lien-pdf').value=r[cf.lien_pdf]||'';
