@@ -391,14 +391,14 @@ async function saveRemise(remise) {
   // Détail chèques
  remise.cheques.forEach((c, i) => {
     const base = COLS_REMISE.detail_start + i * 8;
-    mainRow[base]     = c.donateur     || '';
-    mainRow[base + 1] = c.montant      || '';
-    mainRow[base + 2] = c.num_cheque  || ''; 
-    mainRow[base + 2] = c.type_mvt     || '';
-    mainRow[base + 3] = c.description  || '';
-    mainRow[base + 4] = c.type_comp    || '';
-    mainRow[base + 5] = c.nom_chat     || '';
-    mainRow[base + 6] = c.recu_fiscal  || '';
+    mainRow[base]     = c.donateur    || '';
+    mainRow[base + 1] = c.montant     || '';
+    mainRow[base + 2] = c.num_cheque  || '';
+    mainRow[base + 3] = c.type_mvt    || '';
+    mainRow[base + 4] = c.description || '';
+    mainRow[base + 5] = c.type_comp   || '';
+    mainRow[base + 6] = c.nom_chat    || '';
+    mainRow[base + 7] = c.recu_fiscal || '';
   });
   await appendRows(SHEETS_CONFIG.sheets.remises, [mainRow]);
   await logAction('AJOUT', 'Remises', id, `${remise.cheques.length} chèque(s) — ${mainRow[COLS_REMISE.montant_total]}€`);
@@ -681,12 +681,12 @@ async function updateRemise(rowIndex, remise) {
     const base = COLS_REMISE.detail_start + i * 8;
     mainRow[base]     = c.donateur    || '';
     mainRow[base + 1] = c.montant     || '';
-   mainRow[base + 2] = c.num_cheque  || '';
-    mainRow[base + 2] = c.type_mvt    || '';
-    mainRow[base + 3] = c.description || '';
-    mainRow[base + 4] = c.type_comp   || '';
-    mainRow[base + 5] = c.nom_chat    || '';
-    mainRow[base + 6] = c.recu_fiscal || '';
+    mainRow[base + 2] = c.num_cheque  || '';
+    mainRow[base + 3] = c.type_mvt    || '';
+    mainRow[base + 4] = c.description || '';
+    mainRow[base + 5] = c.type_comp   || '';
+    mainRow[base + 6] = c.nom_chat    || '';
+    mainRow[base + 7] = c.recu_fiscal || '';
   });
   await updateRange(SHEETS_CONFIG.sheets.remises, sheetRow, 0, [mainRow]);
   await logAction('MODIF', 'Remises', id, `Modifié le ${todayFR()}`);
