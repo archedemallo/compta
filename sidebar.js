@@ -14,7 +14,8 @@ function buildSidebar(activePage) {
     { section: 'Comptabilité' },
     { id: 'caisse',    label: 'Caisse — saisie',    icon: 'ti-cash',           href: 'caisse.html' },
     { id: 'banque',    label: 'Banque — saisie',    icon: 'ti-building-bank',  href: 'banque.html' },
-    { id: 'cheques',   label: 'Chèques & Remises',  icon: 'ti-writing',        href: 'cheques.html' },
+    { id: 'cheques',       label: 'Chèques émis',      icon: 'ti-writing',        href: 'cheques.html' },
+    { id: 'remisecheques', label: 'Remises de chèques', icon: 'ti-stack',          href: 'remisecheques.html' },
     { id: 'factures',  label: 'Factures',            icon: 'ti-file-invoice',   href: 'factures.html' },
     { id: 'import',    label: 'Import relevé',       icon: 'ti-upload',         href: 'import.html' },
 
