@@ -315,6 +315,8 @@ function updateRemTotal(){
 }
 
 function resetRemise(){
+  editRemIdx = null;   // ← ajouter
+  document.getElementById('rem-bordereau').value = '';
   document.getElementById('rem-bordereau').value='';
   document.getElementById('rem-date').value=Sheets.todayISO();
   document.getElementById('rem-err').classList.add('hidden');
@@ -347,11 +349,26 @@ async function submitRemise(){
     periode:document.getElementById('rem-per').value,
     cheques,
   };
-  try{
-    await Sheets.saveRemise(remise);
-    showToast('Remise enregistrée !');resetRemise();await loadData();
-  }catch(e){showErr('Erreur : '+(e.message||'?'));}
-}
+  try {
+    if (editRemIdx !== null) {
+      const cr = Sheets.cols.remise;
+      const existing = allRemises[editRemIdx];
+      remise.id           = existing[cr.id]           || '';
+      remise.statut       = existing[cr.statut]       || 'en_attente';
+      remise.date_encaiss = existing[cr.date_encaiss] || '';
+      remise.ref_banque   = existing[cr.ref_banque]   || '';
+      await Sheets.updateRemise(editRemIdx, remise);
+      editRemIdx = null;
+      document.getElementById('rem-submit-label')?.textContent && 
+        (document.getElementById('rem-submit-label').textContent = 'Enregistrer la remise');
+      showToast('Remise modifiée !');
+    } else {
+      await Sheets.saveRemise(remise);
+      showToast('Remise enregistrée !');
+    }
+    resetRemise();
+    await loadData();
+  } catch(e) { showErr('Erreur : ' + (e.message || '?')); }
 
 function openDel(ri,detail){delIdx=ri;document.getElementById('del-detail').textContent=detail;document.getElementById('modal-del').classList.remove('hidden');}
 function closeDel(){document.getElementById('modal-del').classList.add('hidden');delIdx=null;}
