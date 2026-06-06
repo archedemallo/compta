@@ -106,7 +106,10 @@
             <label class="form-label req">Catégorie</label>
             <select id="f-cat"></select>
           </div>
-
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <select id="f-desc"></select>
+          </div>
           <div class="form-row-2">
             <div class="form-group">
               <label class="form-label">Date règlement</label>
@@ -172,6 +175,10 @@ Auth.requireAuth(async()=>{
   const cats=Sheets.getTypesMouvement();
   const sc=document.getElementById('f-cat'), fl=document.getElementById('fl-cat');
   cats.forEach(c=>{sc.innerHTML+=`<option>${c}</option>`;fl.innerHTML+=`<option value="${c}">${c}</option>`;});
+  const descs = typeof getDescriptions === 'function' ? getDescriptions() : [];
+  const sd = document.getElementById('f-desc');
+  sd.innerHTML = '<option value="">—</option>';
+  descs.forEach(d => sd.innerHTML += `<option>${d}</option>`);
   const modes=Sheets.getModesReglement();
   const sm=document.getElementById('f-mode-reg');
   modes.forEach(m=>sm.innerHTML+=`<option>${m}</option>`);
@@ -226,6 +233,7 @@ function renderTable(){
 function reset(){
   ['f-fourn','f-num','f-montant','f-date','f-date-reg','f-lien-pdf','f-comment'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=id==='f-date'?Sheets.todayISO():'';});
   document.getElementById('f-cat').selectedIndex=0;
+  document.getElementById('f-desc').selectedIndex = 0;
   document.getElementById('f-mode-reg').selectedIndex=0;
   document.getElementById('form-err').classList.add('hidden');
   editIdx=null;
@@ -247,6 +255,7 @@ async function submit(){
     date_facture:date,
     montant_ttc:montant,
     categorie:document.getElementById('f-cat').value,
+    description: document.getElementById('f-desc').value,
     date_reglement:document.getElementById('f-date-reg').value,
     mode_reglement:document.getElementById('f-mode-reg').value,
     lien_pdf:document.getElementById('f-lien-pdf').value.trim(),
@@ -271,6 +280,7 @@ function openEdit(ri){
   document.getElementById('f-montant').value=r[cf.montant_ttc]||'';
   document.getElementById('f-date').value=r[cf.date_facture]||'';
   document.getElementById('f-cat').value=r[cf.categorie]||'';
+  document.getElementById('f-desc').value = r[cf.description] || '';
   document.getElementById('f-date-reg').value=r[cf.date_reglement]||'';
   document.getElementById('f-mode-reg').value=r[cf.mode_reglement]||'';
   document.getElementById('f-lien-pdf').value=r[cf.lien_pdf]||'';
