@@ -142,7 +142,7 @@
 <script src="sheets.js"></script>
 <script src="sidebar.js"></script>
 <script>
-let allRemises=[], delIdx=null, chqCounter=0;
+let allRemises=[], delIdx=null, chqCounter=0, let editRemIdx=null;
 const openRows=new Set();
 
 Auth.requireAuth(async()=>{
@@ -249,7 +249,10 @@ function renderTable(){
         <td class="r" style="font-weight:500;">${fmt(r[cr.montant_total])}</td>
         <td>${badge}</td>
         <td style="color:var(--text-3);font-size:10px;">${formatDate(r[cr.date_encaiss])}</td>
-        <td class="r"><button class="del-btn" onclick="openDel(${ri},'BRD: ${escH(r[cr.num_bordereau]||'')} — ${escH(fmt(r[cr.montant_total]))}')"><i class="ti ti-trash"></i></button></td>
+        <td class="r" style="white-space:nowrap;">
+          <button class="edit-btn" onclick="openEdit(${ri})" title="Modifier" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;color:var(--blue);"><i class="ti ti-pencil"></i></button>
+          <button class="del-btn" onclick="openDel(${ri},'BRD: ${escH(r[cr.num_bordereau]||'')} — ${escH(fmt(r[cr.montant_total]))}')"><i class="ti ti-trash"></i></button>
+        </td>
       </tr>
       <tr class="detail-row" id="detail-${id}" style="${isOpen?'':'display:none;'}">
         <td colspan="8">${detailHtml}</td>
@@ -376,6 +379,32 @@ function showErr(m){const e=document.getElementById('rem-err');e.textContent=m;e
 function showToast(m){const t=document.createElement('div');t.className='success-toast';t.innerHTML=`<i class="ti ti-check"></i> ${m}`;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
 
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
+
+function openEdit(ri){
+  const cr=Sheets.cols.remise, r=allRemises[ri];
+  editRemIdx=ri;
+  document.getElementById('rem-bordereau').value=r[cr.num_bordereau]||'';
+  document.getElementById('rem-date').value=r[cr.date_remise]||'';
+  document.getElementById('rem-per').value=r[cr.periode]||'';
+  document.getElementById('cheques-remise-list').innerHTML='';
+  chqCounter=0;
+  const nb=parseInt(r[cr.nb_cheques])||0;
+  for(let i=0;i<nb;i++){
+    addChequeRemise();
+    const base=cr.detail_start+i*7;
+    const item=document.getElementById('cheques-remise-list').lastElementChild;
+    item.querySelector('.rem-donateur').value   = r[base]   ||'';
+    item.querySelector('.rem-montant').value    = r[base+1] ||'';
+    item.querySelector('.rem-type').value       = r[base+2] ||'';
+    item.querySelector('.rem-desc').value       = r[base+3] ||'';
+    item.querySelector('.rem-type-comp').value  = r[base+4] ||'';
+    item.querySelector('.rem-nom-chat').value   = r[base+5] ||'';
+    item.querySelector('.rem-recu-fiscal').value= r[base+6] ||'';
+  }
+  updateRemTotal();
+  document.getElementById('rem-submit-label').textContent='Enregistrer les modifications';
+  document.querySelector('.form-card').scrollIntoView({behavior:'smooth'});
+}
 </script>
 </body>
 </html>
