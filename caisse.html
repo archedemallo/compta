@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Caisse — Arche de Mallo</title>
+<title>Caisse 1 — Arche de Mallo</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
-  .split-layout{display:grid;grid-template-columns:1fr 420px;gap:14px;align-items:start;}
+  .split-layout{display:grid;grid-template-columns:1fr 380px;gap:14px;align-items:start;}
   .form-card{background:var(--surface);border:0.5px solid var(--orange);border-radius:var(--radius);padding:18px 20px;position:sticky;top:60px;}
   .form-title{font-size:13px;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;}
   .form-title i{color:var(--orange);}
@@ -16,12 +16,12 @@
   .form-label.req::after{content:' *';color:var(--red);}
   .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   .list-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px;}
-  .list-head{padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
-  .list-title{font-size:13px;font-weight:600;}
+  .list-head{padding:12px 16px;border-bottom:0.5px solid var(--border);}
+  .list-title{font-size:13px;font-weight:600;margin-bottom:8px;}
   .filters-bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
   .f-select{font-size:11px;padding:4px 8px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text-2);font-family:'DM Sans',sans-serif;}
-  .f-input{font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;width:130px;}
-  .kpi-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+  .f-input{font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;width:120px;}
+  .kpi-bar{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
   .kpi{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;}
   .kpi-label{font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
   .kpi-value{font-size:18px;font-weight:600;}
@@ -38,8 +38,8 @@
   .r{text-align:right;font-variant-numeric:tabular-nums;}
   .amount-c{color:var(--green);font-weight:500;}
   .amount-d{color:var(--red);font-weight:500;}
-  .pdf-btn,.flag-btn,.edit-btn,.del-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;}
-  .pdf-btn{color:var(--blue);} .edit-btn{color:var(--blue);} .del-btn{color:var(--red);}
+  .flag-btn,.edit-btn,.del-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;}
+  .edit-btn{color:var(--blue);} .del-btn{color:var(--red);}
   .flag-btn{color:var(--text-3);} .flag-btn.on{color:var(--orange);}
   .flag-comment-cell{max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:var(--amber);cursor:pointer;}
   .sens-toggle{display:flex;gap:4px;}
@@ -48,12 +48,6 @@
   .sens-btn.credit.active{background:var(--green);color:white;}
   .sens-btn.debit{border-color:var(--red);color:var(--red);}
   .sens-btn.debit.active{background:var(--red);color:white;}
-  .src-toggle{display:flex;gap:4px;}
-  .src-btn{flex:1;padding:6px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:transparent;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--text-2);transition:all 0.15s;}
-  .src-btn.active{background:var(--brown-mid);color:white;border-color:var(--brown-mid);}
-  .drive-picker{display:flex;gap:6px;align-items:center;}
-  .drive-picker input{flex:1;}
-  .btn-drive{display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface-2);color:var(--text-2);font-size:11px;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;}
   .form-actions{display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:0.5px solid var(--border);}
   .modal-overlay{position:fixed;inset:0;background:rgba(61,43,31,0.35);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
   .modal{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-md);width:440px;max-width:95vw;}
@@ -74,7 +68,7 @@
 <aside class="sidebar" id="sidebar"></aside>
 <div class="main">
   <div class="topbar">
-    <div class="topbar-title"><i class="ti ti-cash" style="color:var(--orange)"></i> Caisse — Saisie</div>
+    <div class="topbar-title"><i class="ti ti-cash" style="color:var(--orange)"></i> Caisse 1 — Saisie</div>
     <div class="topbar-right"><span style="font-size:11px;color:var(--text-3);" id="topbar-per"></span></div>
   </div>
   <div class="page-content">
@@ -87,14 +81,9 @@
       <div>
         <div class="list-card">
           <div class="list-head">
-            <div class="list-title">Opérations caisse</div>
+            <div class="list-title">Opérations — Caisse 1</div>
             <div class="filters-bar">
               <input class="f-input" type="text" id="fl-search" placeholder="Rechercher…" oninput="renderTable()">
-              <select class="f-select" id="fl-source" onchange="renderTable()">
-                <option value="">Caisse 1 + 2</option>
-                <option value="C1">Caisse 1</option>
-                <option value="C2">Caisse 2</option>
-              </select>
               <select class="f-select" id="fl-type" onchange="renderTable()"><option value="">Tous types</option></select>
               <select class="f-select" id="fl-type-comp" onchange="renderTable()"><option value="">Tous types comp.</option></select>
               <select class="f-select" id="fl-sens" onchange="renderTable()">
@@ -129,13 +118,6 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Source</label>
-            <div class="src-toggle">
-              <button class="src-btn active" id="src-c1" onclick="setSource('C1')">Caisse 1</button>
-              <button class="src-btn"        id="src-c2" onclick="setSource('C2')">Caisse 2</button>
-            </div>
-          </div>
-          <div class="form-group">
             <label class="form-label">Sens</label>
             <div class="sens-toggle">
               <button class="sens-btn credit active" id="btn-credit" onclick="setSens('credit')"><i class="ti ti-arrow-down-left"></i> Entrée</button>
@@ -157,17 +139,8 @@
           </div>
           <div class="form-group"><label class="form-label">Description</label><input type="text" id="f-desc" placeholder="Précisions…"></div>
           <div class="form-row-2">
-            <div class="form-group"><label class="form-label">Mode règlement</label><select id="f-reglement"></select></div>
             <div class="form-group"><label class="form-label">Nom du chat</label><input type="text" id="f-chat" placeholder="Si adoption"></div>
-          </div>
-          <div class="form-row-2">
             <div class="form-group"><label class="form-label">N° reçu</label><input type="text" id="f-recu"></div>
-            <div class="form-group"><label class="form-label">Facture PDF (Drive)</label>
-              <div class="drive-picker">
-                <input type="text" id="f-facture" placeholder="ID Drive">
-                <button class="btn-drive" onclick="openDrivePicker()"><i class="ti ti-brand-google-drive"></i></button>
-              </div>
-            </div>
           </div>
 
           <div id="form-err" class="hidden" style="color:var(--red);font-size:11px;padding:6px 0;margin-top:4px;"></div>
@@ -208,8 +181,9 @@
 <script src="sheets.js"></script>
 <script src="sidebar.js"></script>
 <script>
-let allRows=[],activeSens='credit',activeSrc='C1',editIdx=null,flagTarget=null,delIdx=null;
+let allRows=[],activeSens='credit',editIdx=null,flagTarget=null,delIdx=null;
 let sortCol=-1,sortAsc=true;
+const SOURCE='C1';
 
 Auth.requireAuth(async()=>{
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
@@ -226,21 +200,19 @@ Auth.requireAuth(async()=>{
 function populateSelects(){
   const types=Sheets.getTypesMouvement();
   const typesC=Sheets.getTypesComplementaires();
-  const modes=Sheets.getModesReglement();
-  const ft=document.getElementById('f-type'),fc=document.getElementById('f-type-comp'),fr=document.getElementById('f-reglement');
+  const ft=document.getElementById('f-type'),fc=document.getElementById('f-type-comp');
   const flt=document.getElementById('fl-type'),flc=document.getElementById('fl-type-comp');
   ft.innerHTML='<option value="">— Choisir —</option>';
   fc.innerHTML='<option value="">—</option>';
-  fr.innerHTML='<option value="">—</option>';
   flt.innerHTML='<option value="">Tous types</option>';
   flc.innerHTML='<option value="">Tous types comp.</option>';
   types.forEach(t=>{ft.innerHTML+=`<option>${t}</option>`;flt.innerHTML+=`<option>${t}</option>`;});
   typesC.forEach(t=>{fc.innerHTML+=`<option>${t}</option>`;flc.innerHTML+=`<option>${t}</option>`;});
-  modes.forEach(m=>{fr.innerHTML+=`<option>${m}</option>`;});
 }
 
 async function loadData(){
-  allRows=await Sheets.getCaisseOperations();
+  const all=await Sheets.getCaisseOperations();
+  allRows=all.filter(r=>r[Sheets.cols.caisse.source]!=='C2');
   Sidebar.setLastUpdate();
   renderKPIs();renderTable();
 }
@@ -254,22 +226,16 @@ function onPeriodeChange(p){
 function renderKPIs(){
   const cc=Sheets.cols.caisse,per=Sidebar.getActivePeriode();
   const rows=allRows.filter(r=>r[cc.periode]===per);
-  const c1=rows.filter(r=>r[cc.source]!=='C2');
-  const c2=rows.filter(r=>r[cc.source]==='C2');
   const sum=(arr,col)=>arr.reduce((s,r)=>s+(parseFloat(r[col])||0),0);
-  const in1=sum(c1,cc.credit),out1=sum(c1,cc.debit);
-  const in2=sum(c2,cc.credit),out2=sum(c2,cc.debit);
+  const inn=sum(rows,cc.credit),out=sum(rows,cc.debit);
   document.getElementById('kpi-bar').innerHTML=`
-    <div class="kpi"><div class="kpi-label">Caisse 1 — Entrées</div><div class="kpi-value" style="color:var(--green)">${fmt(in1)}</div><div class="kpi-sub">Sorties : ${fmt(out1)}</div></div>
-    <div class="kpi"><div class="kpi-label">Caisse 1 — Net période</div><div class="kpi-value" style="color:${in1-out1>=0?'var(--green)':'var(--red)'}">${fmt(in1-out1)}</div></div>
-    <div class="kpi"><div class="kpi-label">Caisse 2 — Entrées</div><div class="kpi-value" style="color:var(--green)">${fmt(in2)}</div><div class="kpi-sub">Sorties : ${fmt(out2)}</div></div>
-    <div class="kpi"><div class="kpi-label">Caisse 2 — Net période</div><div class="kpi-value" style="color:${in2-out2>=0?'var(--green)':'var(--red)'}">${fmt(in2-out2)}</div></div>`;
+    <div class="kpi"><div class="kpi-label">Entrées période</div><div class="kpi-value" style="color:var(--green)">${fmt(inn)}</div><div class="kpi-sub">Sorties : ${fmt(out)}</div></div>
+    <div class="kpi"><div class="kpi-label">Net période</div><div class="kpi-value" style="color:${inn-out>=0?'var(--green)':'var(--red)'}">${fmt(inn-out)}</div></div>`;
 }
 
 function renderTable(){
   const cc=Sheets.cols.caisse,per=Sidebar.getActivePeriode();
   const search=(document.getElementById('fl-search')?.value||'').toLowerCase();
-  const srcF=document.getElementById('fl-source')?.value||'';
   const typeF=document.getElementById('fl-type')?.value||'';
   const typeCompF=document.getElementById('fl-type-comp')?.value||'';
   const sensF=document.getElementById('fl-sens')?.value||'';
@@ -278,8 +244,6 @@ function renderTable(){
   const flagF=document.getElementById('fl-flag')?.value||'';
 
   let rows=allRows.filter(r=>r[cc.periode]===per);
-  if(srcF==='C1')rows=rows.filter(r=>r[cc.source]!=='C2');
-  else if(srcF==='C2')rows=rows.filter(r=>r[cc.source]==='C2');
   if(typeF)rows=rows.filter(r=>r[cc.type_mvt]===typeF);
   if(typeCompF)rows=rows.filter(r=>r[cc.type_comp]===typeCompF);
   if(sensF==='credit')rows=rows.filter(r=>parseFloat(r[cc.credit])>0);
@@ -287,7 +251,7 @@ function renderTable(){
   if(dateFrom)rows=rows.filter(r=>dateToISO(r[cc.date])>=dateFrom);
   if(dateTo)rows=rows.filter(r=>dateToISO(r[cc.date])<=dateTo);
   if(flagF==='flagged')rows=rows.filter(r=>r[cc.flag_check]==='TRUE');
-  if(search)rows=rows.filter(r=>[r[cc.libelle],r[cc.type_mvt],r[cc.type_comp],r[cc.description],r[cc.nom]].join(' ').toLowerCase().includes(search));
+  if(search)rows=rows.filter(r=>[r[cc.libelle],r[cc.type_mvt],r[cc.type_comp],r[cc.description]].join(' ').toLowerCase().includes(search));
 
   if(sortCol>=0){
     rows=[...rows].sort((a,b)=>{
@@ -310,18 +274,14 @@ function renderTable(){
     const ri=allRows.indexOf(r);
     const flagged=r[cc.flag_check]==='TRUE';
     const comment=r[cc.flag_comment]||'';
-    const pdf=r[cc.lien_facture]?`<button class="pdf-btn" onclick="Sheets.openFacture('${escH(r[cc.lien_facture])}')" title="Voir facture"><i class="ti ti-file-type-pdf"></i></button>`:'';
-    const src=r[cc.source]==='C2'?'<span class="chip chip-caisse2">Caisse 2</span>':'<span class="chip chip-caisse1">Caisse 1</span>';
     return `<tr class="${editIdx===ri?'editing':''}">
       <td style="color:var(--text-3);white-space:nowrap;">${r[cc.date]||''}</td>
-      <td>${src}</td>
       <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escH(r[cc.libelle]||'')}">${r[cc.libelle]||''}</td>
       <td><span class="chip chip-${chipType(r[cc.type_mvt])}">${r[cc.type_mvt]||''}</span></td>
       <td style="font-size:10px;color:var(--text-3);">${r[cc.type_comp]||''}</td>
       <td style="color:var(--text-3);font-size:10px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r[cc.description]||''}</td>
       <td class="r amount-d">${r[cc.debit]?fmt(r[cc.debit]):''}</td>
       <td class="r amount-c">${r[cc.credit]?fmt(r[cc.credit]):''}</td>
-      <td class="r">${pdf}</td>
       <td class="r" style="white-space:nowrap;">
         <button class="edit-btn" onclick="openEdit(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>
         <button class="del-btn"  onclick="openDel(${ri})" title="Supprimer"><i class="ti ti-trash"></i></button>
@@ -335,26 +295,24 @@ function renderTable(){
   document.getElementById('table-wrap').innerHTML=`
     <table>
       <thead><tr>
-        ${mkTh('Date',cc.date)}${mkTh('Source',-1)}${mkTh('Libellé',cc.libelle)}
+        ${mkTh('Date',cc.date)}${mkTh('Libellé',cc.libelle)}
         ${mkTh('Type',cc.type_mvt)}${mkTh('Type comp.',cc.type_comp)}${mkTh('Description',cc.description)}
         ${mkTh('Débit',cc.debit,'r')}${mkTh('Crédit',cc.credit,'r')}
-        <th class="r">PDF</th><th class="r">Actions</th><th>Commentaire</th>
+        <th class="r">Actions</th><th>Commentaire</th>
       </tr></thead>
       <tbody>${trs}</tbody>
     </table>`;
 }
 
 function setSort(col){if(sortCol===col)sortAsc=!sortAsc;else{sortCol=col;sortAsc=true;}renderTable();}
-function clearFilters(){['fl-search','fl-date-from','fl-date-to'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});['fl-source','fl-type','fl-type-comp','fl-sens','fl-flag'].forEach(id=>{const e=document.getElementById(id);if(e)e.selectedIndex=0;});sortCol=-1;sortAsc=true;renderTable();}
+function clearFilters(){['fl-search','fl-date-from','fl-date-to'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});['fl-type','fl-type-comp','fl-sens','fl-flag'].forEach(id=>{const e=document.getElementById(id);if(e)e.selectedIndex=0;});sortCol=-1;sortAsc=true;renderTable();}
 
-function setSource(s){activeSrc=s;document.getElementById('src-c1').classList.toggle('active',s==='C1');document.getElementById('src-c2').classList.toggle('active',s==='C2');}
 function setSens(s){activeSens=s;document.getElementById('btn-credit').classList.toggle('active',s==='credit');document.getElementById('btn-debit').classList.toggle('active',s==='debit');}
 
 function resetForm(){
-  ['f-date','f-montant','f-libelle','f-desc','f-chat','f-recu','f-facture'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=id==='f-date'?Sheets.todayISO():'';});
+  ['f-date','f-montant','f-libelle','f-desc','f-chat','f-recu'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=id==='f-date'?Sheets.todayISO():'';});
   document.getElementById('f-type').selectedIndex=0;
   document.getElementById('f-type-comp').selectedIndex=0;
-  document.getElementById('f-reglement').selectedIndex=0;
   document.getElementById('form-err').classList.add('hidden');
   cancelEdit();
 }
@@ -369,7 +327,7 @@ function cancelEdit(){
 }
 
 async function submitForm(){
-  const err=document.getElementById('form-err');err.classList.add('hidden');
+  document.getElementById('form-err').classList.add('hidden');
   const date=document.getElementById('f-date').value;
   const montant=parseFloat(document.getElementById('f-montant').value);
   const libelle=document.getElementById('f-libelle').value.trim();
@@ -379,24 +337,27 @@ async function submitForm(){
   if(!libelle){showErr('Le libellé est obligatoire.');return;}
   if(!type_mvt){showErr('Le type de mouvement est obligatoire.');return;}
   const op={
-    source:activeSrc,date,libelle,
-    debit:activeSens==='debit'?montant:'',credit:activeSens==='credit'?montant:'',
+    source:SOURCE, date, libelle,
+    debit:activeSens==='debit'?montant:'', credit:activeSens==='credit'?montant:'',
     periode:document.getElementById('f-per').value,
-    type_mvt,type_comp:document.getElementById('f-type-comp').value,
+    type_mvt, type_comp:document.getElementById('f-type-comp').value,
     description:document.getElementById('f-desc').value.trim(),
-    nom:libelle,reglement:document.getElementById('f-reglement').value,
+    nom:libelle, reglement:'Espèces',
     nom_chat:document.getElementById('f-chat').value.trim(),
     num_recu:document.getElementById('f-recu').value.trim(),
-    lien_facture:document.getElementById('f-facture').value.trim(),
+    lien_facture:'',
   };
   const btn=document.getElementById('btn-submit');btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2 spinner"></i>';
   try{
     if(editIdx!==null){
       const cc=Sheets.cols.caisse,r=allRows[editIdx];
-      op.flag_check=r[cc.flag_check]||'FALSE';op.flag_comment=r[cc.flag_comment]||'';
-      await Sheets.updateCaisseOperation(editIdx,op);showToast('Opération modifiée !');
+      op.flag_check=r[cc.flag_check]||'FALSE';
+      op.flag_comment=r[cc.flag_comment]||'';
+      await Sheets.updateCaisseOperation(editIdx,op);
+      showToast('Opération modifiée !');
     } else {
-      await Sheets.saveCaisseOperation(op);showToast('Opération enregistrée !');
+      await Sheets.saveCaisseOperation(op);
+      showToast('Opération enregistrée !');
     }
     resetForm();await loadData();
   }catch(e){showErr('Erreur : '+(e.message||'?'));}
@@ -411,16 +372,13 @@ function openEdit(ri){
   document.getElementById('f-type').value=r[cc.type_mvt]||'';
   document.getElementById('f-type-comp').value=r[cc.type_comp]||'';
   document.getElementById('f-desc').value=r[cc.description]||'';
-  document.getElementById('f-reglement').value=r[cc.reglement]||'';
   document.getElementById('f-chat').value=r[cc.nom_chat]||'';
   document.getElementById('f-recu').value=r[cc.num_recu]||'';
-  document.getElementById('f-facture').value=r[cc.lien_facture]||'';
-  setSource(r[cc.source]==='C2'?'C2':'C1');
   setSens(r[cc.credit]&&parseFloat(r[cc.credit])>0?'credit':'debit');
   document.getElementById('form-mode-lbl').textContent='Modifier l\'opération';
   document.getElementById('btn-submit').innerHTML='<i class="ti ti-device-floppy"></i> Enregistrer les modifications';
   document.getElementById('btn-cancel-edit').style.display='';
-  const banner=document.getElementById('edit-banner');banner.style.display='';
+  document.getElementById('edit-banner').style.display='';
   document.getElementById('edit-line-label').textContent=`${r[cc.date]||''} — ${r[cc.libelle]||''}`;
   document.querySelector('.form-card').scrollIntoView({behavior:'smooth'});
   renderTable();
@@ -439,7 +397,13 @@ async function confirmDel(){
   catch(e){alert('Erreur : '+e.message);}
 }
 
-function openFlag(ri,libelle,comment,isFlagged){flagTarget={ri,isFlagged};document.getElementById('flag-info').textContent=`Ligne : ${libelle}`;document.getElementById('flag-comment').value=comment||'';document.getElementById('flag-resolved').checked=false;document.getElementById('modal-flag').classList.remove('hidden');}
+function openFlag(ri,libelle,comment,isFlagged){
+  flagTarget={ri,isFlagged};
+  document.getElementById('flag-info').textContent=`Ligne : ${libelle}`;
+  document.getElementById('flag-comment').value=comment||'';
+  document.getElementById('flag-resolved').checked=false;
+  document.getElementById('modal-flag').classList.remove('hidden');
+}
 function closeFlag(){document.getElementById('modal-flag').classList.add('hidden');flagTarget=null;}
 async function saveFlag(){
   if(!flagTarget)return;
@@ -449,9 +413,7 @@ async function saveFlag(){
   catch(e){alert('Erreur : '+e.message);}
 }
 
-function openDrivePicker(){gapi.load('picker',()=>{const t=gapi.client.getToken();if(!t)return;new google.picker.PickerBuilder().addView(new google.picker.DocsView()).setOAuthToken(t.access_token).setCallback(d=>{if(d.action===google.picker.Action.PICKED)document.getElementById('f-facture').value=d.docs[0].id;}).build().setVisible(true);});}
-
-function chipType(t){if(!t)return'depense';const l=t.toLowerCase();if(l.includes('adopt'))return'adoption';if(l.includes('don'))return'don';if(l.includes('adh'))return'adhesion';if(l.includes('vén')||l.includes('ment'))return'evenement';return'depense';}
+function chipType(t){if(!t)return'depense';const l=t.toLowerCase();if(l.includes('adopt'))return'adoption';if(l.includes('don'))return'don';if(l.includes('adh'))return'adhesion';return'depense';}
 function fmt(v){if(!v&&v!==0)return'';return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
 function dateToISO(d){if(!d)return'';const p=String(d).split('/');if(p.length===3&&p[0].length===2)return`${p[2]}-${p[1]}-${p[0]}`;return d;}
 function showErr(m){const e=document.getElementById('form-err');e.textContent=m;e.classList.remove('hidden');}
