@@ -142,9 +142,25 @@
 <script src="sheets.js"></script>
 <script src="sidebar.js"></script>
 <script>
+// ============================================================
+// VARIABLES GLOBALES
+// ============================================================
 let allRemises=[], delIdx=null, chqCounter=0, editRemIdx=null;
 const openRows=new Set();
 
+// ============================================================
+// UTILITAIRES (déclarés en premier)
+// ============================================================
+function escH(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;'); }
+function fmt(v){ if(!v&&v!==0)return'—'; return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
+function formatDate(d){ if(!d)return'—'; const s=String(d).trim(); if(/^\d{2}\/\d{2}\/\d{4}$/.test(s))return s; if(/^\d{4}-\d{2}-\d{2}$/.test(s)){const p=s.split('-');return`${p[2]}/${p[1]}/${p[0]}`;} return s; }
+function chipType(t){ if(!t&&t!==0)return'depense'; const l=String(t).toLowerCase(); if(l.includes('adopt'))return'adoption'; if(l.includes('don'))return'don'; if(l.includes('adh'))return'adhesion'; return'depense'; }
+function showErr(m){ const e=document.getElementById('rem-err');e.textContent=m;e.classList.remove('hidden'); }
+function showToast(m){ const t=document.createElement('div');t.className='success-toast';t.innerHTML=`<i class="ti ti-check"></i> ${m}`;document.body.appendChild(t);setTimeout(()=>t.remove(),3000); }
+
+// ============================================================
+// AUTH + INIT
+// ============================================================
 Auth.requireAuth(async()=>{
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
   Sidebar.build('remisecheques');
@@ -159,6 +175,9 @@ Auth.requireAuth(async()=>{
   await loadData();
 });
 
+// ============================================================
+// CHARGEMENT
+// ============================================================
 async function loadData(){
   allRemises=await Sheets.getRemises();
   Sidebar.setLastUpdate();
@@ -171,6 +190,9 @@ function onPeriodeChange(p){
   renderKPIs();renderTable();
 }
 
+// ============================================================
+// KPIs
+// ============================================================
 function renderKPIs(){
   const cr=Sheets.cols.remise;
   const per=document.getElementById('fl-per')?.value||'';
@@ -185,6 +207,9 @@ function renderKPIs(){
     <div class="kpi"><div class="kpi-label">Total TTC période</div><div class="kpi-value">${fmt(totTotal)}</div><div style="font-size:10px;color:var(--text-3);">${enc.length} encaissée(s)</div></div>`;
 }
 
+// ============================================================
+// TABLE
+// ============================================================
 function renderTable(){
   const cr=Sheets.cols.remise;
   const per=document.getElementById('fl-per')?.value||'';
@@ -206,19 +231,16 @@ function renderTable(){
       ?'<span class="chip" style="background:var(--amber-bg);color:var(--amber);">En attente</span>'
       :'<span class="chip" style="background:var(--green-bg);color:var(--green);">Encaissée</span>';
     const nb=parseInt(r[cr.nb_cheques])||0;
-    // Détecter si ancien format (4 champs) ou nouveau (7 champs)
-    // En testant si le champ à base+4 ressemble à un montant ou non
-    const stride = 7;
     let detailRows='';
     for(let i=0;i<nb;i++){
       const base=cr.detail_start+i*7;
-      const donateur   = r[base]   || '—';
-      const montant    = r[base+1] || '';
-      const type_mvt   = r[base+2] || '—';
-      const description= r[base+3] || '—';
-      const type_comp  = r[base+4] || '—';
-      const nom_chat   = r[base+5] || '—';
-      const recu_fiscal= r[base+6] || '—';
+      const donateur   =r[base]  ||'—';
+      const montant    =r[base+1]||'';
+      const type_mvt   =r[base+2]||'—';
+      const description=r[base+3]||'—';
+      const type_comp  =r[base+4]||'—';
+      const nom_chat   =r[base+5]||'—';
+      const recu_fiscal=r[base+6]||'—';
       detailRows+=`<tr>
         <td>${donateur}</td>
         <td class="r" style="font-weight:500;">${montant?fmt(montant):'—'}</td>
@@ -274,6 +296,9 @@ function toggleRow(id){
   renderTable();
 }
 
+// ============================================================
+// FORMULAIRE REMISE
+// ============================================================
 function addChequeRemise(){
   const id='chq-rem-'+chqCounter++;
   const types=Sheets.getTypesMouvement();
@@ -315,13 +340,13 @@ function updateRemTotal(){
 }
 
 function resetRemise(){
-  editRemIdx = null;   // ← ajouter
-  document.getElementById('rem-bordereau').value = '';
+  editRemIdx=null;
   document.getElementById('rem-bordereau').value='';
   document.getElementById('rem-date').value=Sheets.todayISO();
   document.getElementById('rem-err').classList.add('hidden');
   document.getElementById('cheques-remise-list').innerHTML='';
-  chqCounter=0;addChequeRemise();
+  chqCounter=0;
+  addChequeRemise();
 }
 
 async function submitRemise(){
@@ -349,62 +374,51 @@ async function submitRemise(){
     periode:document.getElementById('rem-per').value,
     cheques,
   };
-  try {
-    if (editRemIdx !== null) {
-      const cr = Sheets.cols.remise;
-      const existing = allRemises[editRemIdx];
-      remise.id           = existing[cr.id]           || '';
-      remise.statut       = existing[cr.statut]       || 'en_attente';
-      remise.date_encaiss = existing[cr.date_encaiss] || '';
-      remise.ref_banque   = existing[cr.ref_banque]   || '';
-      await Sheets.updateRemise(editRemIdx, remise);
-      editRemIdx = null;
+  try{
+    if(editRemIdx!==null){
+      const cr=Sheets.cols.remise;
+      const existing=allRemises[editRemIdx];
+      remise.id          =existing[cr.id]          ||'';
+      remise.statut      =existing[cr.statut]      ||'en_attente';
+      remise.date_encaiss=existing[cr.date_encaiss]||'';
+      remise.ref_banque  =existing[cr.ref_banque]  ||'';
+      await Sheets.updateRemise(editRemIdx,remise);
+      editRemIdx=null;
       showToast('Remise modifiée !');
-    } else {
+    }else{
       await Sheets.saveRemise(remise);
       showToast('Remise enregistrée !');
     }
     resetRemise();
     await loadData();
-  } catch(e) { showErr('Erreur : ' + (e.message || '?')); }
+  }catch(e){showErr('Erreur : '+(e.message||'?'));}
+}
 
-function openDel(ri,detail){delIdx=ri;document.getElementById('del-detail').textContent=detail;document.getElementById('modal-del').classList.remove('hidden');}
-function closeDel(){document.getElementById('modal-del').classList.add('hidden');delIdx=null;}
+// ============================================================
+// SUPPRESSION
+// ============================================================
+function openDel(ri,detail){
+  delIdx=ri;
+  document.getElementById('del-detail').textContent=detail;
+  document.getElementById('modal-del').classList.remove('hidden');
+}
+function closeDel(){
+  document.getElementById('modal-del').classList.add('hidden');
+  delIdx=null;
+}
 async function confirmDel(){
   if(delIdx===null)return;
-  try{await Sheets.deleteRow(Sheets.config.sheets.remises,delIdx);closeDel();showToast('Remise supprimée');await loadData();}
-  catch(e){alert('Erreur : '+e.message);}
+  try{
+    await Sheets.deleteRow(Sheets.config.sheets.remises,delIdx);
+    closeDel();
+    showToast('Remise supprimée');
+    await loadData();
+  }catch(e){alert('Erreur : '+e.message);}
 }
 
-function chipType(t){
-  if(!t&&t!==0)return'depense';
-  const l=String(t).toLowerCase();
-  if(l.includes('adopt'))return'adoption';
-  if(l.includes('don'))return'don';
-  if(l.includes('adh'))return'adhesion';
-  return'depense';
-}
-
-function formatDate(d){
-  if(!d)return'—';const s=String(d).trim();if(/^\d{2}\/\d{2}\/\d{4}$/.test(s))return s;if(/^\d{4}-\d{2}-\d{2}$/.test(s)){const p=s.split('-');return`${p[2]}/${p[1]}/${p[0]}`;}return s;
-}
-
-function fmt(v){
-  if(!v&&v!==0)return'—';return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
-}
-
-function showErr(m){
-  const e=document.getElementById('rem-err');e.textContent=m;e.classList.remove('hidden');
-}
-
-function showToast(m){
-  const t=document.createElement('div');t.className='success-toast';t.innerHTML=`<i class="ti ti-check"></i> ${m}`;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
-}
-
-function escH(s){
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;');
-}
-
+// ============================================================
+// ÉDITION
+// ============================================================
 function openEdit(ri){
   const cr=Sheets.cols.remise, r=allRemises[ri];
   editRemIdx=ri;
@@ -418,19 +432,16 @@ function openEdit(ri){
     addChequeRemise();
     const base=cr.detail_start+i*7;
     const item=document.getElementById('cheques-remise-list').lastElementChild;
-    item.querySelector('.rem-donateur').value   = r[base]   ||'';
-    item.querySelector('.rem-montant').value    = r[base+1] ||'';
-    item.querySelector('.rem-type').value       = r[base+2] ||'';
-    item.querySelector('.rem-desc').value       = r[base+3] ||'';
-    item.querySelector('.rem-type-comp').value  = r[base+4] ||'';
-    item.querySelector('.rem-nom-chat').value   = r[base+5] ||'';
-    item.querySelector('.rem-recu-fiscal').value= r[base+6] ||'';
+    item.querySelector('.rem-donateur').value   =r[base]  ||'';
+    item.querySelector('.rem-montant').value    =r[base+1]||'';
+    item.querySelector('.rem-type').value       =r[base+2]||'';
+    item.querySelector('.rem-desc').value       =r[base+3]||'';
+    item.querySelector('.rem-type-comp').value  =r[base+4]||'';
+    item.querySelector('.rem-nom-chat').value   =r[base+5]||'';
+    item.querySelector('.rem-recu-fiscal').value=r[base+6]||'';
   }
   updateRemTotal();
-  document.getElementById('rem-submit-label').textContent='Enregistrer les modifications';
   document.querySelector('.form-card').scrollIntoView({behavior:'smooth'});
-  }
 }
-</script>
-</body>
+</script></body>
 </html>
