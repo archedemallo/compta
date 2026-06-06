@@ -304,14 +304,13 @@ function renderChequesTable(){
       <td class="r" style="font-weight:500;">${fmt(r[cc.montant])}</td>
       <td>${badge}</td>
       <td style="color:var(--text-3);font-size:10px;">${formatDate(r[cc.date_encaiss])}</td>
-      <td style="text-align:center;"><input type="checkbox" disabled ${r[cc.statut_banque]==='paye'?'checked':''} style="width:14px;height:14px;accent-color:var(--green);"></td>
       <td class="r" style="white-space:nowrap;">
         ${s==='en_attente'?`<button class="edit-btn" onclick="openEditChq(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>`:''}
         <button class="del-btn" onclick="openDel('cheque',${ri},'N°'+${JSON.stringify(r[cc.num_cheque]||'')}+' — '+${JSON.stringify(r[cc.beneficiaire]||'')})" title="Supprimer"><i class="ti ti-trash"></i></button>
       </td>
     </tr>`;
   }).join('');
-  document.getElementById('cheques-table-wrap').innerHTML=`<table><thead><tr><th>Date</th><th>N° chèque</th><th>Bénéficiaire</th><th>Type</th><th>Description</th><th class="r">Montant</th><th>Statut</th><th>Encaissé le</th><th style="text-align:center;">Payé</th><th class="r">Actions</th></tr></thead><tbody>${trs}</tbody></table>`;
+  document.getElementById('cheques-table-wrap').innerHTML=`<table><thead><tr><th>Date</th><th>N° chèque</th><th>Bénéficiaire</th><th>Type</th><th>Description</th><th class="r">Montant</th><th>Statut</th><th>Encaissé le</th><th class="r">Actions</th></tr></thead><tbody>${trs}</tbody></table>`;
 }
 
 function resetCheque(){
