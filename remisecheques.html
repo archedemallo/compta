@@ -317,6 +317,12 @@ function addChequeRemise(){
       <div class="form-group"><label class="form-label req">Donateur / Nom</label><input type="text" class="rem-donateur" placeholder="Nom"></div>
       <div class="form-group"><label class="form-label req">Montant (€)</label><input type="number" class="rem-montant" step="0.01" min="0" placeholder="0,00" oninput="updateRemTotal()"></div>
     </div>
+    <div class="form-row-2">
+    <div class="form-group"><label class="form-label req">Donateur / Nom</label><input type="text" class="rem-donateur" placeholder="Nom"></div>
+    <div class="form-group"><label class="form-label req">Montant (€)</label><input type="number" class="rem-montant" step="0.01" min="0" placeholder="0,00" oninput="updateRemTotal()"></div>
+  </div>
+  <div class="form-group"><label class="form-label">N° chèque</label><input type="text" class="rem-num-cheque" placeholder="Ex: 1234567"></div>
+  <div class="form-group"><label class="form-label req">Type de mouvement</label><select class="rem-type">${topts}</select></div>
     <div class="form-group"><label class="form-label req">Type de mouvement</label><select class="rem-type">${topts}</select></div>
     <div class="form-group"><label class="form-label">Description</label><select class="rem-desc">${dopts}</select></div>
     <div class="form-group"><label class="form-label">Libellé complémentaire</label><input type="text" class="rem-type-comp" placeholder="Précisions…"></div>
