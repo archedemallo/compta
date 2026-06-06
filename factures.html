@@ -175,7 +175,7 @@ Auth.requireAuth(async()=>{
   const cats=Sheets.getTypesMouvement();
   const sc=document.getElementById('f-cat'), fl=document.getElementById('fl-cat');
   cats.forEach(c=>{sc.innerHTML+=`<option>${c}</option>`;fl.innerHTML+=`<option value="${c}">${c}</option>`;});
-  const descs = typeof getDescriptions === 'function' ? getDescriptions() : [];
+  const descs = Sheets.getDescriptions();
   const sd = document.getElementById('f-desc');
   sd.innerHTML = '<option value="">—</option>';
   descs.forEach(d => sd.innerHTML += `<option>${d}</option>`);
