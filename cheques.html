@@ -107,12 +107,12 @@
             <select id="chq-type"></select>
           </div>
           <div class="form-group">
-            <label class="form-label">Type complémentaire</label>
-            <select id="chq-type-comp"></select>
-          </div>
-          <div class="form-group">
             <label class="form-label">Description</label>
             <select id="chq-desc"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Libellé complémentaire</label>
+            <input type="text" id="chq-type-comp" placeholder="Précisions…">
           </div>
           <div class="form-group">
             <label class="form-label">Période</label>
@@ -162,11 +162,6 @@ Auth.requireAuth(async()=>{
   sc.innerHTML='<option value="">— Choisir —</option>';
   types.forEach(t=>sc.innerHTML+=`<option>${t}</option>`);
 
-  const typesC=Sheets.getTypesComplementaires();
-  const scc=document.getElementById('chq-type-comp');
-  scc.innerHTML='<option value="">—</option>';
-  typesC.forEach(t=>scc.innerHTML+=`<option>${t}</option>`);
-
   const descs=Sheets.getDescriptions();
   const sd=document.getElementById('chq-desc');
   sd.innerHTML='<option value="">—</option>';
@@ -213,31 +208,38 @@ function renderTable(){
   const trs=rows.map(r=>{
     const ri=allCheques.indexOf(r);
     const s=r[cc.statut]||'';
-    const badge=s==='en_attente'?'<span class="chip" style="background:var(--amber-bg);color:var(--amber);">En attente</span>':s==='encaisse'?'<span class="chip" style="background:var(--green-bg);color:var(--green);">Encaissé</span>':'<span class="chip" style="background:var(--red-bg);color:var(--red);">Annulé</span>';
+    const badge=s==='en_attente'
+      ?'<span class="chip" style="background:var(--amber-bg);color:var(--amber);">En attente</span>'
+      :s==='encaisse'
+      ?'<span class="chip" style="background:var(--green-bg);color:var(--green);">Encaissé</span>'
+      :'<span class="chip" style="background:var(--red-bg);color:var(--red);">Annulé</span>';
     return `<tr>
       <td style="color:var(--text-3);">${formatDate(r[cc.date_emission])}</td>
-      <td style="font-weight:500;">N°${r[cc.num_cheque]||'—'}</td>
+      <td style="font-weight:500;">${r[cc.num_cheque]||'—'}</td>
       <td>${r[cc.beneficiaire]||'—'}</td>
       <td><span class="chip chip-${chipType(r[cc.type_mvt])}">${r[cc.type_mvt]||'—'}</span></td>
-      <td style="color:var(--text-3);font-size:10px;">${r[cc.type_comp]||'—'}</td>
       <td style="color:var(--text-3);font-size:10px;">${r[cc.description]||'—'}</td>
+      <td style="color:var(--text-3);font-size:10px;">${r[cc.type_comp]||'—'}</td>
       <td class="r" style="font-weight:500;">${fmt(r[cc.montant])}</td>
       <td>${badge}</td>
       <td style="color:var(--text-3);font-size:10px;">${formatDate(r[cc.date_encaiss])}</td>
       <td class="r" style="white-space:nowrap;">
         ${s==='en_attente'?`<button class="edit-btn" onclick="openEditChq(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>`:''}
-        <button class="del-btn" onclick="openDel(${ri},'N°${escH(r[cc.num_cheque]||'')} — ${escH(r[cc.beneficiaire]||'')}')"><i class="ti ti-trash"></i></button>
+        <button class="del-btn" onclick="openDel(${ri},'${escH(r[cc.num_cheque]||'')} — ${escH(r[cc.beneficiaire]||'')}')"><i class="ti ti-trash"></i></button>
       </td>
     </tr>`;
   }).join('');
-  document.getElementById('cheques-table-wrap').innerHTML=`<table><thead><tr><th>Date</th><th>N° chèque</th><th>Bénéficiaire</th><th>Type</th><th>Type complémentaire</th><th>Description</th><th class="r">Montant</th><th>Statut</th><th>Encaissé le</th><th class="r">Actions</th></tr></thead><tbody>${trs}</tbody></table>`;
+  document.getElementById('cheques-table-wrap').innerHTML=`<table><thead><tr>
+    <th>Date</th><th>N° chèque</th><th>Bénéficiaire</th><th>Type de mouvement</th>
+    <th>Description</th><th>Libellé complémentaire</th><th class="r">Montant</th>
+    <th>Statut</th><th>Encaissé le</th><th class="r">Actions</th>
+  </tr></thead><tbody>${trs}</tbody></table>`;
 }
 
 function resetCheque(){
-  ['chq-num','chq-benef','chq-montant'].forEach(id=>document.getElementById(id).value='');
+  ['chq-num','chq-benef','chq-montant','chq-type-comp'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   document.getElementById('chq-date').value=Sheets.todayISO();
   document.getElementById('chq-type').selectedIndex=0;
-  document.getElementById('chq-type-comp').selectedIndex=0;
   document.getElementById('chq-desc').selectedIndex=0;
   document.getElementById('chq-err').classList.add('hidden');
   editChqIdx=null;
@@ -257,9 +259,11 @@ async function submitCheque(){
   const chq={
     num_cheque:num,
     date_emission:Sheets.normalizeDate(document.getElementById('chq-date').value),
-    beneficiaire:benef,montant,type_mvt:type,
-    type_comp:document.getElementById('chq-type-comp').value,
+    beneficiaire:benef,
+    montant,
+    type_mvt:type,
     description:document.getElementById('chq-desc').value,
+    type_comp:document.getElementById('chq-type-comp').value,
     periode:document.getElementById('chq-per').value,
   };
   const btn=document.getElementById('chq-submit');btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2 spinner"></i>';
@@ -277,8 +281,8 @@ function openEditChq(ri){
   document.getElementById('chq-benef').value=r[cc.beneficiaire]||'';
   document.getElementById('chq-montant').value=r[cc.montant]||'';
   document.getElementById('chq-type').value=r[cc.type_mvt]||'';
-  document.getElementById('chq-type-comp').value=r[cc.type_comp]||'';
   document.getElementById('chq-desc').value=r[cc.description]||'';
+  document.getElementById('chq-type-comp').value=r[cc.type_comp]||'';
   document.getElementById('chq-mode-lbl').textContent='Modifier le chèque';
   document.getElementById('chq-submit').innerHTML='<i class="ti ti-device-floppy"></i> Enregistrer les modifications';
   document.querySelector('.form-card').scrollIntoView({behavior:'smooth'});
