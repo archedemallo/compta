@@ -648,7 +648,7 @@ window.Sheets = {
   saveBanqueOperation,  updateBanqueOperation,
   saveCaissePhysique,
   saveCheque,           encaisserCheque,
-  saveRemise,           encaisserRemise,
+  saveRemise,           encaisserRemise, updateRemise,
   saveFacture,          updateFacture,
   updateFlag, appendRows, updateCell, updateRange, deleteRow,
   // Calculs
@@ -662,3 +662,30 @@ window.Sheets = {
   // Utilitaires
   formatMoney, normalizeDate, todayISO, todayFR, genId, openFacture,
 };
+
+async function updateRemise(rowIndex, remise) {
+  const id = allRemises?.[rowIndex]?.[COLS_REMISE.id] || remise.id || genId('BRD');
+  const sheetRow = rowIndex + 2;
+  const mainRow = new Array(9 + remise.cheques.length * 7).fill('');
+  mainRow[COLS_REMISE.id]            = id;
+  mainRow[COLS_REMISE.date_remise]   = remise.date_remise   || '';
+  mainRow[COLS_REMISE.num_bordereau] = remise.num_bordereau || id;
+  mainRow[COLS_REMISE.nb_cheques]    = remise.cheques.length;
+  mainRow[COLS_REMISE.montant_total] = remise.cheques.reduce((s,c) => s + (parseFloat(c.montant)||0), 0);
+  mainRow[COLS_REMISE.periode]       = remise.periode || '';
+  mainRow[COLS_REMISE.statut]        = remise.statut  || 'en_attente';
+  mainRow[COLS_REMISE.date_encaiss]  = remise.date_encaiss || '';
+  mainRow[COLS_REMISE.ref_banque]    = remise.ref_banque    || '';
+  remise.cheques.forEach((c, i) => {
+    const base = COLS_REMISE.detail_start + i * 7;
+    mainRow[base]     = c.donateur    || '';
+    mainRow[base + 1] = c.montant     || '';
+    mainRow[base + 2] = c.type_mvt    || '';
+    mainRow[base + 3] = c.description || '';
+    mainRow[base + 4] = c.type_comp   || '';
+    mainRow[base + 5] = c.nom_chat    || '';
+    mainRow[base + 6] = c.recu_fiscal || '';
+  });
+  await updateRange(SHEETS_CONFIG.sheets.remises, sheetRow, 0, [mainRow]);
+  await logAction('MODIF', 'Remises', id, `Modifié le ${todayFR()}`);
+}
