@@ -16,7 +16,7 @@ const SHEETS_CONFIG = {
     config:       'Config',
     journal:      'Journal',
     cheques:      'Cheques',        // chèques émis en attente
-    remises:      'Remises',        // remises de chèques
+    remises:      'Remises_cheques',        // remises de chèques
     factures:     'Factures',
     import_hist:  'Import_historique',
   },
