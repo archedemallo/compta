@@ -206,18 +206,27 @@ function renderTable(){
       ?'<span class="chip" style="background:var(--amber-bg);color:var(--amber);">En attente</span>'
       :'<span class="chip" style="background:var(--green-bg);color:var(--green);">Encaissée</span>';
     const nb=parseInt(r[cr.nb_cheques])||0;
-    // 7 champs par chèque : type_mvt, montant, donateur, description, type_comp, nom_chat, recu_fiscal
+    // Détecter si ancien format (4 champs) ou nouveau (7 champs)
+    // En testant si le champ à base+4 ressemble à un montant ou non
+    const stride = 7;
     let detailRows='';
     for(let i=0;i<nb;i++){
-      const base=cr.detail_start+i*7;
+      const base=cr.detail_start+i*stride;
+      const type_mvt   = r[base]   || '—';
+      const montant    = r[base+1] || '';
+      const donateur   = r[base+2] || '—';
+      const description= r[base+3] || '—';
+      const type_comp  = r[base+4] || '—';
+      const nom_chat   = r[base+5] || '—';
+      const recu_fiscal= r[base+6] || '—';
       detailRows+=`<tr>
-        <td>${r[base+2]||'—'}</td>
-        <td class="r" style="font-weight:500;">${fmt(r[base+1])}</td>
-        <td><span class="chip chip-${chipType(r[base]||'')}">${r[base]||'—'}</span></td>
-        <td style="color:var(--text-3);">${r[base+3]||'—'}</td>
-        <td style="color:var(--text-3);">${r[base+4]||'—'}</td>
-        <td style="color:var(--text-3);">${r[base+5]||'—'}</td>
-        <td style="color:var(--text-3);">${r[base+6]||'—'}</td>
+        <td>${donateur}</td>
+        <td class="r" style="font-weight:500;">${montant?fmt(montant):'—'}</td>
+        <td><span class="chip chip-${chipType(type_mvt)}">${type_mvt}</span></td>
+        <td style="color:var(--text-3);">${description}</td>
+        <td style="color:var(--text-3);">${type_comp}</td>
+        <td style="color:var(--text-3);">${nom_chat}</td>
+        <td style="color:var(--text-3);">${recu_fiscal}</td>
       </tr>`;
     }
     const detailHtml=`
