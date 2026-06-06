@@ -378,7 +378,7 @@ async function encaisserCheque(chequeRowIndex, dateBanque, refBanque) {
 async function saveRemise(remise) {
   const id  = remise.id || genId('BRD');
   // Ligne principale remise
-  const mainRow = new Array(9 + remise.cheques.length * 4).fill('');
+  const mainRow = new Array(9 + remise.cheques.length * 8).fill('');
   mainRow[COLS_REMISE.id]            = id;
   mainRow[COLS_REMISE.date_remise]   = remise.date_remise   || '';
   mainRow[COLS_REMISE.num_bordereau] = remise.num_bordereau || id;
@@ -390,9 +390,10 @@ async function saveRemise(remise) {
   mainRow[COLS_REMISE.ref_banque]    = '';
   // Détail chèques
  remise.cheques.forEach((c, i) => {
-    const base = COLS_REMISE.detail_start + i * 7;
+    const base = COLS_REMISE.detail_start + i * 8;
     mainRow[base]     = c.donateur     || '';
     mainRow[base + 1] = c.montant      || '';
+    mainRow[base + 2] = c.num_cheque  || ''; 
     mainRow[base + 2] = c.type_mvt     || '';
     mainRow[base + 3] = c.description  || '';
     mainRow[base + 4] = c.type_comp    || '';
@@ -666,7 +667,7 @@ window.Sheets = {
 async function updateRemise(rowIndex, remise) {
   const id = allRemises?.[rowIndex]?.[COLS_REMISE.id] || remise.id || genId('BRD');
   const sheetRow = rowIndex + 2;
-  const mainRow = new Array(9 + remise.cheques.length * 7).fill('');
+  const mainRow = new Array(9 + remise.cheques.length * 8).fill('');
   mainRow[COLS_REMISE.id]            = id;
   mainRow[COLS_REMISE.date_remise]   = remise.date_remise   || '';
   mainRow[COLS_REMISE.num_bordereau] = remise.num_bordereau || id;
@@ -677,9 +678,10 @@ async function updateRemise(rowIndex, remise) {
   mainRow[COLS_REMISE.date_encaiss]  = remise.date_encaiss || '';
   mainRow[COLS_REMISE.ref_banque]    = remise.ref_banque    || '';
   remise.cheques.forEach((c, i) => {
-    const base = COLS_REMISE.detail_start + i * 7;
+    const base = COLS_REMISE.detail_start + i * 8;
     mainRow[base]     = c.donateur    || '';
     mainRow[base + 1] = c.montant     || '';
+   mainRow[base + 2] = c.num_cheque  || '';
     mainRow[base + 2] = c.type_mvt    || '';
     mainRow[base + 3] = c.description || '';
     mainRow[base + 4] = c.type_comp   || '';
