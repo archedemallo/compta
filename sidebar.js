@@ -12,7 +12,8 @@ function buildSidebar(activePage) {
     { id: 'dashboard', label: 'Vue générale',       icon: 'ti-chart-bar',      href: 'index.html' },
 
     { section: 'Comptabilité' },
-    { id: 'caisse',    label: 'Caisse — saisie',    icon: 'ti-cash',           href: 'caisse.html' },
+    { id: 'caisse',    label: 'Caisse1 — saisie',    icon: 'ti-cash',           href: 'caisse.html' },
+    { id: 'caisse2',    label: 'Caisse2 — saisie',    icon: 'ti-cash',           href: 'caisse2.html' }, 
     { id: 'banque',    label: 'Banque — saisie',    icon: 'ti-building-bank',  href: 'banque.html' },
     { id: 'cheques',       label: 'Chèques émis',      icon: 'ti-writing',        href: 'cheques.html' },
     { id: 'remisecheques', label: 'Remises de chèques', icon: 'ti-stack',          href: 'remisecheques.html' },
@@ -20,8 +21,8 @@ function buildSidebar(activePage) {
     { id: 'import',    label: 'Import relevé',       icon: 'ti-upload',         href: 'import.html' },
 
     { section: 'Caisses physiques' },
-    { id: 'caisse1',   label: 'Caisse 1',           icon: 'ti-safe',           href: 'caisse-physique.html?n=1' },
-    { id: 'caisse2',   label: 'Caisse 2',           icon: 'ti-safe',           href: 'caisse-physique.html?n=2' },
+    { id: 'caisse1physique',   label: 'Caisse 1',           icon: 'ti-safe',           href: 'caisse-physique.html' },
+    { id: 'caisse2physique',   label: 'Caisse 2',           icon: 'ti-safe',           href: 'caisse-physique2.html' },
 
     { section: 'Partage' },
     { id: 'synthese',  label: 'Vue synthèse',       icon: 'ti-eye',            href: 'synthese.html' },
