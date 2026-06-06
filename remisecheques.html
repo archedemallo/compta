@@ -233,32 +233,34 @@ function renderTable(){
     const nb=parseInt(r[cr.nb_cheques])||0;
     let detailRows='';
     for(let i=0;i<nb;i++){
-      const base=cr.detail_start+i*7;
-      const donateur   =r[base]  ||'—';
-      const montant    =r[base+1]||'';
-      const type_mvt   =r[base+2]||'—';
-      const description=r[base+3]||'—';
-      const type_comp  =r[base+4]||'—';
-      const nom_chat   =r[base+5]||'—';
-      const recu_fiscal=r[base+6]||'—';
-      detailRows+=`<tr>
-        <td>${donateur}</td>
-        <td class="r" style="font-weight:500;">${montant?fmt(montant):'—'}</td>
-        <td><span class="chip chip-${chipType(type_mvt)}">${type_mvt}</span></td>
-        <td style="color:var(--text-3);">${description}</td>
-        <td style="color:var(--text-3);">${type_comp}</td>
-        <td style="color:var(--text-3);">${nom_chat}</td>
-        <td style="color:var(--text-3);">${recu_fiscal}</td>
-      </tr>`;
-    }
+  const base=cr.detail_start+i*8;   // ← 8 au lieu de 7
+  const donateur   =r[base]  ||'—';
+  const montant    =r[base+1]||'';
+  const num_cheque =r[base+2]||'—';   // ← nouveau
+  const type_mvt   =r[base+3]||'—';
+  const description=r[base+4]||'—';
+  const type_comp  =r[base+5]||'—';
+  const nom_chat   =r[base+6]||'—';
+  const recu_fiscal=r[base+7]||'—';
+  detailRows+=`<tr>
+    <td>${donateur}</td>
+    <td class="r" style="font-weight:500;">${montant?fmt(montant):'—'}</td>
+    <td style="color:var(--text-3);">${num_cheque}</td>
+    <td><span class="chip chip-${chipType(type_mvt)}">${type_mvt}</span></td>
+    <td style="color:var(--text-3);">${description}</td>
+    <td style="color:var(--text-3);">${type_comp}</td>
+    <td style="color:var(--text-3);">${nom_chat}</td>
+    <td style="color:var(--text-3);">${recu_fiscal}</td>
+  </tr>`;
+}
     const detailHtml=`
       <div class="detail-inner">
         <table>
           <thead><tr>
-            <th>Nom</th><th class="r">Montant</th><th>Type de mouvement</th>
-            <th>Description</th><th>Libellé complémentaire</th>
-            <th>Nom du chat</th><th>N° reçu fiscal</th>
-          </tr></thead>
+  <th>Nom</th><th class="r">Montant</th><th>N° chèque</th><th>Type de mouvement</th>
+  <th>Description</th><th>Libellé complémentaire</th>
+  <th>Nom du chat</th><th>N° reçu fiscal</th>
+</tr></thead>
           <tbody>${detailRows||'<tr><td colspan="7" style="color:var(--text-3);text-align:center;">Aucun détail</td></tr>'}</tbody>
         </table>
       </div>`;
@@ -365,14 +367,15 @@ async function submitRemise(){
     const montant=parseFloat(item.querySelector('.rem-montant')?.value)||0;
     if(!montant){showErr('Tous les montants sont obligatoires.');return;}
     cheques.push({
-      donateur:   item.querySelector('.rem-donateur')?.value.trim()||'',
-      montant,
-      type_mvt:   item.querySelector('.rem-type')?.value||'',
-      description:item.querySelector('.rem-desc')?.value||'',
-      type_comp:  item.querySelector('.rem-type-comp')?.value.trim()||'',
-      nom_chat:   item.querySelector('.rem-nom-chat')?.value.trim()||'',
-      recu_fiscal:item.querySelector('.rem-recu-fiscal')?.value.trim()||'',
-    });
+  donateur:   item.querySelector('.rem-donateur')?.value.trim()||'',
+  montant,
+  num_cheque: item.querySelector('.rem-num-cheque')?.value.trim()||'',   // ← nouveau
+  type_mvt:   item.querySelector('.rem-type')?.value||'',
+  description:item.querySelector('.rem-desc')?.value||'',
+  type_comp:  item.querySelector('.rem-type-comp')?.value.trim()||'',
+  nom_chat:   item.querySelector('.rem-nom-chat')?.value.trim()||'',
+  recu_fiscal:item.querySelector('.rem-recu-fiscal')?.value.trim()||'',
+});
   }
   const remise={
     num_bordereau:document.getElementById('rem-bordereau').value.trim(),
@@ -440,6 +443,7 @@ function openEdit(ri){
     const item=document.getElementById('cheques-remise-list').lastElementChild;
     item.querySelector('.rem-donateur').value   =r[base]  ||'';
     item.querySelector('.rem-montant').value    =r[base+1]||'';
+    item.querySelector('.rem-num-cheque').value =r[base+2]||'';
     item.querySelector('.rem-type').value       =r[base+2]||'';
     item.querySelector('.rem-desc').value       =r[base+3]||'';
     item.querySelector('.rem-type-comp').value  =r[base+4]||'';
