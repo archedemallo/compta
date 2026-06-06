@@ -217,6 +217,7 @@ function renderTable(){
       <td style="font-weight:500;">${r[cf.fournisseur]||'—'}</td>
       <td style="color:var(--text-3);">${r[cf.num_facture]||'—'}</td>
       <td><span class="chip chip-${chipCat(r[cf.categorie])}">${r[cf.categorie]||'—'}</span></td>
+      <td style="color:var(--text-3);">${r[cf.description]||'—'}</td>
       <td class="r" style="font-weight:500;">${fmt(r[cf.montant_ttc])}</td>
       <td style="color:var(--text-3);">${r[cf.date_reglement]||'—'}</td>
       <td style="color:var(--text-3);">${r[cf.commentaire]||'—'}</td>
@@ -227,7 +228,7 @@ function renderTable(){
       </td>
     </tr>`;
   }).join('');
-  document.getElementById('table-wrap').innerHTML=`<table><thead><tr><th>Date</th><th>Fournisseur</th><th>N°</th><th>Catégorie</th><th class="r">Montant TTC</th><th>Règlement</th><th>Commentaire</th><th class="r">PDF</th><th class="r">Actions</th></tr></thead><tbody>${trs}</tbody></table>`;
+  document.getElementById('table-wrap').innerHTML=`<table><thead><tr><th>Date</th><th>Fournisseur</th><th>N°</th><th>Catégorie</th><th>Description</th><th class="r">Montant TTC</th><th>Règlement</th><th>Commentaire</th><th class="r">PDF</th><th class="r">Actions</th></tr></thead><tbody>${trs}</tbody></table>`;
 }
 
 function reset(){
