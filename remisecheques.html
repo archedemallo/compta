@@ -358,11 +358,23 @@ async function confirmDel(){
   catch(e){alert('Erreur : '+e.message);}
 }
 
-function chipType(t){if(!t)return'depense';const l=t.toLowerCase();if(l.includes('adopt'))return'adoption';if(l.includes('don'))return'don';if(l.includes('adh'))return'adhesion';return'depense';}
+function chipType(t){
+  if(!t&&t!==0)return'depense';
+  const l=String(t).toLowerCase();
+  if(l.includes('adopt'))return'adoption';
+  if(l.includes('don'))return'don';
+  if(l.includes('adh'))return'adhesion';
+  return'depense';
+}
+
 function formatDate(d){if(!d)return'—';const s=String(d).trim();if(/^\d{2}\/\d{2}\/\d{4}$/.test(s))return s;if(/^\d{4}-\d{2}-\d{2}$/.test(s)){const p=s.split('-');return`${p[2]}/${p[1]}/${p[0]}`;}return s;}
+
 function fmt(v){if(!v&&v!==0)return'—';return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
+
 function showErr(m){const e=document.getElementById('rem-err');e.textContent=m;e.classList.remove('hidden');}
+
 function showToast(m){const t=document.createElement('div');t.className='success-toast';t.innerHTML=`<i class="ti ti-check"></i> ${m}`;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
+
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
 </script>
 </body>
