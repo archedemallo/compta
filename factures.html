@@ -193,17 +193,22 @@ async function loadData(){
   Sidebar.setLastUpdate();
   renderKPIs();renderTable();
 }
-function onPeriodeChange(p){document.getElementById('topbar-per').textContent=p;renderTable();}
+function onPeriodeChange(p){document.getElementById('topbar-per').textContent=p;renderKPIs();renderTable();}
 
 function renderKPIs(){
   const cf=Sheets.cols.facture;
-  const total=allRows.reduce((s,r)=>s+(parseFloat(r[cf.montant_ttc])||0),0);
+  const perf=document.getElementById('fl-per')?.value||'';
+  const filtered=perf?allRows.filter(r=>r[cf.periode]===perf):allRows;
+  const total=filtered.reduce((s,r)=>s+(parseFloat(r[cf.montant_ttc])||0),0);
+  const payees=filtered.filter(r=>r[cf.statut]==='payee').length;
+  const enAttente=filtered.filter(r=>r[cf.statut]!=='payee').length;
   document.getElementById('kpi-row').innerHTML=`
-    <div class="kpi"><div class="kpi-label">Total factures</div><div class="kpi-value">${allRows.length}</div></div>
-    <div class="kpi"><div class="kpi-label">Total TTC</div><div class="kpi-value">${fmt(total)}</div></div>`;
+    <div class="kpi"><div class="kpi-label">Factures sur la période</div><div class="kpi-value">${filtered.length}</div><div style="font-size:10px;color:var(--text-3);margin-top:2px;">${payees} payée(s) — ${enAttente} en attente</div></div>
+    <div class="kpi"><div class="kpi-label">Total TTC période</div><div class="kpi-value">${fmt(total)}</div></div>`;
 }
 
 function renderTable(){
+  renderKPIs();
   const cf=Sheets.cols.facture;
   const perf=document.getElementById('fl-per')?.value||'';
   const search=(document.getElementById('fl-search')?.value||'').toLowerCase();
@@ -218,22 +223,23 @@ function renderTable(){
     const ri=allRows.indexOf(r);
     const pdf=r[cf.lien_pdf]?`<button class="pdf-btn" onclick="Sheets.openFacture('${escH(r[cf.lien_pdf])}')" title="Voir"><i class="ti ti-file-type-pdf"></i></button>`:'';
     return `<tr>
-      <td>${r[cf.date_facture]||'—'}</td>
+      <td>${formatDate(r[cf.date_facture])}</td>
       <td style="font-weight:500;">${r[cf.fournisseur]||'—'}</td>
       <td style="color:var(--text-3);">${r[cf.num_facture]||'—'}</td>
       <td><span class="chip chip-${chipCat(r[cf.categorie])}">${r[cf.categorie]||'—'}</span></td>
       <td style="color:var(--text-3);">${r[cf.description]||'—'}</td>
       <td class="r" style="font-weight:500;">${fmt(r[cf.montant_ttc])}</td>
-      <td style="color:var(--text-3);">${r[cf.date_reglement]||'—'}</td>
+      <td style="color:var(--text-3);">${r[cf.date_reglement]?formatDate(r[cf.date_reglement]):'—'}</td>
       <td style="color:var(--text-3);">${r[cf.commentaire]||'—'}</td>
       <td class="r">${pdf}</td>
+      <td style="text-align:center;"><input type="checkbox" disabled ${r[cf.statut]==='payee'?'checked':''} style="width:14px;height:14px;accent-color:var(--green);"></td>
       <td class="r" style="white-space:nowrap;">
         <button class="edit-btn" onclick="openEdit(${ri})"><i class="ti ti-pencil"></i></button>
         <button class="del-btn"  onclick="openDel(${ri})"><i class="ti ti-trash"></i></button>
       </td>
     </tr>`;
   }).join('');
-  document.getElementById('table-wrap').innerHTML=`<table><thead><tr><th>Date</th><th>Fournisseur</th><th>N°</th><th>Catégorie</th><th>Description</th><th class="r">Montant TTC</th><th>Règlement</th><th>Commentaire</th><th class="r">PDF</th><th class="r">Actions</th></tr></thead><tbody>${trs}</tbody></table>`;
+  document.getElementById('table-wrap').innerHTML=`<table><thead><tr><th>Date</th><th>Fournisseur</th><th>N°</th><th>Catégorie</th><th>Description</th><th class="r">Montant TTC</th><th>Règlement</th><th>Commentaire</th><th class="r">PDF</th><th style="text-align:center;">Payée</th><th class="r">Actions</th></tr></thead><tbody>${trs}</tbody></table>`;
 }
 
 function reset(){
@@ -307,6 +313,17 @@ function fmt(v){if(!v&&v!==0)return'—';return parseFloat(v).toLocaleString('fr
 function showErr(m){const e=document.getElementById('form-err');e.textContent=m;e.classList.remove('hidden');}
 function showToast(m){const t=document.createElement('div');t.className='success-toast';t.innerHTML=`<i class="ti ti-check"></i> ${m}`;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
 function escH(s){return String(s||'').replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
+
+function formatDate(d){
+  if(!d)return'—';
+  const s=String(d).trim();
+  // Déjà au format DD/MM/YYYY
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(s))return s;
+  // Format ISO YYYY-MM-DD → DD/MM/YYYY
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)){const p=s.split('-');return`${p[2]}/${p[1]}/${p[0]}`;}
+  return s;
+}
+
 </script>
 </body>
 </html>
