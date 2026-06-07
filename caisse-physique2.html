@@ -346,7 +346,7 @@ function renderKPIs() {
 function renderTable() {
   const cp = Sheets.cols.caissePhysique;
   const per = document.getElementById('fl-per')?.value || Sidebar.getActivePeriode();
-  const rows = [...allRows.filter(r => r[cp.periode] !== undefined ? r[cp.periode] === per : true)].reverse();
+  const rows = [...allRows].reverse();
 
   if (!rows.length) {
     document.getElementById('table-wrap').innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-3);font-size:12px;">Aucun comptage pour cette période</div>';
