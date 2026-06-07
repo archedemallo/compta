@@ -18,8 +18,6 @@
   .list-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px;}
   .list-head{padding:12px 16px;border-bottom:0.5px solid var(--border);}
   .list-title{font-size:13px;font-weight:600;margin-bottom:8px;}
-
-  /* Barre de filtres sur 1 ligne compacte — style remise chèques */
   .filters-bar{display:flex;gap:6px;flex-wrap:nowrap;align-items:center;overflow-x:auto;}
   .filters-bar::-webkit-scrollbar{height:3px;}
   .filters-bar::-webkit-scrollbar-thumb{background:rgba(61,43,31,0.2);border-radius:3px;}
@@ -27,14 +25,11 @@
   .f-input{font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;}
   .f-input-search{width:130px;}
   .f-input-date{width:118px;}
-
   .kpi-bar{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
   .kpi{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;}
   .kpi-label{font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
   .kpi-value{font-size:18px;font-weight:600;}
   .kpi-sub{font-size:10px;color:var(--text-3);margin-top:2px;}
-
-  /* Tableau — nouvelles colonnes */
   table{width:100%;border-collapse:collapse;font-size:11px;}
   thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:7px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);cursor:pointer;white-space:nowrap;user-select:none;}
   thead th:hover{background:var(--warm);}
@@ -50,12 +45,8 @@
   .flag-btn,.edit-btn,.del-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;}
   .edit-btn{color:var(--blue);} .del-btn{color:var(--red);}
   .flag-btn{color:var(--text-3);} .flag-btn.on{color:var(--orange);}
-
-  /* Cellules tronquées */
   .td-trunc{max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .td-trunc-sm{max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:var(--text-3);}
-
-  /* Formulaire — sens toggle */
   .sens-toggle{display:flex;gap:4px;}
   .sens-btn{flex:1;padding:7px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:transparent;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all 0.15s;}
   .sens-btn.credit{border-color:var(--green);color:var(--green);}
@@ -63,8 +54,9 @@
   .sens-btn.debit{border-color:var(--red);color:var(--red);}
   .sens-btn.debit.active{background:var(--red);color:white;}
   .form-actions{display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:0.5px solid var(--border);}
-
-  /* Modales */
+  /* Encadré bordereau remise banque */
+  .bordereau-box{background:var(--blue-bg);border:0.5px solid rgba(24,95,165,0.2);border-radius:var(--radius-sm);padding:8px 10px;margin-top:4px;}
+  .bordereau-box .form-label{color:var(--blue);}
   .modal-overlay{position:fixed;inset:0;background:rgba(61,43,31,0.35);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
   .modal{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-md);width:440px;max-width:95vw;}
   .modal-header{padding:14px 18px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
@@ -73,13 +65,12 @@
   .modal-body{padding:18px;}
   .modal-footer{padding:12px 18px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
   .confirm-detail{margin-top:10px;padding:10px;background:var(--red-bg);border-radius:var(--radius-sm);font-size:12px;color:var(--red);}
-
-  /* Toast / spinner */
   .success-toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:white;padding:10px 18px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;z-index:999;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-md);animation:slideIn 0.25s ease;}
   @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
   .spinner{display:inline-block;animation:spin 1s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
   .edit-banner{background:rgba(201,107,42,0.08);border:0.5px solid var(--orange);border-radius:var(--radius-sm);padding:8px 12px;font-size:11px;color:var(--orange);display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .chip-brd{font-size:9px;padding:1px 5px;border-radius:6px;background:var(--blue-bg);color:var(--blue);font-weight:500;}
 </style>
 </head>
 <body>
@@ -94,13 +85,11 @@
     <div class="kpi-bar" id="kpi-bar"></div>
 
     <div class="split-layout">
-
       <!-- GAUCHE : tableau -->
       <div>
         <div class="list-card">
           <div class="list-head">
             <div class="list-title">Opérations — Caisse 2</div>
-            <!-- Filtres sur 1 ligne, style remise chèques -->
             <div class="filters-bar">
               <select class="f-select" id="fl-per" onchange="onFilterPeriodeChange()"></select>
               <input class="f-input f-input-search" type="text" id="fl-search" placeholder="Rechercher…" oninput="renderTable()">
@@ -158,19 +147,19 @@
           <!-- Libellé -->
           <div class="form-group"><label class="form-label req">Libellé</label><input type="text" id="f-libelle" placeholder="Nom, description courte"></div>
 
-          <!-- 1. Type mouvement -->
+          <!-- Type mouvement -->
           <div class="form-group">
             <label class="form-label req">Type mouvement</label>
             <select id="f-type"></select>
           </div>
 
-          <!-- 2. Description (liste config) -->
+          <!-- Description (liste config) -->
           <div class="form-group">
             <label class="form-label">Description</label>
             <select id="f-desc"></select>
           </div>
 
-          <!-- 3. Libellé complémentaire (saisie libre) -->
+          <!-- Libellé complémentaire -->
           <div class="form-group">
             <label class="form-label">Libellé complémentaire</label>
             <input type="text" id="f-type-comp" placeholder="Précisions libres…">
@@ -182,8 +171,14 @@
             <div class="form-group"><label class="form-label">N° reçu fiscal</label><input type="text" id="f-recu"></div>
           </div>
 
-          <!-- N° bordereau -->
-          <div class="form-group"><label class="form-label">N° bordereau</label><input type="text" id="f-bordereau" placeholder="Ex: BRD-2026-001"></div>
+          <!-- N° bordereau remise banque -->
+          <div class="bordereau-box">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label"><i class="ti ti-building-bank" style="font-size:11px;"></i> N° bordereau remise banque</label>
+              <input type="text" id="f-bordereau" placeholder="Ex: RB-2026-001" style="width:100%;box-sizing:border-box;">
+              <div style="font-size:9px;color:var(--blue);margin-top:3px;opacity:0.8;">À renseigner lors d'un dépôt d'espèces en banque</div>
+            </div>
+          </div>
 
           <div id="form-err" class="hidden" style="color:var(--red);font-size:11px;padding:6px 0;margin-top:4px;"></div>
           <div class="form-actions">
@@ -192,7 +187,6 @@
           </div>
         </div>
       </div>
-
     </div>
   </div>
 </div>
@@ -232,15 +226,10 @@ Auth.requireAuth(async()=>{
   Sidebar.build('caisse2');
   const pers=Sheets.getPeriodes(), ap=Sidebar.getActivePeriode();
   document.getElementById('topbar-per').textContent=ap;
-
-  // Remplir le select période du formulaire
   const sp=document.getElementById('f-per');
   pers.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;if(p===ap)o.selected=true;sp.appendChild(o);});
-
-  // Remplir le select période du filtre (style remise chèques)
   const flp=document.getElementById('fl-per');
   pers.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;if(p===ap)o.selected=true;flp.appendChild(o);});
-
   document.getElementById('f-date').value=Sheets.todayISO();
   populateSelects();
   await loadData();
@@ -248,22 +237,13 @@ Auth.requireAuth(async()=>{
 
 function populateSelects(){
   const types=Sheets.getTypesMouvement();
-  // Descriptions depuis config (via window.getDescriptions si dispo, sinon Sheets.getDescriptions)
-  const descs=(typeof window.getDescriptions==='function')
-    ? window.getDescriptions()
-    : (typeof Sheets.getDescriptions==='function' ? Sheets.getDescriptions() : []);
-
-  // Type mouvement (formulaire)
+  const descs=(typeof Sheets.getDescriptions==='function'?Sheets.getDescriptions():[]);
   const ft=document.getElementById('f-type');
   ft.innerHTML='<option value="">— Choisir —</option>';
   types.forEach(t=>{ft.innerHTML+=`<option>${escH(t)}</option>`;});
-
-  // Description (formulaire) — liste config
   const fd=document.getElementById('f-desc');
   fd.innerHTML='<option value="">—</option>';
   descs.forEach(d=>{fd.innerHTML+=`<option>${escH(d)}</option>`;});
-
-  // Filtre type mouvement
   const flt=document.getElementById('fl-type');
   flt.innerHTML='<option value="">Tous types</option>';
   types.forEach(t=>{flt.innerHTML+=`<option>${escH(t)}</option>`;});
@@ -276,18 +256,13 @@ async function loadData(){
   renderKPIs();renderTable();
 }
 
-// Appelé quand la sidebar change la période active
 function onPeriodeChange(p){
   document.getElementById('f-per').value=p;
   document.getElementById('fl-per').value=p;
   document.getElementById('topbar-per').textContent=p;
   renderKPIs();renderTable();
 }
-
-// Appelé quand le filtre de période change dans la barre de filtres
-function onFilterPeriodeChange(){
-  renderKPIs();renderTable();
-}
+function onFilterPeriodeChange(){renderKPIs();renderTable();}
 
 function renderKPIs(){
   const cc=Sheets.cols.caisse;
@@ -317,7 +292,7 @@ function renderTable(){
   if(dateFrom) rows=rows.filter(r=>dateToISO(r[cc.date])>=dateFrom);
   if(dateTo)   rows=rows.filter(r=>dateToISO(r[cc.date])<=dateTo);
   if(flagF==='flagged') rows=rows.filter(r=>r[cc.flag_check]==='TRUE');
-  if(search) rows=rows.filter(r=>[r[cc.libelle],r[cc.type_mvt],r[cc.type_comp],r[cc.description]].join(' ').toLowerCase().includes(search));
+  if(search) rows=rows.filter(r=>[r[cc.libelle],r[cc.type_mvt],r[cc.type_comp],r[cc.description],r[cc.num_bordereau]].join(' ').toLowerCase().includes(search));
 
   if(sortCol>=0){
     rows=[...rows].sort((a,b)=>{
@@ -338,16 +313,11 @@ function renderTable(){
   const sortIcon=(col)=>`<span class="sort-icon">${sortCol===col?(sortAsc?'↑':'↓'):'↕'}</span>`;
   const mkTh=(label,col,cls='')=>`<th class="${sortCol===col?'sorted':''} ${cls}" onclick="setSort(${col})">${label}${sortIcon(col)}</th>`;
 
-  /*
-   * Ordre colonnes demandé :
-   * Date / Libellé / Débit / Crédit / Type mouvement / Description / Libellé complémentaire / Nom du chat / N° reçu fiscal / Actions
-   * + colonne commentaire flag (discrète en fin)
-   */
   const trs=rows.map(r=>{
     const ri=allRows.indexOf(r);
     const flagged=r[cc.flag_check]==='TRUE';
     const comment=r[cc.flag_comment]||'';
-    // description = cc.description (ancienne colonne), type_comp = cc.type_comp (libellé complémentaire)
+    const bordereau=r[cc.num_bordereau]||'';
     return `<tr class="${editIdx===ri?'editing':''}">
       <td style="color:var(--text-3);white-space:nowrap;">${r[cc.date]||''}</td>
       <td class="td-trunc" title="${escH(r[cc.libelle]||'')}">${r[cc.libelle]||''}</td>
@@ -358,7 +328,7 @@ function renderTable(){
       <td class="td-trunc-sm" title="${escH(r[cc.type_comp]||'')}">${r[cc.type_comp]||''}</td>
       <td style="font-size:10px;color:var(--text-3);">${r[cc.nom_chat]||''}</td>
       <td style="font-size:10px;color:var(--text-3);">${r[cc.num_recu]||''}</td>
-      <td style="font-size:10px;color:var(--text-3);">${r[cc.num_bordereau]||''}</td>
+      <td style="font-size:10px;">${bordereau?`<span class="chip-brd">${escH(bordereau)}</span>`:''}</td>
       <td class="r" style="white-space:nowrap;">
         <button class="edit-btn" onclick="openEdit(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>
         <button class="del-btn"  onclick="openDel(${ri})"  title="Supprimer"><i class="ti ti-trash"></i></button>
@@ -380,7 +350,7 @@ function renderTable(){
         ${mkTh('Libellé comp.',cc.type_comp)}
         ${mkTh('Nom du chat',cc.nom_chat)}
         ${mkTh('N° reçu',cc.num_recu)}
-        ${mkTh('N° bordereau',cc.num_bordereau)}
+        ${mkTh('Bord. remise banque',cc.num_bordereau)}
         <th class="r">Actions</th>
         <th>Commentaire</th>
       </tr></thead>
@@ -437,8 +407,8 @@ async function submitForm(){
     debit:activeSens==='debit'?montant:'', credit:activeSens==='credit'?montant:'',
     periode:document.getElementById('f-per').value,
     type_mvt,
-    description:document.getElementById('f-desc').value,        // liste config
-    type_comp:document.getElementById('f-type-comp').value.trim(), // saisie libre
+    description:document.getElementById('f-desc').value,
+    type_comp:document.getElementById('f-type-comp').value.trim(),
     nom:libelle, reglement:'Espèces',
     nom_chat:document.getElementById('f-chat').value.trim(),
     num_recu:document.getElementById('f-recu').value.trim(),
@@ -469,8 +439,8 @@ function openEdit(ri){
   document.getElementById('f-montant').value=r[cc.credit]||r[cc.debit]||'';
   document.getElementById('f-libelle').value=r[cc.libelle]||'';
   document.getElementById('f-type').value=r[cc.type_mvt]||'';
-  document.getElementById('f-desc').value=r[cc.description]||'';       // Description
-  document.getElementById('f-type-comp').value=r[cc.type_comp]||'';    // Libellé complémentaire
+  document.getElementById('f-desc').value=r[cc.description]||'';
+  document.getElementById('f-type-comp').value=r[cc.type_comp]||'';
   document.getElementById('f-chat').value=r[cc.nom_chat]||'';
   document.getElementById('f-recu').value=r[cc.num_recu]||'';
   document.getElementById('f-bordereau').value=r[cc.num_bordereau]||'';
@@ -513,7 +483,6 @@ async function saveFlag(){
   catch(e){alert('Erreur : '+e.message);}
 }
 
-// Helpers
 function chipType(t){if(!t)return'depense';const l=t.toLowerCase();if(l.includes('adopt'))return'adoption';if(l.includes('don'))return'don';if(l.includes('adh'))return'adhesion';return'depense';}
 function fmt(v){if(!v&&v!==0)return'';return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
 function dateToISO(d){if(!d)return'';const p=String(d).split('/');if(p.length===3&&p[0].length===2)return`${p[2]}-${p[1]}-${p[0]}`;return d;}
