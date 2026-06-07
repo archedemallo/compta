@@ -187,7 +187,7 @@ const ONGLET_LABELS = {
 
 Auth.requireAuth(async () => {
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
-  Sidebar.build('import-suivi');
+  Sidebar.build('import-suivi-archive');
   const pers = Sheets.getPeriodes(), ap = Sidebar.getActivePeriode();
 
   const sp = document.getElementById('f-per');
