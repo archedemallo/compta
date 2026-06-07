@@ -7,43 +7,74 @@
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
+  /* Layout principal */
   .split-layout{display:grid;grid-template-columns:1fr 380px;gap:14px;align-items:start;}
-  .form-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:18px 20px;position:sticky;top:60px;}
-  .form-card-title{font-size:13px;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px;}
+
+  /* Formulaire sticky — hauteur max avec scroll interne */
+  .form-card{
+    background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);
+    padding:18px 20px;
+    position:sticky;top:60px;
+    max-height:calc(100vh - 80px);
+    overflow-y:auto;
+  }
+  .form-card.editing{border-color:var(--orange);}
+  .form-card-title{font-size:13px;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;}
   .form-card-title i{color:var(--orange);}
   .form-group{margin-bottom:10px;}
   .form-label{display:block;font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
   .form-label.req::after{content:' *';color:var(--red);}
   .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+  /* Bannière mode édition */
+  .edit-banner{background:rgba(201,107,42,0.08);border:0.5px solid var(--orange);border-radius:var(--radius-sm);padding:7px 10px;font-size:11px;color:var(--orange);display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+
+  /* Liste */
   .list-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;}
-  .list-head{padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
-  .list-title{font-size:13px;font-weight:600;}
-  .kpi-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
-  .kpi{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;}
-  .kpi-label{font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
-  .kpi-value{font-size:18px;font-weight:600;}
+  .list-head{padding:10px 14px;border-bottom:0.5px solid var(--border);}
+  .list-title{font-size:13px;font-weight:600;margin-bottom:8px;}
+
+  /* Filtres compacts */
+  .filters-bar{display:flex;gap:4px;flex-wrap:wrap;align-items:center;}
+  .f-select{font-size:10px;padding:3px 6px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text-2);font-family:'DM Sans',sans-serif;}
+  .f-input{font-size:10px;padding:3px 8px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;width:130px;}
+  .btn-xs{font-size:10px;padding:2px 7px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text-2);cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+  .btn-xs:hover{background:var(--cream);}
+
+  /* KPIs */
+  .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+  .kpi{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:8px 12px;}
+  .kpi-label{font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;}
+  .kpi-value{font-size:16px;font-weight:600;}
+
+  /* Tableau */
   table{width:100%;border-collapse:collapse;font-size:11px;}
-  thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:7px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);}
-  tbody td{padding:7px 10px;border-bottom:0.5px solid var(--border);vertical-align:middle;}
+  thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 8px;border-bottom:0.5px solid var(--border);background:var(--surface-2);white-space:nowrap;}
+  tbody td{padding:6px 8px;border-bottom:0.5px solid var(--border);vertical-align:middle;}
   tbody tr:last-child td{border-bottom:none;}
   tbody tr:hover{background:var(--cream);}
+  tbody tr.editing-row{background:rgba(201,107,42,0.06);outline:1px solid var(--orange);}
   .r{text-align:right;font-variant-numeric:tabular-nums;}
-  .pdf-btn{color:var(--blue);background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;}
-  .edit-btn{color:var(--blue);background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;}
-  .del-btn{color:var(--red);background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;}
+  .pdf-btn{color:var(--blue);background:none;border:none;cursor:pointer;font-size:12px;padding:0 2px;}
+  .edit-btn{color:var(--blue);background:none;border:none;cursor:pointer;font-size:12px;padding:0 2px;}
+  .del-btn{color:var(--red);background:none;border:none;cursor:pointer;font-size:12px;padding:0 2px;}
+
+  /* Drive picker */
   .drive-picker{display:flex;gap:6px;align-items:center;}
   .drive-picker input{flex:1;}
-  .btn-drive{display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface-2);color:var(--text-2);font-size:11px;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;}
+  .btn-drive{display:inline-flex;align-items:center;gap:4px;padding:5px 8px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface-2);color:var(--text-2);font-size:10px;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;}
+
+  /* Modal */
   .modal-overlay{position:fixed;inset:0;background:rgba(61,43,31,0.35);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
   .modal{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-md);width:420px;max-width:95vw;}
-  .modal-header{padding:14px 18px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+  .modal-header{padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
   .modal-title{font-size:13px;font-weight:600;}
   .modal-close{background:none;border:none;font-size:18px;color:var(--text-3);cursor:pointer;}
-  .modal-body{padding:18px;}
-  .modal-footer{padding:12px 18px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
-  .f-select{font-size:11px;padding:4px 8px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text-2);font-family:'DM Sans',sans-serif;}
-  .f-input{font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;width:140px;}
-  .success-toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:white;padding:10px 18px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;z-index:999;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-md);animation:slideIn 0.25s ease;}
+  .modal-body{padding:16px;}
+  .modal-footer{padding:10px 16px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+  .confirm-detail{margin-top:8px;padding:8px;background:var(--red-bg);border-radius:var(--radius-sm);font-size:11px;color:var(--red);}
+
+  .success-toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:white;padding:9px 16px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;z-index:999;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-md);animation:slideIn 0.25s ease;}
   @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
   .spinner{display:inline-block;animation:spin 1s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
@@ -59,35 +90,50 @@
   <div class="page-content">
     <div class="split-layout">
 
-      <!-- LISTE -->
+      <!-- GAUCHE : KPIs + liste -->
       <div>
         <div class="kpi-row" id="kpi-row"></div>
         <div class="list-card">
           <div class="list-head">
             <div class="list-title">Liste des factures</div>
-            <div style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center;">
-              <select class="f-select" id="fl-per" onchange="renderTable()" style="width:120px;">
-              </select>
-              <input class="f-input" type="text" id="fl-search" placeholder="Rechercher…" oninput="renderTable()">
+            <div class="filters-bar">
+              <select class="f-select" id="fl-per" onchange="renderTable()"></select>
+              <input class="f-input" type="text" id="fl-search" placeholder="🔍 Rechercher…" oninput="renderTable()">
               <select class="f-select" id="fl-cat" onchange="renderTable()">
                 <option value="">Toutes catégories</option>
               </select>
+              <select class="f-select" id="fl-desc" onchange="renderTable()">
+                <option value="">Toutes descriptions</option>
+              </select>
+              <select class="f-select" id="fl-statut" onchange="renderTable()">
+                <option value="">Tous statuts</option>
+                <option value="payee">Payées</option>
+                <option value="attente">En attente</option>
+              </select>
+              <button class="btn-xs" onclick="clearFilters()"><i class="ti ti-x"></i> Effacer</button>
+              <span id="result-count" style="font-size:9px;color:var(--text-3);white-space:nowrap;"></span>
             </div>
           </div>
           <div id="table-wrap"><div style="padding:32px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement…</div></div>
         </div>
       </div>
 
-      <!-- FORMULAIRE -->
+      <!-- DROITE : formulaire sticky -->
       <div>
-        <div class="form-card">
-          <div class="form-card-title"><i class="ti ti-plus"></i> <span id="form-mode-lbl">Nouvelle facture</span></div>
+        <div class="form-card" id="form-card">
+          <div class="form-card-title">
+            <span><i class="ti ti-plus"></i> <span id="form-mode-lbl">Nouvelle facture</span></span>
+            <button class="btn btn-secondary btn-sm" id="btn-cancel" onclick="reset()" style="display:none;"><i class="ti ti-x"></i> Annuler</button>
+          </div>
+
+          <div id="edit-banner" class="edit-banner" style="display:none;">
+            <span><i class="ti ti-pencil"></i> Modification en cours</span>
+          </div>
 
           <div class="form-group">
             <label class="form-label req">Fournisseur</label>
             <input type="text" id="f-fourn" placeholder="Nom du fournisseur">
           </div>
-
           <div class="form-row-2">
             <div class="form-group">
               <label class="form-label">N° facture</label>
@@ -98,12 +144,10 @@
               <input type="number" id="f-montant" step="0.01" min="0" placeholder="0,00">
             </div>
           </div>
-
           <div class="form-group">
             <label class="form-label req">Date facture</label>
             <input type="date" id="f-date">
           </div>
-
           <div class="form-group">
             <label class="form-label req">Catégorie</label>
             <select id="f-cat"></select>
@@ -122,7 +166,6 @@
               <select id="f-mode-reg"></select>
             </div>
           </div>
-
           <div class="form-group">
             <label class="form-label">Facture PDF (Drive)</label>
             <div class="drive-picker">
@@ -130,12 +173,10 @@
               <button class="btn-drive" onclick="openDrivePicker()"><i class="ti ti-brand-google-drive"></i> Choisir</button>
             </div>
           </div>
-
           <div class="form-group">
             <label class="form-label">Commentaire</label>
             <input type="text" id="f-comment" placeholder="Précisions…">
           </div>
-
           <div class="form-group">
             <label class="form-label">Période</label>
             <select id="f-per"></select>
@@ -143,7 +184,7 @@
 
           <div id="form-err" class="hidden" style="color:var(--red);font-size:11px;padding:6px 0;"></div>
           <div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);">
-            <button class="btn btn-primary" style="flex:1" id="btn-submit" onclick="submit()"><i class="ti ti-device-floppy"></i> Enregistrer</button>
+            <button class="btn btn-primary" style="flex:1;" id="btn-submit" onclick="submit()"><i class="ti ti-device-floppy"></i> Enregistrer</button>
             <button class="btn btn-secondary" onclick="reset()"><i class="ti ti-refresh"></i> Vider</button>
           </div>
         </div>
@@ -156,7 +197,7 @@
 <div class="modal-overlay hidden" id="modal-del">
   <div class="modal">
     <div class="modal-header"><span class="modal-title"><i class="ti ti-trash" style="color:var(--red)"></i> Supprimer la facture</span><button class="modal-close" onclick="closeDel()">×</button></div>
-    <div class="modal-body"><div class="confirm-text" id="del-detail" style="font-size:12px;line-height:1.6;"></div></div>
+    <div class="modal-body"><div style="font-size:12px;">Êtes-vous sûr de vouloir supprimer cette facture ?</div><div class="confirm-detail" id="del-detail"></div></div>
     <div class="modal-footer"><button class="btn btn-secondary btn-sm" onclick="closeDel()">Annuler</button><button class="btn btn-danger btn-sm" onclick="confirmDel()"><i class="ti ti-trash"></i> Supprimer</button></div>
   </div>
 </div>
@@ -164,166 +205,279 @@
 <script src="auth.js"></script>
 <script src="sheets.js"></script>
 <script src="sidebar.js"></script>
-  
 <script>
-let allRows=[],editIdx=null,delIdx=null;
+let allRows=[], editIdx=null, delIdx=null;
 
 Auth.requireAuth(async()=>{
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
   Sidebar.build('factures');
-  const pers=Sheets.getPeriodes(),ap=Sidebar.getActivePeriode();
-  ['f-per','fl-per'].forEach(id=>{const s=document.getElementById(id);if(!s)return;pers.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;if(p===ap)o.selected=true;s.appendChild(o);});});
+  const pers=Sheets.getPeriodes(), ap=Sidebar.getActivePeriode();
   document.getElementById('topbar-per').textContent=ap;
+
+  // Peupler selects période
+  ['f-per','fl-per'].forEach(id=>{
+    const s=document.getElementById(id);if(!s)return;
+    pers.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;if(p===ap)o.selected=true;s.appendChild(o);});
+  });
+
   document.getElementById('f-date').value=Sheets.todayISO();
+
+  // Catégories
   const cats=Sheets.getTypesMouvement();
-  const sc=document.getElementById('f-cat'), fl=document.getElementById('fl-cat');
-  cats.forEach(c=>{sc.innerHTML+=`<option>${c}</option>`;fl.innerHTML+=`<option value="${c}">${c}</option>`;});
+  const sc=document.getElementById('f-cat');
+  sc.innerHTML='<option value="">— Choisir —</option>';
+  cats.forEach(c=>{
+    sc.innerHTML+=`<option>${c}</option>`;
+    document.getElementById('fl-cat').innerHTML+=`<option value="${escH(c)}">${c}</option>`;
+  });
+
+  // Descriptions
   const descs=Sheets.getDescriptions();
   const sd=document.getElementById('f-desc');
   sd.innerHTML='<option value="">—</option>';
-  descs.forEach(d=>sd.innerHTML+=`<option>${d}</option>`);
+  descs.forEach(d=>{
+    sd.innerHTML+=`<option>${escH(d)}</option>`;
+    document.getElementById('fl-desc').innerHTML+=`<option value="${escH(d)}">${d}</option>`;
+  });
+
+  // Modes règlement
   const modes=Sheets.getModesReglement();
   const sm=document.getElementById('f-mode-reg');
-  modes.forEach(m=>sm.innerHTML+=`<option>${m}</option>`);
+  sm.innerHTML='<option value="">—</option>';
+  modes.forEach(m=>sm.innerHTML+=`<option>${escH(m)}</option>`);
+
   await loadData();
 });
 
 async function loadData(){
   allRows=await Sheets.getFactures();
   Sidebar.setLastUpdate();
+  renderKPIs();
+  renderTable();
+}
+
+function onPeriodeChange(p){
+  document.getElementById('topbar-per').textContent=p;
+  document.getElementById('fl-per').value=p;
   renderKPIs();renderTable();
 }
-function onPeriodeChange(p){document.getElementById('topbar-per').textContent=p;renderKPIs();renderTable();}
 
 function renderKPIs(){
   const cf=Sheets.cols.facture;
   const perf=document.getElementById('fl-per')?.value||'';
-  const filtered=perf?allRows.filter(r=>r[cf.periode]===perf):allRows;
-  const total=filtered.reduce((s,r)=>s+(parseFloat(r[cf.montant_ttc])||0),0);
-  const payees=filtered.filter(r=>r[cf.statut]==='payee').length;
-  const enAttente=filtered.filter(r=>r[cf.statut]!=='payee').length;
+  const rows=perf?allRows.filter(r=>r[cf.periode]===perf):allRows;
+  const total=rows.reduce((s,r)=>s+(parseFloat(r[cf.montant_ttc])||0),0);
+  const payees=rows.filter(r=>r[cf.statut]==='payee');
+  const attente=rows.filter(r=>r[cf.statut]!=='payee');
+  const totPayee=payees.reduce((s,r)=>s+(parseFloat(r[cf.montant_ttc])||0),0);
   document.getElementById('kpi-row').innerHTML=`
-    <div class="kpi"><div class="kpi-label">Factures sur la période</div><div class="kpi-value">${filtered.length}</div><div style="font-size:10px;color:var(--text-3);margin-top:2px;">${payees} payée(s) — ${enAttente} en attente</div></div>
-    <div class="kpi"><div class="kpi-label">Total TTC période</div><div class="kpi-value">${fmt(total)}</div></div>`;
+    <div class="kpi"><div class="kpi-label">Total période</div><div class="kpi-value">${rows.length} facture(s)</div></div>
+    <div class="kpi"><div class="kpi-label">Payées</div><div class="kpi-value" style="color:var(--green)">${fmt(totPayee)}</div><div style="font-size:9px;color:var(--text-3)">${payees.length} facture(s)</div></div>
+    <div class="kpi"><div class="kpi-label">En attente</div><div class="kpi-value" style="color:var(--amber)">${fmt(total-totPayee)}</div><div style="font-size:9px;color:var(--text-3)">${attente.length} facture(s)</div></div>`;
 }
 
 function renderTable(){
   renderKPIs();
   const cf=Sheets.cols.facture;
-  const perf=document.getElementById('fl-per')?.value||'';
-  const search=(document.getElementById('fl-search')?.value||'').toLowerCase();
-  const catf=document.getElementById('fl-cat')?.value||'';
+  const perf   = document.getElementById('fl-per')?.value||'';
+  const search = (document.getElementById('fl-search')?.value||'').toLowerCase();
+  const catf   = document.getElementById('fl-cat')?.value||'';
+  const descf  = document.getElementById('fl-desc')?.value||'';
+  const statf  = document.getElementById('fl-statut')?.value||'';
+
   let rows=allRows;
-  if(perf) rows=rows.filter(r=>r[cf.periode]===perf);
-  if(catf) rows=rows.filter(r=>r[cf.categorie]===catf);
-  if(search) rows=rows.filter(r=>[r[cf.fournisseur],r[cf.num_facture],r[cf.commentaire]].join(' ').toLowerCase().includes(search));
+  if(perf)   rows=rows.filter(r=>r[cf.periode]===perf);
+  if(catf)   rows=rows.filter(r=>r[cf.categorie]===catf);
+  if(descf)  rows=rows.filter(r=>r[cf.description]===descf);
+  if(statf==='payee')   rows=rows.filter(r=>r[cf.statut]==='payee');
+  if(statf==='attente') rows=rows.filter(r=>r[cf.statut]!=='payee');
+  if(search) rows=rows.filter(r=>[r[cf.fournisseur],r[cf.num_facture],r[cf.commentaire],r[cf.description]].join(' ').toLowerCase().includes(search));
   rows=[...rows].reverse();
-  if(!rows.length){document.getElementById('table-wrap').innerHTML='<div style="padding:32px;text-align:center;color:var(--text-3);font-size:12px;">Aucune facture</div>';return;}
-  const trs=rows.map((r)=>{
+
+  document.getElementById('result-count').textContent=`${rows.length} ligne(s)`;
+
+  if(!rows.length){
+    document.getElementById('table-wrap').innerHTML='<div style="padding:32px;text-align:center;color:var(--text-3);font-size:12px;">Aucune facture</div>';
+    return;
+  }
+
+  const trs=rows.map(r=>{
     const ri=allRows.indexOf(r);
-    const pdf=r[cf.lien_pdf]?`<button class="pdf-btn" onclick="Sheets.openFacture('${escH(r[cf.lien_pdf])}')" title="Voir"><i class="ti ti-file-type-pdf"></i></button>`:'';
-    return `<tr>
-      <td>${formatDate(r[cf.date_facture])}</td>
-      <td style="font-weight:500;">${r[cf.fournisseur]||'—'}</td>
-      <td style="color:var(--text-3);">${r[cf.num_facture]||'—'}</td>
+    const payee=r[cf.statut]==='payee';
+    const pdf=r[cf.lien_pdf]?`<button class="pdf-btn" onclick="Sheets.openFacture('${escH(r[cf.lien_pdf])}')" title="Voir PDF"><i class="ti ti-file-type-pdf"></i></button>`:'';
+    return `<tr class="${editIdx===ri?'editing-row':''}">
+      <td style="white-space:nowrap;color:var(--text-3);font-size:10px;">${formatDate(r[cf.date_facture])}</td>
+      <td style="font-weight:500;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escH(r[cf.fournisseur]||'')}">${r[cf.fournisseur]||'—'}</td>
+      <td style="color:var(--text-3);font-size:10px;">${r[cf.num_facture]||'—'}</td>
       <td><span class="chip chip-${chipCat(r[cf.categorie])}">${r[cf.categorie]||'—'}</span></td>
-      <td style="color:var(--text-3);">${r[cf.description]||'—'}</td>
+      <td style="color:var(--text-3);font-size:10px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r[cf.description]||'—'}</td>
       <td class="r" style="font-weight:500;">${fmt(r[cf.montant_ttc])}</td>
-      <td style="color:var(--text-3);">${r[cf.date_reglement]?formatDate(r[cf.date_reglement]):'—'}</td>
-      <td style="color:var(--text-3);">${r[cf.commentaire]||'—'}</td>
+      <td style="color:var(--text-3);font-size:10px;white-space:nowrap;">${formatDate(r[cf.date_reglement])}</td>
+      <td style="color:var(--text-3);font-size:10px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r[cf.commentaire]||'—'}</td>
       <td class="r">${pdf}</td>
-      <td style="text-align:center;"><input type="checkbox" disabled ${r[cf.statut]==='payee'?'checked':''} style="width:14px;height:14px;accent-color:var(--green);"></td>
+      <td style="text-align:center;">
+        ${payee
+          ? '<span style="color:var(--green);font-size:11px;"><i class="ti ti-check"></i></span>'
+          : '<span style="color:var(--text-3);font-size:11px;">—</span>'}
+      </td>
       <td class="r" style="white-space:nowrap;">
-        <button class="edit-btn" onclick="openEdit(${ri})"><i class="ti ti-pencil"></i></button>
-        <button class="del-btn"  onclick="openDel(${ri})"><i class="ti ti-trash"></i></button>
+        <button class="edit-btn" onclick="openEdit(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>
+        <button class="del-btn"  onclick="openDel(${ri})"  title="Supprimer"><i class="ti ti-trash"></i></button>
       </td>
     </tr>`;
   }).join('');
-  document.getElementById('table-wrap').innerHTML=`<table><thead><tr><th>Date</th><th>Fournisseur</th><th>N°</th><th>Catégorie</th><th>Description</th><th class="r">Montant TTC</th><th>Règlement</th><th>Commentaire</th><th class="r">PDF</th><th style="text-align:center;">Payée</th><th class="r">Actions</th></tr></thead><tbody>${trs}</tbody></table>`;
+
+  document.getElementById('table-wrap').innerHTML=`
+    <table>
+      <thead><tr>
+        <th>Date</th><th>Fournisseur</th><th>N°</th><th>Catégorie</th><th>Description</th>
+        <th class="r">Montant TTC</th><th>Règlement</th><th>Commentaire</th>
+        <th class="r">PDF</th><th style="text-align:center;">Payée</th><th class="r">Actions</th>
+      </tr></thead>
+      <tbody>${trs}</tbody>
+    </table>`;
+}
+
+function clearFilters(){
+  document.getElementById('fl-search').value='';
+  ['fl-cat','fl-desc','fl-statut'].forEach(id=>{const e=document.getElementById(id);if(e)e.selectedIndex=0;});
+  renderTable();
 }
 
 function reset(){
-  ['f-fourn','f-num','f-montant','f-date','f-date-reg','f-lien-pdf','f-comment'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=id==='f-date'?Sheets.todayISO():'';});
+  ['f-fourn','f-num','f-montant','f-date-reg','f-lien-pdf','f-comment'].forEach(id=>{
+    const e=document.getElementById(id);if(e)e.value='';
+  });
+  document.getElementById('f-date').value=Sheets.todayISO();
   document.getElementById('f-cat').selectedIndex=0;
   document.getElementById('f-desc').selectedIndex=0;
   document.getElementById('f-mode-reg').selectedIndex=0;
   document.getElementById('form-err').classList.add('hidden');
-  editIdx=null;
   document.getElementById('form-mode-lbl').textContent='Nouvelle facture';
   document.getElementById('btn-submit').innerHTML='<i class="ti ti-device-floppy"></i> Enregistrer';
+  document.getElementById('btn-cancel').style.display='none';
+  document.getElementById('edit-banner').style.display='none';
+  document.getElementById('form-card').classList.remove('editing');
+  editIdx=null;
+  renderTable();
 }
 
 async function submit(){
-  const err=document.getElementById('form-err');err.classList.add('hidden');
-  const fourn=document.getElementById('f-fourn').value.trim();
+  document.getElementById('form-err').classList.add('hidden');
+  const fourn  =document.getElementById('f-fourn').value.trim();
   const montant=parseFloat(document.getElementById('f-montant').value);
-  const date=document.getElementById('f-date').value;
-  if(!fourn){showErr('Le fournisseur est obligatoire.');return;}
+  const date   =document.getElementById('f-date').value;
+  if(!fourn)  {showErr('Le fournisseur est obligatoire.');return;}
   if(!montant||montant<=0){showErr('Le montant est obligatoire.');return;}
-  if(!date){showErr('La date est obligatoire.');return;}
+  if(!date)   {showErr('La date est obligatoire.');return;}
+
   const fac={
-    num_facture:document.getElementById('f-num').value.trim(),
-    fournisseur:fourn,
-    date_facture:date,
-    montant_ttc:montant,
-    categorie:document.getElementById('f-cat').value,
-    description:document.getElementById('f-desc').value,
-    date_reglement:document.getElementById('f-date-reg').value,
-    mode_reglement:document.getElementById('f-mode-reg').value,
-    lien_pdf:document.getElementById('f-lien-pdf').value.trim(),
-    commentaire:document.getElementById('f-comment').value.trim(),
-    periode:document.getElementById('f-per').value,
+    num_facture:    document.getElementById('f-num').value.trim(),
+    fournisseur:    fourn,
+    date_facture:   date,
+    montant_ttc:    montant,
+    categorie:      document.getElementById('f-cat').value,
+    description:    document.getElementById('f-desc').value,
+    date_reglement: document.getElementById('f-date-reg').value,
+    mode_reglement: document.getElementById('f-mode-reg').value,
+    lien_pdf:       document.getElementById('f-lien-pdf').value.trim(),
+    commentaire:    document.getElementById('f-comment').value.trim(),
+    periode:        document.getElementById('f-per').value,
   };
+
   const btn=document.getElementById('btn-submit');
   btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2 spinner"></i>';
   try{
-    if(editIdx!==null){const cf=Sheets.cols.facture;fac.id=allRows[editIdx][cf.id];await Sheets.updateFacture(editIdx,fac);showToast('Facture modifiée !');}
-    else{await Sheets.saveFacture(fac);showToast('Facture enregistrée !');}
+    if(editIdx!==null){
+      fac.id=allRows[editIdx][Sheets.cols.facture.id];
+      // Préserver le statut existant
+      fac.statut=allRows[editIdx][Sheets.cols.facture.statut]||'';
+      await Sheets.updateFacture(editIdx,fac);
+      showToast('Facture modifiée !');
+    } else {
+      await Sheets.saveFacture(fac);
+      showToast('Facture enregistrée !');
+    }
     reset();await loadData();
   }catch(e){showErr('Erreur : '+(e.message||'?'));}
   finally{btn.disabled=false;btn.innerHTML='<i class="ti ti-device-floppy"></i> Enregistrer';}
 }
 
 function openEdit(ri){
-  const cf=Sheets.cols.facture,r=allRows[ri];
+  const cf=Sheets.cols.facture, r=allRows[ri];
   editIdx=ri;
-  document.getElementById('f-fourn').value=r[cf.fournisseur]||'';
-  document.getElementById('f-num').value=r[cf.num_facture]||'';
-  document.getElementById('f-montant').value=r[cf.montant_ttc]||'';
-  document.getElementById('f-date').value=r[cf.date_facture]||'';
-  document.getElementById('f-cat').value=r[cf.categorie]||'';
-  document.getElementById('f-desc').value=r[cf.description]||'';
-  document.getElementById('f-date-reg').value=r[cf.date_reglement]||'';
-  document.getElementById('f-mode-reg').value=r[cf.mode_reglement]||'';
-  document.getElementById('f-lien-pdf').value=r[cf.lien_pdf]||'';
-  document.getElementById('f-comment').value=r[cf.commentaire]||'';
+
+  document.getElementById('f-fourn').value      = r[cf.fournisseur]    ||'';
+  document.getElementById('f-num').value         = r[cf.num_facture]    ||'';
+  document.getElementById('f-montant').value     = r[cf.montant_ttc]   ||'';
+  // Correction : convertir DD/MM/YYYY → YYYY-MM-DD pour l'input type=date
+  document.getElementById('f-date').value        = toISO(r[cf.date_facture]);
+  document.getElementById('f-cat').value         = r[cf.categorie]      ||'';
+  document.getElementById('f-desc').value        = r[cf.description]    ||'';
+  document.getElementById('f-date-reg').value    = toISO(r[cf.date_reglement]);
+  document.getElementById('f-mode-reg').value    = r[cf.mode_reglement] ||'';
+  document.getElementById('f-lien-pdf').value    = r[cf.lien_pdf]       ||'';
+  document.getElementById('f-comment').value     = r[cf.commentaire]    ||'';
+  // Période
+  const fp=document.getElementById('f-per');
+  if(r[cf.periode]) fp.value=r[cf.periode];
+
   document.getElementById('form-mode-lbl').textContent='Modifier la facture';
   document.getElementById('btn-submit').innerHTML='<i class="ti ti-device-floppy"></i> Enregistrer les modifications';
-  document.querySelector('.form-card').scrollIntoView({behavior:'smooth'});
+  document.getElementById('btn-cancel').style.display='';
+  document.getElementById('edit-banner').style.display='';
+  document.getElementById('form-card').classList.add('editing');
+  renderTable();
+  // Le panneau est sticky, pas besoin de scroll — il est toujours visible
 }
 
-function openDel(ri){delIdx=ri;const cf=Sheets.cols.facture,r=allRows[ri];document.getElementById('del-detail').innerHTML=`<strong>${r[cf.fournisseur]||'?'}</strong><br>${r[cf.date_facture]||''} — ${fmt(r[cf.montant_ttc])}`;document.getElementById('modal-del').classList.remove('hidden');}
+function openDel(ri){
+  delIdx=ri;
+  const cf=Sheets.cols.facture, r=allRows[ri];
+  document.getElementById('del-detail').innerHTML=`<strong>${r[cf.fournisseur]||'?'}</strong> — ${r[cf.num_facture]||''}<br>${formatDate(r[cf.date_facture])} — ${fmt(r[cf.montant_ttc])}`;
+  document.getElementById('modal-del').classList.remove('hidden');
+}
 function closeDel(){document.getElementById('modal-del').classList.add('hidden');delIdx=null;}
-async function confirmDel(){if(delIdx===null)return;try{await Sheets.deleteRow(Sheets.config.sheets.factures,delIdx);closeDel();showToast('Facture supprimée');await loadData();}catch(e){alert('Erreur : '+e.message);}}
+async function confirmDel(){
+  if(delIdx===null)return;
+  try{await Sheets.deleteRow(Sheets.config.sheets.factures,delIdx);closeDel();showToast('Facture supprimée');await loadData();}
+  catch(e){alert('Erreur : '+e.message);}
+}
 
-function openDrivePicker(){gapi.load('picker',()=>{const t=gapi.client.getToken();if(!t)return;new google.picker.PickerBuilder().addView(new google.picker.DocsView()).setOAuthToken(t.access_token).setCallback(d=>{if(d.action===google.picker.Action.PICKED)document.getElementById('f-lien-pdf').value=d.docs[0].id;}).build().setVisible(true);});}
+function openDrivePicker(){
+  gapi.load('picker',()=>{
+    const t=gapi.client.getToken();if(!t)return;
+    new google.picker.PickerBuilder()
+      .addView(new google.picker.DocsView())
+      .setOAuthToken(t.access_token)
+      .setCallback(d=>{if(d.action===google.picker.Action.PICKED)document.getElementById('f-lien-pdf').value=d.docs[0].id;})
+      .build().setVisible(true);
+  });
+}
 
+// ============================================================
+// HELPERS
+// ============================================================
+function toISO(d){
+  // Convertit DD/MM/YYYY → YYYY-MM-DD pour les inputs type=date
+  if(!d)return'';
+  const s=String(d).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s; // déjà ISO
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(s)){const p=s.split('/');return`${p[2]}-${p[1]}-${p[0]}`;}
+  return s;
+}
+function formatDate(d){
+  if(!d)return'—';
+  const s=String(d).trim();
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(s))return s;
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)){const p=s.split('-');return`${p[2]}/${p[1]}/${p[0]}`;}
+  return s;
+}
 function chipCat(t){if(!t)return'depense';const l=t.toLowerCase();if(l.includes('adopt'))return'adoption';if(l.includes('don'))return'don';if(l.includes('adh'))return'adhesion';return'depense';}
 function fmt(v){if(!v&&v!==0)return'—';return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
 function showErr(m){const e=document.getElementById('form-err');e.textContent=m;e.classList.remove('hidden');}
 function showToast(m){const t=document.createElement('div');t.className='success-toast';t.innerHTML=`<i class="ti ti-check"></i> ${m}`;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
-function escH(s){return String(s||'').replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
-
-function formatDate(d){
-  if(!d)return'—';
-  const s=String(d).trim();
-  // Déjà au format DD/MM/YYYY
-  if(/^\d{2}\/\d{2}\/\d{4}$/.test(s))return s;
-  // Format ISO YYYY-MM-DD → DD/MM/YYYY
-  if(/^\d{4}-\d{2}-\d{2}$/.test(s)){const p=s.split('-');return`${p[2]}/${p[1]}/${p[0]}`;}
-  return s;
-}
-
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
 </script>
 </body>
 </html>
