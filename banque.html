@@ -841,27 +841,51 @@ async function savePanel(){
     await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.flag_check,   flagged?'TRUE':'FALSE');
     await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.flag_comment, comment);
 
-    // Lier chèque → colonne Q (ref_cheque)
+    // Lier chèque → colonne Q (ref_cheque) + reporter les infos du chèque
     if(linkedCheque){
-      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.ref_cheque, linkedCheque.data[Sheets.cols.cheque.num_cheque]||'');
+      const cc = Sheets.cols.cheque;
+      const chq = linkedCheque.data;
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.ref_cheque,  chq[cc.num_cheque]  ||'');
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,    chq[cc.type_mvt]    ||'');
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, chq[cc.description] ||'');
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp,   chq[cc.type_comp]   ||'');
+      // nom_chat si présent dans l'onglet Cheques (colonne 12 si elle existe)
+      if(chq[12]) await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.nom_chat, chq[12]);
       await Sheets.encaisserCheque(linkedCheque.idx, r[cb.date]||Sheets.todayFR(), r[cb.libelle]||'Encaissement');
     }
 
-    // Lier remise → colonne O (ref_remise)
+    // Lier remise → colonne O (ref_remise) + reporter les infos
     if(linkedRemise){
-      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.ref_remise, linkedRemise.data[Sheets.cols.remise.num_bordereau]||'');
+      const cr = Sheets.cols.remise;
+      const rem = linkedRemise.data;
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.ref_remise,  rem[cr.num_bordereau]||'');
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,    'Don');
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, `Remise chèques ${rem[cr.num_bordereau]||''} — ${rem[cr.nb_cheques]||0} chèque(s)`);
       await Sheets.encaisserRemise(linkedRemise.idx, r[cb.date]||Sheets.todayFR(), r[cb.libelle]||'Encaissement');
     }
 
-    // Lier facture → colonne R (lien_facture) + marquer payée
+    // Lier facture → reporter les infos + marquer payée
     if(linkedFacture){
-      const cf=Sheets.cols.facture, fi=linkedFacture.idx;
-      await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.statut,        'payee');
-      await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.date_reglement, r[cb.date]||Sheets.todayFR());
-      if(linkedFacture.data[cf.lien_pdf])
-        await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.lien_facture, linkedFacture.data[cf.lien_pdf]);
-      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.num_facture,
-        linkedFacture.data[cf.num_facture]||linkedFacture.data[cf.fournisseur]||'');
+      const cf = Sheets.cols.facture, fi = linkedFacture.idx;
+      const fac = linkedFacture.data;
+      await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.statut,         'payee');
+      await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.date_reglement,  r[cb.date]||Sheets.todayFR());
+      await Sheets.updateCell(Sheets.config.sheets.banque,   sheetRow, cb.num_facture, fac[cf.num_facture]  ||'');
+      await Sheets.updateCell(Sheets.config.sheets.banque,   sheetRow, cb.type_comp,   fac[cf.fournisseur]  ||'');
+      await Sheets.updateCell(Sheets.config.sheets.banque,   sheetRow, cb.description, fac[cf.description]  ||'');
+      await Sheets.updateCell(Sheets.config.sheets.banque,   sheetRow, cb.type_mvt,    fac[cf.categorie]    ||'');
+      if(fac[cf.lien_pdf])
+        await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.lien_facture, fac[cf.lien_pdf]);
+    }
+
+    // Remise en caisse (espèces) → colonne P
+    const caisseSrc   = document.getElementById('rap-caisse-source').value;
+    const caisseMont  = parseMontant(document.getElementById('rap-caisse-montant').value||'');
+    const caisseDate  = document.getElementById('rap-caisse-date').value;
+    if(caisseSrc && caisseMont > 0){
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.num_rem_espece, `${caisseSrc} — ${fmt(caisseMont)} — ${caisseDate}`);
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,       'Virement interne');
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description,    `Dépôt caisse ${caisseSrc} du ${caisseDate}`);
     }
 
     // Ventilation → stocker en description si multiple
