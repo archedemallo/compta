@@ -479,7 +479,10 @@ function renderTable(){
 
   if (sortCol >= 0) {
     rows = [...rows].sort((a,b) => {
-      const va=String(a[sortCol]||''), vb=String(b[sortCol]||'');
+      let va=String(a[sortCol]||''), vb=String(b[sortCol]||'');
+      // Convertir les dates DD/MM/YYYY en ISO pour tri correct
+      if(/^\d{2}\/\d{2}\/\d{4}$/.test(va)) va=dateToISO(va);
+      if(/^\d{2}\/\d{2}\/\d{4}$/.test(vb)) vb=dateToISO(vb);
       const na=parseFloat(va), nb=parseFloat(vb);
       const cmp=!isNaN(na)&&!isNaN(nb)?na-nb:va.localeCompare(vb,'fr');
       return sortAsc?cmp:-cmp;
@@ -732,6 +735,12 @@ function openPanel(){
   document.getElementById('rap-comment').value = r[cb.flag_comment]||'';
   document.getElementById('rap-flag').checked  = r[cb.flag_check] === 'TRUE';
   document.getElementById('rap-caisse-date').value = Sheets.todayISO();
+  document.getElementById('rap-caisse-montant').value = '';
+  document.getElementById('rap-caisse-source').selectedIndex = 0;
+  // Vider les zones liées
+  document.getElementById('rap-cheque-linked').innerHTML  = '';
+  document.getElementById('rap-facture-linked').innerHTML = '';
+  document.getElementById('rap-remise-linked').innerHTML  = '';
   ventItems = [{ montant, type_mvt: r[cb.type_mvt]||'' }];
   renderVentRows(montant);
   populateRapSelects();
@@ -778,17 +787,23 @@ function checkVentTotal(montantTotal){
 
 function populateRapSelects(){
   const cc=Sheets.cols.cheque, cr=Sheets.cols.remise, cf=Sheets.cols.facture;
+
   const sc=document.getElementById('rap-cheque-select');
   sc.innerHTML='<option value="">— Choisir un chèque en attente —</option>';
   allCheques.forEach((r,i)=>sc.innerHTML+=`<option value="${i}">N°${r[cc.num_cheque]||'?'} — ${r[cc.beneficiaire]||'?'} — ${fmt(r[cc.montant])}</option>`);
+  sc.selectedIndex=0;
+
   const sr=document.getElementById('rap-remise-select');
   sr.innerHTML='<option value="">— Choisir une remise en attente —</option>';
   allRemises.forEach((r,i)=>sr.innerHTML+=`<option value="${i}">${r[cr.num_bordereau]||'?'} — ${fmt(r[cr.montant_total])}</option>`);
+  sr.selectedIndex=0;
+
   const sf=document.getElementById('rap-facture-select');
   sf.innerHTML='<option value="">— Choisir une facture non réglée —</option>';
   allFactures.filter(r=>r[cf.statut]!=='payee').forEach((r,i)=>{
     sf.innerHTML+=`<option value="${i}">${r[cf.fournisseur]||'?'} — ${fmt(r[cf.montant_ttc])} — ${r[cf.date_facture]||'?'}</option>`;
   });
+  sf.selectedIndex=0;
 }
 
 function lierCheque(){
@@ -849,7 +864,6 @@ async function savePanel(){
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,    chq[cc.type_mvt]    ||'');
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, chq[cc.description] ||'');
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp,   chq[cc.type_comp]   ||'');
-      // nom_chat si présent dans l'onglet Cheques (colonne 12 si elle existe)
       if(chq[12]) await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.nom_chat, chq[12]);
       await Sheets.encaisserCheque(linkedCheque.idx, r[cb.date]||Sheets.todayFR(), r[cb.libelle]||'Encaissement');
     }
@@ -865,15 +879,30 @@ async function savePanel(){
     }
 
     // Lier facture → reporter les infos + marquer payée
+    // Compatible avec un chèque lié simultanément : le type_mvt vient du chèque si présent,
+    // la facture est marquée payée et son N° est noté dans la ligne banque
     if(linkedFacture){
       const cf = Sheets.cols.facture, fi = linkedFacture.idx;
       const fac = linkedFacture.data;
-      await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.statut,         'payee');
-      await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.date_reglement,  r[cb.date]||Sheets.todayFR());
-      await Sheets.updateCell(Sheets.config.sheets.banque,   sheetRow, cb.num_facture, fac[cf.num_facture]  ||'');
-      await Sheets.updateCell(Sheets.config.sheets.banque,   sheetRow, cb.type_comp,   fac[cf.fournisseur]  ||'');
-      await Sheets.updateCell(Sheets.config.sheets.banque,   sheetRow, cb.description, fac[cf.description]  ||'');
-      await Sheets.updateCell(Sheets.config.sheets.banque,   sheetRow, cb.type_mvt,    fac[cf.categorie]    ||'');
+      await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.statut,          'payee');
+      await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.date_reglement,   r[cb.date]||Sheets.todayFR());
+      // Reporter N° chèque sur la facture si lié ensemble
+      if(linkedCheque){
+        const cc=Sheets.cols.cheque;
+        await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.mode_reglement, 'Chèque');
+        await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.commentaire,    `Chèque N°${linkedCheque.data[cc.num_cheque]||'?'}`);
+      }
+      // Écrire N° facture dans banque (ne pas écraser type_mvt si chèque déjà lié)
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.num_facture, fac[cf.num_facture]||'');
+      if(!linkedCheque){
+        // Seulement si pas de chèque lié — sinon le chèque a priorité sur type_mvt/description
+        await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp,   fac[cf.fournisseur]||'');
+        await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, fac[cf.description]||'');
+        await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,    fac[cf.categorie]  ||'');
+      } else {
+        // Si chèque + facture : mettre le fournisseur en libellé complémentaire
+        await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp, fac[cf.fournisseur]||'');
+      }
       if(fac[cf.lien_pdf])
         await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.lien_facture, fac[cf.lien_pdf]);
     }
