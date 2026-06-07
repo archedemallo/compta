@@ -324,7 +324,7 @@ async function loadData() {
 function renderKPIs() {
   const cp = Sheets.cols.caissePhysique;
   const per = document.getElementById('fl-per')?.value || Sidebar.getActivePeriode();
-  const rows = allRows.filter(r => r[cp.periode] !== undefined ? r[cp.periode] === per : true);
+  const rows = allRows;
   const last = rows.length > 0 ? rows[rows.length - 1] : null;
   const soldActuel = last ? parseFloat(last[cp.total]) || 0 : 0;
   const dateActuel = last ? (last[cp.mois] || '—') : '—';
