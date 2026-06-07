@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Import Suivi — Arche de Mallo</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  /* Onglets */
+  .tabs-bar{display:flex;gap:0;border-bottom:0.5px solid var(--border);margin-bottom:16px;overflow-x:auto;}
+  .tab-btn{padding:8px 16px;font-size:12px;font-weight:500;color:var(--text-3);border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all 0.15s;}
+  .tab-btn:hover{color:var(--text-2);}
+  .tab-btn.active{color:var(--orange);border-bottom-color:var(--orange);}
+  .tab-badge{display:inline-block;font-size:9px;padding:1px 5px;border-radius:10px;background:var(--orange);color:white;margin-left:5px;font-weight:600;}
+
+  /* Barre de filtres */
+  .filters-bar{display:flex;gap:6px;flex-wrap:nowrap;align-items:center;overflow-x:auto;margin-bottom:12px;}
+  .f-select{font-size:11px;padding:4px 8px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text-2);font-family:'DM Sans',sans-serif;}
+  .f-input{font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;width:140px;}
+
+  /* Tableau */
+  .list-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  table{width:100%;border-collapse:collapse;font-size:11px;}
+  thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:7px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);white-space:nowrap;}
+  tbody td{padding:7px 10px;border-bottom:0.5px solid var(--border);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--cream);}
+  tbody tr.selected{background:rgba(201,107,42,0.06);}
+  .r{text-align:right;font-variant-numeric:tabular-nums;}
+
+  /* Checkbox style */
+  .row-check{width:15px;height:15px;accent-color:var(--orange);cursor:pointer;}
+
+  /* Chips destination */
+  .chip-caisse{background:var(--amber-bg);color:var(--amber);}
+  .chip-banque{background:var(--blue-bg);color:var(--blue);}
+
+  /* Montant sélectionnable (Adoption / Adhésion) */
+  .montant-choice{display:flex;flex-direction:column;gap:4px;}
+  .montant-line{display:flex;align-items:center;gap:6px;font-size:10px;}
+  .montant-line input[type=checkbox]{width:13px;height:13px;accent-color:var(--orange);cursor:pointer;}
+  .montant-lbl{color:var(--text-3);}
+  .montant-val{font-weight:500;color:var(--text);}
+
+  /* Barre d'actions bas de page */
+  .action-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--surface);border-top:0.5px solid var(--border);border-radius:0 0 var(--radius) var(--radius);position:sticky;bottom:0;z-index:10;}
+  .action-bar-info{font-size:11px;color:var(--text-3);}
+  .action-bar-btns{display:flex;gap:8px;align-items:center;}
+
+  /* Info box */
+  .info-box{background:var(--blue-bg);border:0.5px solid rgba(24,95,165,0.15);border-radius:var(--radius-sm);padding:8px 12px;font-size:11px;color:var(--blue);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .warn-box{background:var(--amber-bg);border:0.5px solid rgba(133,79,11,0.15);border-radius:var(--radius-sm);padding:8px 12px;font-size:11px;color:var(--amber);display:flex;align-items:center;gap:8px;}
+
+  /* Modales */
+  .modal-overlay{position:fixed;inset:0;background:rgba(61,43,31,0.35);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
+  .modal{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-md);width:500px;max-width:95vw;max-height:90vh;overflow-y:auto;}
+  .modal-header{padding:14px 18px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--surface);z-index:1;}
+  .modal-title{font-size:13px;font-weight:600;}
+  .modal-close{background:none;border:none;font-size:18px;color:var(--text-3);cursor:pointer;}
+  .modal-body{padding:18px;}
+  .modal-footer{padding:12px 18px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;gap:8px;position:sticky;bottom:0;background:var(--surface);}
+  .form-group{margin-bottom:10px;}
+  .form-label{display:block;font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
+  .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+  /* Spinner */
+  .spinner{display:inline-block;animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .success-toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:white;padding:10px 18px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;z-index:999;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-md);animation:slideIn 0.25s ease;}
+  @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+  /* Ligne déjà importée */
+  tbody tr.already-imported{opacity:0.4;}
+  tbody tr.already-imported td{text-decoration:line-through;}
+
+  /* KPI */
+  .kpi-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+  .kpi{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;}
+  .kpi-label{font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
+  .kpi-value{font-size:18px;font-weight:600;}
+</style>
+</head>
+<body>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title"><i class="ti ti-download" style="color:var(--orange)"></i> Import depuis Suivi</div>
+    <div class="topbar-right">
+      <button class="btn btn-secondary btn-sm" onclick="reloadAll()"><i class="ti ti-refresh"></i> Actualiser</button>
+      <a href="import-suivi-archive.html" class="btn btn-secondary btn-sm"><i class="ti ti-history"></i> Déjà importés</a>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <div class="info-box"><i class="ti ti-info-circle"></i> Les données sont lues en temps réel depuis le Google Sheet <strong>Suivi</strong>. Sélectionnez les lignes à importer puis cliquez sur "Importer la sélection".</div>
+
+    <div class="kpi-bar" id="kpi-bar">
+      <div class="kpi"><div class="kpi-label">Chargement…</div><div class="kpi-value" style="color:var(--text-3)">—</div></div>
+    </div>
+
+    <!-- Onglets par catégorie -->
+    <div class="tabs-bar" id="tabs-bar"></div>
+
+    <!-- Filtres -->
+    <div class="filters-bar">
+      <input class="f-input" type="text" id="fl-search" placeholder="Rechercher…" oninput="renderCurrentTab()">
+      <select class="f-select" id="fl-dest" onchange="renderCurrentTab()">
+        <option value="">Caisse + Banque</option>
+        <option value="caisse">Caisse uniquement</option>
+        <option value="banque">Banque uniquement</option>
+      </select>
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-2);cursor:pointer;">
+        <input type="checkbox" id="fl-hide-imported" onchange="renderCurrentTab()" style="accent-color:var(--orange);"> Masquer déjà importés
+      </label>
+      <button class="btn btn-secondary btn-sm" onclick="clearFilters()"><i class="ti ti-x"></i> Effacer</button>
+    </div>
+
+    <!-- Tableau courant -->
+    <div class="list-card">
+      <div id="table-wrap">
+        <div style="padding:40px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement des données Suivi…</div>
+      </div>
+      <div class="action-bar">
+        <span class="action-bar-info" id="selection-info">Aucune ligne sélectionnée</span>
+        <div class="action-bar-btns">
+          <button class="btn btn-secondary btn-sm" onclick="selectAll()"><i class="ti ti-checkbox"></i> Tout sélectionner</button>
+          <button class="btn btn-secondary btn-sm" onclick="deselectAll()"><i class="ti ti-square"></i> Tout désélectionner</button>
+          <button class="btn btn-primary" id="btn-import" onclick="openImportModal()" disabled><i class="ti ti-download"></i> Importer la sélection</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMATION IMPORT -->
+<div class="modal-overlay hidden" id="modal-import">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title"><i class="ti ti-download" style="color:var(--orange)"></i> Confirmer l'import</span>
+      <button class="modal-close" onclick="closeImportModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-box" style="margin-bottom:12px;"><i class="ti ti-info-circle"></i> Vérifiez et ajustez les informations avant d'importer.</div>
+      <div id="import-preview"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeImportModal()">Annuler</button>
+      <button class="btn btn-primary" id="btn-confirm-import" onclick="confirmImport()"><i class="ti ti-check"></i> Confirmer l'import</button>
+    </div>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script src="sheets.js"></script>
+<script src="sidebar.js"></script>
+<script>
+// ============================================================
+// CONFIG SUIVI
+// ============================================================
+const SUIVI_ID = '1y6yD4AohP7T10GE7mmguIqNWSnwla9t1mewBpCDej_Y';
+
+// Définition des onglets et leur mapping de colonnes (index 0-based)
+const ONGLETS = {
+  Adoption: {
+    label: 'Adoptions',
+    icon: 'ti-heart',
+    cols: {
+      date: 2,          // C - dateAdoption
+      nom: 17,          // R
+      prenom: 18,       // S
+      nom_chat: 4,      // E - nomUsuel
+      mode_reglement: 42, // AQ - check_paiement
+      num_cheque: 30,   // AF - cheque1
+      // Montants multiples
+      montants: [
+        { col: 29, label: 'Total participation' },  // AD
+        { col: 28, label: 'Reste à payer' },         // AC
+      ],
+    },
+    type_mvt: 'Adoption',
+    description: 'Adoption',
+  },
+  Reservation_Chat: {
+    label: 'Rés. Chat',
+    icon: 'ti-cat',
+    cols: {
+      date: 2,          // C - dateReservation
+      nom: 10,          // K - nomComplet
+      prenom: null,
+      nom_chat: 5,      // F - nomChat
+      mode_reglement: 19, // T - check_paiement
+      num_cheque: 17,   // R - numeroPaiement
+      montants: [{ col: null, label: 'Réservation', fixed: 50 }],
+    },
+    type_mvt: 'Adoption',
+    description: 'Reservation',
+  },
+  Reservation_Chaton: {
+    label: 'Rés. Chaton',
+    icon: 'ti-cat',
+    cols: {
+      date: 2,          // C - dateReservation
+      nom: 11,          // L - nomComplet
+      prenom: null,
+      nom_chat: 6,      // G - nomChat
+      mode_reglement: 21, // V - check_paiement
+      num_cheque: 19,   // T - numeroPaiement
+      montants: [{ col: null, label: 'Réservation', fixed: 50 }],
+    },
+    type_mvt: 'Adoption',
+    description: 'Reservation',
+  },
+  Contrat_reservation_chat: {
+    label: 'Contrat rés.',
+    icon: 'ti-file-text',
+    cols: {
+      date: 2,          // C - dateReservation
+      nom: 10,          // K - nomComplet
+      prenom: null,
+      nom_chat: 5,      // F - nomChat
+      mode_reglement: 19, // T - check_paiement
+      num_cheque: 17,   // R - numeroPaiement
+      montants: [{ col: null, label: 'Réservation', fixed: 50 }],
+    },
+    type_mvt: 'Adoption',
+    description: 'Reservation',
+  },
+  Dons: {
+    label: 'Dons',
+    icon: 'ti-gift',
+    cols: {
+      date: 2,          // C - dateEntete
+      nom: 7,           // H
+      prenom: 8,        // I
+      nom_chat: null,
+      mode_reglement: 17, // R - check_paiement
+      num_cheque: 5,    // F - numeroCheque
+      num_recu: 6,      // G - numeroRecuFiscal
+      montants: [{ col: 4, label: 'Montant don' }], // E
+    },
+    type_mvt: 'Dons',
+    description: 'Dons',
+  },
+  Adhesion: {
+    label: 'Adhésions',
+    icon: 'ti-id-badge',
+    cols: {
+      date: 2,          // C - dateAdhesion
+      nom: 4,           // E
+      prenom: 5,        // F
+      nom_chat: null,
+      mode_reglement: 16, // Q - check_paiement (à venir)
+      num_cheque: 14,   // O - numeroPaiement
+      montants: [
+        { col: 12, label: 'Don bienfaiteur' },   // M
+        { col: 13, label: 'Don sympathisant' },  // N
+        { col: 14, label: 'Paiement adhésion' }, // O
+      ],
+    },
+    type_mvt: 'Adhesion',
+    description: 'Adhesion',
+  },
+};
+
+// ============================================================
+// ÉTAT
+// ============================================================
+let allData = {};        // { onglet: [rows] }
+let imported = [];       // IDs déjà importés (depuis localStorage)
+let activeTab = 'Adoption';
+let selection = {};      // { 'onglet:rowIdx:montantIdx': { checked, row, onglet, montant } }
+
+// ============================================================
+// INIT
+// ============================================================
+Auth.requireAuth(async () => {
+  await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
+  Sidebar.build('import-suivi');
+  loadImported();
+  buildTabs();
+  await reloadAll();
+});
+
+function onPeriodeChange(p) { /* pas de filtre période ici */ }
+
+// ============================================================
+// IMPORT DÉJÀ EFFECTUÉS (localStorage)
+// ============================================================
+function loadImported() {
+  try { imported = JSON.parse(localStorage.getItem('arche_suivi_imported') || '[]'); }
+  catch(e) { imported = []; }
+}
+function saveImported() {
+  localStorage.setItem('arche_suivi_imported', JSON.stringify(imported));
+}
+function isImported(onglet, rowIdx, montantIdx) {
+  return imported.some(i => i.onglet === onglet && i.rowIdx === rowIdx && i.montantIdx === montantIdx);
+}
+function markImported(onglet, rowIdx, montantIdx, opRef) {
+  imported.push({ onglet, rowIdx, montantIdx, opRef, date: new Date().toISOString() });
+  saveImported();
+}
+
+// ============================================================
+// ONGLETS
+// ============================================================
+function buildTabs() {
+  const bar = document.getElementById('tabs-bar');
+  bar.innerHTML = Object.entries(ONGLETS).map(([key, cfg]) =>
+    `<button class="tab-btn ${key === activeTab ? 'active' : ''}" onclick="switchTab('${key}')" id="tab-${key}">
+      <i class="ti ${cfg.icon}" style="font-size:13px;vertical-align:-2px;margin-right:4px;"></i>
+      ${cfg.label}
+      <span class="tab-badge" id="badge-${key}">…</span>
+    </button>`
+  ).join('');
+}
+
+function switchTab(key) {
+  activeTab = key;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + key)?.classList.add('active');
+  renderCurrentTab();
+}
+
+// ============================================================
+// CHARGEMENT DEPUIS SUIVI
+// ============================================================
+async function reloadAll() {
+  document.getElementById('table-wrap').innerHTML =
+    '<div style="padding:40px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>';
+
+  const keys = Object.keys(ONGLETS);
+  await Promise.all(keys.map(async key => {
+    try {
+      const resp = await gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId: SUIVI_ID,
+        range: `${key}!A2:AQ`, // toutes les colonnes depuis la ligne 2
+      });
+      allData[key] = (resp.result.values || []).filter(r => r && r.length > 1);
+    } catch(e) {
+      allData[key] = [];
+      console.warn(`Erreur chargement onglet ${key}:`, e);
+    }
+  }));
+
+  updateBadges();
+  updateKPIs();
+  renderCurrentTab();
+}
+
+function updateBadges() {
+  Object.entries(ONGLETS).forEach(([key]) => {
+    const rows = allData[key] || [];
+    const nonImportes = rows.filter((r, ri) => {
+      const cfg = ONGLETS[key];
+      return cfg.cols.montants.some((m, mi) => !isImported(key, ri, mi));
+    }).length;
+    const badge = document.getElementById('badge-' + key);
+    if (badge) badge.textContent = nonImportes;
+  });
+}
+
+function updateKPIs() {
+  let totalLignes = 0, totalNonImp = 0, totalCaisse = 0, totalBanque = 0;
+  Object.entries(ONGLETS).forEach(([key, cfg]) => {
+    const rows = allData[key] || [];
+    rows.forEach((row, ri) => {
+      cfg.cols.montants.forEach((m, mi) => {
+        const montant = m.fixed !== undefined ? m.fixed : parseFloat(row[m.col] || 0) || 0;
+        if (!montant) return;
+        totalLignes++;
+        if (!isImported(key, ri, mi)) {
+          totalNonImp++;
+          const dest = getDestination(row[cfg.cols.mode_reglement]);
+          if (dest === 'caisse') totalCaisse += montant;
+          else totalBanque += montant;
+        }
+      });
+    });
+  });
+  document.getElementById('kpi-bar').innerHTML = `
+    <div class="kpi"><div class="kpi-label">Total lignes Suivi</div><div class="kpi-value">${totalLignes}</div></div>
+    <div class="kpi"><div class="kpi-label">À importer</div><div class="kpi-value" style="color:var(--orange)">${totalNonImp}</div></div>
+    <div class="kpi"><div class="kpi-label">Vers caisse</div><div class="kpi-value" style="color:var(--amber)">${fmt(totalCaisse)}</div></div>
+    <div class="kpi"><div class="kpi-label">Vers banque</div><div class="kpi-value" style="color:var(--blue)">${fmt(totalBanque)}</div></div>`;
+}
+
+// ============================================================
+// RENDU DU TABLEAU
+// ============================================================
+function renderCurrentTab() {
+  const key = activeTab;
+  const cfg = ONGLETS[key];
+  const rows = allData[key] || [];
+  const search = (document.getElementById('fl-search')?.value || '').toLowerCase();
+  const destF = document.getElementById('fl-dest')?.value || '';
+  const hideImported = document.getElementById('fl-hide-imported')?.checked || false;
+
+  // Filtrage
+  let filtered = rows.map((row, ri) => ({ row, ri })).filter(({ row, ri }) => {
+    const nom = getCellVal(row, cfg.cols.nom);
+    const prenom = getCellVal(row, cfg.cols.prenom);
+    const chat = getCellVal(row, cfg.cols.nom_chat);
+    const date = getCellVal(row, cfg.cols.date);
+    if (search && ![nom, prenom, chat, date].join(' ').toLowerCase().includes(search)) return false;
+    const dest = getDestination(getCellVal(row, cfg.cols.mode_reglement));
+    if (destF && dest !== destF) return false;
+    if (hideImported) {
+      const allDone = cfg.cols.montants.every((m, mi) => {
+        const montant = m.fixed !== undefined ? m.fixed : parseFloat(row[m.col] || 0) || 0;
+        return !montant || isImported(key, ri, mi);
+      });
+      if (allDone) return false;
+    }
+    return true;
+  });
+
+  if (!filtered.length) {
+    document.getElementById('table-wrap').innerHTML =
+      '<div style="padding:32px;text-align:center;color:var(--text-3);font-size:12px;">Aucune ligne pour ces filtres</div>';
+    updateSelectionInfo();
+    return;
+  }
+
+  // Colonnes spécifiques selon l'onglet
+  const hasChat = cfg.cols.nom_chat !== null;
+  const hasPrenom = cfg.cols.prenom !== null;
+  const multiMontants = cfg.cols.montants.length > 1;
+
+  const trs = filtered.map(({ row, ri }) => {
+    const date = getCellVal(row, cfg.cols.date);
+    const nom = getCellVal(row, cfg.cols.nom);
+    const prenom = hasPrenom ? getCellVal(row, cfg.cols.prenom) : '';
+    const chat = hasChat ? getCellVal(row, cfg.cols.nom_chat) : '';
+    const modeRaw = getCellVal(row, cfg.cols.mode_reglement);
+    const dest = getDestination(modeRaw);
+    const modeLabel = modeRaw || 'Chèque';
+    const numCheque = getCellVal(row, cfg.cols.num_cheque);
+
+    // Montants (cases à cocher si multiple)
+    const montantsHtml = cfg.cols.montants.map((m, mi) => {
+      const montant = m.fixed !== undefined ? m.fixed : parseFloat(row[m.col] || 0) || 0;
+      if (!montant) return '';
+      const selKey = `${key}:${ri}:${mi}`;
+      const alreadyDone = isImported(key, ri, mi);
+      const checked = selection[selKey]?.checked || false;
+      if (multiMontants) {
+        return `<div class="montant-line">
+          <input type="checkbox" class="row-check" data-key="${selKey}"
+            ${checked ? 'checked' : ''} ${alreadyDone ? 'disabled' : ''}
+            onchange="toggleLine('${selKey}','${key}',${ri},${mi},${montant},'${escH(m.label)}')">
+          <span class="montant-lbl">${m.label} :</span>
+          <span class="montant-val ${alreadyDone ? 'text-muted' : ''}">${fmt(montant)}</span>
+          ${alreadyDone ? '<span style="font-size:9px;background:var(--green-bg);color:var(--green);padding:1px 5px;border-radius:8px;">✓ Importé</span>' : ''}
+        </div>`;
+      } else {
+        return `<div style="display:flex;align-items:center;gap:6px;">
+          <input type="checkbox" class="row-check" data-key="${selKey}"
+            ${checked ? 'checked' : ''} ${alreadyDone ? 'disabled' : ''}
+            onchange="toggleLine('${selKey}','${key}',${ri},${mi},${montant},'${escH(m.label)}')">
+          <span class="montant-val ${alreadyDone ? 'text-muted' : ''}" style="font-weight:500;">${fmt(montant)}</span>
+          ${alreadyDone ? '<span style="font-size:9px;background:var(--green-bg);color:var(--green);padding:1px 5px;border-radius:8px;">✓ Importé</span>' : ''}
+        </div>`;
+      }
+    }).join('');
+
+    const allImported = cfg.cols.montants.every((m, mi) => {
+      const montant = m.fixed !== undefined ? m.fixed : parseFloat(row[m.col] || 0) || 0;
+      return !montant || isImported(key, ri, mi);
+    });
+
+    return `<tr class="${allImported ? 'already-imported' : ''}">
+      <td style="color:var(--text-3);white-space:nowrap;">${formatDate(date)}</td>
+      <td style="font-weight:500;">${nom}${prenom ? ' ' + prenom : ''}</td>
+      ${hasChat ? `<td style="color:var(--text-3);">${chat}</td>` : ''}
+      <td><div class="montant-choice">${montantsHtml || '—'}</div></td>
+      <td><span class="chip chip-${dest}">${modeLabel}</span></td>
+      <td><span class="chip chip-${dest === 'caisse' ? 'caisse1' : 'banque'}">${dest === 'caisse' ? 'Caisse' : 'Banque'}</span></td>
+      ${numCheque ? `<td style="font-size:10px;color:var(--text-3);">${numCheque}</td>` : '<td></td>'}
+    </tr>`;
+  }).join('');
+
+  document.getElementById('table-wrap').innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Date</th>
+        <th>Nom / Prénom</th>
+        ${hasChat ? '<th>Nom du chat</th>' : ''}
+        <th>Montant(s)</th>
+        <th>Mode règlt</th>
+        <th>Destination</th>
+        <th>N° chèque</th>
+      </tr></thead>
+      <tbody>${trs}</tbody>
+    </table>`;
+
+  updateSelectionInfo();
+}
+
+// ============================================================
+// SÉLECTION
+// ============================================================
+function toggleLine(selKey, onglet, ri, mi, montant, label) {
+  const cb = document.querySelector(`input[data-key="${selKey}"]`);
+  if (!cb) return;
+  if (cb.checked) {
+    const cfg = ONGLETS[onglet];
+    const row = allData[onglet][ri];
+    selection[selKey] = {
+      checked: true, onglet, ri, mi, montant, label,
+      row, cfg,
+    };
+  } else {
+    delete selection[selKey];
+  }
+  updateSelectionInfo();
+}
+
+function selectAll() {
+  const key = activeTab;
+  const cfg = ONGLETS[key];
+  const rows = allData[key] || [];
+  rows.forEach((row, ri) => {
+    cfg.cols.montants.forEach((m, mi) => {
+      const montant = m.fixed !== undefined ? m.fixed : parseFloat(row[m.col] || 0) || 0;
+      if (!montant || isImported(key, ri, mi)) return;
+      const selKey = `${key}:${ri}:${mi}`;
+      selection[selKey] = { checked: true, onglet: key, ri, mi, montant, label: m.label, row, cfg };
+    });
+  });
+  renderCurrentTab();
+}
+
+function deselectAll() {
+  const key = activeTab;
+  Object.keys(selection).forEach(k => { if (k.startsWith(key + ':')) delete selection[k]; });
+  renderCurrentTab();
+}
+
+function updateSelectionInfo() {
+  const keys = Object.keys(selection);
+  const total = keys.reduce((s, k) => s + (selection[k].montant || 0), 0);
+  document.getElementById('selection-info').textContent =
+    keys.length ? `${keys.length} ligne(s) sélectionnée(s) — ${fmt(total)}` : 'Aucune ligne sélectionnée';
+  document.getElementById('btn-import').disabled = keys.length === 0;
+}
+
+// ============================================================
+// MODAL CONFIRMATION
+// ============================================================
+function openImportModal() {
+  const selKeys = Object.keys(selection);
+  if (!selKeys.length) return;
+
+  const per = Sidebar.getActivePeriode();
+  let html = '';
+
+  selKeys.forEach(sk => {
+    const s = selection[sk];
+    const cfg = s.cfg;
+    const row = s.row;
+    const dest = getDestination(getCellVal(row, cfg.cols.mode_reglement));
+    const modeRaw = getCellVal(row, cfg.cols.mode_reglement) || 'Chèque';
+    const nom = getCellVal(row, cfg.cols.nom) + (cfg.cols.prenom !== null ? ' ' + getCellVal(row, cfg.cols.prenom) : '');
+    const chat = cfg.cols.nom_chat !== null ? getCellVal(row, cfg.cols.nom_chat) : '';
+    const date = formatDateISO(getCellVal(row, cfg.cols.date));
+    const numCheque = getCellVal(row, cfg.cols.num_cheque);
+    const numRecu = cfg.cols.num_recu !== undefined ? getCellVal(row, cfg.cols.num_recu) : '';
+
+    html += `
+      <div style="background:var(--surface-2);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px;" data-selkey="${sk}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-size:11px;font-weight:600;color:var(--orange);">${ONGLETS[s.onglet].label} — ${s.label || ''}</div>
+          <div style="font-size:13px;font-weight:600;color:var(--green);">${fmt(s.montant)}</div>
+        </div>
+        <div class="form-row-2" style="gap:8px;">
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" class="imp-date" value="${date}" style="font-size:11px;padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);width:100%;font-family:'DM Sans',sans-serif;">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Période</label>
+            <select class="imp-per" style="font-size:11px;padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);width:100%;font-family:'DM Sans',sans-serif;">
+              ${Sheets.getPeriodes().map(p => `<option ${p===per?'selected':''}>${p}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="form-row-2" style="gap:8px;">
+          <div class="form-group">
+            <label class="form-label">Libellé (nom)</label>
+            <input type="text" class="imp-libelle" value="${escHVal(nom)}" style="font-size:11px;padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);width:100%;font-family:'DM Sans',sans-serif;">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Montant (€)</label>
+            <input type="number" class="imp-montant" value="${s.montant}" step="0.01" style="font-size:11px;padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);width:100%;font-family:'DM Sans',sans-serif;">
+          </div>
+        </div>
+        <div class="form-row-2" style="gap:8px;">
+          <div class="form-group">
+            <label class="form-label">Type mouvement</label>
+            <select class="imp-type" style="font-size:11px;padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);width:100%;font-family:'DM Sans',sans-serif;">
+              ${Sheets.getTypesMouvement().map(t => `<option ${t===cfg.type_mvt?'selected':''}>${t}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <input type="text" class="imp-desc" value="${escHVal(cfg.description)}" style="font-size:11px;padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);width:100%;font-family:'DM Sans',sans-serif;">
+          </div>
+        </div>
+        <div class="form-row-2" style="gap:8px;">
+          <div class="form-group">
+            <label class="form-label">Mode règlement</label>
+            <select class="imp-mode" style="font-size:11px;padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);width:100%;font-family:'DM Sans',sans-serif;">
+              ${['Espèces','Chèque','Virement','CB'].map(m => `<option ${m===modeRaw?'selected':''}>${m}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Destination</label>
+            <div style="font-size:11px;padding:6px 8px;border-radius:var(--radius-sm);background:var(--surface);border:0.5px solid var(--border-mid);">
+              <span class="chip chip-${dest === 'caisse' ? 'caisse1' : 'banque'}">${dest === 'caisse' ? 'Caisse' : 'Banque'}</span>
+            </div>
+          </div>
+        </div>
+        ${chat ? `<div class="form-group">
+          <label class="form-label">Nom du chat</label>
+          <input type="text" class="imp-chat" value="${escHVal(chat)}" style="font-size:11px;padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);width:100%;font-family:'DM Sans',sans-serif;">
+        </div>` : '<input type="hidden" class="imp-chat" value="">'}
+        <div class="form-row-2" style="gap:8px;">
+          ${numCheque ? `<div class="form-group">
+            <label class="form-label">N° chèque / bordereau</label>
+            <input type="text" class="imp-bordereau" value="${escHVal(numCheque)}" style="font-size:11px;padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);width:100%;font-family:'DM Sans',sans-serif;">
+          </div>` : '<input type="hidden" class="imp-bordereau" value="">'}
+          ${numRecu ? `<div class="form-group">
+            <label class="form-label">N° reçu fiscal</label>
+            <input type="text" class="imp-recu" value="${escHVal(numRecu)}" style="font-size:11px;padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);width:100%;font-family:'DM Sans',sans-serif;">
+          </div>` : '<input type="hidden" class="imp-recu" value="">'}
+        </div>
+      </div>`;
+  });
+
+  document.getElementById('import-preview').innerHTML = html;
+  document.getElementById('modal-import').classList.remove('hidden');
+}
+
+function closeImportModal() {
+  document.getElementById('modal-import').classList.add('hidden');
+}
+
+// ============================================================
+// CONFIRMATION ET IMPORT
+// ============================================================
+async function confirmImport() {
+  const btn = document.getElementById('btn-confirm-import');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader-2 spinner"></i> Import en cours…';
+
+  const selKeys = Object.keys(selection);
+  let ok = 0, errors = [];
+
+  for (const sk of selKeys) {
+    const s = selection[sk];
+    const card = document.querySelector(`[data-selkey="${sk}"]`);
+    if (!card) continue;
+
+    const date      = card.querySelector('.imp-date').value;
+    const periode   = card.querySelector('.imp-per').value;
+    const libelle   = card.querySelector('.imp-libelle').value.trim();
+    const montant   = parseFloat(card.querySelector('.imp-montant').value) || 0;
+    const type_mvt  = card.querySelector('.imp-type').value;
+    const desc      = card.querySelector('.imp-desc').value.trim();
+    const mode      = card.querySelector('.imp-mode').value;
+    const chat      = card.querySelector('.imp-chat').value.trim();
+    const bordereau = card.querySelector('.imp-bordereau').value.trim();
+    const recu      = card.querySelector('.imp-recu').value.trim();
+    const dest      = getDestination(mode);
+
+    const op = {
+      source: dest === 'caisse' ? 'C1' : 'BQ',
+      date: Sheets.normalizeDate(date),
+      libelle,
+      debit: '',
+      credit: montant,
+      periode,
+      type_mvt,
+      description: desc,
+      type_comp: '',
+      nom: libelle,
+      reglement: mode,
+      nom_chat: chat,
+      num_recu: recu,
+      num_bordereau: bordereau,
+      lien_facture: '',
+      suivi_ref: `${s.onglet}:${s.ri}:${s.mi}`, // référence source
+    };
+
+    try {
+      if (dest === 'caisse') {
+        await Sheets.saveCaisseOperation(op);
+      } else {
+        await Sheets.saveBanqueOperation(op);
+      }
+      markImported(s.onglet, s.ri, s.mi, `${dest}:${date}:${libelle}`);
+      ok++;
+    } catch(e) {
+      errors.push(`${libelle} : ${e.message}`);
+    }
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="ti ti-check"></i> Confirmer l\'import';
+  closeImportModal();
+  selection = {};
+
+  if (ok > 0) showToast(`${ok} opération(s) importée(s) !`);
+  if (errors.length) alert('Erreurs :\n' + errors.join('\n'));
+
+  updateBadges();
+  updateKPIs();
+  renderCurrentTab();
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function getDestination(modeRaw) {
+  const mode = (modeRaw || '').trim().toLowerCase();
+  if (mode === 'espèces' || mode === 'especes') return 'caisse';
+  return 'banque'; // chèque, virement, cb, vide = banque
+}
+
+function getCellVal(row, colIdx) {
+  if (colIdx === null || colIdx === undefined) return '';
+  return (row[colIdx] || '').toString().trim();
+}
+
+function formatDate(d) {
+  if (!d) return '—';
+  const s = String(d).trim();
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) { const p = s.split('-'); return `${p[2]}/${p[1]}/${p[0]}`; }
+  return s;
+}
+
+function formatDateISO(d) {
+  if (!d) return new Date().toISOString().slice(0,10);
+  const s = String(d).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) { const p = s.split('/'); return `${p[2]}-${p[1]}-${p[0]}`; }
+  return s;
+}
+
+function fmt(v) { if (!v && v !== 0) return '—'; return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
+function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;'); }
+function escHVal(s) { return String(s||'').replace(/"/g,'&quot;'); }
+function clearFilters() { document.getElementById('fl-search').value=''; document.getElementById('fl-dest').selectedIndex=0; document.getElementById('fl-hide-imported').checked=false; renderCurrentTab(); }
+function showToast(m) { const t=document.createElement('div');t.className='success-toast';t.innerHTML=`<i class="ti ti-check"></i> ${m}`;document.body.appendChild(t);setTimeout(()=>t.remove(),3000); }
+</script>
+</body>
+</html>

@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Import Suivi — Archive — Arche de Mallo</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  .filters-bar{display:flex;gap:6px;flex-wrap:nowrap;align-items:center;overflow-x:auto;margin-bottom:12px;}
+  .f-select{font-size:11px;padding:4px 8px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text-2);font-family:'DM Sans',sans-serif;}
+  .f-input{font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;width:140px;}
+  .list-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  table{width:100%;border-collapse:collapse;font-size:11px;}
+  thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:7px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);white-space:nowrap;cursor:pointer;user-select:none;}
+  thead th:hover{background:var(--warm);}
+  thead th .sort-icon{font-size:10px;margin-left:3px;opacity:0.5;}
+  thead th.sorted .sort-icon{opacity:1;color:var(--orange);}
+  tbody td{padding:7px 10px;border-bottom:0.5px solid var(--border);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--cream);}
+  tbody tr.editing{background:rgba(201,107,42,0.06);outline:1px solid var(--orange);}
+  .r{text-align:right;font-variant-numeric:tabular-nums;}
+  .amount-c{color:var(--green);font-weight:500;}
+  .edit-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;color:var(--blue);}
+  .del-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;color:var(--red);}
+  .kpi-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+  .kpi{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;}
+  .kpi-label{font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
+  .kpi-value{font-size:18px;font-weight:600;}
+  .kpi-sub{font-size:10px;color:var(--text-3);margin-top:2px;}
+  .split-layout{display:grid;grid-template-columns:1fr 360px;gap:14px;align-items:start;}
+  .form-card{background:var(--surface);border:0.5px solid var(--orange);border-radius:var(--radius);padding:18px 20px;position:sticky;top:60px;}
+  .form-title{font-size:13px;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .form-title i{color:var(--orange);}
+  .form-group{margin-bottom:10px;}
+  .form-label{display:block;font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
+  .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .edit-banner{background:rgba(201,107,42,0.08);border:0.5px solid var(--orange);border-radius:var(--radius-sm);padding:8px 12px;font-size:11px;color:var(--orange);display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .modal-overlay{position:fixed;inset:0;background:rgba(61,43,31,0.35);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
+  .modal{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-md);width:440px;max-width:95vw;}
+  .modal-header{padding:14px 18px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+  .modal-title{font-size:13px;font-weight:600;}
+  .modal-close{background:none;border:none;font-size:18px;color:var(--text-3);cursor:pointer;}
+  .modal-body{padding:18px;}
+  .modal-footer{padding:12px 18px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+  .confirm-detail{margin-top:10px;padding:10px;background:var(--red-bg);border-radius:var(--radius-sm);font-size:12px;color:var(--red);}
+  .success-toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:white;padding:10px 18px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;z-index:999;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-md);animation:slideIn 0.25s ease;}
+  @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .spinner{display:inline-block;animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .sens-toggle{display:flex;gap:4px;}
+  .sens-btn{flex:1;padding:7px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:transparent;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all 0.15s;}
+  .sens-btn.credit{border-color:var(--green);color:var(--green);}
+  .sens-btn.credit.active{background:var(--green);color:white;}
+  .sens-btn.debit{border-color:var(--red);color:var(--red);}
+  .sens-btn.debit.active{background:var(--red);color:white;}
+</style>
+</head>
+<body>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title"><i class="ti ti-history" style="color:var(--orange)"></i> Import Suivi — Déjà importés</div>
+    <div class="topbar-right">
+      <a href="import-suivi.html" class="btn btn-primary btn-sm"><i class="ti ti-download"></i> Nouvel import</a>
+    </div>
+  </div>
+
+  <div class="page-content">
+
+    <div class="kpi-bar" id="kpi-bar"></div>
+
+    <div class="split-layout">
+
+      <!-- GAUCHE : tableau des opérations importées -->
+      <div>
+        <div class="list-card">
+          <div style="padding:12px 16px;border-bottom:0.5px solid var(--border);">
+            <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Opérations importées depuis Suivi</div>
+            <div class="filters-bar">
+              <select class="f-select" id="fl-per" onchange="renderTable()"></select>
+              <input class="f-input" type="text" id="fl-search" placeholder="Rechercher…" oninput="renderTable()">
+              <select class="f-select" id="fl-onglet" onchange="renderTable()">
+                <option value="">Tous les onglets</option>
+                <option value="Adoption">Adoptions</option>
+                <option value="Reservation_Chat">Rés. Chat</option>
+                <option value="Reservation_Chaton">Rés. Chaton</option>
+                <option value="Contrat_reservation_chat">Contrat rés.</option>
+                <option value="Dons">Dons</option>
+                <option value="Adhesion">Adhésions</option>
+              </select>
+              <select class="f-select" id="fl-dest" onchange="renderTable()">
+                <option value="">Caisse + Banque</option>
+                <option value="C1">Caisse</option>
+                <option value="BQ">Banque</option>
+              </select>
+              <button class="btn btn-secondary btn-sm" onclick="clearFilters()"><i class="ti ti-x"></i> Effacer</button>
+            </div>
+          </div>
+          <div id="table-wrap" style="overflow-x:auto;max-height:600px;overflow-y:auto;">
+            <div style="padding:32px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DROITE : formulaire modification -->
+      <div>
+        <div class="form-card">
+          <div class="form-title">
+            <span><i class="ti ti-pencil"></i> <span id="form-mode-lbl">Modifier une opération</span></span>
+            <button class="btn btn-secondary btn-sm" id="btn-cancel-edit" onclick="cancelEdit()" style="display:none;"><i class="ti ti-x"></i> Annuler</button>
+          </div>
+          <div id="edit-banner" class="edit-banner" style="display:none;">
+            <span><i class="ti ti-pencil"></i> <strong id="edit-line-label"></strong></span>
+          </div>
+          <div style="font-size:11px;color:var(--text-3);padding:20px 0;text-align:center;" id="form-placeholder">
+            <i class="ti ti-arrow-left" style="font-size:18px;display:block;margin-bottom:8px;"></i>
+            Cliquez sur <i class="ti ti-pencil"></i> dans le tableau pour modifier une opération importée.
+          </div>
+          <div id="form-fields" style="display:none;">
+            <!-- Sens -->
+            <div class="form-group">
+              <label class="form-label">Sens</label>
+              <div class="sens-toggle">
+                <button class="sens-btn credit active" id="btn-credit" onclick="setSens('credit')"><i class="ti ti-arrow-down-left"></i> Entrée</button>
+                <button class="sens-btn debit" id="btn-debit" onclick="setSens('debit')"><i class="ti ti-arrow-up-right"></i> Sortie</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Période</label>
+              <select id="f-per"></select>
+            </div>
+            <div class="form-row-2">
+              <div class="form-group"><label class="form-label">Date</label><input type="date" id="f-date"></div>
+              <div class="form-group"><label class="form-label">Montant (€)</label><input type="number" id="f-montant" step="0.01" min="0" placeholder="0,00"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Libellé</label><input type="text" id="f-libelle"></div>
+            <div class="form-group"><label class="form-label">Type mouvement</label><select id="f-type"></select></div>
+            <div class="form-group"><label class="form-label">Description</label><input type="text" id="f-desc"></div>
+            <div class="form-group"><label class="form-label">Libellé complémentaire</label><input type="text" id="f-type-comp"></div>
+            <div class="form-row-2">
+              <div class="form-group"><label class="form-label">Nom du chat</label><input type="text" id="f-chat"></div>
+              <div class="form-group"><label class="form-label">N° reçu fiscal</label><input type="text" id="f-recu"></div>
+            </div>
+            <div class="form-group"><label class="form-label">N° bordereau / chèque</label><input type="text" id="f-bordereau"></div>
+            <div id="form-err" class="hidden" style="color:var(--red);font-size:11px;padding:6px 0;"></div>
+            <div style="display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:0.5px solid var(--border);">
+              <button class="btn btn-primary" style="flex:1;" id="btn-submit" onclick="submitEdit()"><i class="ti ti-device-floppy"></i> Enregistrer</button>
+              <button class="btn btn-secondary" onclick="cancelEdit()"><i class="ti ti-x"></i> Annuler</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SUPPRIMER -->
+<div class="modal-overlay hidden" id="modal-del">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-trash" style="color:var(--red)"></i> Supprimer l'opération importée</span><button class="modal-close" onclick="closeDel()">×</button></div>
+    <div class="modal-body">
+      <div style="font-size:12px;">Êtes-vous sûr ? L'opération sera supprimée de Compta. Elle pourra être ré-importée depuis la page Import.</div>
+      <div class="confirm-detail" id="del-detail"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeDel()">Annuler</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmDel()"><i class="ti ti-trash"></i> Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script src="sheets.js"></script>
+<script src="sidebar.js"></script>
+<script>
+let allRows = [], editIdx = null, editSource = null, activeSens = 'credit', delIdx = null, delSource = null;
+let sortCol = -1, sortAsc = true;
+
+const ONGLET_LABELS = {
+  Adoption: 'Adoption', Reservation_Chat: 'Rés. Chat',
+  Reservation_Chaton: 'Rés. Chaton', Contrat_reservation_chat: 'Contrat rés.',
+  Dons: 'Dons', Adhesion: 'Adhésion',
+};
+
+Auth.requireAuth(async () => {
+  await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
+  Sidebar.build('import-suivi');
+  const pers = Sheets.getPeriodes(), ap = Sidebar.getActivePeriode();
+
+  const sp = document.getElementById('f-per');
+  pers.forEach(p => { const o = document.createElement('option'); o.value=p; o.textContent=p; if(p===ap)o.selected=true; sp.appendChild(o); });
+
+  const flp = document.getElementById('fl-per');
+  pers.forEach(p => { const o = document.createElement('option'); o.value=p; o.textContent=p; if(p===ap)o.selected=true; flp.appendChild(o); });
+
+  const ft = document.getElementById('f-type');
+  ft.innerHTML = '<option value="">— Choisir —</option>';
+  Sheets.getTypesMouvement().forEach(t => { ft.innerHTML += `<option>${escH(t)}</option>`; });
+
+  await loadData();
+});
+
+function onPeriodeChange(p) {
+  document.getElementById('f-per').value = p;
+  document.getElementById('fl-per').value = p;
+  renderKPIs(); renderTable();
+}
+
+async function loadData() {
+  // Charger caisse + banque, filtrer sur suivi_ref présent
+  const [caisse, banque] = await Promise.all([
+    Sheets.getCaisseOperations(),
+    Sheets.getBanqueOperations(),
+  ]);
+  const cc = Sheets.cols.caisse;
+  const cb = Sheets.cols.banque;
+
+  // On garde uniquement les lignes avec un suivi_ref
+  const caisseImp = caisse
+    .map((r, i) => ({ row: r, idx: i, source: 'caisse', cols: cc }))
+    .filter(({ row }) => row[cc.suivi_ref]);
+  const banqueImp = banque
+    .map((r, i) => ({ row: r, idx: i, source: 'banque', cols: cb }))
+    .filter(({ row }) => row[cb.suivi_ref]);
+
+  allRows = [...caisseImp, ...banqueImp];
+  Sidebar.setLastUpdate();
+  renderKPIs(); renderTable();
+}
+
+function renderKPIs() {
+  const per = document.getElementById('fl-per')?.value || Sidebar.getActivePeriode();
+  const rows = allRows.filter(({ row, cols }) => row[cols.periode] === per);
+  const total = rows.reduce((s, { row, cols }) => s + (parseFloat(row[cols.credit]) || 0), 0);
+  const caisse = rows.filter(({ source }) => source === 'caisse').length;
+  const banque = rows.filter(({ source }) => source === 'banque').length;
+
+  document.getElementById('kpi-bar').innerHTML = `
+    <div class="kpi"><div class="kpi-label">Opérations importées (période)</div><div class="kpi-value">${rows.length}</div><div class="kpi-sub">Caisse : ${caisse} — Banque : ${banque}</div></div>
+    <div class="kpi"><div class="kpi-label">Total importé</div><div class="kpi-value" style="color:var(--green)">${fmt(total)}</div><div class="kpi-sub">Période ${per}</div></div>
+    <div class="kpi"><div class="kpi-label">Total toutes périodes</div><div class="kpi-value">${allRows.length}</div><div class="kpi-sub">lignes importées</div></div>`;
+}
+
+function renderTable() {
+  const per = document.getElementById('fl-per')?.value || Sidebar.getActivePeriode();
+  const search = (document.getElementById('fl-search')?.value || '').toLowerCase();
+  const ongletF = document.getElementById('fl-onglet')?.value || '';
+  const destF = document.getElementById('fl-dest')?.value || '';
+
+  let rows = allRows.filter(({ row, cols }) => row[cols.periode] === per);
+  if (ongletF) rows = rows.filter(({ row, cols }) => (row[cols.suivi_ref] || '').startsWith(ongletF));
+  if (destF === 'C1') rows = rows.filter(({ source }) => source === 'caisse');
+  if (destF === 'BQ') rows = rows.filter(({ source }) => source === 'banque');
+  if (search) rows = rows.filter(({ row, cols }) =>
+    [row[cols.libelle], row[cols.type_mvt], row[cols.nom_chat], row[cols.description]].join(' ').toLowerCase().includes(search)
+  );
+
+  if (sortCol >= 0) {
+    rows = [...rows].sort((a, b) => {
+      const va = String(a.row[sortCol] || ''), vb = String(b.row[sortCol] || '');
+      const na = parseFloat(va), nb = parseFloat(vb);
+      const cmp = !isNaN(na) && !isNaN(nb) ? na - nb : va.localeCompare(vb, 'fr');
+      return sortAsc ? cmp : -cmp;
+    });
+  } else {
+    rows = [...rows].reverse();
+  }
+
+  if (!rows.length) {
+    document.getElementById('table-wrap').innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-3);font-size:12px;">Aucune opération importée pour cette période</div>';
+    return;
+  }
+
+  const sortIcon = col => `<span class="sort-icon">${sortCol === col ? (sortAsc ? '↑' : '↓') : '↕'}</span>`;
+  const mkTh = (label, col, cls='') =>
+    `<th class="${sortCol===col?'sorted':''} ${cls}" onclick="setSort(${col})">${label}${sortIcon(col)}</th>`;
+
+  const trs = rows.map(({ row, idx, source, cols }) => {
+    const ongletRef = (row[cols.suivi_ref] || '').split(':')[0] || '';
+    const ongletLabel = ONGLET_LABELS[ongletRef] || ongletRef;
+    const isEdit = editIdx === idx && editSource === source;
+    return `<tr class="${isEdit ? 'editing' : ''}">
+      <td style="color:var(--text-3);white-space:nowrap;">${row[cols.date] || ''}</td>
+      <td style="font-weight:500;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row[cols.libelle] || ''}</td>
+      <td><span class="chip chip-${source === 'caisse' ? 'caisse1' : 'banque'}">${source === 'caisse' ? 'Caisse' : 'Banque'}</span></td>
+      <td><span class="chip chip-${chipType(row[cols.type_mvt])}">${row[cols.type_mvt] || ''}</span></td>
+      <td style="font-size:10px;color:var(--text-3);">${ongletLabel}</td>
+      <td class="r amount-c">${row[cols.credit] ? fmt(row[cols.credit]) : ''}</td>
+      <td style="font-size:10px;color:var(--text-3);">${row[cols.nom_chat] || ''}</td>
+      <td class="r" style="white-space:nowrap;">
+        <button class="edit-btn" onclick="openEdit(${idx},'${source}')" title="Modifier"><i class="ti ti-pencil"></i></button>
+        <button class="del-btn" onclick="openDel(${idx},'${source}')" title="Supprimer"><i class="ti ti-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('table-wrap').innerHTML = `
+    <table>
+      <thead><tr>
+        ${mkTh('Date', 0)}
+        ${mkTh('Libellé', 1)}
+        <th>Source</th>
+        <th>Type mvt</th>
+        <th>Onglet Suivi</th>
+        ${mkTh('Crédit', 0, 'r')}
+        <th>Nom chat</th>
+        <th class="r">Actions</th>
+      </tr></thead>
+      <tbody>${trs}</tbody>
+    </table>`;
+}
+
+function setSort(col) { if(sortCol===col)sortAsc=!sortAsc;else{sortCol=col;sortAsc=true;} renderTable(); }
+
+// ============================================================
+// ÉDITION
+// ============================================================
+function openEdit(idx, source) {
+  editIdx = idx; editSource = source;
+  const entry = allRows.find(r => r.idx === idx && r.source === source);
+  if (!entry) return;
+  const { row, cols } = entry;
+
+  document.getElementById('form-placeholder').style.display = 'none';
+  document.getElementById('form-fields').style.display = 'block';
+  document.getElementById('btn-cancel-edit').style.display = '';
+  document.getElementById('edit-banner').style.display = '';
+  document.getElementById('edit-line-label').textContent = `${row[cols.date] || ''} — ${row[cols.libelle] || ''}`;
+
+  document.getElementById('f-date').value = dateToISO(row[cols.date]);
+  document.getElementById('f-montant').value = row[cols.credit] || row[cols.debit] || '';
+  document.getElementById('f-libelle').value = row[cols.libelle] || '';
+  document.getElementById('f-type').value = row[cols.type_mvt] || '';
+  document.getElementById('f-desc').value = row[cols.description] || '';
+  document.getElementById('f-type-comp').value = row[cols.type_comp] || '';
+  document.getElementById('f-chat').value = row[cols.nom_chat] || '';
+  document.getElementById('f-recu').value = row[cols.num_recu] || '';
+  document.getElementById('f-bordereau').value = row[cols.num_bordereau] || '';
+
+  const per = row[cols.periode] || Sidebar.getActivePeriode();
+  document.getElementById('f-per').value = per;
+
+  setSens(row[cols.credit] && parseFloat(row[cols.credit]) > 0 ? 'credit' : 'debit');
+  document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth' });
+  renderTable();
+}
+
+function cancelEdit() {
+  editIdx = null; editSource = null;
+  document.getElementById('form-placeholder').style.display = '';
+  document.getElementById('form-fields').style.display = 'none';
+  document.getElementById('btn-cancel-edit').style.display = 'none';
+  document.getElementById('edit-banner').style.display = 'none';
+  renderTable();
+}
+
+async function submitEdit() {
+  if (editIdx === null) return;
+  const entry = allRows.find(r => r.idx === editIdx && r.source === editSource);
+  if (!entry) return;
+  const { row, cols } = entry;
+
+  const montant = parseFloat(document.getElementById('f-montant').value) || 0;
+  const op = {
+    source: editSource === 'caisse' ? (row[cols.source] || 'C1') : 'BQ',
+    date: Sheets.normalizeDate(document.getElementById('f-date').value),
+    libelle: document.getElementById('f-libelle').value.trim(),
+    debit: activeSens === 'debit' ? montant : '',
+    credit: activeSens === 'credit' ? montant : '',
+    periode: document.getElementById('f-per').value,
+    type_mvt: document.getElementById('f-type').value,
+    description: document.getElementById('f-desc').value.trim(),
+    type_comp: document.getElementById('f-type-comp').value.trim(),
+    nom: document.getElementById('f-libelle').value.trim(),
+    reglement: row[cols.reglement] || '',
+    nom_chat: document.getElementById('f-chat').value.trim(),
+    num_recu: document.getElementById('f-recu').value.trim(),
+    num_bordereau: document.getElementById('f-bordereau').value.trim(),
+    lien_facture: row[cols.lien_facture] || '',
+    suivi_ref: row[cols.suivi_ref] || '',
+    flag_check: row[cols.flag_check] || 'FALSE',
+    flag_comment: row[cols.flag_comment] || '',
+  };
+
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader-2 spinner"></i>';
+  try {
+    if (editSource === 'caisse') {
+      await Sheets.updateCaisseOperation(editIdx, op);
+    } else {
+      await Sheets.updateBanqueOperation(editIdx, op);
+    }
+    showToast('Opération modifiée !');
+    cancelEdit();
+    await loadData();
+  } catch(e) {
+    document.getElementById('form-err').textContent = 'Erreur : ' + (e.message || '?');
+    document.getElementById('form-err').classList.remove('hidden');
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="ti ti-device-floppy"></i> Enregistrer';
+  }
+}
+
+function setSens(s) {
+  activeSens = s;
+  document.getElementById('btn-credit').classList.toggle('active', s === 'credit');
+  document.getElementById('btn-debit').classList.toggle('active', s === 'debit');
+}
+
+// ============================================================
+// SUPPRESSION
+// ============================================================
+function openDel(idx, source) {
+  delIdx = idx; delSource = source;
+  const entry = allRows.find(r => r.idx === idx && r.source === source);
+  if (!entry) return;
+  const { row, cols } = entry;
+  document.getElementById('del-detail').innerHTML =
+    `<strong>${row[cols.date] || '—'}</strong> — ${row[cols.libelle] || '—'}<br>${row[cols.type_mvt] || ''} — ${fmt(row[cols.credit] || row[cols.debit] || 0)}`;
+  document.getElementById('modal-del').classList.remove('hidden');
+}
+function closeDel() { document.getElementById('modal-del').classList.add('hidden'); delIdx = null; delSource = null; }
+async function confirmDel() {
+  if (delIdx === null) return;
+  try {
+    const sheetName = delSource === 'caisse' ? Sheets.config.sheets.caisse : Sheets.config.sheets.banque;
+    await Sheets.deleteRow(sheetName, delIdx);
+
+    // Retirer du localStorage l'entrée correspondante
+    const entry = allRows.find(r => r.idx === delIdx && r.source === delSource);
+    if (entry) {
+      const ref = entry.row[entry.cols.suivi_ref] || '';
+      const [onglet, ri, mi] = ref.split(':');
+      if (onglet && ri !== undefined && mi !== undefined) {
+        let imported = JSON.parse(localStorage.getItem('arche_suivi_imported') || '[]');
+        imported = imported.filter(i => !(i.onglet === onglet && i.rowIdx === parseInt(ri) && i.montantIdx === parseInt(mi)));
+        localStorage.setItem('arche_suivi_imported', JSON.stringify(imported));
+      }
+    }
+    closeDel();
+    showToast('Opération supprimée');
+    await loadData();
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function clearFilters() {
+  document.getElementById('fl-search').value = '';
+  ['fl-onglet','fl-dest'].forEach(id => { const e = document.getElementById(id); if(e)e.selectedIndex=0; });
+  renderTable();
+}
+function chipType(t) { if(!t)return'depense'; const l=t.toLowerCase(); if(l.includes('adopt'))return'adoption'; if(l.includes('don'))return'don'; if(l.includes('adh'))return'adhesion'; return'depense'; }
+function fmt(v) { if(!v&&v!==0)return'—'; return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
+function dateToISO(d) { if(!d)return''; const p=String(d).split('/'); if(p.length===3&&p[0].length===2)return`${p[2]}-${p[1]}-${p[0]}`; return d; }
+function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;'); }
+function showToast(m) { const t=document.createElement('div');t.className='success-toast';t.innerHTML=`<i class="ti ti-check"></i> ${m}`;document.body.appendChild(t);setTimeout(()=>t.remove(),3000); }
+</script>
+</body>
+</html>
