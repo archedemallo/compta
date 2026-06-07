@@ -708,6 +708,7 @@ window.Sheets = {
   saveRemise,           encaisserRemise, updateRemise,
   saveFacture,          updateFacture,
   updateFlag, appendRows, updateCell, updateRange, deleteRow,
+  logAction,
   // Soldes initiaux
   getSoldeInitial, saveSoldeInitial,
   // Calculs
