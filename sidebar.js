@@ -21,7 +21,7 @@ function buildSidebar(activePage) {
     { id: 'import',    label: 'Import relevé',       icon: 'ti-upload',         href: 'import.html' },
 
     { section: 'Caisses physiques' },
-    { id: 'caisse1physique',   label: 'Caisse 1',           icon: 'ti-safe',           href: 'caisse-physique.html' },
+    { id: 'caisse1physique',   label: 'Caisse 1',           icon: 'ti-safe',           href: 'caisse-physique1.html' },
     { id: 'caisse2physique',   label: 'Caisse 2',           icon: 'ti-safe',           href: 'caisse-physique2.html' },
 
     { section: 'Import' },
