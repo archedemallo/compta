@@ -65,21 +65,26 @@ const COLS_CAISSE = {
 };
 
 const COLS_BANQUE = {
-  date:         0,
-  libelle:      1,
-  debit:        2,
-  credit:       3,
-  solde:        4,
-  periode:      5,
-  type_mvt:     6,
-  type_comp:    7,
-  description:  8,
-  nom:          9,
-  ref_cheque:   10,
-  ref_remise:   11,
-  lien_facture: 12,
-  flag_check:   13,
-  flag_comment: 14,
+  date:           0,   // A — Date
+  libelle:        1,   // B — Libellé
+  debit:          2,   // C — Débit
+  credit:         3,   // D — Crédit
+  solde:          4,   // E — Solde
+  periode:        5,   // F — Période
+  type_mvt:       6,   // G — Type Mouvement
+  description:    7,   // H — Description
+  nom:            8,   // I — Ajouté par
+  type_comp:      9,   // J — Libellé complémentaire
+  num_facture:    10,  // K — Facture numéro
+  nom_chat:       11,  // L — Nom chat
+  num_don_fiscal: 12,  // M — Num don fiscal
+  flag_check:     13,  // N — A vérifier
+  ref_remise:     14,  // O — Bordereau remise
+  num_rem_espece: 15,  // P — Remise espèce
+  ref_cheque:     16,  // Q — Numéro chq
+  lien_facture:   17,  // R — Liens PDF
+  statut:         18,  // S — Statut
+  flag_comment:   19,  // T — Annotation
 };
 
 const COLS_CHEQUE = {
@@ -294,22 +299,27 @@ async function updateCaisseOperation(rowIndex, op) {
 
 // ---- SAUVEGARDER OPÉRATION BANQUE ----
 async function saveBanqueOperation(op) {
-  const row = new Array(15).fill('');
-  row[COLS_BANQUE.date]         = op.date          || '';
-  row[COLS_BANQUE.libelle]      = op.libelle       || '';
-  row[COLS_BANQUE.debit]        = op.debit         || '';
-  row[COLS_BANQUE.credit]       = op.credit        || '';
-  row[COLS_BANQUE.solde]        = op.solde         || '';
-  row[COLS_BANQUE.periode]      = op.periode       || '';
-  row[COLS_BANQUE.type_mvt]     = op.type_mvt      || '';
-  row[COLS_BANQUE.type_comp]    = op.type_comp     || '';
-  row[COLS_BANQUE.description]  = op.description   || '';
-  row[COLS_BANQUE.nom]          = op.nom           || '';
-  row[COLS_BANQUE.ref_cheque]   = op.ref_cheque    || '';
-  row[COLS_BANQUE.ref_remise]   = op.ref_remise    || '';
-  row[COLS_BANQUE.lien_facture] = op.lien_facture  || '';
-  row[COLS_BANQUE.flag_check]   = 'FALSE';
-  row[COLS_BANQUE.flag_comment] = '';
+  const row = new Array(20).fill('');
+  row[COLS_BANQUE.date]           = op.date           || '';
+  row[COLS_BANQUE.libelle]        = op.libelle        || '';
+  row[COLS_BANQUE.debit]          = op.debit          || '';
+  row[COLS_BANQUE.credit]         = op.credit         || '';
+  row[COLS_BANQUE.solde]          = op.solde          || '';
+  row[COLS_BANQUE.periode]        = op.periode        || '';
+  row[COLS_BANQUE.type_mvt]       = op.type_mvt       || '';
+  row[COLS_BANQUE.description]    = op.description    || '';
+  row[COLS_BANQUE.nom]            = op.nom            || '';
+  row[COLS_BANQUE.type_comp]      = op.type_comp      || '';
+  row[COLS_BANQUE.num_facture]    = op.num_facture    || '';
+  row[COLS_BANQUE.nom_chat]       = op.nom_chat       || '';
+  row[COLS_BANQUE.num_don_fiscal] = op.num_don_fiscal || '';
+  row[COLS_BANQUE.flag_check]     = 'FALSE';
+  row[COLS_BANQUE.ref_remise]     = op.ref_remise     || '';
+  row[COLS_BANQUE.num_rem_espece] = op.num_rem_espece || '';
+  row[COLS_BANQUE.ref_cheque]     = op.ref_cheque     || '';
+  row[COLS_BANQUE.lien_facture]   = op.lien_facture   || '';
+  row[COLS_BANQUE.statut]         = op.statut         || '';
+  row[COLS_BANQUE.flag_comment]   = '';
   await appendRows(SHEETS_CONFIG.sheets.banque, [row]);
   await logAction('AJOUT', 'Banque', op.libelle, `${op.date} — ${op.type_mvt} — ${op.credit || op.debit}€`);
   if (!Auth.isAdmin()) await sendAlert(Auth.getUser(), 'Banque', op);
@@ -318,22 +328,27 @@ async function saveBanqueOperation(op) {
 // ---- MODIFIER OPÉRATION BANQUE ----
 async function updateBanqueOperation(rowIndex, op) {
   const sheetRow = rowIndex + 2;
-  const row = new Array(15).fill('');
-  row[COLS_BANQUE.date]         = op.date          || '';
-  row[COLS_BANQUE.libelle]      = op.libelle       || '';
-  row[COLS_BANQUE.debit]        = op.debit         || '';
-  row[COLS_BANQUE.credit]       = op.credit        || '';
-  row[COLS_BANQUE.solde]        = op.solde         || '';
-  row[COLS_BANQUE.periode]      = op.periode       || '';
-  row[COLS_BANQUE.type_mvt]     = op.type_mvt      || '';
-  row[COLS_BANQUE.type_comp]    = op.type_comp     || '';
-  row[COLS_BANQUE.description]  = op.description   || '';
-  row[COLS_BANQUE.nom]          = op.nom           || '';
-  row[COLS_BANQUE.ref_cheque]   = op.ref_cheque    || '';
-  row[COLS_BANQUE.ref_remise]   = op.ref_remise    || '';
-  row[COLS_BANQUE.lien_facture] = op.lien_facture  || '';
-  row[COLS_BANQUE.flag_check]   = op.flag_check    || 'FALSE';
-  row[COLS_BANQUE.flag_comment] = op.flag_comment  || '';
+  const row = new Array(20).fill('');
+  row[COLS_BANQUE.date]           = op.date           || '';
+  row[COLS_BANQUE.libelle]        = op.libelle        || '';
+  row[COLS_BANQUE.debit]          = op.debit          || '';
+  row[COLS_BANQUE.credit]         = op.credit         || '';
+  row[COLS_BANQUE.solde]          = op.solde          || '';
+  row[COLS_BANQUE.periode]        = op.periode        || '';
+  row[COLS_BANQUE.type_mvt]       = op.type_mvt       || '';
+  row[COLS_BANQUE.description]    = op.description    || '';
+  row[COLS_BANQUE.nom]            = op.nom            || '';
+  row[COLS_BANQUE.type_comp]      = op.type_comp      || '';
+  row[COLS_BANQUE.num_facture]    = op.num_facture    || '';
+  row[COLS_BANQUE.nom_chat]       = op.nom_chat       || '';
+  row[COLS_BANQUE.num_don_fiscal] = op.num_don_fiscal || '';
+  row[COLS_BANQUE.flag_check]     = op.flag_check     || 'FALSE';
+  row[COLS_BANQUE.ref_remise]     = op.ref_remise     || '';
+  row[COLS_BANQUE.num_rem_espece] = op.num_rem_espece || '';
+  row[COLS_BANQUE.ref_cheque]     = op.ref_cheque     || '';
+  row[COLS_BANQUE.lien_facture]   = op.lien_facture   || '';
+  row[COLS_BANQUE.statut]         = op.statut         || '';
+  row[COLS_BANQUE.flag_comment]   = op.flag_comment   || '';
   await updateRange(SHEETS_CONFIG.sheets.banque, sheetRow, 0, [row]);
   await logAction('MODIF', 'Banque', op.libelle, `Modifié le ${todayFR()}`);
 }
