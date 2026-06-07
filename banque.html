@@ -524,9 +524,9 @@ function renderTable(){
     const hasChq  = r[cb.ref_cheque] ? `<span class="chip-chq" title="Chèque lié">CHQ</span>` : '';
     const hasBrd  = r[cb.ref_remise] ? `<span class="chip-brd" title="Remise liée">BRD</span>` : '';
 
-    // Ventilation badge
+    // Ventilation badge (description contient JSON ventilation si ventilé)
     let ventBadge = '';
-    try { const meta=JSON.parse(r[cb.description]||'{}'); if(meta.ventilation) ventBadge=`<span class="chip-vent">Venté</span>`; } catch(e){}
+    try { const m=JSON.parse(r[cb.description]||'{}'); if(m.ventilation) ventBadge=`<span class="chip-vent">Venté</span>`; } catch(e){}
 
     // PDF
     const hasPdf = r[cb.lien_facture]
@@ -536,14 +536,14 @@ function renderTable(){
     // Solde calculé
     const soldeCalc = soldeMap.has(r) ? fmt(soldeMap.get(r)) : '—';
 
-    // Extraire méta JSON pour affichage (num facture, nom chat, etc.)
-    let meta = {};
-    try { meta = JSON.parse(r[cb.description]||'{}'); } catch(e){}
-    const numFacture    = meta.num_facture   || r[cb.description] || '';
-    const nomChat       = r[cb.nom]          || meta.nom_chat     || '';
-    const numDonFiscal  = meta.num_don_fiscal|| '';
-    const numBordChq    = r[cb.ref_cheque]   || '';
-    const numRemEspece  = meta.num_rem_espece|| '';
+    // Extraire les champs directs (plus de JSON)
+    const numFacture    = r[cb.num_facture]    || '';
+    const nomChat       = r[cb.nom_chat]       || '';
+    const numDonFiscal  = r[cb.num_don_fiscal] || '';
+    const numBordChq    = r[cb.ref_cheque]     || '';
+    const numRemEspece  = r[cb.num_rem_espece] || '';
+    const typeComp      = r[cb.type_comp]      || '';
+    const descVal       = r[cb.description]    || '';
 
     if (isEditing) {
       // ---- LIGNE D'ÉDITION INLINE ----
@@ -559,13 +559,15 @@ function renderTable(){
           <td class="r"><input type="text" id="ei-credit" value="${r[cb.credit]||''}" style="width:70px;text-align:right;"></td>
           <td class="r" style="color:var(--text-3);font-size:10px;">${soldeCalc}</td>
           <td><select id="ei-type" style="width:110px;">${typeOpts}</select></td>
-          <td><input type="text" id="ei-description" value="${escH(numFacture)}" style="width:90px;" placeholder="N° facture…"></td>
-          <td><input type="text" id="ei-type-comp" value="${escH(r[cb.type_comp]||meta.type_comp||'')}" style="width:90px;" placeholder="Libellé comp."></td>
+          <td><input type="text" id="ei-description" value="${escH(descVal)}" style="width:90px;" placeholder="Description…"></td>
+          <td><input type="text" id="ei-type-comp" value="${escH(typeComp)}" style="width:90px;" placeholder="Libellé comp."></td>
+          <td><input type="text" id="ei-num-facture" value="${escH(numFacture)}" style="width:80px;" placeholder="N° facture"></td>
           <td><input type="text" id="ei-nom-chat" value="${escH(nomChat)}" style="width:80px;"></td>
           <td><input type="text" id="ei-don-fiscal" value="${escH(numDonFiscal)}" style="width:70px;"></td>
-          <td><input type="text" id="ei-ref-cheque" value="${escH(numBordChq)}" style="width:70px;"></td>
+          <td><input type="text" id="ei-ref-remise" value="${escH(r[cb.ref_remise]||'')}" style="width:70px;"></td>
           <td><input type="text" id="ei-rem-espece" value="${escH(numRemEspece)}" style="width:70px;"></td>
-          <td>${hasChq}${hasBrd}${ventBadge}</td>
+          <td><input type="text" id="ei-ref-cheque" value="${escH(numBordChq)}" style="width:70px;"></td>
+          <td style="white-space:nowrap;">${hasChq}${hasBrd}${ventBadge}</td>
           <td>${hasPdf}</td>
           <td><button class="flag-btn ${flagged?'on':''}" onclick="event.stopPropagation();openFlag(${ri},'${escH(r[cb.libelle]||'')}','${escH(comment)}',${flagged})" title="Annoter"><i class="ti ti-flag${flagged?'-filled':''}"></i></button></td>
           <td class="flag-comment-cell">${comment}</td>
@@ -583,13 +585,15 @@ function renderTable(){
       <td class="r amount-c">${r[cb.credit] ? fmt(r[cb.credit]) : ''}</td>
       <td class="r" style="color:var(--text-3);font-size:10px;">${soldeCalc}</td>
       <td><span class="chip chip-${chipType(r[cb.type_mvt])}">${r[cb.type_mvt]||''}</span></td>
-      <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--text-3);" title="${escH(numFacture)}">${numFacture}</td>
-      <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--text-3);">${escH(r[cb.type_comp]||meta.type_comp||'')}</td>
+      <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--text-3);" title="${escH(descVal)}">${escH(descVal)}</td>
+      <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--text-3);">${escH(typeComp)}</td>
+      <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--text-3);">${escH(numFacture)}</td>
       <td style="font-size:10px;color:var(--text-3);">${escH(nomChat)}</td>
       <td style="font-size:10px;color:var(--text-3);">${escH(numDonFiscal)}</td>
+      <td style="font-size:10px;">${r[cb.ref_remise]?`<span class="chip-brd">${escH(r[cb.ref_remise])}</span>`:''}</td>
+      <td style="font-size:10px;color:var(--text-3);">${escH(numRemEspece)}</td>
       <td style="font-size:10px;">${numBordChq?`<span class="chip-chq">${escH(numBordChq)}</span>`:''}</td>
-      <td style="font-size:10px;">${numRemEspece?`<span class="chip-vent">${escH(numRemEspece)}</span>`:''}</td>
-      <td style="white-space:nowrap;">${hasChq}${hasBrd}${ventBadge}</td>
+      <td style="white-space:nowrap;">${ventBadge}</td>
       <td class="r">${hasPdf}</td>
       <td class="r"><button class="flag-btn ${flagged?'on':''}" onclick="event.stopPropagation();openFlag(${ri},'${escH(r[cb.libelle]||'')}','${escH(comment)}',${flagged})" title="Annoter"><i class="ti ti-flag${flagged?'-filled':''}"></i></button></td>
       <td class="flag-comment-cell" onclick="event.stopPropagation();openFlag(${ri},'${escH(r[cb.libelle]||'')}','${escH(comment)}',${flagged})">${comment}</td>
@@ -606,16 +610,18 @@ function renderTable(){
         <th class="r">Crédit${si(-1)}</th>
         <th class="r">Solde calc.${si(-1)}</th>
         ${mkTh('Type mvt',cb.type_mvt)}
-        <th>N° facture / Desc.${si(-1)}</th>
+        <th>Description${si(-1)}</th>
         <th>Libellé comp.${si(-1)}</th>
+        <th>N° facture${si(-1)}</th>
         <th>Nom chat${si(-1)}</th>
         <th>N° don fiscal${si(-1)}</th>
-        <th>N° bord. CHQ${si(-1)}</th>
-        <th>N° rem. espèce${si(-1)}</th>
-        <th>Liens</th>
+        <th>Bord. remise${si(-1)}</th>
+        <th>Rem. espèce${si(-1)}</th>
+        <th>N° CHQ${si(-1)}</th>
+        <th>Ventil.</th>
         <th class="r">PDF</th>
         <th class="r">🔍</th>
-        <th>Commentaire</th>
+        <th>Annotation</th>
       </tr></thead>
       <tbody>${trs}</tbody>
     </table>`;
@@ -658,42 +664,27 @@ async function saveInlineEdit(ri){
   const cb = Sheets.cols.banque;
   const r  = allRows[ri];
 
-  const date      = document.getElementById('ei-date')?.value.trim()        || r[cb.date]     || '';
-  const libelle   = document.getElementById('ei-libelle')?.value.trim()     || r[cb.libelle]  || '';
-  const debit     = document.getElementById('ei-debit')?.value.trim()       || '';
-  const credit    = document.getElementById('ei-credit')?.value.trim()      || '';
-  const type_mvt  = document.getElementById('ei-type')?.value               || r[cb.type_mvt] || '';
-  const type_comp = document.getElementById('ei-type-comp')?.value.trim()   || '';
-  const nomChat   = document.getElementById('ei-nom-chat')?.value.trim()    || '';
-  const donFiscal = document.getElementById('ei-don-fiscal')?.value.trim()  || '';
-  const refCheque = document.getElementById('ei-ref-cheque')?.value.trim()  || r[cb.ref_cheque]|| '';
-  const remEspece = document.getElementById('ei-rem-espece')?.value.trim()  || '';
-  const descRaw   = document.getElementById('ei-description')?.value.trim() || '';
-
-  // Construire meta JSON (préserver ventilation existante)
-  let meta = {};
-  try { meta = JSON.parse(r[cb.description]||'{}'); } catch(e){}
-  if (descRaw) meta.num_facture = descRaw;
-  if (nomChat) meta.nom_chat    = nomChat;
-  if (donFiscal) meta.num_don_fiscal = donFiscal;
-  if (remEspece) meta.num_rem_espece = remEspece;
-  if (type_comp) meta.type_comp = type_comp;
-
   const op = {
-    date, libelle,
-    debit:   debit  ? parseFloat(debit.replace(',','.'))  : '',
-    credit:  credit ? parseFloat(credit.replace(',','.')) : '',
-    solde:   r[cb.solde] || '',
-    periode: r[cb.periode] || '',
-    type_mvt,
-    type_comp,
-    description: Object.keys(meta).length ? JSON.stringify(meta) : '',
-    nom:         nomChat,
-    ref_cheque:  refCheque,
-    ref_remise:  r[cb.ref_remise]  || '',
-    lien_facture:r[cb.lien_facture]|| '',
-    flag_check:  r[cb.flag_check]  || 'FALSE',
-    flag_comment:r[cb.flag_comment]|| '',
+    date:           document.getElementById('ei-date')?.value.trim()        || r[cb.date]     || '',
+    libelle:        document.getElementById('ei-libelle')?.value.trim()     || r[cb.libelle]  || '',
+    debit:          document.getElementById('ei-debit')?.value.trim().replace(',','.')  || '',
+    credit:         document.getElementById('ei-credit')?.value.trim().replace(',','.') || '',
+    solde:          r[cb.solde]          || '',
+    periode:        r[cb.periode]        || '',
+    type_mvt:       document.getElementById('ei-type')?.value               || r[cb.type_mvt] || '',
+    description:    document.getElementById('ei-description')?.value.trim() || r[cb.description] || '',
+    nom:            r[cb.nom]            || '',
+    type_comp:      document.getElementById('ei-type-comp')?.value.trim()   || r[cb.type_comp]      || '',
+    num_facture:    document.getElementById('ei-num-facture')?.value.trim() || r[cb.num_facture]    || '',
+    nom_chat:       document.getElementById('ei-nom-chat')?.value.trim()    || r[cb.nom_chat]       || '',
+    num_don_fiscal: document.getElementById('ei-don-fiscal')?.value.trim()  || r[cb.num_don_fiscal] || '',
+    flag_check:     r[cb.flag_check]     || 'FALSE',
+    ref_remise:     document.getElementById('ei-ref-remise')?.value.trim()  || r[cb.ref_remise]     || '',
+    num_rem_espece: document.getElementById('ei-rem-espece')?.value.trim()  || r[cb.num_rem_espece] || '',
+    ref_cheque:     document.getElementById('ei-ref-cheque')?.value.trim()  || r[cb.ref_cheque]     || '',
+    lien_facture:   r[cb.lien_facture]   || '',
+    statut:         r[cb.statut]         || '',
+    flag_comment:   r[cb.flag_comment]   || '',
   };
 
   try {
@@ -843,30 +834,41 @@ async function savePanel(){
   const cb=Sheets.cols.banque, r=allRows[panelRowIdx];
   const comment=document.getElementById('rap-comment').value.trim();
   const flagged=document.getElementById('rap-flag').checked;
-  const meta={};
-  if(ventItems.length>1) meta.ventilation=ventItems;
-  if(linkedCheque)  meta.cheque ={num:linkedCheque.data[Sheets.cols.cheque.num_cheque],montant:linkedCheque.data[Sheets.cols.cheque.montant]};
-  if(linkedFacture) meta.facture={fournisseur:linkedFacture.data[Sheets.cols.facture.fournisseur],montant:linkedFacture.data[Sheets.cols.facture.montant_ttc],lien:linkedFacture.data[Sheets.cols.facture.lien_pdf]};
-  if(linkedRemise)  meta.remise ={num:linkedRemise.data[Sheets.cols.remise.num_bordereau],montant:linkedRemise.data[Sheets.cols.remise.montant_total]};
-  const caisseSrc=document.getElementById('rap-caisse-source').value;
-  const caisseMont=parseMontant(document.getElementById('rap-caisse-montant').value||'');
-  if(caisseSrc&&caisseMont>0) meta.remise_caisse={source:caisseSrc,montant:caisseMont,date:document.getElementById('rap-caisse-date').value};
+  const sheetRow=panelRowIdx+2;
+
   try{
-    const sheetRow=panelRowIdx+2;
-    const refs=[linkedCheque?linkedCheque.data[Sheets.cols.cheque.id]:'', linkedRemise?linkedRemise.data[Sheets.cols.remise.id]:''];
-    await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.ref_cheque,   refs[0]);
-    await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.ref_remise,   refs[1]);
+    // Flag et annotation
     await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.flag_check,   flagged?'TRUE':'FALSE');
     await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.flag_comment, comment);
-    if(Object.keys(meta).length>0) await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, JSON.stringify(meta));
-    if(linkedCheque) await Sheets.encaisserCheque(linkedCheque.idx, r[cb.date]||Sheets.todayFR(), r[cb.libelle]||'Encaissement');
-    if(linkedRemise) await Sheets.encaisserRemise(linkedRemise.idx, r[cb.date]||Sheets.todayFR(), r[cb.libelle]||'Encaissement');
+
+    // Lier chèque → colonne Q (ref_cheque)
+    if(linkedCheque){
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.ref_cheque, linkedCheque.data[Sheets.cols.cheque.num_cheque]||'');
+      await Sheets.encaisserCheque(linkedCheque.idx, r[cb.date]||Sheets.todayFR(), r[cb.libelle]||'Encaissement');
+    }
+
+    // Lier remise → colonne O (ref_remise)
+    if(linkedRemise){
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.ref_remise, linkedRemise.data[Sheets.cols.remise.num_bordereau]||'');
+      await Sheets.encaisserRemise(linkedRemise.idx, r[cb.date]||Sheets.todayFR(), r[cb.libelle]||'Encaissement');
+    }
+
+    // Lier facture → colonne R (lien_facture) + marquer payée
     if(linkedFacture){
       const cf=Sheets.cols.facture, fi=linkedFacture.idx;
       await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.statut,        'payee');
       await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.date_reglement, r[cb.date]||Sheets.todayFR());
-      if(linkedFacture.data[cf.lien_pdf]) await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.lien_facture, linkedFacture.data[cf.lien_pdf]);
+      if(linkedFacture.data[cf.lien_pdf])
+        await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.lien_facture, linkedFacture.data[cf.lien_pdf]);
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.num_facture,
+        linkedFacture.data[cf.num_facture]||linkedFacture.data[cf.fournisseur]||'');
     }
+
+    // Ventilation → stocker en description si multiple
+    if(ventItems.length>1){
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, JSON.stringify({ventilation:ventItems}));
+    }
+
     await Sheets.logAction('MODIF','Banque',r[cb.libelle]||'?','Rapprochement enregistré');
     closePanel();
     clearSelection();
