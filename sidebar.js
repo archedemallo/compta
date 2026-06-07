@@ -24,6 +24,10 @@ function buildSidebar(activePage) {
     { id: 'caisse1physique',   label: 'Caisse 1',           icon: 'ti-safe',           href: 'caisse-physique.html' },
     { id: 'caisse2physique',   label: 'Caisse 2',           icon: 'ti-safe',           href: 'caisse-physique2.html' },
 
+    { section: 'Import' },
+    { id: 'import-suivi',         label: 'Import Suivi - Formulaires',    icon: 'ti-download', href: 'import-suivi.html' },
+    { id: 'import-suivi-archive', label: 'Déjà importés',   icon: 'ti-history',  href: 'import-suivi-archive.html' },
+     
     { section: 'Partage' },
     { id: 'synthese',  label: 'Vue synthèse',       icon: 'ti-eye',            href: 'synthese.html' },
     { id: 'alertes',   label: 'Journal / Alertes',  icon: 'ti-bell',           href: 'alertes.html', badge: true, adminOnly: true },
