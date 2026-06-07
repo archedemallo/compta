@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caisse physique 1 — Arche de Mallo</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  .split-layout{display:grid;grid-template-columns:1fr 320px;gap:14px;align-items:start;}
+  .form-card{background:var(--surface);border:0.5px solid var(--orange);border-radius:var(--radius);padding:18px 20px;position:sticky;top:60px;}
+  .form-title{font-size:13px;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px;}
+  .form-title i{color:var(--orange);}
+  .form-group{margin-bottom:10px;}
+  .form-label{display:block;font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
+  .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .list-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px;}
+  .list-head{padding:12px 16px;border-bottom:0.5px solid var(--border);}
+  .list-title{font-size:13px;font-weight:600;margin-bottom:8px;}
+  .filters-bar{display:flex;gap:6px;flex-wrap:nowrap;align-items:center;}
+  .f-select{font-size:11px;padding:4px 8px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text-2);font-family:'DM Sans',sans-serif;}
+  .kpi-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+  .kpi{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;}
+  .kpi-label{font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
+  .kpi-value{font-size:18px;font-weight:600;}
+  .kpi-sub{font-size:10px;color:var(--text-3);margin-top:2px;}
+  table{width:100%;border-collapse:collapse;font-size:11px;}
+  thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:7px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);white-space:nowrap;}
+  tbody td{padding:7px 10px;border-bottom:0.5px solid var(--border);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--cream);}
+  .r{text-align:right;font-variant-numeric:tabular-nums;}
+  .del-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;color:var(--red);}
+  .expand-btn{background:none;border:0.5px solid var(--border-mid);border-radius:4px;cursor:pointer;font-size:11px;padding:2px 6px;color:var(--text-2);font-family:'DM Sans',sans-serif;transition:all 0.15s;}
+  .expand-btn:hover{background:var(--cream);}
+  .expand-btn.open{background:var(--orange);color:white;border-color:var(--orange);}
+  .detail-row td{padding:0!important;border-bottom:0.5px solid var(--border);}
+  .detail-inner{background:var(--surface-2);padding:10px 16px;}
+
+  /* --- Section dénominations --- */
+  .denom-section{margin-bottom:12px;}
+  .denom-section-title{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-3);margin-bottom:6px;padding-bottom:4px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:4px;}
+  .denom-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
+
+  /* --- Billet coloré (style modèle 5) --- */
+  .billet-item{border-radius:var(--radius-sm);border:0.5px solid;padding:5px 4px;text-align:center;}
+  .billet-note{font-size:11px;font-weight:600;margin-bottom:3px;}
+  .billet-input{width:100%;border:0.5px solid rgba(0,0,0,0.15);border-radius:3px;font-size:10px;padding:2px 4px;text-align:center;font-family:'DM Sans',sans-serif;background:rgba(255,255,255,0.7);}
+  .billet-total{font-size:9px;margin-top:3px;font-weight:500;}
+
+  /* Couleurs billets euro */
+  .b500{background:#EAF3DE;border-color:#3B6D11;color:#27500A;}
+  .b500 .billet-input{color:#27500A;}
+  .b500 .billet-total{color:#27500A;}
+  .b200{background:#E6F1FB;border-color:#185FA5;color:#0C447C;}
+  .b200 .billet-input{color:#0C447C;}
+  .b200 .billet-total{color:#0C447C;}
+  .b100{background:#FAEEDA;border-color:#854F0B;color:#633806;}
+  .b100 .billet-input{color:#633806;}
+  .b100 .billet-total{color:#633806;}
+  .b50{background:#FAECE7;border-color:#993C1D;color:#712B13;}
+  .b50 .billet-input{color:#712B13;}
+  .b50 .billet-total{color:#712B13;}
+  .b20{background:#EEEDFE;border-color:#534AB7;color:#3C3489;}
+  .b20 .billet-input{color:#3C3489;}
+  .b20 .billet-total{color:#3C3489;}
+  .b10{background:#F1EFE8;border-color:#5F5E5A;color:#444441;}
+  .b10 .billet-input{color:#444441;}
+  .b10 .billet-total{color:#444441;}
+  .b5{background:#F5F0EA;border-color:#888780;color:#5F5E5A;}
+  .b5 .billet-input{color:#5F5E5A;}
+  .b5 .billet-total{color:#5F5E5A;}
+
+  /* --- Pièce en cercle (style modèle 5) --- */
+  .piece-item{display:flex;flex-direction:column;align-items:center;gap:3px;}
+  .piece-circle{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1.5px solid;}
+  .piece-label{font-size:9px;font-weight:600;}
+  .piece-input{width:36px;border:0.5px solid var(--border-mid);border-radius:3px;font-size:10px;padding:2px 3px;text-align:center;font-family:'DM Sans',sans-serif;background:var(--surface);}
+  .piece-total{font-size:8px;font-weight:500;}
+
+  /* Pièces or (2€, 1€, 0.50€) */
+  .p-gold{background:#FAEEDA;border-color:#EF9F27;color:#633806;}
+  .p-gold .piece-label{color:#633806;}
+  .p-gold .piece-total{color:#854F0B;}
+  /* Pièces argent (0.20€ et moins) */
+  .p-silver{background:#D3D1C7;border-color:#B4B2A9;color:#444441;}
+  .p-silver .piece-label{color:#444441;}
+  .p-silver .piece-total{color:#5F5E5A;}
+
+  /* --- Total bar --- */
+  .total-bar{background:var(--warm);border-radius:var(--radius-sm);padding:10px 12px;margin-top:10px;}
+  .total-bar-top{display:flex;justify-content:space-between;align-items:center;}
+  .total-bar-label{font-size:10px;color:var(--text-2);}
+  .total-bar-val{font-size:18px;font-weight:600;color:var(--green);}
+  .total-bar-detail{display:flex;gap:12px;margin-top:4px;font-size:9px;color:var(--text-3);}
+  .total-bar-detail span strong{color:var(--text-2);}
+
+  /* Modales */
+  .modal-overlay{position:fixed;inset:0;background:rgba(61,43,31,0.35);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
+  .modal{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-md);width:440px;max-width:95vw;}
+  .modal-header{padding:14px 18px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+  .modal-title{font-size:13px;font-weight:600;}
+  .modal-close{background:none;border:none;font-size:18px;color:var(--text-3);cursor:pointer;}
+  .modal-body{padding:18px;}
+  .modal-footer{padding:12px 18px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+  .confirm-detail{margin-top:10px;padding:10px;background:var(--red-bg);border-radius:var(--radius-sm);font-size:12px;color:var(--red);}
+  .success-toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:white;padding:10px 18px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;z-index:999;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-md);animation:slideIn 0.25s ease;}
+  @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .spinner{display:inline-block;animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title"><i class="ti ti-safe" style="color:var(--orange)"></i> Caisse physique 1 — Comptage</div>
+    <div class="topbar-right"><span style="font-size:11px;color:var(--text-3);" id="topbar-per"></span></div>
+  </div>
+  <div class="page-content">
+
+    <div class="kpi-bar" id="kpi-bar"></div>
+
+    <div class="split-layout">
+
+      <!-- GAUCHE : historique -->
+      <div>
+        <div class="list-card">
+          <div class="list-head">
+            <div class="list-title">Historique des comptages — Caisse 1</div>
+            <div class="filters-bar">
+              <select class="f-select" id="fl-per" onchange="renderKPIs();renderTable()"></select>
+              <button class="btn btn-secondary btn-sm" onclick="clearFilters()"><i class="ti ti-x"></i> Effacer</button>
+            </div>
+          </div>
+          <div id="table-wrap" style="overflow-x:auto;max-height:600px;overflow-y:auto;">
+            <div style="padding:32px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DROITE : formulaire sticky -->
+      <div>
+        <div class="form-card">
+          <div class="form-title"><i class="ti ti-plus"></i> Nouveau comptage</div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Période</label>
+              <select id="f-per"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date du comptage</label>
+              <input type="date" id="f-date">
+            </div>
+          </div>
+
+          <!-- BILLETS -->
+          <div class="denom-section">
+            <div class="denom-section-title"><i class="ti ti-notes"></i> Billets</div>
+            <div class="denom-grid" id="billets-grid"></div>
+          </div>
+
+          <!-- PIÈCES -->
+          <div class="denom-section">
+            <div class="denom-section-title"><i class="ti ti-circle"></i> Pièces</div>
+            <div class="denom-grid" id="pieces-grid"></div>
+          </div>
+
+          <!-- TOTAL -->
+          <div class="total-bar">
+            <div class="total-bar-top">
+              <span class="total-bar-label">Total calculé</span>
+              <span class="total-bar-val" id="total-global">0,00 €</span>
+            </div>
+            <div class="total-bar-detail">
+              <span>Billets : <strong id="total-billets">0,00 €</strong></span>
+              <span>Pièces : <strong id="total-pieces">0,00 €</strong></span>
+            </div>
+          </div>
+
+          <div id="form-err" class="hidden" style="color:var(--red);font-size:11px;padding:6px 0;margin-top:4px;"></div>
+          <div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);">
+            <button class="btn btn-primary" style="flex:1;" id="btn-submit" onclick="submitComptage()"><i class="ti ti-device-floppy"></i> Enregistrer</button>
+            <button class="btn btn-secondary" onclick="resetForm()"><i class="ti ti-refresh"></i> Vider</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SUPPRIMER -->
+<div class="modal-overlay hidden" id="modal-del">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-trash" style="color:var(--red)"></i> Supprimer le comptage</span><button class="modal-close" onclick="closeDel()">×</button></div>
+    <div class="modal-body"><div style="font-size:12px;">Êtes-vous sûr de vouloir supprimer ce comptage ?</div><div class="confirm-detail" id="del-detail"></div></div>
+    <div class="modal-footer"><button class="btn btn-secondary btn-sm" onclick="closeDel()">Annuler</button><button class="btn btn-danger btn-sm" onclick="confirmDel()"><i class="ti ti-trash"></i> Supprimer</button></div>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script src="sheets.js"></script>
+<script src="sidebar.js"></script>
+<script>
+const CAISSE_NUM = 1;
+
+// Définition des coupures avec couleurs modèle 5
+const BILLETS = [
+  { val:500, label:'500 €', cls:'b500', key:'b500' },
+  { val:200, label:'200 €', cls:'b200', key:'b200' },
+  { val:100, label:'100 €', cls:'b100', key:'b100' },
+  { val:50,  label:'50 €',  cls:'b50',  key:'b50'  },
+  { val:20,  label:'20 €',  cls:'b20',  key:'b20'  },
+  { val:10,  label:'10 €',  cls:'b10',  key:'b10'  },
+  { val:5,   label:'5 €',   cls:'b5',   key:'b5'   },
+];
+const PIECES = [
+  { val:2,    label:'2 €',   cls:'p-gold',   key:'p200' },
+  { val:1,    label:'1 €',   cls:'p-gold',   key:'p100' },
+  { val:0.5,  label:'0,50 €',cls:'p-gold',   key:'p050' },
+  { val:0.2,  label:'0,20 €',cls:'p-silver', key:'p020' },
+  { val:0.1,  label:'0,10 €',cls:'p-silver', key:'p010' },
+  { val:0.05, label:'0,05 €',cls:'p-silver', key:'p005' },
+  { val:0.02, label:'0,02 €',cls:'p-silver', key:'p002' },
+  { val:0.01, label:'0,01 €',cls:'p-silver', key:'p001' },
+];
+
+let allRows = [], delIdx = null;
+const openRows = new Set();
+
+// ============================================================
+// INIT
+// ============================================================
+Auth.requireAuth(async () => {
+  await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
+  Sidebar.build('caisse1physique');
+  const pers = Sheets.getPeriodes(), ap = Sidebar.getActivePeriode();
+  document.getElementById('topbar-per').textContent = ap;
+
+  ['f-per','fl-per'].forEach(id => {
+    const s = document.getElementById(id); if (!s) return;
+    pers.forEach(p => { const o = document.createElement('option'); o.value=p; o.textContent=p; if(p===ap)o.selected=true; s.appendChild(o); });
+  });
+
+  document.getElementById('f-date').value = Sheets.todayISO();
+  buildDenomGrids();
+  await loadData();
+});
+
+function onPeriodeChange(p) {
+  document.getElementById('f-per').value = p;
+  document.getElementById('fl-per').value = p;
+  document.getElementById('topbar-per').textContent = p;
+  renderKPIs(); renderTable();
+}
+
+// ============================================================
+// CONSTRUCTION DES GRILLES
+// ============================================================
+function buildDenomGrids() {
+  // Billets
+  const bg = document.getElementById('billets-grid');
+  BILLETS.forEach(b => {
+    const div = document.createElement('div');
+    div.className = 'billet-item ' + b.cls;
+    div.innerHTML = `
+      <div class="billet-note">${b.label}</div>
+      <input class="billet-input denom-input" data-val="${b.val}" data-key="${b.key}" value="0" type="number" min="0" step="1" oninput="updateTotal()">
+      <div class="billet-total" id="sub-${b.key}">= 0,00 €</div>`;
+    bg.appendChild(div);
+  });
+
+  // Pièces
+  const pg = document.getElementById('pieces-grid');
+  PIECES.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'piece-item';
+    div.innerHTML = `
+      <div class="piece-circle ${p.cls}"><span class="piece-label">${p.label.replace(' €','').replace(',','.')}</span></div>
+      <input class="piece-input denom-input" data-val="${p.val}" data-key="${p.key}" value="0" type="number" min="0" step="1" oninput="updateTotal()">
+      <div class="piece-total ${p.cls}" id="sub-${p.key}">0,00 €</div>`;
+    pg.appendChild(div);
+  });
+}
+
+// ============================================================
+// TOTAL EN TEMPS RÉEL
+// ============================================================
+function updateTotal() {
+  let totalBillets = 0, totalPieces = 0;
+  document.querySelectorAll('.denom-input').forEach(inp => {
+    const val = parseFloat(inp.dataset.val) || 0;
+    const qty = parseInt(inp.value) || 0;
+    const sous = Math.round(val * qty * 100) / 100;
+    const key = inp.dataset.key;
+    // Mettre à jour le sous-total de la coupure
+    const subEl = document.getElementById('sub-' + key);
+    if (subEl) subEl.textContent = (key.startsWith('b') ? '= ' : '') + fmt(sous);
+    if (BILLETS.find(b => b.key === key)) totalBillets += sous;
+    else totalPieces += sous;
+  });
+  totalBillets = Math.round(totalBillets * 100) / 100;
+  totalPieces  = Math.round(totalPieces  * 100) / 100;
+  const total  = Math.round((totalBillets + totalPieces) * 100) / 100;
+  document.getElementById('total-billets').textContent = fmt(totalBillets);
+  document.getElementById('total-pieces').textContent  = fmt(totalPieces);
+  document.getElementById('total-global').textContent  = fmt(total);
+}
+
+// ============================================================
+// CHARGEMENT
+// ============================================================
+async function loadData() {
+  allRows = await Sheets.getCaissePhysique(CAISSE_NUM);
+  Sidebar.setLastUpdate();
+  renderKPIs(); renderTable();
+}
+
+// ============================================================
+// KPIs
+// ============================================================
+function renderKPIs() {
+  const cp = Sheets.cols.caissePhysique;
+  const per = document.getElementById('fl-per')?.value || Sidebar.getActivePeriode();
+  const rows = allRows.filter(r => r[cp.periode] !== undefined ? r[cp.periode] === per : true);
+  const last = rows.length > 0 ? rows[rows.length - 1] : null;
+  const soldActuel = last ? parseFloat(last[cp.total]) || 0 : 0;
+  const dateActuel = last ? (last[cp.mois] || '—') : '—';
+  const prev = rows.length > 1 ? rows[rows.length - 2] : null;
+  const soldPrev = prev ? parseFloat(prev[cp.total]) || 0 : null;
+  const diff = soldPrev !== null ? Math.round((soldActuel - soldPrev) * 100) / 100 : null;
+
+  document.getElementById('kpi-bar').innerHTML = `
+    <div class="kpi"><div class="kpi-label">Dernier solde constaté</div><div class="kpi-value" style="color:var(--green)">${fmt(soldActuel)}</div><div class="kpi-sub">Le ${dateActuel}</div></div>
+    <div class="kpi"><div class="kpi-label">Évolution</div>
+      <div class="kpi-value" style="color:${diff===null?'var(--text)':diff>=0?'var(--green)':'var(--red)'}">${diff!==null?(diff>=0?'+':'')+fmt(diff):'—'}</div>
+      <div class="kpi-sub">${diff!==null?'vs comptage précédent':'Premier comptage'}</div></div>
+    <div class="kpi"><div class="kpi-label">Comptages période</div><div class="kpi-value" style="color:var(--blue)">${rows.length}</div><div class="kpi-sub">Période ${per}</div></div>`;
+}
+
+// ============================================================
+// TABLEAU HISTORIQUE
+// ============================================================
+function renderTable() {
+  const cp = Sheets.cols.caissePhysique;
+  const per = document.getElementById('fl-per')?.value || Sidebar.getActivePeriode();
+  const rows = [...allRows.filter(r => r[cp.periode] !== undefined ? r[cp.periode] === per : true)].reverse();
+
+  if (!rows.length) {
+    document.getElementById('table-wrap').innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-3);font-size:12px;">Aucun comptage pour cette période</div>';
+    return;
+  }
+
+  const trs = rows.map(r => {
+    const ri = allRows.indexOf(r);
+    const id = 'cp-' + ri;
+    const isOpen = openRows.has(id);
+
+    // Calcul billets / pièces
+    const totalBillets = Math.round(BILLETS.reduce((s, b) => s + b.val * (parseInt(r[cp[b.key]] || 0)), 0) * 100) / 100;
+    const totalPieces  = Math.round(PIECES.reduce( (s, p) => s + p.val * (parseInt(r[cp[p.key]] || 0)), 0) * 100) / 100;
+
+    // Détail par coupure pour la ligne expansée
+    const detailBillets = BILLETS
+      .filter(b => parseInt(r[cp[b.key]] || 0) > 0)
+      .map(b => {
+        const qty = parseInt(r[cp[b.key]]);
+        const sous = Math.round(b.val * qty * 100) / 100;
+        return `<span style="font-size:10px;padding:2px 7px;border-radius:3px;margin:2px;display:inline-block;border:0.5px solid;" class="${b.cls}">${b.label} × ${qty} = ${fmt(sous)}</span>`;
+      }).join('');
+
+    const detailPieces = PIECES
+      .filter(p => parseInt(r[cp[p.key]] || 0) > 0)
+      .map(p => {
+        const qty = parseInt(r[cp[p.key]]);
+        const sous = Math.round(p.val * qty * 100) / 100;
+        return `<span style="font-size:10px;padding:2px 7px;border-radius:3px;margin:2px;display:inline-block;border:0.5px solid;" class="${p.cls}">${p.label} × ${qty} = ${fmt(sous)}</span>`;
+      }).join('');
+
+    const detailHtml = `
+      <div style="background:var(--surface-2);padding:10px 16px;">
+        <div style="margin-bottom:6px;">
+          <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-3);margin-bottom:4px;">Billets — ${fmt(totalBillets)}</div>
+          <div>${detailBillets || '<span style="font-size:10px;color:var(--text-3)">Aucun billet</span>'}</div>
+        </div>
+        <div>
+          <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-3);margin-bottom:4px;">Pièces — ${fmt(totalPieces)}</div>
+          <div>${detailPieces || '<span style="font-size:10px;color:var(--text-3)">Aucune pièce</span>'}</div>
+        </div>
+      </div>`;
+
+    return `
+      <tr>
+        <td><button class="expand-btn ${isOpen?'open':''}" onclick="toggleRow('${id}')">${isOpen?'−':'+'}</button></td>
+        <td style="color:var(--text-3);white-space:nowrap;">${r[cp.mois]||'—'}</td>
+        <td class="r" style="color:var(--green);font-weight:500;">${fmt(totalBillets)}</td>
+        <td class="r" style="color:var(--blue);font-weight:500;">${fmt(totalPieces)}</td>
+        <td class="r" style="font-weight:600;font-size:12px;">${fmt(parseFloat(r[cp.total])||0)}</td>
+        <td class="r">
+          <button class="del-btn" onclick="openDel(${ri},'${escH(r[cp.mois]||'')} — ${escH(fmt(parseFloat(r[cp.total])||0))}')" title="Supprimer"><i class="ti ti-trash"></i></button>
+        </td>
+      </tr>
+      <tr class="detail-row" id="detail-${id}" style="${isOpen?'':'display:none;'}">
+        <td colspan="6">${detailHtml}</td>
+      </tr>`;
+  }).join('');
+
+  document.getElementById('table-wrap').innerHTML = `
+    <table>
+      <thead><tr>
+        <th style="width:36px;"></th>
+        <th>Date</th>
+        <th class="r">Billets</th>
+        <th class="r">Pièces</th>
+        <th class="r">Total</th>
+        <th class="r">Actions</th>
+      </tr></thead>
+      <tbody>${trs}</tbody>
+    </table>`;
+}
+
+function toggleRow(id) {
+  if (openRows.has(id)) openRows.delete(id); else openRows.add(id);
+  renderTable();
+}
+
+function clearFilters() { renderKPIs(); renderTable(); }
+
+// ============================================================
+// ENREGISTREMENT
+// ============================================================
+async function submitComptage() {
+  document.getElementById('form-err').classList.add('hidden');
+  const date = document.getElementById('f-date').value;
+  const per  = document.getElementById('f-per').value;
+  if (!date) { showErr('La date est obligatoire.'); return; }
+
+  const qtys = {};
+  document.querySelectorAll('.denom-input').forEach(inp => { qtys[inp.dataset.key] = parseInt(inp.value) || 0; });
+
+  let totalBillets = 0, totalPieces = 0;
+  BILLETS.forEach(b => { totalBillets += b.val * (qtys[b.key] || 0); });
+  PIECES.forEach(p  => { totalPieces  += p.val * (qtys[p.key]  || 0); });
+  totalBillets = Math.round(totalBillets * 100) / 100;
+  totalPieces  = Math.round(totalPieces  * 100) / 100;
+  const total  = Math.round((totalBillets + totalPieces) * 100) / 100;
+
+  const comptage = {
+    date: Sheets.normalizeDate(date),
+    mois: Sheets.normalizeDate(date),
+    periode: per,
+    total, total_billets: totalBillets, total_pieces: totalPieces,
+    ...Object.fromEntries([...BILLETS, ...PIECES].map(d => [d.key, qtys[d.key] || 0])),
+  };
+
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader-2 spinner"></i>';
+  try {
+    await Sheets.saveCaissePhysique(CAISSE_NUM, comptage);
+    showToast('Comptage enregistré !');
+    resetForm();
+    await loadData();
+  } catch(e) {
+    showErr('Erreur : ' + (e.message || '?'));
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="ti ti-device-floppy"></i> Enregistrer';
+  }
+}
+
+function resetForm() {
+  document.getElementById('f-date').value = Sheets.todayISO();
+  document.querySelectorAll('.denom-input').forEach(inp => inp.value = '0');
+  updateTotal();
+  document.getElementById('form-err').classList.add('hidden');
+}
+
+// ============================================================
+// SUPPRESSION
+// ============================================================
+function openDel(ri, detail) {
+  delIdx = ri;
+  document.getElementById('del-detail').textContent = detail;
+  document.getElementById('modal-del').classList.remove('hidden');
+}
+function closeDel() { document.getElementById('modal-del').classList.add('hidden'); delIdx = null; }
+async function confirmDel() {
+  if (delIdx === null) return;
+  try {
+    const sheet = CAISSE_NUM === 1 ? Sheets.config.sheets.caisse1 : Sheets.config.sheets.caisse2;
+    await Sheets.deleteRow(sheet, delIdx);
+    closeDel(); showToast('Comptage supprimé'); await loadData();
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function fmt(v) {
+  if (v === null || v === undefined || v === '') return '—';
+  return parseFloat(v).toLocaleString('fr-FR', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' €';
+}
+function showErr(m) { const e = document.getElementById('form-err'); e.textContent = m; e.classList.remove('hidden'); }
+function showToast(m) { const t = document.createElement('div'); t.className='success-toast'; t.innerHTML=`<i class="ti ti-check"></i> ${m}`; document.body.appendChild(t); setTimeout(()=>t.remove(),3000); }
+function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;'); }
+</script>
+</body>
+</html>
