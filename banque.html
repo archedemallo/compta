@@ -725,9 +725,7 @@ function openPanel(){
   document.getElementById('panel-line-info').textContent = `${r[cb.date]||''} — ${r[cb.libelle]||''} — ${fmt(montant)}`;
   document.getElementById('rap-comment').value = r[cb.flag_comment]||'';
   document.getElementById('rap-flag').checked  = r[cb.flag_check] === 'TRUE';
-  document.getElementById('rap-caisse-date').value = Sheets.todayISO();
-  document.getElementById('rap-caisse-montant').value = '';
-  document.getElementById('rap-caisse-source').selectedIndex = 0;
+
   // Vider les zones liées
   document.getElementById('rap-cheque-linked').innerHTML  = '';
   document.getElementById('rap-facture-linked').innerHTML = '';
@@ -925,15 +923,7 @@ async function savePanel(){
         await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.lien_facture, fac[cf.lien_pdf]);
     }
 
-    // Remise en caisse (espèces) → colonne P
-    const caisseSrc   = document.getElementById('rap-caisse-source').value;
-    const caisseMont  = parseMontant(document.getElementById('rap-caisse-montant').value||'');
-    const caisseDate  = document.getElementById('rap-caisse-date').value;
-    if(caisseSrc && caisseMont > 0){
-      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.num_rem_espece, `${caisseSrc} — ${fmt(caisseMont)} — ${caisseDate}`);
-      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,       'Virement interne');
-      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description,    `Dépôt caisse ${caisseSrc} du ${caisseDate}`);
-    }
+
 
     // Lier sortie caisse → cocher rapproché dans Caisse + reporter infos dans banque
     if(linkedCaisse){
