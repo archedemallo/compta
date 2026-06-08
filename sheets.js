@@ -5,7 +5,7 @@
 
 // ---- CONFIGURATION ----
 const SHEETS_CONFIG = {
-  spreadsheetId:   '1KOuX0XnccyjPOPntOJUYzivk2jGn07y7tp__gRIN3F0',
+  spreadsheetId:   'VOTRE_SPREADSHEET_ID',
   formulairesId:   '1y6yD4AohP7T10GE7mmguIqNWSnwla9t1mewBpCDej_Y',
   facturesDriveId: 'VOTRE_DOSSIER_DRIVE_ID',
   sheets: {
@@ -62,7 +62,7 @@ const COLS_CAISSE = {
   lien_facture: 15,
   flag_check:   16,
   flag_comment: 17,
-  suivi_ref:    18, 
+  rapproche:    18,  // S — Rapproché avec banque (TRUE/FALSE)
 };
 
 const COLS_BANQUE = {
@@ -86,7 +86,6 @@ const COLS_BANQUE = {
   lien_facture:   17,  // R — Liens PDF
   statut:         18,  // S — Statut
   flag_comment:   19,  // T — Annotation
-  suivi_ref:      20, 
 };
 
 const COLS_CHEQUE = {
@@ -252,7 +251,7 @@ async function deleteRow(sheetName, rowIndex) {
 
 // ---- SAUVEGARDER OPÉRATION CAISSE ----
 async function saveCaisseOperation(op) {
-  const row = new Array(19).fill('');
+  const row = new Array(18).fill('');
   row[COLS_CAISSE.source]       = op.source       || 'C1';
   row[COLS_CAISSE.date]         = op.date          || '';
   row[COLS_CAISSE.libelle]      = op.libelle       || '';
@@ -270,7 +269,6 @@ async function saveCaisseOperation(op) {
   row[COLS_CAISSE.lien_facture] = op.lien_facture  || '';
   row[COLS_CAISSE.flag_check]   = 'FALSE';
   row[COLS_CAISSE.flag_comment] = '';
-  row[COLS_CAISSE.suivi_ref] = op.suivi_ref || ''; 
   await appendRows(SHEETS_CONFIG.sheets.caisse, [row]);
   await logAction('AJOUT', 'Caisse', op.libelle, `${op.date} — ${op.type_mvt} — ${op.credit || op.debit}€`);
   if (!Auth.isAdmin()) await sendAlert(Auth.getUser(), 'Caisse', op);
@@ -279,7 +277,7 @@ async function saveCaisseOperation(op) {
 // ---- MODIFIER OPÉRATION CAISSE ----
 async function updateCaisseOperation(rowIndex, op) {
   const sheetRow = rowIndex + 2;
-  const row = new Array(19).fill('');
+  const row = new Array(18).fill('');
   row[COLS_CAISSE.source]       = op.source       || 'C1';
   row[COLS_CAISSE.date]         = op.date          || '';
   row[COLS_CAISSE.libelle]      = op.libelle       || '';
@@ -296,14 +294,13 @@ async function updateCaisseOperation(rowIndex, op) {
   row[COLS_CAISSE.lien_facture] = op.lien_facture  || '';
   row[COLS_CAISSE.flag_check]   = op.flag_check    || 'FALSE';
   row[COLS_CAISSE.flag_comment] = op.flag_comment  || '';
-  row[COLS_CAISSE.suivi_ref] = op.suivi_ref || ''; 
   await updateRange(SHEETS_CONFIG.sheets.caisse, sheetRow, 0, [row]);
   await logAction('MODIF', 'Caisse', op.libelle, `Modifié le ${todayFR()}`);
 }
 
 // ---- SAUVEGARDER OPÉRATION BANQUE ----
 async function saveBanqueOperation(op) {
-  const row = new Array(21).fill('');
+  const row = new Array(20).fill('');
   row[COLS_BANQUE.date]           = op.date           || '';
   row[COLS_BANQUE.libelle]        = op.libelle        || '';
   row[COLS_BANQUE.debit]          = op.debit          || '';
@@ -324,7 +321,6 @@ async function saveBanqueOperation(op) {
   row[COLS_BANQUE.lien_facture]   = op.lien_facture   || '';
   row[COLS_BANQUE.statut]         = op.statut         || '';
   row[COLS_BANQUE.flag_comment]   = '';
-  row[COLS_BANQUE.suivi_ref] = op.suivi_ref || ''; 
   await appendRows(SHEETS_CONFIG.sheets.banque, [row]);
   await logAction('AJOUT', 'Banque', op.libelle, `${op.date} — ${op.type_mvt} — ${op.credit || op.debit}€`);
   if (!Auth.isAdmin()) await sendAlert(Auth.getUser(), 'Banque', op);
@@ -333,7 +329,7 @@ async function saveBanqueOperation(op) {
 // ---- MODIFIER OPÉRATION BANQUE ----
 async function updateBanqueOperation(rowIndex, op) {
   const sheetRow = rowIndex + 2;
-  const row = new Array(21).fill('');
+  const row = new Array(20).fill('');
   row[COLS_BANQUE.date]           = op.date           || '';
   row[COLS_BANQUE.libelle]        = op.libelle        || '';
   row[COLS_BANQUE.debit]          = op.debit          || '';
@@ -354,7 +350,6 @@ async function updateBanqueOperation(rowIndex, op) {
   row[COLS_BANQUE.lien_facture]   = op.lien_facture   || '';
   row[COLS_BANQUE.statut]         = op.statut         || '';
   row[COLS_BANQUE.flag_comment]   = op.flag_comment   || '';
-  row[COLS_BANQUE.suivi_ref] = op.suivi_ref || ''; 
   await updateRange(SHEETS_CONFIG.sheets.banque, sheetRow, 0, [row]);
   await logAction('MODIF', 'Banque', op.libelle, `Modifié le ${todayFR()}`);
 }
@@ -562,6 +557,13 @@ function saveSoldeInitial(periode, compte, montant) {
   }
 }
 
+// ---- RAPPROCHER UNE LIGNE CAISSE (depuis banque) ----
+async function rapprocheCaisseOperation(rowIndex) {
+  const sheetRow = rowIndex + 2;
+  await updateCell(SHEETS_CONFIG.sheets.caisse, sheetRow, COLS_CAISSE.rapproche, 'TRUE');
+  await logAction('MODIF', 'Caisse', `Ligne ${rowIndex+1}`, 'Rapproché avec banque');
+}
+
 // ============================================================
 // JOURNAL
 // ============================================================
@@ -732,6 +734,7 @@ window.Sheets = {
   logAction,
   // Soldes initiaux
   getSoldeInitial, saveSoldeInitial,
+  rapprocheCaisseOperation,
   // Calculs
   calculerTotalCaisse, detectDoublons,
   // Paramètres
