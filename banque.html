@@ -23,14 +23,17 @@
   .list-head{padding:8px 12px;border-bottom:0.5px solid var(--border);}
 
   /* Filtres compacts sur 2 lignes */
-  .filters-row{display:flex;gap:4px;align-items:center;margin-bottom:4px;flex-wrap:nowrap;overflow-x:auto;}
-  .filters-row:last-child{margin-bottom:0;}
-  .f-select{font-size:10px;padding:3px 6px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text-2);font-family:'DM Sans',sans-serif;white-space:nowrap;flex-shrink:0;}
-  .f-input{font-size:10px;padding:3px 8px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;flex-shrink:0;}
-  .f-label{font-size:9px;color:var(--text-3);white-space:nowrap;flex-shrink:0;}
-  .f-input-sm{width:90px;}
-  .f-input-md{width:120px;}
-  .f-input-lg{flex:1;min-width:140px;max-width:200px;}
+  /* APRÈS */
+.filters-row{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;overflow-x:auto;}
+.f-select{font-size:11px;padding:4px 8px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text-2);font-family:'DM Sans',sans-serif;}
+.f-input{font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;}
+.f-label{font-size:10px;color:var(--text-3);white-space:nowrap;flex-shrink:0;}
+.f-input-sm{width:110px;}
+.f-input-md{width:120px;}
+.f-input-lg{width:160px;}
+.btn-xs{font-size:11px;padding:4px 8px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text-2);cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+.btn-xs:hover{background:var(--cream);}
+#result-count{font-size:10px;color:var(--text-3);white-space:nowrap;flex-shrink:0;}
   .btn-xs{font-size:10px;padding:2px 7px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text-2);cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;}
   .btn-xs:hover{background:var(--cream);}
   #result-count{font-size:9px;color:var(--text-3);white-space:nowrap;flex-shrink:0;}
@@ -145,34 +148,33 @@
     <!-- LISTE -->
     <div class="list-card" style="border-radius:0 0 var(--radius) var(--radius);border-top:none;">
       <!-- Filtres compacts 2 lignes -->
-      <div class="list-head">
-        <div class="filters-row">
-          <input class="f-input f-input-lg" type="text" id="fl-search" placeholder="🔍 Rechercher…" oninput="renderTable()">
-          <select class="f-select" id="fl-type" onchange="renderTable()"><option value="">Tous types</option></select>
-          <select class="f-select" id="fl-sens" onchange="renderTable()">
-            <option value="">D + C</option>
-            <option value="credit">Crédits</option>
-            <option value="debit">Débits</option>
-          </select>
-          <select class="f-select" id="fl-flag" onchange="renderTable()">
-            <option value="">Toutes</option>
-            <option value="flagged">À vérifier</option>
-            <option value="rapproche">Rapprochées</option>
-          </select>
-          <span id="result-count"></span>
-        </div>
-        <div class="filters-row">
-          <span class="f-label">Du :</span>
-          <input class="f-input f-input-sm" type="date" id="fl-date-from" onchange="renderTable()">
-          <span class="f-label">Au :</span>
-          <input class="f-input f-input-sm" type="date" id="fl-date-to" onchange="renderTable()">
-          <span class="f-label">Min :</span>
-          <input class="f-input f-input-sm" type="text" id="fl-montant-min" placeholder="0" oninput="renderTable()">
-          <span class="f-label">Max :</span>
-          <input class="f-input f-input-sm" type="text" id="fl-montant-max" placeholder="∞" oninput="renderTable()">
-          <button class="btn-xs" onclick="clearFilters()"><i class="ti ti-x"></i> Effacer</button>
-        </div>
-      </div>
+      <!-- REMPLACER les deux div.filters-row par : -->
+<div class="list-head">
+  <div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap;overflow-x:auto;">
+    <input class="f-input f-input-lg" type="text" id="fl-search" placeholder="🔍 Rechercher…" oninput="renderTable()" style="width:160px;">
+    <select class="f-select" id="fl-type" onchange="renderTable()"><option value="">Tous types</option></select>
+    <select class="f-select" id="fl-sens" onchange="renderTable()">
+      <option value="">D + C</option>
+      <option value="credit">Crédits</option>
+      <option value="debit">Débits</option>
+    </select>
+    <select class="f-select" id="fl-flag" onchange="renderTable()">
+      <option value="">Toutes</option>
+      <option value="flagged">À vérifier</option>
+      <option value="rapproche">Rapprochées</option>
+    </select>
+    <span class="f-label">Du :</span>
+    <input class="f-input" type="date" id="fl-date-from" onchange="renderTable()" style="width:130px;">
+    <span class="f-label">Au :</span>
+    <input class="f-input" type="date" id="fl-date-to" onchange="renderTable()" style="width:130px;">
+    <span class="f-label">Min :</span>
+    <input class="f-input" type="text" id="fl-montant-min" placeholder="0 €" oninput="renderTable()" style="width:70px;">
+    <span class="f-label">Max :</span>
+    <input class="f-input" type="text" id="fl-montant-max" placeholder="∞" oninput="renderTable()" style="width:70px;">
+    <button class="btn-xs" onclick="clearFilters()"><i class="ti ti-x"></i> Effacer</button>
+    <span id="result-count"></span>
+  </div>
+</div>
 
       <!-- Barre de sélection -->
       <div class="selection-bar" id="selection-bar">
