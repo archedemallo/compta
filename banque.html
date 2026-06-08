@@ -264,27 +264,17 @@
         <div id="rap-remise-linked"></div>
       </div>
 
-      <!-- REMISE EN CAISSE -->
+      <!-- LIAISON SORTIE CAISSE → BANQUE -->
       <div class="rap-section">
-        <div class="rap-section-title"><i class="ti ti-cash"></i> Remise en caisse</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-          <div class="form-group">
-            <label class="form-label">Source</label>
-            <select id="rap-caisse-source" style="padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);font-size:11px;font-family:'DM Sans',sans-serif;">
-              <option value="">—</option>
-              <option value="C1">Caisse 1</option>
-              <option value="C2">Caisse 2</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Montant (€)</label>
-            <input type="text" id="rap-caisse-montant" placeholder="0,00">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Date dépôt</label>
-            <input type="date" id="rap-caisse-date">
-          </div>
+        <div class="rap-section-title"><i class="ti ti-cash"></i> Lier à une sortie de caisse (dépôt espèces en banque)</div>
+        <div style="font-size:11px;color:var(--text-3);margin-bottom:8px;">Sorties de caisse non encore rapprochées avec la banque.</div>
+        <div class="rap-select-row">
+          <select id="rap-caisse-select" style="padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);font-size:11px;font-family:'DM Sans',sans-serif;">
+            <option value="">— Choisir une sortie caisse —</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="lierCaisse()"><i class="ti ti-check"></i> Lier</button>
         </div>
+        <div id="rap-caisse-linked"></div>
       </div>
 
       <!-- ANNOTATION -->
@@ -336,13 +326,13 @@
 // ============================================================
 // ÉTAT
 // ============================================================
-let allRows=[], allCheques=[], allRemises=[], allFactures=[];
+let allRows=[], allCheques=[], allRemises=[], allFactures=[], allCaisseRows=[];
 let selectedIdx = null;
 let editingIdx  = null;   // index dans allRows de la ligne en cours d'édition
 let sortCol=-1, sortAsc=true;
 let ventItems = [];
 let panelRowIdx = null;
-let linkedCheque = null, linkedFacture = null, linkedRemise = null;
+let linkedCheque = null, linkedFacture = null, linkedRemise = null, linkedCaisse = null;
 
 // ============================================================
 // INIT
@@ -380,11 +370,12 @@ async function loadData(){
       showTableError('Google Sheets non configuré.');
       return;
     }
-    [allRows, allCheques, allRemises, allFactures] = await Promise.all([
+    [allRows, allCheques, allRemises, allFactures, allCaisseRows] = await Promise.all([
       Sheets.getBanqueOperations(),
       Sheets.getCheques('en_attente'),
       Sheets.getRemises('en_attente'),
       Sheets.getFactures(),
+      Sheets.getCaisseOperations(),
     ]);
     Sidebar.setLastUpdate();
     updateSoldeBanner();
@@ -727,7 +718,7 @@ function clearSelection(){
 function openPanel(){
   if (selectedIdx === null) return;
   panelRowIdx   = selectedIdx;
-  linkedCheque  = null; linkedFacture = null; linkedRemise = null;
+  linkedCheque  = null; linkedFacture = null; linkedRemise = null; linkedCaisse = null;
   ventItems     = [];
   const cb = Sheets.cols.banque, r = allRows[panelRowIdx];
   const montant = parseFloat(r[cb.credit]||r[cb.debit]) || 0;
@@ -741,6 +732,7 @@ function openPanel(){
   document.getElementById('rap-cheque-linked').innerHTML  = '';
   document.getElementById('rap-facture-linked').innerHTML = '';
   document.getElementById('rap-remise-linked').innerHTML  = '';
+  document.getElementById('rap-caisse-linked').innerHTML  = '';
   ventItems = [{ montant, type_mvt: r[cb.type_mvt]||'' }];
   renderVentRows(montant);
   populateRapSelects();
@@ -804,6 +796,19 @@ function populateRapSelects(){
     sf.innerHTML+=`<option value="${i}">${r[cf.fournisseur]||'?'} — ${fmt(r[cf.montant_ttc])} — ${r[cf.date_facture]||'?'}</option>`;
   });
   sf.selectedIndex=0;
+
+  // Sorties caisse non rapprochées
+  const cc = Sheets.cols.caisse;
+  const sc2 = document.getElementById('rap-caisse-select');
+  sc2.innerHTML='<option value="">— Choisir une sortie caisse —</option>';
+  allCaisseRows
+    .map((r,i) => ({r, i}))
+    .filter(({r}) => parseFloat(r[cc.debit]) > 0 && r[cc.rapproche] !== 'TRUE')
+    .forEach(({r, i}) => {
+      const brd = r[cc.num_bordereau] ? ' — BRD: ' + r[cc.num_bordereau] : '';
+      sc2.innerHTML += '<option value="' + i + '">' + (r[cc.source]||'') + ' | ' + (r[cc.date]||'') + ' — ' + (r[cc.libelle]||'') + ' — ' + fmt(r[cc.debit]) + brd + '</option>';
+    });
+  sc2.selectedIndex=0;
 }
 
 function lierCheque(){
@@ -841,6 +846,19 @@ function lierRemise(){
     <div class="rap-linked">
       <span class="rap-linked-label"><strong>BRD ${r[cr.num_bordereau]||'?'}</strong> — ${r[cr.nb_cheques]||0} chèque(s) — ${fmt(r[cr.montant_total])}</span>
       <button class="rap-remove" onclick="linkedRemise=null;document.getElementById('rap-remise-linked').innerHTML='';"><i class="ti ti-x"></i></button>
+    </div>`;
+}
+
+function lierCaisse(){
+  const idx=parseInt(document.getElementById('rap-caisse-select').value);
+  if(isNaN(idx)||idx<0)return;
+  const cc=Sheets.cols.caisse, r=allCaisseRows[idx];
+  linkedCaisse={idx, data:r};
+  const brd = r[cc.num_bordereau] ? ' — BRD: ' + r[cc.num_bordereau] : '';
+  document.getElementById('rap-caisse-linked').innerHTML=`
+    <div class="rap-linked">
+      <span class="rap-linked-label"><strong>${r[cc.source]||''}</strong> — ${r[cc.date]||''} — ${r[cc.libelle]||''} — ${fmt(r[cc.debit])}${brd}</span>
+      <button class="rap-remove" onclick="linkedCaisse=null;document.getElementById('rap-caisse-linked').innerHTML='';"><i class="ti ti-x"></i></button>
     </div>`;
 }
 
@@ -915,6 +933,19 @@ async function savePanel(){
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.num_rem_espece, `${caisseSrc} — ${fmt(caisseMont)} — ${caisseDate}`);
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,       'Virement interne');
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description,    `Dépôt caisse ${caisseSrc} du ${caisseDate}`);
+    }
+
+    // Lier sortie caisse → cocher rapproché dans Caisse + reporter infos dans banque
+    if(linkedCaisse){
+      const cc = Sheets.cols.caisse;
+      const lig = linkedCaisse.data;
+      // Cocher rapproché côté caisse
+      await Sheets.rapprocheCaisseOperation(linkedCaisse.idx);
+      // Reporter infos dans la ligne banque
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.num_rem_espece, lig[cc.num_bordereau] || (lig[cc.source] + '-' + lig[cc.date]));
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,       lig[cc.type_mvt]    || 'Virement interne');
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description,    lig[cc.libelle]     || '');
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp,      'Caisse ' + (lig[cc.source]||''));
     }
 
     // Ventilation → stocker en description si multiple
