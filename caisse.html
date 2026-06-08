@@ -329,6 +329,7 @@ function renderTable(){
       <td style="font-size:10px;color:var(--text-3);">${r[cc.nom_chat]||''}</td>
       <td style="font-size:10px;color:var(--text-3);">${r[cc.num_recu]||''}</td>
       <td style="font-size:10px;">${bordereau?`<span class="chip-brd">${escH(bordereau)}</span>`:''}</td>
+      <td style="text-align:center;font-size:12px;">${r[cc.rapproche]==='TRUE'?'<span style="color:var(--green);"><i class="ti ti-check"></i></span>':'—'}</td>
       <td class="r" style="white-space:nowrap;">
         <button class="edit-btn" onclick="openEdit(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>
         <button class="del-btn"  onclick="openDel(${ri})"  title="Supprimer"><i class="ti ti-trash"></i></button>
@@ -351,6 +352,7 @@ function renderTable(){
         ${mkTh('Nom du chat',cc.nom_chat)}
         ${mkTh('N° reçu',cc.num_recu)}
         ${mkTh('Bord. remise banque',cc.num_bordereau)}
+        ${mkTh('Rapproché',cc.rapproche)}
         <th class="r">Actions</th>
         <th>Commentaire</th>
       </tr></thead>
