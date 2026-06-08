@@ -796,15 +796,15 @@ function populateRapSelects(){
   sf.selectedIndex=0;
 
   // Sorties caisse non rapprochées
-  const cc = Sheets.cols.caisse;
+  const ccaisse = Sheets.cols.caisse;
   const sc2 = document.getElementById('rap-caisse-select');
   sc2.innerHTML='<option value="">— Choisir une sortie caisse —</option>';
   allCaisseRows
     .map((r,i) => ({r, i}))
-    .filter(({r}) => parseFloat(r[cc.debit]) > 0 && r[cc.rapproche] !== 'TRUE')
+    .filter(({r}) => parseFloat(r[ccaisse.debit]) > 0 && r[ccaisse.rapproche] !== 'TRUE')
     .forEach(({r, i}) => {
-      const brd = r[cc.num_bordereau] ? ' — BRD: ' + r[cc.num_bordereau] : '';
-      sc2.innerHTML += '<option value="' + i + '">' + (r[cc.source]||'') + ' | ' + (r[cc.date]||'') + ' — ' + (r[cc.libelle]||'') + ' — ' + fmt(r[cc.debit]) + brd + '</option>';
+      const brd = r[ccaisse.num_bordereau] ? ' — BRD: ' + r[ccaisse.num_bordereau] : '';
+      sc2.innerHTML += '<option value="' + i + '">' + (r[ccaisse.source]||'') + ' | ' + (r[ccaisse.date]||'') + ' — ' + (r[ccaisse.libelle]||'') + ' — ' + fmt(r[ccaisse.debit]) + brd + '</option>';
     });
   sc2.selectedIndex=0;
 }
