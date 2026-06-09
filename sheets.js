@@ -188,6 +188,8 @@ async function getCheques(statut) {
 async function getRemises(statut) {
   const rows = await readSheet(SHEETS_CONFIG.sheets.remises);
   const data = rows.length > 1 ? rows.slice(1) : [];
+  // Attacher l'index réel dans le sheet à chaque ligne
+  data.forEach((r, i) => { r._sheetIndex = i; });
   return statut ? data.filter(r => r[COLS_REMISE.statut] === statut) : data;
 }
 
