@@ -815,7 +815,7 @@ function lierCheque(){
   const idx=parseInt(document.getElementById('rap-cheque-select').value);
   if(isNaN(idx)||idx<0)return;
   const cc=Sheets.cols.cheque, r=allCheques[idx];
-  linkedCheque={idx,data:r};
+  linkedCheque={idx: r._sheetIndex, data:r};
   document.getElementById('rap-cheque-linked').innerHTML=`
     <div class="rap-linked">
       <span class="rap-linked-label"><strong>N°${r[cc.num_cheque]||'?'}</strong> — ${r[cc.beneficiaire]||'?'} — ${fmt(r[cc.montant])} — <span style="color:var(--text-3);">${r[cc.date_emission]||''}</span></span>
@@ -828,7 +828,7 @@ function lierFacture(){
   if(isNaN(idx)||idx<0)return;
   const cf=Sheets.cols.facture, r=allFactures.filter(f=>f[cf.statut]!=='payee')[idx];
   if(!r)return;
-  linkedFacture={idx:allFactures.indexOf(r),data:r};
+  linkedFacture={idx: r._sheetIndex, data:r};
   const pdfBtn=r[cf.lien_pdf]?`<button class="pdf-btn" onclick="Sheets.openFacture('${escH(r[cf.lien_pdf])}')" title="Voir"><i class="ti ti-file-type-pdf"></i></button>`:'';
   document.getElementById('rap-facture-linked').innerHTML=`
     <div class="rap-linked">
@@ -932,7 +932,7 @@ async function savePanel(){
       const cc = Sheets.cols.caisse;
       const lig = linkedCaisse.data;
       // Cocher rapproché côté caisse
-      await Sheets.rapprocheCaisseOperation(linkedCaisse.idx);
+      await Sheets.rapprocheCaisseOperation(linkedCaisse.idx, (r[cb.date]||'') + ' — ' + (r[cb.libelle]||''));
       // Reporter infos dans la ligne banque
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.num_rem_espece, lig[cc.num_bordereau] || (lig[cc.source] + '-' + lig[cc.date]));
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,       lig[cc.type_mvt]    || 'Virement interne');
