@@ -62,7 +62,7 @@ const COLS_CAISSE = {
   lien_facture: 15,
   flag_check:   16,
   flag_comment: 17,
-  rapproche:    18,  // S — Rapproché avec banque (TRUE/FALSE)
+  suivi_ref:    18,  // S — Référence banque liée (date + libellé) / rapprochement caisse↔banque
 };
 
 const COLS_BANQUE = {
@@ -182,20 +182,22 @@ async function getCaissePhysique(numCaisse) {
 async function getCheques(statut) {
   const rows = await readSheet(SHEETS_CONFIG.sheets.cheques);
   const data = rows.length > 1 ? rows.slice(1) : [];
+  data.forEach((r, i) => { r._sheetIndex = i; });
   return statut ? data.filter(r => r[COLS_CHEQUE.statut] === statut) : data;
 }
 
 async function getRemises(statut) {
   const rows = await readSheet(SHEETS_CONFIG.sheets.remises);
   const data = rows.length > 1 ? rows.slice(1) : [];
-  // Attacher l'index réel dans le sheet à chaque ligne
   data.forEach((r, i) => { r._sheetIndex = i; });
   return statut ? data.filter(r => r[COLS_REMISE.statut] === statut) : data;
 }
 
 async function getFactures() {
   const rows = await readSheet(SHEETS_CONFIG.sheets.factures);
-  return rows.length > 1 ? rows.slice(1) : [];
+  const data = rows.length > 1 ? rows.slice(1) : [];
+  data.forEach((r, i) => { r._sheetIndex = i; });
+  return data;
 }
 
 async function getJournal(limit) {
@@ -253,7 +255,7 @@ async function deleteRow(sheetName, rowIndex) {
 
 // ---- SAUVEGARDER OPÉRATION CAISSE ----
 async function saveCaisseOperation(op) {
-  const row = new Array(18).fill('');
+  const row = new Array(19).fill('');
   row[COLS_CAISSE.source]       = op.source       || 'C1';
   row[COLS_CAISSE.date]         = op.date          || '';
   row[COLS_CAISSE.libelle]      = op.libelle       || '';
@@ -271,6 +273,7 @@ async function saveCaisseOperation(op) {
   row[COLS_CAISSE.lien_facture] = op.lien_facture  || '';
   row[COLS_CAISSE.flag_check]   = 'FALSE';
   row[COLS_CAISSE.flag_comment] = '';
+  row[COLS_CAISSE.suivi_ref]    = '';
   await appendRows(SHEETS_CONFIG.sheets.caisse, [row]);
   await logAction('AJOUT', 'Caisse', op.libelle, `${op.date} — ${op.type_mvt} — ${op.credit || op.debit}€`);
   if (!Auth.isAdmin()) await sendAlert(Auth.getUser(), 'Caisse', op);
@@ -279,7 +282,7 @@ async function saveCaisseOperation(op) {
 // ---- MODIFIER OPÉRATION CAISSE ----
 async function updateCaisseOperation(rowIndex, op) {
   const sheetRow = rowIndex + 2;
-  const row = new Array(18).fill('');
+  const row = new Array(19).fill('');
   row[COLS_CAISSE.source]       = op.source       || 'C1';
   row[COLS_CAISSE.date]         = op.date          || '';
   row[COLS_CAISSE.libelle]      = op.libelle       || '';
@@ -293,9 +296,11 @@ async function updateCaisseOperation(rowIndex, op) {
   row[COLS_CAISSE.reglement]    = op.reglement     || '';
   row[COLS_CAISSE.nom_chat]     = op.nom_chat      || '';
   row[COLS_CAISSE.num_recu]     = op.num_recu      || '';
+  row[COLS_CAISSE.num_bordereau]= op.num_bordereau || '';
   row[COLS_CAISSE.lien_facture] = op.lien_facture  || '';
   row[COLS_CAISSE.flag_check]   = op.flag_check    || 'FALSE';
   row[COLS_CAISSE.flag_comment] = op.flag_comment  || '';
+  row[COLS_CAISSE.suivi_ref]    = op.suivi_ref     || '';
   await updateRange(SHEETS_CONFIG.sheets.caisse, sheetRow, 0, [row]);
   await logAction('MODIF', 'Caisse', op.libelle, `Modifié le ${todayFR()}`);
 }
@@ -560,9 +565,9 @@ function saveSoldeInitial(periode, compte, montant) {
 }
 
 // ---- RAPPROCHER UNE LIGNE CAISSE (depuis banque) ----
-async function rapprocheCaisseOperation(rowIndex) {
+async function rapprocheCaisseOperation(rowIndex, refBanque) {
   const sheetRow = rowIndex + 2;
-  await updateCell(SHEETS_CONFIG.sheets.caisse, sheetRow, COLS_CAISSE.rapproche, 'TRUE');
+  await updateCell(SHEETS_CONFIG.sheets.caisse, sheetRow, COLS_CAISSE.suivi_ref, refBanque || 'Banque');
   await logAction('MODIF', 'Caisse', `Ligne ${rowIndex+1}`, 'Rapproché avec banque');
 }
 
