@@ -841,7 +841,7 @@ function lierRemise(){
   const idx=parseInt(document.getElementById('rap-remise-select').value);
   if(isNaN(idx)||idx<0)return;
   const cr=Sheets.cols.remise, r=allRemises[idx];
-  linkedRemise={idx,data:r};
+  linkedRemise={idx: r._sheetIndex, data:r};
   document.getElementById('rap-remise-linked').innerHTML=`
     <div class="rap-linked">
       <span class="rap-linked-label"><strong>BRD ${r[cr.num_bordereau]||'?'}</strong> — ${r[cr.nb_cheques]||0} chèque(s) — ${fmt(r[cr.montant_total])}</span>
