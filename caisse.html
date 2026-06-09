@@ -695,7 +695,6 @@ async function saveRapprochement(){
     num_bordereau:r[cc.num_bordereau]||'',
     lien_facture: r[cc.lien_facture]||'',
     suivi_ref:    key,
-    rapproche:    'TRUE',
     flag_check:   flagged?'TRUE':(r[cc.flag_check]||'FALSE'),
     flag_comment: comment||(r[cc.flag_comment]||''),
   };
@@ -721,7 +720,6 @@ async function deRapprocher(){
   const cc=Sheets.cols.caisse,r=allRows[selectedIdx];
   const op={...r};
   op[cc.suivi_ref]='';
-  op[cc.rapproche]='FALSE';
   try{
     await Sheets.updateCaisseOperation(selectedIdx,op);
     closeRapPanel();clearSelection();
@@ -808,7 +806,6 @@ async function submitForm(){
       op.flag_check=r[cc.flag_check]||'FALSE';
       op.flag_comment=r[cc.flag_comment]||'';
       op.suivi_ref=r[cc.suivi_ref]||'';
-      op.rapproche=r[cc.rapproche]||'FALSE';
       await Sheets.updateCaisseOperation(editIdx,op);
       showToast('Opération modifiée !');
     } else {
