@@ -486,7 +486,7 @@ async function saveFlag(){
 }
 
 function chipType(t){if(!t)return'depense';const l=t.toLowerCase();if(l.includes('adopt'))return'adoption';if(l.includes('don'))return'don';if(l.includes('adh'))return'adhesion';return'depense';}
-function fmt(v){if(!v&&v!==0)return'';return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
+function fmt(v){if(!v&&v!==0)return'';const n=parseFloat(String(v).replace(/\s/g,'').replace(',','.'));if(isNaN(n))return'';return n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
 function dateToISO(d){if(!d)return'';const p=String(d).split('/');if(p.length===3&&p[0].length===2)return`${p[2]}-${p[1]}-${p[0]}`;return d;}
 function showErr(m){const e=document.getElementById('form-err');e.textContent=m;e.classList.remove('hidden');}
 function showToast(m){const t=document.createElement('div');t.className='success-toast';t.innerHTML=`<i class="ti ti-check"></i> ${m}`;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
