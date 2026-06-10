@@ -807,10 +807,10 @@ function populateRapSelects(){
   const ccaisse = Sheets.cols.caisse;
   const sc2 = document.getElementById('rap-caisse-select');
   sc2.innerHTML='<option value="">— Choisir une sortie caisse —</option>';
-  allCaisseRows
-    .map((r,i) => ({r, i}))
-    .filter(({r}) => parseFloat(r[ccaisse.debit]) > 0 && r[ccaisse.rapproche] !== 'TRUE')
-    .forEach(({r, i}) => {
+ allCaisseRows
+  .map((r,i) => ({r, idx:i}))
+  .filter(({r}) => parseFloat(r[ccaisse.debit]) > 0 && r[ccaisse.rapproche] !== 'TRUE')
+  .forEach(({r, idx:i}) => {
       const brd = r[ccaisse.num_bordereau] ? ' — BRD: ' + r[ccaisse.num_bordereau] : '';
       sc2.innerHTML += '<option value="' + i + '">' + (r[ccaisse.source]||'') + ' | ' + (r[ccaisse.date]||'') + ' — ' + (r[ccaisse.libelle]||'') + ' — ' + fmt(r[ccaisse.debit]) + brd + '</option>';
     });
