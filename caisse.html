@@ -323,7 +323,7 @@ function renderTable(){
       <td class="td-trunc" title="${escH(r[cc.libelle]||'')}">${r[cc.libelle]||''}</td>
       <td class="r amount-d">${r[cc.debit]?fmt(r[cc.debit]):''}</td>
       <td class="r amount-c">${r[cc.credit]?fmt(r[cc.credit]):''}</td>
-      <td class="r" style="color:var(--text-3);font-size:10px;">${r[cc.solde]?fmt(r[cc.solde]):''}</td>   // ← ajouter
+      <td class="r" style="color:var(--text-3);font-size:10px;">${r[cc.solde]?fmt(r[cc.solde]):''}</td>
       <td><span class="chip chip-${chipType(r[cc.type_mvt])}">
       <td class="td-trunc-sm" title="${escH(r[cc.description]||'')}">${r[cc.description]||''}</td>
       <td class="td-trunc-sm" title="${escH(r[cc.type_comp]||'')}">${r[cc.type_comp]||''}</td>
