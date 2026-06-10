@@ -725,7 +725,7 @@ async function confirmImport() {
 // ============================================================
 function getDestination(modeRaw) {
   const mode = (modeRaw || '').trim().toLowerCase();
-  if (mode === 'espèces' || mode === 'especes') return 'caisse';
+  if (mode === 'espèces' || mode === 'especes' || mode === 'Espèce') return 'caisse';
   return 'banque'; // chèque, virement, cb, vide = banque
 }
 
