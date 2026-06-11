@@ -313,18 +313,26 @@ function renderTable(){
   const sortIcon=(col)=>`<span class="sort-icon">${sortCol===col?(sortAsc?'↑':'↓'):'↕'}</span>`;
   const mkTh=(label,col,cls='')=>`<th class="${sortCol===col?'sorted':''} ${cls}" onclick="setSort(${col})">${label}${sortIcon(col)}</th>`;
 
-  const trs=rows.map(r=>{
+  // Calcul du solde cumulé sur les lignes affichées (dans l'ordre d'affichage)
+  let runningBalance = 0;
+  const soldeCumule = rows.map(r => {
+    runningBalance += (parseFloat(r[cc.credit]) || 0) - (parseFloat(r[cc.debit]) || 0);
+    return runningBalance;
+  });
+
+  const trs=rows.map((r, displayIdx)=>{
     const ri=allRows.indexOf(r);
     const flagged=r[cc.flag_check]==='TRUE';
     const comment=r[cc.flag_comment]||'';
     const bordereau=r[cc.num_bordereau]||'';
+    const solde=soldeCumule[displayIdx];
     return `<tr class="${editIdx===ri?'editing':''}">
       <td style="color:var(--text-3);white-space:nowrap;">${r[cc.date]||''}</td>
       <td class="td-trunc" title="${escH(r[cc.libelle]||'')}">${r[cc.libelle]||''}</td>
       <td class="r amount-d">${r[cc.debit]?fmt(r[cc.debit]):''}</td>
       <td class="r amount-c">${r[cc.credit]?fmt(r[cc.credit]):''}</td>
-      <td class="r" style="color:var(--text-3);font-size:10px;">${r[cc.solde]?fmt(r[cc.solde]):''}</td>
-      <td><span class="chip chip-${chipType(r[cc.type_mvt])}">
+      <td class="r" style="color:${solde>=0?'var(--green)':'var(--red)'};font-size:10px;font-weight:500;">${fmt(solde)}</td>
+      <td><span class="chip chip-${chipType(r[cc.type_mvt])}">${r[cc.type_mvt]||''}</span></td>
       <td class="td-trunc-sm" title="${escH(r[cc.description]||'')}">${r[cc.description]||''}</td>
       <td class="td-trunc-sm" title="${escH(r[cc.type_comp]||'')}">${r[cc.type_comp]||''}</td>
       <td style="font-size:10px;color:var(--text-3);">${r[cc.nom_chat]||''}</td>
