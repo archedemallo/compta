@@ -114,6 +114,16 @@
   .form-group{display:flex;flex-direction:column;gap:3px;}
   .form-label{font-size:9px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;}
   .form-label.req::after{content:' *';color:var(--red);}
+
+  /* Section Suivi dans panneau banque */
+  .suivi-tabs-bank{display:flex;gap:0;border-bottom:0.5px solid var(--border);margin-bottom:8px;overflow-x:auto;}
+  .suivi-tab-bank{padding:5px 10px;font-size:10px;font-weight:500;color:var(--text-3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+  .suivi-tab-bank.active{color:var(--orange);border-bottom-color:var(--orange);}
+  .suivi-tab-bank-badge{font-size:9px;padding:1px 4px;border-radius:8px;background:var(--orange);color:white;margin-left:3px;}
+  .suivi-line-bank{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--radius-sm);border:0.5px solid var(--border);margin-bottom:4px;cursor:pointer;transition:all 0.12s;}
+  .suivi-line-bank:hover{background:var(--warm);border-color:var(--orange);}
+  .suivi-line-bank.selected{background:rgba(201,107,42,0.08);border-color:var(--orange);}
+  .suivi-line-bank.already{opacity:0.4;cursor:default;text-decoration:line-through;}
   .info-box{background:var(--blue-bg);border:0.5px solid rgba(24,95,165,0.15);border-radius:var(--radius-sm);padding:7px 10px;font-size:11px;color:var(--blue);display:flex;align-items:center;gap:8px;}
 </style>
 </head>
@@ -283,6 +293,16 @@
         <div id="rap-caisse-linked"></div>
       </div>
 
+      <!-- LIER À SUIVI -->
+      <div class="rap-section">
+        <div class="rap-section-title" style="color:var(--purple);"><i class="ti ti-database" style="color:var(--purple);"></i> Lier à une ligne Suivi</div>
+        <div style="font-size:11px;color:var(--text-3);margin-bottom:8px;">Associe cette opération bancaire à une ligne du Google Sheet Suivi.</div>
+        <div class="suivi-tabs-bank" id="suivi-tabs-bank"></div>
+        <input class="f-input" type="text" id="rap-suivi-search" placeholder="Rechercher…" oninput="renderSuiviBankLines()" style="width:100%;box-sizing:border-box;margin-bottom:6px;font-size:10px;padding:3px 8px;">
+        <div id="suivi-bank-lines" style="max-height:200px;overflow-y:auto;"></div>
+        <div id="rap-suivi-linked"></div>
+      </div>
+
       <!-- ANNOTATION -->
       <div class="rap-section">
         <div class="rap-section-title"><i class="ti ti-flag"></i> Annotation</div>
@@ -338,7 +358,18 @@ let editingIdx  = null;   // index dans allRows de la ligne en cours d'édition
 let sortCol=-1, sortAsc=true;
 let ventItems = [];
 let panelRowIdx = null;
-let linkedCheque = null, linkedFacture = null, linkedRemise = null, linkedCaisse = null;
+let linkedCheque = null, linkedFacture = null, linkedRemise = null, linkedCaisse = null, linkedSuivi = null;
+let suiviBankData = {};  // données Suivi chargées
+let activeSuiviBankTab = 'Adoption';
+const SUIVI_BANK_ID = '1y6yD4AohP7T10GE7mmguIqNWSnwla9t1mewBpCDej_Y';
+const SUIVI_BANK_ONGLETS = {
+  Adoption:{label:'Adoptions',cols:{date:2,nom:17,prenom:18,nom_chat:4,montants:[{col:29,label:'Total'},{col:28,label:'Reste'}]}},
+  Reservation_Chat:{label:'Rés. Chat',cols:{date:2,nom:10,prenom:null,nom_chat:5,montants:[{col:null,label:'Réservation',fixed:50}]}},
+  Reservation_Chaton:{label:'Rés. Chaton',cols:{date:2,nom:11,prenom:null,nom_chat:6,montants:[{col:null,label:'Réservation',fixed:50}]}},
+  Contrat_reservation_chat:{label:'Contrat rés.',cols:{date:2,nom:10,prenom:null,nom_chat:5,montants:[{col:null,label:'Réservation',fixed:50}]}},
+  Dons:{label:'Dons',cols:{date:2,nom:7,prenom:8,nom_chat:null,num_recu:6,montants:[{col:4,label:'Don'}]}},
+  Adhesion:{label:'Adhésions',cols:{date:2,nom:4,prenom:5,nom_chat:null,montants:[{col:12,label:'Bienfaiteur'},{col:13,label:'Sympathisant'},{col:14,label:'Adhésion'}]}},
+};
 
 // ============================================================
 // INIT
@@ -726,7 +757,7 @@ function clearSelection(){
 function openPanel(){
   if (selectedIdx === null) return;
   panelRowIdx   = selectedIdx;
-  linkedCheque  = null; linkedFacture = null; linkedRemise = null; linkedCaisse = null;
+  linkedCheque  = null; linkedFacture = null; linkedRemise = null; linkedCaisse = null; linkedSuivi = null;
   ventItems     = [];
   const cb = Sheets.cols.banque, r = allRows[panelRowIdx];
   const montant = parseFloat(r[cb.credit]||r[cb.debit]) || 0;
@@ -739,10 +770,94 @@ function openPanel(){
   document.getElementById('rap-facture-linked').innerHTML = '';
   document.getElementById('rap-remise-linked').innerHTML  = '';
   document.getElementById('rap-caisse-linked').innerHTML  = '';
+  document.getElementById('rap-suivi-linked').innerHTML   = '';
+  linkedSuivi = null;
   ventItems = [{ montant, type_mvt: r[cb.type_mvt]||'' }];
   renderVentRows(montant);
   populateRapSelects();
+  // Charger Suivi si pas encore fait
+  if(!Object.keys(suiviBankData).length) loadSuiviBankData();
+  else { buildSuiviBankTabs(); renderSuiviBankLines(); }
   document.getElementById('panel-overlay').classList.remove('hidden');
+}
+
+async function loadSuiviBankData(){
+  document.getElementById('suivi-bank-lines').innerHTML='<div style="padding:12px;text-align:center;color:var(--text-3);font-size:11px;"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>';
+  await Promise.all(Object.keys(SUIVI_BANK_ONGLETS).map(async key => {
+    try{
+      const resp = await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SUIVI_BANK_ID, range:`${key}!A2:AQ`});
+      suiviBankData[key] = (resp.result.values||[]).filter(r=>r&&r.length>1);
+    }catch(e){ suiviBankData[key]=[]; }
+  }));
+  buildSuiviBankTabs();
+  renderSuiviBankLines();
+}
+
+function buildSuiviBankTabs(){
+  const bar = document.getElementById('suivi-tabs-bank');
+  if(!bar) return;
+  bar.innerHTML = Object.entries(SUIVI_BANK_ONGLETS).map(([key,cfg])=>{
+    const n = (suiviBankData[key]||[]).length;
+    return `<button class="suivi-tab-bank ${key===activeSuiviBankTab?'active':''}" onclick="switchSuiviBankTab('${key}')">${cfg.label}<span class="suivi-tab-bank-badge">${n}</span></button>`;
+  }).join('');
+}
+
+function switchSuiviBankTab(key){
+  activeSuiviBankTab = key;
+  buildSuiviBankTabs();
+  renderSuiviBankLines();
+}
+
+function getImportedSuiviKeys(){
+  try{ return JSON.parse(localStorage.getItem('arche_suivi_imported')||'[]').map(i=>`${i.onglet}:${i.rowIdx}:${i.montantIdx}`); }
+  catch(e){ return []; }
+}
+
+function renderSuiviBankLines(){
+  const key = activeSuiviBankTab;
+  const cfg = SUIVI_BANK_ONGLETS[key];
+  const rows = suiviBankData[key]||[];
+  const search = (document.getElementById('rap-suivi-search')?.value||'').toLowerCase();
+  const imported = getImportedSuiviKeys();
+  const lines = [];
+  rows.forEach((row,ri)=>{
+    const g = col => col!=null?(row[col]||''):'';
+    const nom = [g(cfg.cols.prenom), g(cfg.cols.nom)].filter(Boolean).join(' ')||g(cfg.cols.nom)||'—';
+    const chat = cfg.cols.nom_chat!=null ? g(cfg.cols.nom_chat) : '';
+    const date = g(cfg.cols.date);
+    cfg.cols.montants.forEach((m,mi)=>{
+      const val = m.fixed!==undefined ? m.fixed : parseFloat(row[m.col]||0)||0;
+      if(!val) return;
+      const selKey = `${key}:${ri}:${mi}`;
+      const already = imported.includes(selKey);
+      const txt = [nom,chat,date,m.label].join(' ').toLowerCase();
+      if(search && !txt.includes(search)) return;
+      lines.push({key,ri,mi,nom,chat,date,val,label:m.label,already,selKey,numRecu:cfg.cols.num_recu?g(cfg.cols.num_recu):''});
+    });
+  });
+  const wrap = document.getElementById('suivi-bank-lines');
+  if(!wrap) return;
+  if(!lines.length){ wrap.innerHTML='<div style="padding:12px;text-align:center;color:var(--text-3);font-size:11px;">Aucune ligne</div>'; return; }
+  wrap.innerHTML = lines.map(l=>`
+    <div class="suivi-line-bank ${linkedSuivi?.selKey===l.selKey?'selected':''} ${l.already?'already':''}"
+         onclick="${l.already?'':` selectSuiviBankLine('${l.selKey}','${l.key}',${l.ri},${l.mi},${l.val},'${escH(l.nom)}','${escH(l.chat)}','${escH(l.numRecu)}')`}">
+      <div style="flex:1;">
+        <div style="font-size:11px;font-weight:500;">${escH(l.nom)}${l.chat?' — '+escH(l.chat):''}</div>
+        <div style="font-size:10px;color:var(--text-3);">${escH(l.date)} · ${escH(l.label)}${l.already?' · <span style=\"color:var(--green)\">✓ Déjà importé</span>':''}</div>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:var(--green);white-space:nowrap;">${fmt(l.val)}</div>
+    </div>`).join('');
+}
+
+function selectSuiviBankLine(selKey,key,ri,mi,val,nom,chat,numRecu){
+  linkedSuivi = {selKey,key,ri,mi,val,nom,chat,numRecu};
+  document.getElementById('rap-suivi-linked').innerHTML=`
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--purple-bg);border:0.5px solid rgba(120,60,160,0.2);border-radius:var(--radius-sm);font-size:11px;margin-top:4px;">
+      <i class="ti ti-check" style="color:var(--purple);"></i>
+      <span style="flex:1;color:var(--purple);"><strong>${escH(nom)}</strong>${chat?' — '+escH(chat):''} — ${fmt(val)}</span>
+      <button style="background:none;border:none;cursor:pointer;color:var(--red);font-size:13px;" onclick="linkedSuivi=null;document.getElementById('rap-suivi-linked').innerHTML='';renderSuiviBankLines();"><i class="ti ti-x"></i></button>
+    </div>`;
+  renderSuiviBankLines();
 }
 function closePanel(){ document.getElementById('panel-overlay').classList.add('hidden'); panelRowIdx=null; }
 
@@ -944,6 +1059,22 @@ async function savePanel(){
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,       lig[cc.type_mvt]    || 'Virement interne');
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description,    lig[cc.libelle]     || '');
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp,      'Caisse ' + (lig[cc.source]||''));
+    }
+
+    // Lier Suivi → marquer dans localStorage + reporter suivi_ref dans banque
+    if(linkedSuivi){
+      const suiviRef = linkedSuivi.selKey;
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, linkedSuivi.nom || '');
+      if(linkedSuivi.chat) await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.nom_chat, linkedSuivi.chat);
+      // Marquer dans localStorage
+      try{
+        const arr = JSON.parse(localStorage.getItem('arche_suivi_imported')||'[]');
+        const [onglet,ri,mi] = suiviRef.split(':');
+        if(!arr.find(i=>i.onglet===onglet&&i.rowIdx===parseInt(ri)&&i.montantIdx===parseInt(mi))){
+          arr.push({onglet,rowIdx:parseInt(ri),montantIdx:parseInt(mi),opRef:suiviRef,date:new Date().toISOString()});
+          localStorage.setItem('arche_suivi_imported',JSON.stringify(arr));
+        }
+      }catch(e){}
     }
 
     // Ventilation → stocker en description si multiple
