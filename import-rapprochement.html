@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Import Rapprochement — Arche de Mallo</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  .kpi-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+  .kpi{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:8px 12px;}
+  .kpi-label{font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;}
+  .kpi-value{font-size:16px;font-weight:600;}
+
+  .list-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;}
+  .list-head{padding:8px 12px;border-bottom:0.5px solid var(--border);display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+
+  #table-wrap{overflow-x:auto;max-height:560px;overflow-y:auto;}
+  table{width:100%;border-collapse:collapse;font-size:11px;min-width:900px;}
+  thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 8px;border-bottom:0.5px solid var(--border);background:var(--surface-2);white-space:nowrap;position:sticky;top:0;z-index:2;}
+  tbody td{padding:5px 8px;border-bottom:0.5px solid var(--border);vertical-align:middle;white-space:nowrap;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--cream);}
+  .r{text-align:right;font-variant-numeric:tabular-nums;}
+  .amount{color:var(--green);font-weight:500;}
+  .btn-icon{background:none;border:none;cursor:pointer;font-size:13px;padding:0 3px;}
+  .btn-edit{color:var(--blue);}
+  .btn-transfer{color:var(--green);}
+  .btn-del{color:var(--red);}
+
+  /* Panel édition */
+  .panel-overlay{position:fixed;inset:0;background:rgba(61,43,31,0.3);z-index:150;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px);}
+  .panel{background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;width:100%;max-width:700px;max-height:85vh;overflow-y:auto;box-shadow:0 -4px 32px rgba(61,43,31,0.15);}
+  .panel-head{padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--surface);z-index:1;}
+  .panel-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;}
+  .panel-close{background:none;border:none;font-size:18px;color:var(--text-3);cursor:pointer;}
+  .panel-body{padding:14px 16px;}
+  .panel-footer{padding:10px 16px;border-top:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px;position:sticky;bottom:0;background:var(--surface);}
+  .form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+  .form-group{display:flex;flex-direction:column;gap:3px;}
+  .form-label{font-size:9px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;}
+  .form-control{font-size:11px;padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;}
+
+  /* Modal confirm transfert */
+  .modal-overlay{position:fixed;inset:0;background:rgba(61,43,31,0.35);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
+  .modal{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-md);width:420px;max-width:95vw;}
+  .modal-header{padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+  .modal-title{font-size:13px;font-weight:600;}
+  .modal-close{background:none;border:none;font-size:18px;color:var(--text-3);cursor:pointer;}
+  .modal-body{padding:16px;font-size:12px;}
+  .modal-footer{padding:10px 16px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+  .detail-box{margin-top:8px;padding:8px;background:var(--surface-2);border-radius:var(--radius-sm);font-size:11px;color:var(--text-2);}
+
+  .success-toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:white;padding:9px 16px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;z-index:999;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-md);animation:slideIn 0.25s ease;}
+  @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .spinner{display:inline-block;animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .dest-caisse{background:var(--green-bg);color:var(--green);font-size:9px;padding:2px 6px;border-radius:6px;font-weight:600;}
+  .dest-banque{background:var(--blue-bg);color:var(--blue);font-size:9px;padding:2px 6px;border-radius:6px;font-weight:600;}
+  .mode-chip{font-size:9px;padding:2px 6px;border-radius:6px;background:var(--surface-2);color:var(--text-2);}
+</style>
+</head>
+<body>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title"><i class="ti ti-arrows-transfer-down" style="color:var(--orange)"></i> Import Rapprochement</div>
+    <div class="topbar-right"><span style="font-size:11px;color:var(--text-3);" id="topbar-per"></span></div>
+  </div>
+  <div class="page-content">
+
+    <div class="kpi-bar" id="kpi-bar">
+      <div class="kpi"><div class="kpi-label">Chargement…</div></div>
+    </div>
+
+    <div class="list-card">
+      <div class="list-head">
+        <input class="f-input" type="text" id="fl-search" placeholder="🔍 Rechercher…" oninput="renderTable()" style="width:160px;">
+        <select class="f-select" id="fl-dest" onchange="renderTable()" style="width:100px;">
+          <option value="">Toutes dest.</option>
+          <option value="caisse">Caisse</option>
+          <option value="banque">Banque</option>
+        </select>
+        <select class="f-select" id="fl-onglet" onchange="renderTable()" style="width:120px;">
+          <option value="">Tous onglets</option>
+          <option value="adoptions">Adoptions</option>
+          <option value="dons">Dons</option>
+          <option value="adhesions">Adhésions</option>
+          <option value="reservations">Réservations</option>
+          <option value="depots">Dépôts</option>
+        </select>
+        <select class="f-select" id="fl-mode" onchange="renderTable()" style="width:100px;">
+          <option value="">Tous modes</option>
+          <option value="Espèces">Espèces</option>
+          <option value="Chèque">Chèque</option>
+          <option value="Virement">Virement</option>
+          <option value="CB">CB</option>
+        </select>
+        <button class="btn-xs" onclick="clearFilters()"><i class="ti ti-x"></i> Effacer</button>
+        <span id="result-count" style="font-size:10px;color:var(--text-3);margin-left:4px;"></span>
+        <div style="margin-left:auto;display:flex;gap:6px;">
+          <button class="btn btn-primary btn-sm" onclick="transfertSelectionCaisse()" id="btn-transfer-caisse" style="display:none;">
+            <i class="ti ti-arrow-right"></i> Transférer sélection → Caisse
+          </button>
+        </div>
+      </div>
+      <div id="table-wrap">
+        <div style="padding:32px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>
+      </div>
+    </div>
+
+    <div style="font-size:11px;color:var(--text-3);display:flex;align-items:center;gap:6px;">
+      <i class="ti ti-info-circle"></i>
+      Les lignes <strong>Espèces</strong> peuvent être transférées manuellement vers la Caisse.
+      Les lignes <strong>Chèque / Virement / CB</strong> seront rapprochées depuis la page Banque.
+    </div>
+
+  </div>
+</div>
+
+<!-- PANEL ÉDITION -->
+<div class="panel-overlay hidden" id="panel-overlay">
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title"><i class="ti ti-pencil" style="color:var(--orange)"></i> Modifier la ligne</div>
+      <button class="panel-close" onclick="closePanel()">×</button>
+    </div>
+    <div class="panel-body">
+      <input type="hidden" id="edit-idx">
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input type="date" id="ed-date" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Période</label>
+          <select id="ed-periode" class="form-control"></select>
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Libellé (nom)</label>
+          <input type="text" id="ed-libelle" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Montant (€)</label>
+          <input type="number" id="ed-montant" class="form-control" step="0.01">
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Type mouvement</label>
+          <select id="ed-type" class="form-control"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mode règlement</label>
+          <select id="ed-mode" class="form-control">
+            <option>Espèces</option><option>Chèque</option><option>Virement</option><option>CB</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Nom du chat</label>
+          <input type="text" id="ed-chat" class="form-control" placeholder="—">
+        </div>
+        <div class="form-group">
+          <label class="form-label">N° chèque / bordereau</label>
+          <input type="text" id="ed-cheque" class="form-control" placeholder="—">
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">N° reçu fiscal</label>
+          <input type="text" id="ed-recu" class="form-control" placeholder="—">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <input type="text" id="ed-desc" class="form-control" placeholder="—">
+        </div>
+      </div>
+    </div>
+    <div class="panel-footer">
+      <button class="btn btn-secondary" onclick="closePanel()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveEdit()"><i class="ti ti-device-floppy"></i> Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TRANSFERT CAISSE -->
+<div class="modal-overlay hidden" id="modal-transfer">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title"><i class="ti ti-arrow-right" style="color:var(--green)"></i> Transférer vers Caisse</span>
+      <button class="modal-close" onclick="closeTransfer()">×</button>
+    </div>
+    <div class="modal-body">
+      <div>Confirmer le transfert de cette ligne vers la Caisse ?</div>
+      <div class="detail-box" id="transfer-detail"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeTransfer()">Annuler</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmTransfer()" id="btn-confirm-transfer">
+        <i class="ti ti-arrow-right"></i> Transférer
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script src="sheets.js"></script>
+<script src="sidebar.js"></script>
+<script>
+// ============================================================
+// ÉTAT
+// ============================================================
+let allRows = [];
+let transferIdx = null;
+let selectedRows = new Set();
+
+// ============================================================
+// INIT
+// ============================================================
+Auth.requireAuth(async (user) => {
+  try {
+    await Promise.race([
+      gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4'),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
+    ]);
+  } catch(e) {
+    document.getElementById('table-wrap').innerHTML = '<div style="padding:32px;text-align:center;color:var(--red);">Impossible de charger l\'API Google Sheets.</div>';
+    return;
+  }
+  Sidebar.build('import-rapprochement');
+  document.getElementById('topbar-per').textContent = Sidebar.getActivePeriode();
+
+  // Populer les selects
+  const types = Sheets.getTypesMouvement();
+  const td = document.getElementById('ed-type');
+  td.innerHTML = types.map(t => `<option>${t}</option>`).join('');
+  const periodes = Sheets.getPeriodes();
+  const pd = document.getElementById('ed-periode');
+  pd.innerHTML = periodes.map(p => `<option>${p}</option>`).join('');
+
+  await loadData();
+});
+
+async function loadData() {
+  document.getElementById('table-wrap').innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>';
+  try {
+    allRows = await Sheets.getImportRapprochement('en_attente');
+    Sidebar.setLastUpdate();
+    renderKPIs();
+    renderTable();
+  } catch(e) {
+    document.getElementById('table-wrap').innerHTML = `<div style="padding:32px;text-align:center;color:var(--red);">Erreur : ${e.message}</div>`;
+  }
+}
+
+// ============================================================
+// KPIs
+// ============================================================
+function renderKPIs() {
+  const ci = Sheets.cols.importRap;
+  const total   = allRows.length;
+  const caisse  = allRows.filter(r => r[ci.destination] === 'caisse').length;
+  const banque  = allRows.filter(r => r[ci.destination] === 'banque').length;
+  const montant = allRows.reduce((s, r) => s + (parseFloat(r[ci.montant]) || 0), 0);
+  document.getElementById('kpi-bar').innerHTML = `
+    <div class="kpi"><div class="kpi-label">Total en attente</div><div class="kpi-value">${total}</div></div>
+    <div class="kpi"><div class="kpi-label">→ Caisse (Espèces)</div><div class="kpi-value" style="color:var(--green)">${caisse}</div></div>
+    <div class="kpi"><div class="kpi-label">→ Banque (Chq/Vir/CB)</div><div class="kpi-value" style="color:var(--blue)">${banque}</div></div>
+    <div class="kpi"><div class="kpi-label">Montant total</div><div class="kpi-value">${fmt(montant)}</div></div>`;
+}
+
+// ============================================================
+// TABLEAU
+// ============================================================
+function getFiltered() {
+  const ci = Sheets.cols.importRap;
+  const search = (document.getElementById('fl-search')?.value || '').toLowerCase();
+  const dest   = document.getElementById('fl-dest')?.value   || '';
+  const onglet = document.getElementById('fl-onglet')?.value || '';
+  const mode   = document.getElementById('fl-mode')?.value   || '';
+  let rows = [...allRows];
+  if (dest)   rows = rows.filter(r => r[ci.destination]    === dest);
+  if (onglet) rows = rows.filter(r => (r[ci.onglet]||'').toLowerCase() === onglet);
+  if (mode)   rows = rows.filter(r => r[ci.mode_reglement] === mode);
+  if (search) rows = rows.filter(r => [r[ci.libelle], r[ci.nom_chat], r[ci.type_mvt], r[ci.id]].join(' ').toLowerCase().includes(search));
+  return rows;
+}
+
+function renderTable() {
+  const ci = Sheets.cols.importRap;
+  const rows = getFiltered();
+  document.getElementById('result-count').textContent = `${rows.length} ligne(s)`;
+
+  // Bouton transfert groupe caisse visible si sélection
+  const btnT = document.getElementById('btn-transfer-caisse');
+  const hasCaisseSelected = [...selectedRows].some(idx => {
+    const r = allRows[idx];
+    return r && r[ci.destination] === 'caisse';
+  });
+  btnT.style.display = hasCaisseSelected ? '' : 'none';
+
+  if (!rows.length) {
+    document.getElementById('table-wrap').innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-3);font-size:12px;">Aucune ligne en attente</div>';
+    return;
+  }
+
+  const trs = rows.map(r => {
+    const idx = r._sheetIndex;
+    const dest = r[ci.destination] || '';
+    const destChip = dest === 'caisse'
+      ? '<span class="dest-caisse">Caisse</span>'
+      : '<span class="dest-banque">Banque</span>';
+    const modeChip = `<span class="mode-chip">${escH(r[ci.mode_reglement] || '—')}</span>`;
+    const isSel = selectedRows.has(idx);
+
+    // Bouton transfert caisse seulement si destination = caisse
+    const btnTransfer = dest === 'caisse'
+      ? `<button class="btn-icon btn-transfer" onclick="event.stopPropagation();openTransfer(${idx})" title="Transférer vers Caisse"><i class="ti ti-arrow-right"></i></button>`
+      : `<span style="color:var(--text-3);font-size:10px;" title="Sera rapproché depuis Banque"><i class="ti ti-building-bank"></i></span>`;
+
+    return `<tr onclick="toggleSelect(${idx})" style="cursor:pointer;${isSel ? 'background:rgba(201,107,42,0.08);outline:1.5px solid var(--orange);' : ''}">
+      <td><input type="checkbox" ${isSel ? 'checked' : ''} onclick="event.stopPropagation();toggleSelect(${idx})" style="accent-color:var(--orange);"></td>
+      <td style="font-size:9px;color:var(--text-3);">${escH(r[ci.id] || '')}</td>
+      <td><span class="chip">${escH(r[ci.onglet] || '')}</span></td>
+      <td style="color:var(--text-3);font-size:10px;">${escH(r[ci.date] || '')}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;">${escH(r[ci.libelle] || '')}</td>
+      <td class="r amount">${fmt(r[ci.montant])}</td>
+      <td>${escH(r[ci.type_mvt] || '')}</td>
+      <td>${modeChip}</td>
+      <td>${destChip}</td>
+      <td style="font-size:10px;color:var(--text-3);">${escH(r[ci.nom_chat] || '')}</td>
+      <td style="font-size:10px;color:var(--text-3);">${escH(r[ci.num_cheque] || '')}</td>
+      <td style="font-size:10px;color:var(--text-3);">${escH(r[ci.num_recu] || '')}</td>
+      <td style="font-size:10px;color:var(--text-3);">${escH(r[ci.date_import] || '')}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn-icon btn-edit" onclick="event.stopPropagation();openEdit(${idx})" title="Modifier"><i class="ti ti-pencil"></i></button>
+        ${btnTransfer}
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('table-wrap').innerHTML = `
+    <table>
+      <thead><tr>
+        <th style="width:30px;"></th>
+        <th>ID Source</th>
+        <th>Onglet</th>
+        <th>Date</th>
+        <th>Libellé</th>
+        <th class="r">Montant</th>
+        <th>Type</th>
+        <th>Mode</th>
+        <th>Destination</th>
+        <th>Chat</th>
+        <th>N° Chèque</th>
+        <th>N° Reçu</th>
+        <th>Importé le</th>
+        <th>Actions</th>
+      </tr></thead>
+      <tbody>${trs}</tbody>
+    </table>`;
+}
+
+function toggleSelect(idx) {
+  if (selectedRows.has(idx)) selectedRows.delete(idx);
+  else selectedRows.add(idx);
+  renderTable();
+}
+
+function clearFilters() {
+  document.getElementById('fl-search').value = '';
+  ['fl-dest', 'fl-onglet', 'fl-mode'].forEach(id => { const e = document.getElementById(id); if(e) e.selectedIndex = 0; });
+  renderTable();
+}
+
+// ============================================================
+// ÉDITION
+// ============================================================
+function openEdit(idx) {
+  const ci = Sheets.cols.importRap;
+  const r = allRows.find(x => x._sheetIndex === idx);
+  if (!r) return;
+
+  document.getElementById('edit-idx').value = idx;
+  // Convertir date FR → ISO pour l'input date
+  const dateFR = r[ci.date] || '';
+  let dateISO = dateFR;
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateFR)) {
+    const p = dateFR.split('/');
+    dateISO = `${p[2]}-${p[1]}-${p[0]}`;
+  }
+  document.getElementById('ed-date').value    = dateISO;
+  document.getElementById('ed-libelle').value = r[ci.libelle]       || '';
+  document.getElementById('ed-montant').value = r[ci.montant]       || '';
+  document.getElementById('ed-chat').value    = r[ci.nom_chat]      || '';
+  document.getElementById('ed-cheque').value  = r[ci.num_cheque]    || '';
+  document.getElementById('ed-recu').value    = r[ci.num_recu]      || '';
+  document.getElementById('ed-desc').value    = r[ci.description]   || '';
+  document.getElementById('ed-type').value    = r[ci.type_mvt]      || '';
+  document.getElementById('ed-mode').value    = r[ci.mode_reglement]|| '';
+  document.getElementById('ed-periode').value = r[ci.periode]       || '';
+
+  document.getElementById('panel-overlay').classList.remove('hidden');
+}
+
+function closePanel() {
+  document.getElementById('panel-overlay').classList.add('hidden');
+}
+
+async function saveEdit() {
+  const ci  = Sheets.cols.importRap;
+  const idx = parseInt(document.getElementById('edit-idx').value);
+  const r   = allRows.find(x => x._sheetIndex === idx);
+  if (!r) return;
+
+  const dateVal = document.getElementById('ed-date').value;
+  const dateFR  = dateVal
+    ? dateVal.split('-').reverse().join('/')
+    : r[ci.date] || '';
+
+  const mode = document.getElementById('ed-mode').value;
+  const dest = (mode === 'Espèces') ? 'caisse' : 'banque';
+
+  const op = {
+    id:             r[ci.id]          || '',
+    onglet:         r[ci.onglet]      || '',
+    statut:         'en_attente',
+    destination:    dest,
+    date:           dateFR,
+    periode:        document.getElementById('ed-periode').value,
+    libelle:        document.getElementById('ed-libelle').value.trim(),
+    montant:        document.getElementById('ed-montant').value,
+    type_mvt:       document.getElementById('ed-type').value,
+    mode_reglement: mode,
+    nom_chat:       document.getElementById('ed-chat').value.trim(),
+    num_cheque:     document.getElementById('ed-cheque').value.trim(),
+    num_recu:       document.getElementById('ed-recu').value.trim(),
+    description:    document.getElementById('ed-desc').value.trim(),
+    date_import:    r[ci.date_import] || '',
+    date_rapprochement: '',
+  };
+
+  try {
+    await Sheets.updateImportRapprochement(idx, op);
+    closePanel();
+    showToast('Ligne modifiée !');
+    await loadData();
+  } catch(e) {
+    alert('Erreur : ' + (e.message || e));
+  }
+}
+
+// ============================================================
+// TRANSFERT VERS CAISSE
+// ============================================================
+function openTransfer(idx) {
+  const ci = Sheets.cols.importRap;
+  const r  = allRows.find(x => x._sheetIndex === idx);
+  if (!r) return;
+  transferIdx = idx;
+  document.getElementById('transfer-detail').innerHTML =
+    `<strong>${escH(r[ci.libelle] || '')}</strong><br>` +
+    `${escH(r[ci.date] || '')} — ${fmt(r[ci.montant])} — ${escH(r[ci.type_mvt] || '')}<br>` +
+    `Mode : ${escH(r[ci.mode_reglement] || '')} | Chat : ${escH(r[ci.nom_chat] || '—')}`;
+  document.getElementById('modal-transfer').classList.remove('hidden');
+}
+
+function closeTransfer() {
+  document.getElementById('modal-transfer').classList.add('hidden');
+  transferIdx = null;
+}
+
+async function confirmTransfer() {
+  if (transferIdx === null) return;
+  const btn = document.getElementById('btn-confirm-transfer');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader-2 spinner"></i>';
+
+  const ci = Sheets.cols.importRap;
+  const r  = allRows.find(x => x._sheetIndex === transferIdx);
+
+  try {
+    // 1. Créer l'opération Caisse
+    await Sheets.saveCaisseOperation({
+      source:        'C1',
+      date:          r[ci.date]          || '',
+      libelle:       r[ci.libelle]       || '',
+      debit:         '',
+      credit:        r[ci.montant]       || '',
+      periode:       r[ci.periode]       || '',
+      type_mvt:      r[ci.type_mvt]      || '',
+      description:   r[ci.description]  || '',
+      type_comp:     '',
+      nom:           r[ci.libelle]       || '',
+      reglement:     r[ci.mode_reglement]|| '',
+      nom_chat:      r[ci.nom_chat]      || '',
+      num_recu:      r[ci.num_recu]      || '',
+      num_bordereau: r[ci.num_cheque]    || '',
+      lien_facture:  '',
+      suivi_ref:     r[ci.id]            || '',
+    });
+
+    // 2. Archiver la ligne dans Import_historique
+    await Sheets.archiverImportRapprochement(transferIdx, Sheets.todayFR());
+
+    closeTransfer();
+    showToast('Transféré en Caisse et archivé !');
+    await loadData();
+  } catch(e) {
+    alert('Erreur : ' + (e.message || e));
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-arrow-right"></i> Transférer';
+  }
+}
+
+async function transfertSelectionCaisse() {
+  const ci = Sheets.cols.importRap;
+  const caisseSelected = [...selectedRows].filter(idx => {
+    const r = allRows.find(x => x._sheetIndex === idx);
+    return r && r[ci.destination] === 'caisse';
+  });
+  if (!caisseSelected.length) return;
+  if (!confirm(`Transférer ${caisseSelected.length} ligne(s) Espèces vers la Caisse ?`)) return;
+
+  let ok = 0, errors = [];
+  for (const idx of caisseSelected) {
+    const r = allRows.find(x => x._sheetIndex === idx);
+    try {
+      await Sheets.saveCaisseOperation({
+        source: 'C1', date: r[ci.date]||'', libelle: r[ci.libelle]||'',
+        debit: '', credit: r[ci.montant]||'', periode: r[ci.periode]||'',
+        type_mvt: r[ci.type_mvt]||'', description: r[ci.description]||'',
+        type_comp: '', nom: r[ci.libelle]||'', reglement: r[ci.mode_reglement]||'',
+        nom_chat: r[ci.nom_chat]||'', num_recu: r[ci.num_recu]||'',
+        num_bordereau: r[ci.num_cheque]||'', lien_facture: '',
+        suivi_ref: r[ci.id]||'',
+      });
+      await Sheets.archiverImportRapprochement(idx, Sheets.todayFR());
+      ok++;
+    } catch(e) { errors.push(e.message); }
+  }
+  selectedRows.clear();
+  if (ok > 0) showToast(`${ok} ligne(s) transférée(s) en Caisse !`);
+  if (errors.length) alert('Erreurs :\n' + errors.join('\n'));
+  await loadData();
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function fmt(v) { if (!v && v !== 0) return '—'; const n = parseFloat(v); if (isNaN(n)) return '—'; return n.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €'; }
+function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;'); }
+function showToast(m) { const t = document.createElement('div'); t.className = 'success-toast'; t.innerHTML = `<i class="ti ti-check"></i> ${m}`; document.body.appendChild(t); setTimeout(() => t.remove(), 3500); }
+</script>
+</body>
+</html>
