@@ -25,7 +25,7 @@
   .f-input{font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;}
   .f-input-search{width:130px;}
   .f-input-date{width:118px;}
-  .kpi-bar{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
+  .kpi-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
   .kpi{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;}
   .kpi-label{font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
   .kpi-value{font-size:18px;font-weight:600;}
@@ -71,6 +71,11 @@
   @keyframes spin{to{transform:rotate(360deg);}}
   .edit-banner{background:rgba(201,107,42,0.08);border:0.5px solid var(--orange);border-radius:var(--radius-sm);padding:8px 12px;font-size:11px;color:var(--orange);display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
   .chip-brd{font-size:9px;padding:1px 5px;border-radius:6px;background:var(--blue-bg);color:var(--blue);font-weight:500;}
+  table{table-layout:fixed;}
+  thead th{position:relative;overflow:hidden;}
+  .col-resizer{position:absolute;right:0;top:0;bottom:0;width:5px;cursor:col-resize;background:transparent;z-index:1;}
+  .col-resizer:hover,.col-resizer.resizing{background:var(--orange);opacity:0.5;}
+  tbody tr.verified-row td{opacity:0.55;}
 </style>
 </head>
 <body>
@@ -270,9 +275,12 @@ function renderKPIs(){
   const rows=allRows.filter(r=>r[cc.periode]===per);
   const sum=(arr,col)=>arr.reduce((s,r)=>s+(parseFloat(r[col])||0),0);
   const inn=sum(rows,cc.credit),out=sum(rows,cc.debit);
+  const soldInit=Sheets.getSoldeInitial(per,'caisse2');
   document.getElementById('kpi-bar').innerHTML=`
-    <div class="kpi"><div class="kpi-label">Entrées période</div><div class="kpi-value" style="color:var(--green)">${fmt(inn)}</div><div class="kpi-sub">Sorties : ${fmt(out)}</div></div>
-    <div class="kpi"><div class="kpi-label">Net période</div><div class="kpi-value" style="color:${inn-out>=0?'var(--green)':'var(--red)'}">${fmt(inn-out)}</div></div>`;
+    <div class="kpi"><div class="kpi-label">Entrées</div><div class="kpi-value" style="color:var(--green)">${fmt(inn)}</div><div class="kpi-sub">${rows.filter(r=>parseFloat(r[cc.credit])>0).length} op.</div></div>
+    <div class="kpi"><div class="kpi-label">Sorties</div><div class="kpi-value" style="color:var(--red)">${fmt(out)}</div><div class="kpi-sub">${rows.filter(r=>parseFloat(r[cc.debit])>0).length} op.</div></div>
+    <div class="kpi"><div class="kpi-label">Net période</div><div class="kpi-value" style="color:${inn-out>=0?'var(--green)':'var(--red)'}">${fmt(inn-out)}</div></div>
+    <div class="kpi"><div class="kpi-label">Solde initial</div><div class="kpi-value" style="color:var(--blue)">${fmt(soldInit)}</div><div class="kpi-sub">Configuré dans Config</div></div>`;
 }
 
 function renderTable(){
@@ -326,7 +334,13 @@ function renderTable(){
     const comment=r[cc.flag_comment]||'';
     const bordereau=r[cc.num_bordereau]||'';
     const solde=soldeCumule[displayIdx];
-    return `<tr class="${editIdx===ri?'editing':''}">
+    const isVerified=r[cc.flag_check]==='VERIFIE';
+    return `<tr class="${editIdx===ri?'editing':''} ${isVerified?'verified-row':''}">
+      <td style="text-align:center;padding:4px;">
+        <input type="checkbox" ${isVerified?'checked':''} title="${isVerified?'Décocher pour modifier':'Cocher pour verrouiller'}"
+          style="accent-color:var(--green);cursor:pointer;width:14px;height:14px;"
+          onchange="toggleVerifiedCaisse2(${ri},this.checked)" onclick="event.stopPropagation()">
+      </td>
       <td style="color:var(--text-3);white-space:nowrap;">${r[cc.date]||''}</td>
       <td class="td-trunc" title="${escH(r[cc.libelle]||'')}">${r[cc.libelle]||''}</td>
       <td class="r amount-d">${r[cc.debit]?fmt(r[cc.debit]):''}</td>
@@ -338,10 +352,10 @@ function renderTable(){
       <td style="font-size:10px;color:var(--text-3);">${r[cc.nom_chat]||''}</td>
       <td style="font-size:10px;color:var(--text-3);">${r[cc.num_recu]||''}</td>
       <td style="font-size:10px;">${bordereau?`<span class="chip-brd">${escH(bordereau)}</span>`:''}</td>
-      <td style="text-align:center;font-size:12px;">${r[cc.rapproche]==='TRUE'?'<span style="color:var(--green);"><i class="ti ti-check"></i></span>':'—'}</td>
+      <td style="text-align:center;font-size:12px;">${r[cc.suivi_ref]?`<span style="color:var(--green);" title="${escH(r[cc.suivi_ref])}"><i class="ti ti-check"></i></span>`:'—'}</td>
       <td class="r" style="white-space:nowrap;">
-        <button class="edit-btn" onclick="openEdit(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>
-        <button class="del-btn"  onclick="openDel(${ri})"  title="Supprimer"><i class="ti ti-trash"></i></button>
+        <button class="edit-btn" onclick="openEdit(${ri})" title="Modifier" ${isVerified?'disabled style="opacity:0.3;"':''}><i class="ti ti-pencil"></i></button>
+        <button class="del-btn"  onclick="openDel(${ri})"  title="Supprimer" ${isVerified?'disabled style="opacity:0.3;"':''}><i class="ti ti-trash"></i></button>
         <button class="flag-btn ${flagged?'on':''}" onclick="openFlag(${ri},'${escH(r[cc.libelle]||'')}','${escH(comment)}',${flagged})" title="Annoter"><i class="ti ti-flag${flagged?'-filled':''}"></i></button>
       </td>
       <td style="max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:var(--amber);cursor:pointer;" onclick="openFlag(${ri},'${escH(r[cc.libelle]||'')}','${escH(comment)}',${flagged})">${comment}</td>
@@ -349,8 +363,9 @@ function renderTable(){
   }).join('');
 
   document.getElementById('table-wrap').innerHTML=`
-    <table>
+    <table id="caisse2-table">
       <thead><tr>
+        <th style="width:36px;"></th>
         ${mkTh('Date',cc.date)}
         ${mkTh('Libellé',cc.libelle)}
         ${mkTh('Débit',cc.debit,'r')}
@@ -362,12 +377,13 @@ function renderTable(){
         ${mkTh('Nom du chat',cc.nom_chat)}
         ${mkTh('N° reçu',cc.num_recu)}
         ${mkTh('Bord. remise banque',cc.num_bordereau)}
-        ${mkTh('Rapproché',cc.rapproche)}
+        ${mkTh('Rapproché',cc.suivi_ref)}
         <th class="r">Actions</th>
         <th>Commentaire</th>
       </tr></thead>
       <tbody>${trs}</tbody>
     </table>`;
+  initColResize('caisse2-table');
 }
 
 function setSort(col){if(sortCol===col)sortAsc=!sortAsc;else{sortCol=col;sortAsc=true;}renderTable();}
@@ -446,7 +462,9 @@ async function submitForm(){
 }
 
 function openEdit(ri){
-  const cc=Sheets.cols.caisse,r=allRows[ri];editIdx=ri;
+  const cc=Sheets.cols.caisse,r=allRows[ri];
+  if(r[cc.flag_check]==='VERIFIE'){showToast('⚠️ Ligne vérifiée — décochez pour modifier');return;}
+  editIdx=ri;
   document.getElementById('f-date').value=r[cc.date]||'';
   document.getElementById('f-montant').value=r[cc.credit]||r[cc.debit]||'';
   document.getElementById('f-libelle').value=r[cc.libelle]||'';
@@ -495,6 +513,28 @@ async function saveFlag(){
   catch(e){alert('Erreur : '+e.message);}
 }
 
+async function toggleVerifiedCaisse2(ri,checked){
+  try{
+    await Sheets.updateCell(Sheets.config.sheets.caisse,ri+2,Sheets.cols.caisse.flag_check,checked?'VERIFIE':'FALSE');
+    if(checked&&editIdx===ri)cancelEdit();
+    await loadData();
+    showToast(checked?'Ligne verrouillée ✓':'Ligne déverrouillée');
+  }catch(e){alert('Erreur : '+e.message);}
+}
+function initColResize(tableId){
+  const table=document.getElementById(tableId);if(!table)return;
+  table.querySelectorAll('thead th').forEach(th=>{
+    if(th.querySelector('.col-resizer'))return;
+    const r=document.createElement('div');r.className='col-resizer';th.appendChild(r);
+    let startX,startW;
+    r.addEventListener('mousedown',e=>{
+      e.preventDefault();e.stopPropagation();startX=e.pageX;startW=th.offsetWidth;r.classList.add('resizing');
+      const onMove=ev=>{th.style.width=(startW+ev.pageX-startX)+'px';};
+      const onUp=()=>{r.classList.remove('resizing');document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);};
+      document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onUp);
+    });
+  });
+}
 function chipType(t){if(!t)return'depense';const l=t.toLowerCase();if(l.includes('adopt'))return'adoption';if(l.includes('don'))return'don';if(l.includes('adh'))return'adhesion';return'depense';}
 function fmt(v){if(!v&&v!==0)return'';const n=parseFloat(String(v).replace(/\s/g,'').replace(',','.'));if(isNaN(n))return'';return n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
 function dateToISO(d){if(!d)return'';const p=String(d).split('/');if(p.length===3&&p[0].length===2)return`${p[2]}-${p[1]}-${p[0]}`;return d;}
