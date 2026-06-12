@@ -360,7 +360,7 @@
 // ============================================================
 // ÉTAT
 // ============================================================
-let allRows=[], allCheques=[], allRemises=[], allFactures=[], allCaisseRows=[];
+let allRows=[], allCheques=[], allRemises=[], allFactures=[], allCaisseRows=[], allImportRap=[];
 let selectedIdx = null;
 let editingIdx  = null;   // index dans allRows de la ligne en cours d'édition
 let sortCol=-1, sortAsc=true;
@@ -415,12 +415,13 @@ async function loadData(){
       showTableError('Google Sheets non configuré.');
       return;
     }
-    [allRows, allCheques, allRemises, allFactures, allCaisseRows] = await Promise.all([
+    [allRows, allCheques, allRemises, allFactures, allCaisseRows, allImportRap] = await Promise.all([
       Sheets.getBanqueOperations(),
       Sheets.getCheques('en_attente'),
       Sheets.getRemises('en_attente'),
       Sheets.getFactures(),
       Sheets.getCaisseOperations(),
+      Sheets.getImportRapprochement('en_attente'),
     ]);
     Sidebar.setLastUpdate();
     updateSoldeBanner();
@@ -843,53 +844,40 @@ function switchSuiviBankTab(key){
   renderSuiviBankLines();
 }
 
-function getImportedSuiviKeys(){
-  try{ return JSON.parse(localStorage.getItem('arche_suivi_imported')||'[]').map(i=>`${i.onglet}:${i.rowIdx}:${i.montantIdx}`); }
-  catch(e){ return []; }
-}
-
 function renderSuiviBankLines(){
-  const key = activeSuiviBankTab;
-  const cfg = SUIVI_BANK_ONGLETS[key];
-  const rows = suiviBankData[key]||[];
   const search = (document.getElementById('rap-suivi-search')?.value||'').toLowerCase();
-  const imported = getImportedSuiviKeys();
-  const lines = [];
-  rows.forEach((row,ri)=>{
-    const g = col => col!=null?(row[col]||''):'';
-    const nom = [g(cfg.cols.prenom), g(cfg.cols.nom)].filter(Boolean).join(' ')||g(cfg.cols.nom)||'—';
-    const chat = cfg.cols.nom_chat!=null ? g(cfg.cols.nom_chat) : '';
-    const date = g(cfg.cols.date);
-    cfg.cols.montants.forEach((m,mi)=>{
-      const val = m.fixed!==undefined ? m.fixed : parseMontant(row[m.col]||0)||0;
-      if(!val) return;
-      const selKey = `${key}:${ri}:${mi}`;
-      const already = imported.includes(selKey);
-      const txt = [nom,chat,date,m.label].join(' ').toLowerCase();
-      if(search && !txt.includes(search)) return;
-      lines.push({key,ri,mi,nom,chat,date,val,label:m.label,already,selKey,numRecu:cfg.cols.num_recu?g(cfg.cols.num_recu):''});
-    });
-  });
+  const ci = Sheets.cols.importRap;
+  // Filtrer les lignes Import_Rapprochement en_attente destinées à la banque
+  const lines = (allImportRap||[]).filter(r =>
+    r[ci.destination]==='banque' && r[ci.statut]==='en_attente'
+  ).filter(r => !search || [r[ci.libelle],r[ci.nom_chat],r[ci.type_mvt],r[ci.onglet]].join(' ').toLowerCase().includes(search));
+
   const wrap = document.getElementById('suivi-bank-lines');
   if(!wrap) return;
-  if(!lines.length){ wrap.innerHTML='<div style="padding:12px;text-align:center;color:var(--text-3);font-size:11px;">Aucune ligne</div>'; return; }
-  wrap.innerHTML = lines.map(l=>`
-    <div class="suivi-line-bank ${linkedSuivi?.selKey===l.selKey?'selected':''} ${l.already?'already':''}"
-         onclick="${l.already?'':` selectSuiviBankLine('${l.selKey}','${l.key}',${l.ri},${l.mi},${l.val},'${escH(l.nom)}','${escH(l.chat)}','${escH(l.numRecu)}')`}">
+  if(!lines.length){ wrap.innerHTML='<div style="padding:12px;text-align:center;color:var(--text-3);font-size:11px;">Aucune ligne en attente</div>'; return; }
+  wrap.innerHTML = lines.map(r=>{
+    const idx = r._sheetIndex;
+    const selected = linkedSuivi?.idx === idx;
+    return `<div class="suivi-line-bank ${selected?'selected':''}"
+       onclick="selectSuiviBankLine(${idx})">
       <div style="flex:1;">
-        <div style="font-size:11px;font-weight:500;">${escH(l.nom)}${l.chat?' — '+escH(l.chat):''}</div>
-        <div style="font-size:10px;color:var(--text-3);">${escH(l.date)} · ${escH(l.label)}${l.already?' · <span style=\"color:var(--green)\">✓ Déjà importé</span>':''}</div>
+        <div style="font-size:11px;font-weight:500;">${escH(r[ci.libelle]||'—')}${r[ci.nom_chat]?' — '+escH(r[ci.nom_chat]):''}</div>
+        <div style="font-size:10px;color:var(--text-3);">${escH(r[ci.date]||'')} · ${escH(r[ci.type_mvt]||'')} · ${escH(r[ci.onglet]||'')}${r[ci.num_recu]?' · <span style="color:var(--purple)">Reçu:'+escH(r[ci.num_recu])+'</span>':''}</div>
       </div>
-      <div style="font-size:12px;font-weight:600;color:var(--green);white-space:nowrap;">${fmt(l.val)}</div>
-    </div>`).join('');
+      <div style="font-size:12px;font-weight:600;color:var(--green);white-space:nowrap;">${fmt(r[ci.montant])}</div>
+    </div>`;
+  }).join('');
 }
 
-function selectSuiviBankLine(selKey,key,ri,mi,val,nom,chat,numRecu){
-  linkedSuivi = {selKey,key,ri,mi,val,nom,chat,numRecu};
+function selectSuiviBankLine(idx){
+  const ci = Sheets.cols.importRap;
+  const r = (allImportRap||[]).find(x => x._sheetIndex === idx);
+  if(!r) return;
+  linkedSuivi = {idx, data:r, onglet:r[ci.onglet]||''};
   document.getElementById('rap-suivi-linked').innerHTML=`
     <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--purple-bg);border:0.5px solid rgba(120,60,160,0.2);border-radius:var(--radius-sm);font-size:11px;margin-top:4px;">
       <i class="ti ti-check" style="color:var(--purple);"></i>
-      <span style="flex:1;color:var(--purple);"><strong>${escH(nom)}</strong>${chat?' — '+escH(chat):''} — ${fmt(val)}</span>
+      <span style="flex:1;color:var(--purple);"><strong>${escH(r[ci.libelle]||'')}</strong>${r[ci.nom_chat]?' — '+escH(r[ci.nom_chat]):''} — ${fmt(r[ci.montant])}${r[ci.num_recu]?' <span style="color:var(--text-3);font-size:9px;">Reçu: '+escH(r[ci.num_recu])+'</span>':''}</span>
       <button style="background:none;border:none;cursor:pointer;color:var(--red);font-size:13px;" onclick="linkedSuivi=null;document.getElementById('rap-suivi-linked').innerHTML='';renderSuiviBankLines();"><i class="ti ti-x"></i></button>
     </div>`;
   renderSuiviBankLines();
@@ -959,7 +947,7 @@ function populateRapSelects(){
   sc2.innerHTML='<option value="">— Choisir une sortie caisse —</option>';
  allCaisseRows
   .map((r,i) => ({r, idx:i}))
-  .filter(({r}) => parseMontant(r[ccaisse.debit]) > 0 && r[ccaisse.rapproche] !== 'TRUE')
+  .filter(({r}) => parseMontant(r[ccaisse.debit]) > 0 && !r[ccaisse.suivi_ref])
   .forEach(({r, idx:i}) => {
       const brd = r[ccaisse.num_bordereau] ? ' — BRD: ' + r[ccaisse.num_bordereau] : '';
       sc2.innerHTML += '<option value="' + i + '">' + (r[ccaisse.source]||'') + ' | ' + (r[ccaisse.date]||'') + ' — ' + (r[ccaisse.libelle]||'') + ' — ' + fmt(r[ccaisse.debit]) + brd + '</option>';
@@ -1096,20 +1084,19 @@ async function savePanel(){
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp,      'Caisse ' + (lig[cc.source]||''));
     }
 
-    // Lier Suivi → marquer dans localStorage + reporter suivi_ref dans banque
+    // Lier Suivi → reporter dans banque + archiver dans Import_Rapprochement
     if(linkedSuivi){
-      const suiviRef = linkedSuivi.selKey;
-      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, linkedSuivi.nom || '');
-      if(linkedSuivi.chat) await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.nom_chat, linkedSuivi.chat);
-      // Marquer dans localStorage
-      try{
-        const arr = JSON.parse(localStorage.getItem('arche_suivi_imported')||'[]');
-        const [onglet,ri,mi] = suiviRef.split(':');
-        if(!arr.find(i=>i.onglet===onglet&&i.rowIdx===parseInt(ri)&&i.montantIdx===parseInt(mi))){
-          arr.push({onglet,rowIdx:parseInt(ri),montantIdx:parseInt(mi),opRef:suiviRef,date:new Date().toISOString()});
-          localStorage.setItem('arche_suivi_imported',JSON.stringify(arr));
-        }
-      }catch(e){}
+      const ci = Sheets.cols.importRap;
+      const sr = linkedSuivi.data; // ligne Import_Rapprochement
+      // Copier les infos dans la ligne banque (sans écraser date/montant/libellé)
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,    sr[ci.type_mvt]      || linkedSuivi.onglet || '');
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, sr[ci.type_mvt]      || linkedSuivi.onglet || '');
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp,   sr[ci.libelle]       || '');  // nom de la personne
+      if(sr[ci.nom_chat])    await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.nom_chat,       sr[ci.nom_chat]);
+      if(sr[ci.num_recu])    await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.num_don_fiscal, sr[ci.num_recu]);   // N° reçu fiscal → col don fiscal
+      if(sr[ci.num_cheque])  await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.ref_cheque,     sr[ci.num_cheque]);
+      // Archiver la ligne dans Import_historique
+      await Sheets.archiverImportRapprochement(linkedSuivi.idx, r[cb.date] || Sheets.todayFR());
     }
 
     // Ventilation → stocker en description si multiple
