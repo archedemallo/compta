@@ -58,6 +58,11 @@
   .rap-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;color:var(--purple,#6c5ce7);}
   .rap-btn.linked{color:var(--green);}
   .chip-suivi{font-size:9px;padding:1px 5px;border-radius:6px;background:var(--purple-bg,#f3f0ff);color:var(--purple,#6c5ce7);font-weight:500;cursor:pointer;}
+  table{table-layout:fixed;}
+  thead th{position:relative;overflow:hidden;}
+  .col-resizer{position:absolute;right:0;top:0;bottom:0;width:5px;cursor:col-resize;background:transparent;z-index:1;}
+  .col-resizer:hover,.col-resizer.resizing{background:var(--orange);opacity:0.5;}
+  tbody tr.verified-row>td{opacity:0.55;}
   /* Panneau bas de page */
   .panel-overlay{position:fixed;inset:0;background:rgba(61,43,31,0.3);z-index:150;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px);}
   .panel{background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;width:100%;max-width:860px;max-height:82vh;overflow-y:auto;box-shadow:0 -4px 32px rgba(61,43,31,0.15);}
@@ -296,6 +301,7 @@ function renderTable(){
     const id=r[cr.id]||String(ri);
     const s=r[cr.statut]||'';
     const isOpen=openRows.has(id);
+    const isVerified=r[cr.verified]==='TRUE';
     const badge=s==='en_attente'
       ?'<span class="chip" style="background:var(--amber-bg);color:var(--amber);">En attente</span>'
       :'<span class="chip" style="background:var(--green-bg);color:var(--green);">Encaissée</span>';
@@ -339,8 +345,13 @@ function renderTable(){
         </table>
       </div>`;
     return `
-      <tr>
-        <td><button class="expand-btn ${isOpen?'open':''}" onclick="toggleRow('${id}')">${isOpen?'−':'+'}</button></td>
+      <tr class="${isVerified?'verified-row':''}">
+        <td style="display:flex;align-items:center;gap:4px;padding:5px 8px;">
+          <button class="expand-btn ${isOpen?'open':''}" onclick="toggleRow('${id}')">${isOpen?'−':'+'}</button>
+          <input type="checkbox" ${isVerified?'checked':''} title="${isVerified?'Décocher pour modifier':'Cocher pour verrouiller'}"
+            style="accent-color:var(--green);cursor:pointer;width:13px;height:13px;"
+            onchange="toggleVerifiedRemise(${ri},this.checked)">
+        </td>
         <td style="color:var(--text-3);">${formatDate(r[cr.date_remise])}</td>
         <td style="font-weight:500;">${r[cr.num_bordereau]||'—'}</td>
         <td class="r">${nb} chèque(s)</td>
@@ -348,7 +359,7 @@ function renderTable(){
         <td>${badge}</td>
         <td style="color:var(--text-3);font-size:10px;">${formatDate(r[cr.date_encaiss])}</td>
         <td class="r" style="white-space:nowrap;">
-          <button class="edit-btn" onclick="openEdit(${ri})" title="Modifier" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;color:var(--blue);"><i class="ti ti-pencil"></i></button>
+          <button class="edit-btn" onclick="openEdit(${ri})" title="Modifier" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;color:var(--blue);" ${isVerified?'disabled style="opacity:0.3;"':''}><i class="ti ti-pencil"></i></button>
           <button class="del-btn" onclick="openDel(${ri},'BRD: ${escH(r[cr.num_bordereau]||'')} — ${escH(fmt(r[cr.montant_total]))}')"><i class="ti ti-trash"></i></button>
         </td>
       </tr>
@@ -357,16 +368,38 @@ function renderTable(){
       </tr>`;
   }).join('');
   document.getElementById('table-wrap').innerHTML=`
-    <table>
+    <table id="remises-table">
       <thead><tr>
-        <th style="width:36px;"></th>
+        <th style="width:60px;"></th>
         <th>Date</th><th>N° bordereau</th><th class="r">Nb chèques</th>
         <th class="r">Total</th><th>Statut</th><th>Encaissée le</th><th class="r">Actions</th>
       </tr></thead>
       <tbody>${trs}</tbody>
     </table>`;
+  initColResize('remises-table');
 }
 
+async function toggleVerifiedRemise(ri,checked){
+  try{
+    await Sheets.updateCell(Sheets.config.sheets.remises,ri+2,Sheets.cols.remise.verified,checked?'TRUE':'FALSE');
+    await loadData();
+    showToast(checked?'Remise verrouillée ✓':'Remise déverrouillée');
+  }catch(e){alert('Erreur : '+e.message);}
+}
+function initColResize(tableId){
+  const table=document.getElementById(tableId);if(!table)return;
+  table.querySelectorAll('thead th').forEach(th=>{
+    if(th.querySelector('.col-resizer'))return;
+    const r=document.createElement('div');r.className='col-resizer';th.appendChild(r);
+    let startX,startW;
+    r.addEventListener('mousedown',e=>{
+      e.preventDefault();e.stopPropagation();startX=e.pageX;startW=th.offsetWidth;r.classList.add('resizing');
+      const onMove=ev=>{th.style.width=(startW+ev.pageX-startX)+'px';};
+      const onUp=()=>{r.classList.remove('resizing');document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);};
+      document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onUp);
+    });
+  });
+}
 function toggleRow(id){
   if(openRows.has(id)) openRows.delete(id); else openRows.add(id);
   renderTable();
