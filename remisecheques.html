@@ -54,6 +54,38 @@
   .spinner{display:inline-block;animation:spin 1s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
   .info-box{background:var(--blue-bg);border:0.5px solid rgba(24,95,165,0.15);border-radius:var(--radius-sm);padding:8px 12px;font-size:11px;color:var(--blue);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  /* Rapprochement Suivi */
+  .rap-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;color:var(--purple,#6c5ce7);}
+  .rap-btn.linked{color:var(--green);}
+  .chip-suivi{font-size:9px;padding:1px 5px;border-radius:6px;background:var(--purple-bg,#f3f0ff);color:var(--purple,#6c5ce7);font-weight:500;cursor:pointer;}
+  /* Panneau bas de page */
+  .panel-overlay{position:fixed;inset:0;background:rgba(61,43,31,0.3);z-index:150;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px);}
+  .panel{background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;width:100%;max-width:860px;max-height:82vh;overflow-y:auto;box-shadow:0 -4px 32px rgba(61,43,31,0.15);}
+  .panel-head{padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--surface);z-index:1;}
+  .panel-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;}
+  .panel-close{background:none;border:none;font-size:18px;color:var(--text-3);cursor:pointer;}
+  .panel-body{padding:14px 16px;}
+  .panel-footer{padding:10px 16px;border-top:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;bottom:0;background:var(--surface);}
+  .rap-section{margin-bottom:14px;}
+  .rap-section-title{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;display:flex;align-items:center;gap:6px;padding-bottom:4px;border-bottom:0.5px solid var(--border);}
+  .rap-section-title i{color:var(--orange);}
+  .suivi-tabs{display:flex;gap:0;border-bottom:0.5px solid var(--border);margin-bottom:10px;overflow-x:auto;}
+  .suivi-tab{padding:6px 14px;font-size:11px;font-weight:500;color:var(--text-3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all 0.15s;}
+  .suivi-tab:hover{color:var(--text-2);}
+  .suivi-tab.active{color:var(--orange);border-bottom-color:var(--orange);}
+  .suivi-tab-badge{font-size:9px;padding:1px 4px;border-radius:8px;background:var(--orange);color:white;margin-left:4px;}
+  .suivi-line{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border);margin-bottom:5px;cursor:pointer;transition:all 0.15s;}
+  .suivi-line:hover{background:var(--warm);border-color:var(--orange);}
+  .suivi-line.selected{background:rgba(201,107,42,0.08);border-color:var(--orange);}
+  .suivi-line.already-linked{opacity:0.45;cursor:default;text-decoration:line-through;}
+  .suivi-line-info{flex:1;}
+  .suivi-line-nom{font-size:11px;font-weight:500;}
+  .suivi-line-detail{font-size:10px;color:var(--text-3);margin-top:1px;}
+  .suivi-line-montant{font-size:12px;font-weight:600;color:var(--green);white-space:nowrap;}
+  .rap-linked{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--green-bg);border:0.5px solid rgba(59,109,17,0.2);border-radius:var(--radius-sm);font-size:11px;margin-bottom:12px;}
+  .rap-linked-label{flex:1;color:var(--green);}
+  .rap-remove{background:none;border:none;cursor:pointer;color:var(--red);font-size:14px;padding:0;}
+  .f-input-rap{font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;width:100%;box-sizing:border-box;}
 </style>
 </head>
 <body>
@@ -125,6 +157,43 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- PANNEAU RAPPROCHEMENT SUIVI -->
+<div class="panel-overlay hidden" id="panel-rap">
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title"><i class="ti ti-link" style="color:var(--orange)"></i> Rapprocher avec Suivi — <span id="panel-chq-info" style="color:var(--text-2);font-weight:400;font-size:12px;"></span></div>
+      <button class="panel-close" onclick="closeRapPanel()">×</button>
+    </div>
+    <div class="panel-body">
+      <!-- Lien existant -->
+      <div id="rap-linked-display"></div>
+      <!-- Sélection ligne Suivi -->
+      <div class="rap-section">
+        <div class="rap-section-title"><i class="ti ti-database"></i> Choisir la ligne Suivi correspondante</div>
+        <div class="suivi-tabs" id="suivi-tabs"></div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <input class="f-input-rap" type="text" id="rap-search" placeholder="Rechercher…" oninput="renderSuiviLines()">
+          <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-3);cursor:pointer;white-space:nowrap;">
+            <input type="checkbox" id="rap-hide-linked" onchange="renderSuiviLines()" style="accent-color:var(--orange);"> Masquer déjà liés
+          </label>
+        </div>
+        <div id="suivi-lines-wrap" style="max-height:300px;overflow-y:auto;"></div>
+      </div>
+      <!-- Aperçu -->
+      <div class="rap-section" id="rap-copy-preview" style="display:none;">
+        <div class="rap-section-title"><i class="ti ti-copy"></i> Informations qui seront copiées dans le chèque</div>
+        <div id="rap-copy-detail" style="font-size:11px;color:var(--text-2);background:var(--surface-2);border-radius:var(--radius-sm);padding:10px 12px;"></div>
+      </div>
+    </div>
+    <div class="panel-footer">
+      <button class="btn btn-secondary" onclick="closeRapPanel()">Annuler</button>
+      <button class="btn btn-primary" id="btn-save-rap" onclick="saveRapprochement()" disabled>
+        <i class="ti ti-device-floppy"></i> Enregistrer le rapprochement
+      </button>
     </div>
   </div>
 </div>
@@ -242,6 +311,10 @@ function renderTable(){
   const type_comp  =r[base+5]||'—';
   const nom_chat   =r[base+6]||'—';
   const recu_fiscal=r[base+7]||'—';
+  const suiviRef   =r[base+8]||'';   // suivi_ref stocké après les 8 champs
+  const suiviBadge = suiviRef
+    ? `<span class="chip-suivi" onclick="openRapPanel(${ri},${i})" title="${escH(suiviRef)}">⇄ Suivi ✓</span>`
+    : `<button class="rap-btn" onclick="openRapPanel(${ri},${i})" title="Rapprocher avec Suivi"><i class="ti ti-link"></i></button>`;
   detailRows+=`<tr>
     <td>${donateur}</td>
     <td class="r" style="font-weight:500;">${montant?fmt(montant):'—'}</td>
@@ -251,6 +324,7 @@ function renderTable(){
     <td style="color:var(--text-3);">${type_comp}</td>
     <td style="color:var(--text-3);">${nom_chat}</td>
     <td style="color:var(--text-3);">${recu_fiscal}</td>
+    <td style="text-align:center;">${suiviBadge}</td>
   </tr>`;
 }
     const detailHtml=`
@@ -259,7 +333,7 @@ function renderTable(){
           <thead><tr>
   <th>Nom</th><th class="r">Montant</th><th>N° chèque</th><th>Type de mouvement</th>
   <th>Description</th><th>Libellé complémentaire</th>
-  <th>Nom du chat</th><th>N° reçu fiscal</th>
+  <th>Nom du chat</th><th>N° reçu fiscal</th><th>Suivi</th>
 </tr></thead>
           <tbody>${detailRows||'<tr><td colspan="7" style="color:var(--text-3);text-align:center;">Aucun détail</td></tr>'}</tbody>
         </table>
@@ -423,6 +497,271 @@ async function confirmDel(){
 // ============================================================
 // ÉDITION
 // ============================================================
+// ============================================================
+// RAPPROCHEMENT SUIVI
+// ============================================================
+const SUIVI_SHEET_ID = '1y6yD4AohP7T10GE7mmguIqNWSnwla9t1mewBpCDej_Y';
+const SUIVI_COLS = {
+  Adoption:             { date:2, nom:17, prenom:18, nom_chat:4,  montants:[{col:29,label:'Total participation'},{col:28,label:'Reste à payer'}] },
+  Reservation_Chat:     { date:2, nom:10, prenom:null, nom_chat:5, montants:[{fixed:50,label:'Réservation'}] },
+  Reservation_Chaton:   { date:2, nom:11, prenom:null, nom_chat:6, montants:[{fixed:50,label:'Réservation'}] },
+  Contrat_reservation_chat: { date:2, nom:10, prenom:null, nom_chat:5, montants:[{fixed:50,label:'Réservation'}] },
+  Dons:                 { date:2, nom:7,  prenom:8,    nom_chat:null, montants:[{col:4,label:'Montant don'}] },
+  Adhesion:             { date:2, nom:4,  prenom:5,    nom_chat:null, montants:[{col:12,label:'Don bienfaiteur'},{col:13,label:'Don sympathisant'},{col:14,label:'Paiement adhésion'}] },
+};
+const SUIVI_LABELS = { Adoption:'Adoptions', Reservation_Chat:'Rés. Chat', Reservation_Chaton:'Rés. Chaton', Contrat_reservation_chat:'Contrats Rés.', Dons:'Dons', Adhesion:'Adhésions' };
+
+let suiviData = {};          // données brutes par onglet
+let activeSuiviTab = 'Adoption';
+let rapTarget = null;        // { remiseIdx, chequeIdx }
+let selectedSuiviLine = null;
+
+// Ouvre le panneau pour un chèque donné (remiseIdx = index dans allRemises, chequeIdx = index du chèque dans la remise)
+async function openRapPanel(remiseIdx, chequeIdx) {
+  rapTarget = { remiseIdx, chequeIdx };
+  selectedSuiviLine = null;
+  document.getElementById('btn-save-rap').disabled = true;
+  document.getElementById('rap-copy-preview').style.display = 'none';
+  document.getElementById('rap-search').value = '';
+  document.getElementById('rap-hide-linked').checked = false;
+
+  // Info du chèque
+  const cr = Sheets.cols.remise;
+  const r = allRemises[remiseIdx];
+  const base = cr.detail_start + chequeIdx * 8;
+  const donateur = r[base] || '—';
+  const montant = r[base+1] || '';
+  const numChq = r[base+2] || '';
+  const suiviRef = r[base+8] || '';
+  document.getElementById('panel-chq-info').textContent = `${donateur}${numChq ? ' · N°'+numChq : ''} — ${montant ? fmt(montant) : ''}`;
+
+  // Lien existant
+  if (suiviRef) {
+    document.getElementById('rap-linked-display').innerHTML = `
+      <div class="rap-linked">
+        <i class="ti ti-link" style="color:var(--green);font-size:15px;"></i>
+        <span class="rap-linked-label"><strong>Déjà rapproché</strong> : ${escH(suiviRef)}</span>
+        <button class="rap-remove" onclick="deRapprocher()" title="Supprimer le rapprochement"><i class="ti ti-unlink"></i></button>
+      </div>`;
+  } else {
+    document.getElementById('rap-linked-display').innerHTML = '';
+  }
+
+  document.getElementById('panel-rap').classList.remove('hidden');
+  if (!Object.keys(suiviData).length) await loadSuiviData();
+  buildSuiviTabs();
+  renderSuiviLines();
+}
+
+function closeRapPanel() {
+  document.getElementById('panel-rap').classList.add('hidden');
+  rapTarget = null;
+  selectedSuiviLine = null;
+}
+
+async function loadSuiviData() {
+  document.getElementById('suivi-lines-wrap').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-3);font-size:12px;"><i class="ti ti-loader-2 spinner"></i> Chargement Suivi…</div>';
+  await Promise.all(Object.keys(SUIVI_COLS).map(async onglet => {
+    try {
+      const resp = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId: SUIVI_SHEET_ID, range: `${onglet}!A2:AZ` });
+      suiviData[onglet] = (resp.result.values || []).filter(r => r && r.length > 1);
+    } catch(e) { suiviData[onglet] = []; }
+  }));
+}
+
+function buildSuiviTabs() {
+  document.getElementById('suivi-tabs').innerHTML = Object.keys(SUIVI_COLS).map(onglet =>
+    `<button class="suivi-tab ${onglet === activeSuiviTab ? 'active' : ''}" onclick="switchSuiviTab('${onglet}')">
+      ${SUIVI_LABELS[onglet]}<span class="suivi-tab-badge">${(suiviData[onglet]||[]).length}</span>
+    </button>`
+  ).join('');
+}
+
+function switchSuiviTab(onglet) {
+  activeSuiviTab = onglet;
+  buildSuiviTabs();
+  renderSuiviLines();
+}
+
+function getLinkedKeys() {
+  try {
+    const arr = JSON.parse(localStorage.getItem('arche_suivi_imported') || '[]');
+    return arr.map(i => `${i.onglet}:${i.rowIdx}:${i.montantIdx}`);
+  } catch(e) { return []; }
+}
+
+function renderSuiviLines() {
+  const onglet = activeSuiviTab;
+  const cols = SUIVI_COLS[onglet];
+  const rows = suiviData[onglet] || [];
+  const search = (document.getElementById('rap-search')?.value || '').toLowerCase();
+  const hideLinked = document.getElementById('rap-hide-linked')?.checked || false;
+  const linked = getLinkedKeys();
+
+  const lines = [];
+  rows.forEach((row, ri) => {
+    const g = col => col != null ? (row[col] || '') : '';
+    const nom = [g(cols.prenom), g(cols.nom)].filter(Boolean).join(' ') || g(cols.nom) || '—';
+    const nomChat = g(cols.nom_chat);
+    const date = g(cols.date);
+    cols.montants.forEach((m, mi) => {
+      const montant = m.fixed !== undefined ? m.fixed : parseFloat(g(m.col)) || 0;
+      if (!montant) return;
+      const key = `${onglet}:${ri}:${mi}`;
+      const alreadyLinked = linked.includes(key);
+      if (hideLinked && alreadyLinked) return;
+      if (search && ![nom, nomChat, date, m.label].join(' ').toLowerCase().includes(search)) return;
+      lines.push({ onglet, ri, mi, nom, nomChat, date, montant, label: m.label, alreadyLinked, key, row, cols });
+    });
+  });
+
+  if (!lines.length) {
+    document.getElementById('suivi-lines-wrap').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-3);font-size:12px;">Aucune ligne disponible</div>';
+    return;
+  }
+
+  document.getElementById('suivi-lines-wrap').innerHTML = lines.map(l => `
+    <div class="suivi-line ${selectedSuiviLine?.key === l.key ? 'selected' : ''} ${l.alreadyLinked ? 'already-linked' : ''}"
+         onclick="${l.alreadyLinked ? '' : `selectSuiviLine('${l.key}',${l.ri},${l.mi},'${escH(l.onglet)}')`}">
+      <div class="suivi-line-info">
+        <div class="suivi-line-nom">${escH(l.nom)}${l.nomChat ? ' — ' + escH(l.nomChat) : ''}</div>
+        <div class="suivi-line-detail">${escH(l.date)} · ${escH(l.label)} ${l.alreadyLinked ? '· <span style="color:var(--green);">✓ Déjà lié</span>' : ''}</div>
+      </div>
+      <div class="suivi-line-montant">${fmt(l.montant)}</div>
+    </div>`).join('');
+}
+
+function selectSuiviLine(key, ri, mi, onglet) {
+  const cols = SUIVI_COLS[onglet];
+  const row = (suiviData[onglet] || [])[ri];
+  if (!row) return;
+  selectedSuiviLine = { key, ri, mi, onglet, row, cols };
+
+  // Aperçu des infos copiées
+  const copies = [`Référence Suivi : <strong>${escH(key)}</strong>`];
+  document.getElementById('rap-copy-detail').innerHTML = copies.map(c =>
+    `<div style="padding:2px 0;border-bottom:0.5px solid var(--border);">${c}</div>`).join('');
+  document.getElementById('rap-copy-preview').style.display = '';
+  document.getElementById('btn-save-rap').disabled = false;
+  renderSuiviLines();
+}
+
+async function saveRapprochement() {
+  if (!rapTarget || !selectedSuiviLine) return;
+  const { remiseIdx, chequeIdx } = rapTarget;
+  const { key, onglet, ri, mi } = selectedSuiviLine;
+  const cr = Sheets.cols.remise;
+  const r = allRemises[remiseIdx];
+
+  // Reconstruire l'objet remise complet avec le suivi_ref écrit dans le chèque concerné
+  const nb = parseInt(r[cr.nb_cheques]) || 0;
+  const cheques = [];
+  for (let i = 0; i < nb; i++) {
+    const base = cr.detail_start + i * 8;
+    cheques.push({
+      donateur:    r[base]   || '',
+      montant:     r[base+1] || '',
+      num_cheque:  r[base+2] || '',
+      type_mvt:    r[base+3] || '',
+      description: r[base+4] || '',
+      type_comp:   r[base+5] || '',
+      nom_chat:    r[base+6] || '',
+      recu_fiscal: r[base+7] || '',
+      suivi_ref:   i === chequeIdx ? key : (r[base+8] || ''),
+    });
+  }
+  const remise = {
+    num_bordereau: r[cr.num_bordereau] || '',
+    date_remise:   r[cr.date_remise]   || '',
+    periode:       r[cr.periode]       || '',
+    id:            r[cr.id]            || '',
+    statut:        r[cr.statut]        || 'en_attente',
+    date_encaiss:  r[cr.date_encaiss]  || '',
+    ref_banque:    r[cr.ref_banque]    || '',
+    cheques,
+  };
+
+  const btn = document.getElementById('btn-save-rap');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader-2 spinner"></i>';
+  try {
+    await Sheets.updateRemise(remiseIdx, remise);
+    // Marquer dans localStorage → la ligne Suivi bascule en Archive
+    markSuiviLinked(onglet, ri, mi, key);
+    closeRapPanel();
+    showToast('Rapprochement enregistré !');
+    await loadData();
+  } catch(e) {
+    alert('Erreur : ' + (e.message || e));
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-device-floppy"></i> Enregistrer le rapprochement';
+  }
+}
+
+async function deRapprocher() {
+  if (!rapTarget) return;
+  if (!confirm('Supprimer le lien avec Suivi pour ce chèque ?')) return;
+  const { remiseIdx, chequeIdx } = rapTarget;
+  const cr = Sheets.cols.remise;
+  const r = allRemises[remiseIdx];
+  const base = cr.detail_start + chequeIdx * 8;
+  const oldRef = r[base+8] || '';
+
+  const nb = parseInt(r[cr.nb_cheques]) || 0;
+  const cheques = [];
+  for (let i = 0; i < nb; i++) {
+    const b = cr.detail_start + i * 8;
+    cheques.push({
+      donateur:    r[b]   || '',
+      montant:     r[b+1] || '',
+      num_cheque:  r[b+2] || '',
+      type_mvt:    r[b+3] || '',
+      description: r[b+4] || '',
+      type_comp:   r[b+5] || '',
+      nom_chat:    r[b+6] || '',
+      recu_fiscal: r[b+7] || '',
+      suivi_ref:   i === chequeIdx ? '' : (r[b+8] || ''),
+    });
+  }
+  const remise = {
+    num_bordereau: r[cr.num_bordereau] || '',
+    date_remise:   r[cr.date_remise]   || '',
+    periode:       r[cr.periode]       || '',
+    id:            r[cr.id]            || '',
+    statut:        r[cr.statut]        || 'en_attente',
+    date_encaiss:  r[cr.date_encaiss]  || '',
+    ref_banque:    r[cr.ref_banque]    || '',
+    cheques,
+  };
+  try {
+    await Sheets.updateRemise(remiseIdx, remise);
+    // Retirer du localStorage
+    if (oldRef) {
+      const [onglet, rowIdx, montantIdx] = oldRef.split(':');
+      let arr = JSON.parse(localStorage.getItem('arche_suivi_imported') || '[]');
+      arr = arr.filter(i => !(i.onglet === onglet && i.rowIdx === parseInt(rowIdx) && i.montantIdx === parseInt(montantIdx)));
+      localStorage.setItem('arche_suivi_imported', JSON.stringify(arr));
+    }
+    closeRapPanel();
+    showToast('Lien Suivi supprimé');
+    await loadData();
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+
+function markSuiviLinked(onglet, rowIdx, montantIdx, key) {
+  try {
+    const arr = JSON.parse(localStorage.getItem('arche_suivi_imported') || '[]');
+    if (!arr.find(i => i.onglet === onglet && i.rowIdx === rowIdx && i.montantIdx === montantIdx)) {
+      arr.push({ onglet, rowIdx, montantIdx, opRef: key, date: new Date().toISOString() });
+      localStorage.setItem('arche_suivi_imported', JSON.stringify(arr));
+    }
+  } catch(e) {}
+}
+
+// ============================================================
+// ÉDITION REMISE
+// ============================================================
 function openEdit(ri){
   const cr=Sheets.cols.remise, r=allRemises[ri];
   editRemIdx=ri;
@@ -434,13 +773,13 @@ function openEdit(ri){
   const nb=parseInt(r[cr.nb_cheques])||0;
   for(let i=0;i<nb;i++){
     addChequeRemise();
-    const base=cr.detail_start+i*8;          // ← 8 au lieu de 7
+    const base=cr.detail_start+i*8;
     const item=document.getElementById('cheques-remise-list').lastElementChild;
     item.querySelector('.rem-donateur').value   =r[base]  ||'';
     item.querySelector('.rem-montant').value    =r[base+1]||'';
-    item.querySelector('.rem-num-cheque').value =r[base+2]||'';  // ← base+2
-    item.querySelector('.rem-type').value       =r[base+3]||'';  // ← base+3
-    item.querySelector('.rem-desc').value       =r[base+4]||'';  // ← base+4
+    item.querySelector('.rem-num-cheque').value =r[base+2]||'';
+    item.querySelector('.rem-type').value       =r[base+3]||'';
+    item.querySelector('.rem-desc').value       =r[base+4]||'';
     item.querySelector('.rem-type-comp').value  =r[base+5]||'';
     item.querySelector('.rem-nom-chat').value   =r[base+6]||'';
     item.querySelector('.rem-recu-fiscal').value=r[base+7]||'';
