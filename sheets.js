@@ -103,6 +103,7 @@ const COLS_CHEQUE = {
   statut:       9,
   date_encaiss: 10,
   ref_banque:   11,
+  verified:     12,  // M — Vérifié (TRUE/FALSE)
 };
 
 const COLS_REMISE = {
@@ -115,7 +116,8 @@ const COLS_REMISE = {
   statut:       6,
   date_encaiss: 7,
   ref_banque:   8,
-  detail_start: 9,
+  verified:     9,   // J — Vérifié (TRUE/FALSE) — avant detail_start décalé à 10
+  detail_start: 10,
 };
 
 const COLS_FACTURE = {
@@ -385,7 +387,7 @@ async function updateBanqueOperation(rowIndex, op) {
 // ---- SAUVEGARDER CHÈQUE ----
 async function saveCheque(cheque) {
   const id  = cheque.id || genId('CHQ');
-  const row = new Array(12).fill('');
+  const row = new Array(13).fill('');
   row[COLS_CHEQUE.id]            = id;
   row[COLS_CHEQUE.num_cheque]    = cheque.num_cheque    || '';
   row[COLS_CHEQUE.date_emission] = cheque.date_emission || '';
@@ -398,6 +400,7 @@ async function saveCheque(cheque) {
   row[COLS_CHEQUE.statut]        = 'en_attente';
   row[COLS_CHEQUE.date_encaiss]  = '';
   row[COLS_CHEQUE.ref_banque]    = '';
+  row[COLS_CHEQUE.verified]      = 'FALSE';
   await appendRows(SHEETS_CONFIG.sheets.cheques, [row]);
   await logAction('AJOUT', 'Cheques', cheque.beneficiaire, `N°${cheque.num_cheque} — ${cheque.montant}€`);
   return id;
@@ -676,6 +679,39 @@ async function importRapExistsId(id) {
   return allRows.some(r => r[ci.id] === id);
 }
 
+// ---- TOGGLE VÉRIFIÉ (Chèques, Remises, Caisse) ----
+async function toggleVerified(sheetKey, rowIndex, value) {
+  const sheetName = SHEETS_CONFIG.sheets[sheetKey];
+  const col = sheetKey === 'cheques' ? COLS_CHEQUE.verified
+            : sheetKey === 'remises' ? COLS_REMISE.verified
+            : null;
+  if (col === null) return;
+  const sheetRow = rowIndex + 2;
+  await updateCell(sheetName, sheetRow, col, value ? 'TRUE' : 'FALSE');
+  await logAction('MODIF', sheetName, `Ligne ${rowIndex+1}`, `Vérifié: ${value}`);
+}
+
+// ---- MODIFIER CHÈQUE ----
+async function updateCheque(rowIndex, cheque) {
+  const sheetRow = rowIndex + 2;
+  const row = new Array(13).fill('');
+  row[COLS_CHEQUE.id]            = cheque.id            || '';
+  row[COLS_CHEQUE.num_cheque]    = cheque.num_cheque    || '';
+  row[COLS_CHEQUE.date_emission] = cheque.date_emission || '';
+  row[COLS_CHEQUE.beneficiaire]  = cheque.beneficiaire  || '';
+  row[COLS_CHEQUE.montant]       = cheque.montant       || '';
+  row[COLS_CHEQUE.type_mvt]      = cheque.type_mvt      || '';
+  row[COLS_CHEQUE.type_comp]     = cheque.type_comp     || '';
+  row[COLS_CHEQUE.description]   = cheque.description   || '';
+  row[COLS_CHEQUE.periode]       = cheque.periode       || '';
+  row[COLS_CHEQUE.statut]        = cheque.statut        || 'en_attente';
+  row[COLS_CHEQUE.date_encaiss]  = cheque.date_encaiss  || '';
+  row[COLS_CHEQUE.ref_banque]    = cheque.ref_banque    || '';
+  row[COLS_CHEQUE.verified]      = cheque.verified      || 'FALSE';
+  await updateRange(SHEETS_CONFIG.sheets.cheques, sheetRow, 0, [row]);
+  await logAction('MODIF', 'Cheques', cheque.beneficiaire, `Modifié le ${todayFR()}`);
+}
+
 // ============================================================
 // JOURNAL
 // ============================================================
@@ -841,12 +877,12 @@ window.Sheets = {
   saveCaisseOperation,  updateCaisseOperation,
   saveBanqueOperation,  updateBanqueOperation,
   saveCaissePhysique,
-  saveCheque,           encaisserCheque,
+  saveCheque,           encaisserCheque, updateCheque,
   saveRemise,           encaisserRemise, updateRemise,
   saveFacture,          updateFacture,
   saveImportRapprochement, updateImportRapprochement,
   archiverImportRapprochement, importRapExistsId,
-  updateFlag, appendRows, updateCell, updateRange, deleteRow,
+  updateFlag, toggleVerified, appendRows, updateCell, updateRange, deleteRow,
   logAction,
   // Soldes initiaux
   getSoldeInitial, saveSoldeInitial,
