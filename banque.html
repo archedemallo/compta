@@ -38,7 +38,13 @@
   .btn-xs:hover{background:var(--cream);}
   #result-count{font-size:9px;color:var(--text-3);white-space:nowrap;flex-shrink:0;}
 
-  /* Barre de sélection */
+  /* Ligne vérifiée — verrouillée */
+  tbody tr.row-verifie{background:rgba(59,109,17,0.04);}
+  tbody tr.row-verifie td{color:var(--text-3);}
+  .verifie-check{width:14px;height:14px;accent-color:var(--green);cursor:pointer;}
+  .lock-icon{font-size:11px;color:var(--green);opacity:0.7;}
+
+
   .selection-bar{display:none;background:var(--amber-bg);border-bottom:0.5px solid rgba(133,79,11,0.2);padding:6px 12px;align-items:center;gap:8px;font-size:11px;color:var(--amber);}
   .selection-bar.visible{display:flex;}
 
@@ -176,6 +182,8 @@
       <option value="">Toutes</option>
       <option value="flagged">⚑ Vérif.</option>
       <option value="rapproche">Rappr.</option>
+      <option value="verifie">✓ Vérifiées</option>
+      <option value="non-verifie">○ Non vérif.</option>
     </select>
     <span class="f-label">Du :</span>
     <input class="f-input" type="date" id="fl-date-from" onchange="renderTable()" style="width:130px;">
@@ -497,8 +505,10 @@ function getFilteredRows(){
   if (dateTo)             rows = rows.filter(r => dateToISO(r[cb.date]) <= dateTo);
   if (!isNaN(montMin))    rows = rows.filter(r => Math.abs(parseMontant(r[cb.credit]||r[cb.debit])||0) >= montMin);
   if (!isNaN(montMax) && montMax>0) rows = rows.filter(r => Math.abs(parseMontant(r[cb.credit]||r[cb.debit])||0) <= montMax);
-  if (flagF==='flagged')  rows = rows.filter(r => r[cb.flag_check] === 'TRUE');
-  if (flagF==='rapproche')rows = rows.filter(r => r[cb.ref_cheque]||r[cb.ref_remise]);
+  if (flagF==='flagged')   rows = rows.filter(r => r[cb.flag_check] === 'TRUE');
+  if (flagF==='rapproche') rows = rows.filter(r => r[cb.ref_cheque]||r[cb.ref_remise]);
+  if (flagF==='verifie')   rows = rows.filter(r => r[cb.statut] === 'verifie');
+  if (flagF==='non-verifie') rows = rows.filter(r => r[cb.statut] !== 'verifie');
   if (search)             rows = rows.filter(r => [r[cb.libelle],r[cb.type_mvt],r[cb.description],r[cb.nom]].join(' ').toLowerCase().includes(search));
   return rows;
 }
@@ -548,8 +558,9 @@ function renderTable(){
 
   const trs = rows.map(r => {
     const ri      = allRows.indexOf(r);
-    const flagged = r[cb.flag_check] === 'TRUE';
-    const comment = r[cb.flag_comment] || '';
+    const flagged  = r[cb.flag_check] === 'TRUE';
+    const comment  = r[cb.flag_comment] || '';
+    const verifie  = r[cb.statut] === 'verifie';
     const isEditing = editingIdx === ri;
     const isSel     = selectedIdx === ri;
 
@@ -603,14 +614,18 @@ function renderTable(){
           <td style="white-space:nowrap;">${hasChq}${hasBrd}${ventBadge}</td>
           <td>${hasPdf}</td>
           <td><button class="flag-btn ${flagged?'on':''}" onclick="event.stopPropagation();openFlag(${ri},'${escH(r[cb.libelle]||'')}','${escH(comment)}',${flagged})" title="Annoter"><i class="ti ti-flag${flagged?'-filled':''}"></i></button></td>
+          <td style="text-align:center;"><input type="checkbox" class="verifie-check" ${verifie?'checked':''} onclick="event.stopPropagation();toggleVerifie(${ri},this.checked)" title="Marquer comme vérifiée"></td>
           <td class="flag-comment-cell">${comment}</td>
         </tr>`;
     }
 
     // ---- LIGNE NORMALE ----
-    return `<tr onclick="selectRow(${ri})" class="${isSel?'selected':''}">
+    return `<tr onclick="${verifie?'':'selectRow('+ri+')'}" class="${isSel?'selected':''} ${verifie?'row-verifie':''}">
       <td style="white-space:nowrap;">
-        <button class="edit-btn" onclick="event.stopPropagation();openEdit(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>
+        ${verifie
+          ? `<span class="lock-icon" title="Ligne vérifiée — décochez pour modifier"><i class="ti ti-lock"></i></span>`
+          : `<button class="edit-btn" onclick="event.stopPropagation();openEdit(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>`
+        }
       </td>
       <td style="color:var(--text-3);white-space:nowrap;font-size:10px;">${r[cb.date]||''}</td>
       <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;" title="${escH(r[cb.libelle]||'')}">${r[cb.libelle]||''}</td>
@@ -629,6 +644,7 @@ function renderTable(){
       <td style="white-space:nowrap;">${ventBadge}</td>
       <td class="r">${hasPdf}</td>
       <td class="r"><button class="flag-btn ${flagged?'on':''}" onclick="event.stopPropagation();openFlag(${ri},'${escH(r[cb.libelle]||'')}','${escH(comment)}',${flagged})" title="Annoter"><i class="ti ti-flag${flagged?'-filled':''}"></i></button></td>
+      <td style="text-align:center;"><input type="checkbox" class="verifie-check" ${verifie?'checked':''} onclick="event.stopPropagation();toggleVerifie(${ri},this.checked)" title="Marquer comme vérifiée"></td>
       <td class="flag-comment-cell" onclick="event.stopPropagation();openFlag(${ri},'${escH(r[cb.libelle]||'')}','${escH(comment)}',${flagged})">${comment}</td>
     </tr>`;
   }).join('');
@@ -654,6 +670,7 @@ function renderTable(){
         <th>Ventil.</th>
         <th class="r">PDF</th>
         <th class="r">🔍</th>
+        <th style="text-align:center;" title="Ligne vérifiée — verrouille la modification">✓ Vérif.</th>
         <th>Annotation</th>
       </tr></thead>
       <tbody>${trs}</tbody>
@@ -679,13 +696,31 @@ function clearFilters(){
 // ÉDITION INLINE
 // ============================================================
 function openEdit(ri){
+  const cb = Sheets.cols.banque;
+  if (allRows[ri]?.[cb.statut] === 'verifie') return; // verrouillée
   editingIdx = ri;
   selectedIdx = null;
   document.getElementById('selection-bar').classList.remove('visible');
   renderTable();
-  // Scroll vers la ligne
   const el = document.getElementById(`edit-row-${ri}`);
   if (el) el.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+// ============================================================
+// VÉRIFIÉ — coche/décoche et sauvegarde dans le sheet
+// ============================================================
+async function toggleVerifie(ri, checked) {
+  const cb = Sheets.cols.banque;
+  const sheetRow = ri + 2; // ligne sheet (données démarrent à 2)
+  try {
+    await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.statut, checked ? 'verifie' : '');
+    allRows[ri][cb.statut] = checked ? 'verifie' : ''; // mise à jour locale sans reload
+    if (checked && editingIdx === ri) { editingIdx = null; } // annule l'édition si en cours
+    renderTable();
+  } catch(e) {
+    alert('Erreur lors de la mise à jour : ' + (e.message || e));
+    renderTable(); // rétablit l'état visuel
+  }
 }
 
 function cancelEdit(){
@@ -716,7 +751,7 @@ async function saveInlineEdit(ri){
     num_rem_espece: document.getElementById('ei-rem-espece')?.value.trim()  || r[cb.num_rem_espece] || '',
     ref_cheque:     document.getElementById('ei-ref-cheque')?.value.trim()  || r[cb.ref_cheque]     || '',
     lien_facture:   r[cb.lien_facture]   || '',
-    statut:         r[cb.statut]         || '',
+    statut:         r[cb.statut]         || '', // preserve verifie status
     flag_comment:   r[cb.flag_comment]   || '',
   };
 
