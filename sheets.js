@@ -19,6 +19,7 @@ const SHEETS_CONFIG = {
     remises:      'Remises_cheques',
     factures:     'Factures',
     import_hist:  'Import_historique',
+    import_rap:   'Import_Rapprochement',
   },
   formulaires: {
     adoptions:    'Adoptions',
@@ -62,7 +63,7 @@ const COLS_CAISSE = {
   lien_facture: 15,
   flag_check:   16,
   flag_comment: 17,
-  suivi_ref:    18,  // S — Référence banque liée (date + libellé) / rapprochement caisse↔banque
+  suivi_ref:    18,  // S — Référence (suivi source OU rapprochement banque)
 };
 
 const COLS_BANQUE = {
@@ -86,6 +87,7 @@ const COLS_BANQUE = {
   lien_facture:   17,  // R — Liens PDF
   statut:         18,  // S — Statut
   flag_comment:   19,  // T — Annotation
+  suivi_ref:      20,  // U — Référence Suivi (Adoption:rowIdx:montantIdx)
 };
 
 const COLS_CHEQUE = {
@@ -142,6 +144,25 @@ const COLS_CAISSE_PHYSIQUE = {
 const COLS_JOURNAL = {
   timestamp:0, user_email:1, user_name:2, action:3,
   onglet:4, ligne_ref:5, detail:6, is_admin:7,
+};
+
+const COLS_IMPORT_RAP = {
+  id:                 0,   // A — ID unique ex: Adoption:12:0
+  onglet:             1,   // B — Adoption, Dons, etc.
+  statut:             2,   // C — en_attente / rapprochee
+  destination:        3,   // D — caisse / banque
+  date:               4,   // E — Date de l'opération
+  periode:            5,   // F — Période ex: 2025-2026
+  libelle:            6,   // G — Nom prénom
+  montant:            7,   // H — Montant
+  type_mvt:           8,   // I — Adoption, Don, Adhésion…
+  mode_reglement:     9,   // J — Espèces, Chèque, Virement, CB
+  nom_chat:           10,  // K — Nom du chat
+  num_cheque:         11,  // L — N° chèque ou bordereau
+  num_recu:           12,  // M — N° reçu fiscal
+  description:        13,  // N — Description libre
+  date_import:        14,  // O — Date de la copie depuis Suivi
+  date_rapprochement: 15,  // P — Date du rapprochement ou transfert
 };
 
 // ============================================================
@@ -273,7 +294,7 @@ async function saveCaisseOperation(op) {
   row[COLS_CAISSE.lien_facture] = op.lien_facture  || '';
   row[COLS_CAISSE.flag_check]   = 'FALSE';
   row[COLS_CAISSE.flag_comment] = '';
-  row[COLS_CAISSE.suivi_ref]    = '';
+  row[COLS_CAISSE.suivi_ref]    = op.suivi_ref     || '';
   await appendRows(SHEETS_CONFIG.sheets.caisse, [row]);
   await logAction('AJOUT', 'Caisse', op.libelle, `${op.date} — ${op.type_mvt} — ${op.credit || op.debit}€`);
   if (!Auth.isAdmin()) await sendAlert(Auth.getUser(), 'Caisse', op);
@@ -572,6 +593,90 @@ async function rapprocheCaisseOperation(rowIndex, refBanque) {
 }
 
 // ============================================================
+// IMPORT RAPPROCHEMENT
+// ============================================================
+
+async function getImportRapprochement(statut) {
+  const rows = await readSheet(SHEETS_CONFIG.sheets.import_rap);
+  const data = rows.length > 1 ? rows.slice(1) : [];
+  data.forEach((r, i) => { r._sheetIndex = i; });
+  return statut ? data.filter(r => r[COLS_IMPORT_RAP.statut] === statut) : data;
+}
+
+async function saveImportRapprochement(op) {
+  const ci = COLS_IMPORT_RAP;
+  const row = new Array(16).fill('');
+  row[ci.id]           = op.id           || '';
+  row[ci.onglet]       = op.onglet       || '';
+  row[ci.statut]       = 'en_attente';
+  row[ci.destination]  = op.destination  || '';
+  row[ci.date]         = op.date         || '';
+  row[ci.periode]      = op.periode      || '';
+  row[ci.libelle]      = op.libelle      || '';
+  row[ci.montant]      = op.montant      || '';
+  row[ci.type_mvt]     = op.type_mvt     || '';
+  row[ci.mode_reglement] = op.mode_reglement || '';
+  row[ci.nom_chat]     = op.nom_chat     || '';
+  row[ci.num_cheque]   = op.num_cheque   || '';
+  row[ci.num_recu]     = op.num_recu     || '';
+  row[ci.description]  = op.description  || '';
+  row[ci.date_import]  = todayFR();
+  row[ci.date_rapprochement] = '';
+  await appendRows(SHEETS_CONFIG.sheets.import_rap, [row]);
+  await logAction('AJOUT', 'Import_Rapprochement', op.id, `${op.onglet} — ${op.libelle} — ${op.montant}€`);
+}
+
+async function updateImportRapprochement(rowIndex, op) {
+  const ci = COLS_IMPORT_RAP;
+  const sheetRow = rowIndex + 2;
+  const row = new Array(16).fill('');
+  row[ci.id]           = op.id           || '';
+  row[ci.onglet]       = op.onglet       || '';
+  row[ci.statut]       = op.statut       || 'en_attente';
+  row[ci.destination]  = op.destination  || '';
+  row[ci.date]         = op.date         || '';
+  row[ci.periode]      = op.periode      || '';
+  row[ci.libelle]      = op.libelle      || '';
+  row[ci.montant]      = op.montant      || '';
+  row[ci.type_mvt]     = op.type_mvt     || '';
+  row[ci.mode_reglement] = op.mode_reglement || '';
+  row[ci.nom_chat]     = op.nom_chat     || '';
+  row[ci.num_cheque]   = op.num_cheque   || '';
+  row[ci.num_recu]     = op.num_recu     || '';
+  row[ci.description]  = op.description  || '';
+  row[ci.date_import]  = op.date_import  || '';
+  row[ci.date_rapprochement] = op.date_rapprochement || '';
+  await updateRange(SHEETS_CONFIG.sheets.import_rap, sheetRow, 0, [row]);
+  await logAction('MODIF', 'Import_Rapprochement', op.id, `Modifié le ${todayFR()}`);
+}
+
+async function archiverImportRapprochement(rowIndex, datRapprochement) {
+  // 1. Lire la ligne
+  const rows = await readSheet(SHEETS_CONFIG.sheets.import_rap);
+  const r = rows[rowIndex + 1];
+  if (!r) return;
+  // 2. Copier dans Import_historique
+  const hist = [...r];
+  hist[COLS_IMPORT_RAP.statut]              = 'rapprochee';
+  hist[COLS_IMPORT_RAP.date_rapprochement]  = datRapprochement || todayFR();
+  await appendRows(SHEETS_CONFIG.sheets.import_hist, [hist]);
+  // 3. Effacer la ligne dans Import_Rapprochement
+  await updateRange(SHEETS_CONFIG.sheets.import_rap, rowIndex + 2, 0, [new Array(16).fill('')]);
+  await logAction('MODIF', 'Import_Rapprochement', r[COLS_IMPORT_RAP.id] || '', 'Archivé dans Import_historique');
+}
+
+async function importRapExistsId(id) {
+  // Vérifie si un ID est déjà dans Import_Rapprochement OU Import_historique
+  const [rap, hist] = await Promise.all([
+    readSheet(SHEETS_CONFIG.sheets.import_rap),
+    readSheet(SHEETS_CONFIG.sheets.import_hist),
+  ]);
+  const ci = COLS_IMPORT_RAP;
+  const allRows = [...(rap.slice(1)), ...(hist.slice(1))];
+  return allRows.some(r => r[ci.id] === id);
+}
+
+// ============================================================
 // JOURNAL
 // ============================================================
 async function logAction(action, onglet, reference, detail) {
@@ -725,11 +830,13 @@ window.Sheets = {
   cols: {
     caisse: COLS_CAISSE, banque: COLS_BANQUE,
     cheque: COLS_CHEQUE, remise: COLS_REMISE,
-    facture: COLS_FACTURE, caissePhysique: COLS_CAISSE_PHYSIQUE, journal: COLS_JOURNAL,
+    facture: COLS_FACTURE, caissePhysique: COLS_CAISSE_PHYSIQUE,
+    journal: COLS_JOURNAL, importRap: COLS_IMPORT_RAP,
   },
   // Lecture
   getCaisseOperations, getBanqueOperations, getCaissePhysique,
   getCheques, getRemises, getFactures, getJournal, getFormulairesData,
+  getImportRapprochement,
   // Écriture
   saveCaisseOperation,  updateCaisseOperation,
   saveBanqueOperation,  updateBanqueOperation,
@@ -737,6 +844,8 @@ window.Sheets = {
   saveCheque,           encaisserCheque,
   saveRemise,           encaisserRemise, updateRemise,
   saveFacture,          updateFacture,
+  saveImportRapprochement, updateImportRapprochement,
+  archiverImportRapprochement, importRapExistsId,
   updateFlag, appendRows, updateCell, updateRange, deleteRow,
   logAction,
   // Soldes initiaux
