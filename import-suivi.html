@@ -656,7 +656,7 @@ async function confirmImport() {
   btn.innerHTML = '<i class="ti ti-loader-2 spinner"></i> Import en cours…';
 
   const selKeys = Object.keys(selection);
-  let ok = 0, errors = [];
+  let ok = 0, skipped = 0, errors = [];
 
   for (const sk of selKeys) {
     const s = selection[sk];
@@ -674,32 +674,28 @@ async function confirmImport() {
     const bordereau = card.querySelector('.imp-bordereau').value.trim();
     const recu      = card.querySelector('.imp-recu').value.trim();
     const dest      = getDestination(mode);
-
-    const op = {
-      source: dest === 'caisse' ? 'C1' : 'BQ',
-      date: Sheets.normalizeDate(date),
-      libelle,
-      debit: '',
-      credit: montant,
-      periode,
-      type_mvt,
-      description: desc,
-      type_comp: '',
-      nom: libelle,
-      reglement: mode,
-      nom_chat: chat,
-      num_recu: recu,
-      num_bordereau: bordereau,
-      lien_facture: '',
-      suivi_ref: `${s.onglet}:${s.ri}:${s.mi}`, // référence source
-    };
+    const id        = `${s.onglet}:${s.ri}:${s.mi}`;
 
     try {
-      if (dest === 'caisse') {
-        await Sheets.saveCaisseOperation(op);
-      } else {
-        await Sheets.saveBanqueOperation(op);
-      }
+      // Vérification doublon
+      const exists = await Sheets.importRapExistsId(id);
+      if (exists) { skipped++; continue; }
+
+      await Sheets.saveImportRapprochement({
+        id,
+        onglet:         s.onglet,
+        destination:    dest,
+        date:           Sheets.normalizeDate(date),
+        periode,
+        libelle,
+        montant,
+        type_mvt,
+        mode_reglement: mode,
+        nom_chat:       chat,
+        num_cheque:     bordereau,
+        num_recu:       recu,
+        description:    desc,
+      });
       markImported(s.onglet, s.ri, s.mi, `${dest}:${date}:${libelle}`);
       ok++;
     } catch(e) {
@@ -712,7 +708,8 @@ async function confirmImport() {
   closeImportModal();
   selection = {};
 
-  if (ok > 0) showToast(`${ok} opération(s) importée(s) !`);
+  if (ok > 0)      showToast(`${ok} ligne(s) envoyée(s) dans Import Rapprochement !`);
+  if (skipped > 0) showToast(`${skipped} ligne(s) déjà importée(s), ignorée(s).`);
   if (errors.length) alert('Erreurs :\n' + errors.join('\n'));
 
   updateBadges();
