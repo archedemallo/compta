@@ -26,6 +26,7 @@ function buildSidebar(activePage) {
 
     { section: 'Import' },
     { id: 'import-suivi',         label: 'Import Suivi - Formulaires',    icon: 'ti-download', href: 'import-suivi.html' },
+    { id: 'import-rapprochement', label: 'Import Rapprochement',           icon: 'ti-arrows-transfer-down', href: 'import-rapprochement.html' },
     { id: 'import-suivi-archive', label: 'Déjà importés',   icon: 'ti-history',  href: 'import-suivi-archive.html' },
      
     { section: 'Partage' },
