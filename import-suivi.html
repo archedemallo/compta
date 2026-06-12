@@ -470,6 +470,8 @@ function renderCurrentTab() {
       return !montant || isImported(key, ri, mi);
     });
 
+    const numRecu = cfg.cols.num_recu !== undefined ? getCellVal(row, cfg.cols.num_recu) : '';
+
     return `<tr class="${allImported ? 'already-imported' : ''}">
       <td style="color:var(--text-3);white-space:nowrap;">${formatDate(date)}</td>
       <td style="font-weight:500;">${nom}${prenom ? ' ' + prenom : ''}</td>
@@ -478,6 +480,7 @@ function renderCurrentTab() {
       <td><span class="chip chip-${dest}">${modeLabel}</span></td>
       <td><span class="chip chip-${dest === 'caisse' ? 'caisse1' : 'banque'}">${dest === 'caisse' ? 'Caisse' : 'Banque'}</span></td>
       ${numCheque ? `<td style="font-size:10px;color:var(--text-3);">${numCheque}</td>` : '<td></td>'}
+      ${numRecu ? `<td style="font-size:10px;color:var(--purple);" title="N° reçu fiscal">${numRecu}</td>` : '<td></td>'}
     </tr>`;
   }).join('');
 
@@ -491,6 +494,7 @@ function renderCurrentTab() {
         <th>Mode règlt</th>
         <th>Destination</th>
         <th>N° chèque</th>
+        <th>N° reçu fiscal</th>
       </tr></thead>
       <tbody>${trs}</tbody>
     </table>`;
