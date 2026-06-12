@@ -40,6 +40,11 @@
   .modal-footer{padding:12px 18px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
   .confirm-detail{margin-top:10px;padding:10px;background:var(--red-bg);border-radius:var(--radius-sm);font-size:12px;color:var(--red);}
   .success-toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:white;padding:10px 18px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;z-index:999;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-md);animation:slideIn 0.25s ease;}
+  table{table-layout:fixed;}
+  thead th{position:relative;overflow:hidden;}
+  .col-resizer{position:absolute;right:0;top:0;bottom:0;width:5px;cursor:col-resize;background:transparent;z-index:1;}
+  .col-resizer:hover,.col-resizer.resizing{background:var(--orange);opacity:0.5;}
+  tbody tr.verified-row td{opacity:0.55;}
   @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
   .spinner{display:inline-block;animation:spin 1s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
@@ -208,12 +213,18 @@ function renderTable(){
   const trs=rows.map(r=>{
     const ri=allCheques.indexOf(r);
     const s=r[cc.statut]||'';
+    const isVerified=r[cc.verified]==='TRUE';
     const badge=s==='en_attente'
       ?'<span class="chip" style="background:var(--amber-bg);color:var(--amber);">En attente</span>'
       :s==='encaisse'
       ?'<span class="chip" style="background:var(--green-bg);color:var(--green);">Encaissé</span>'
       :'<span class="chip" style="background:var(--red-bg);color:var(--red);">Annulé</span>';
-    return `<tr>
+    return `<tr class="${isVerified?'verified-row':''}">
+      <td style="text-align:center;padding:4px;">
+        <input type="checkbox" ${isVerified?'checked':''} title="${isVerified?'Décocher pour modifier':'Cocher pour verrouiller'}"
+          style="accent-color:var(--green);cursor:pointer;width:14px;height:14px;"
+          onchange="toggleVerifiedChq(${ri},this.checked)">
+      </td>
       <td style="color:var(--text-3);">${formatDate(r[cc.date_emission])}</td>
       <td style="font-weight:500;">${r[cc.num_cheque]||'—'}</td>
       <td>${r[cc.beneficiaire]||'—'}</td>
@@ -224,16 +235,18 @@ function renderTable(){
       <td>${badge}</td>
       <td style="color:var(--text-3);font-size:10px;">${formatDate(r[cc.date_encaiss])}</td>
       <td class="r" style="white-space:nowrap;">
-        ${s==='en_attente'?`<button class="edit-btn" onclick="openEditChq(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>`:''}
+        ${s==='en_attente'&&!isVerified?`<button class="edit-btn" onclick="openEditChq(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>`:''}
         <button class="del-btn" onclick="openDel(${ri},'${escH(r[cc.num_cheque]||'')} — ${escH(r[cc.beneficiaire]||'')}')"><i class="ti ti-trash"></i></button>
       </td>
     </tr>`;
   }).join('');
-  document.getElementById('cheques-table-wrap').innerHTML=`<table><thead><tr>
+  document.getElementById('cheques-table-wrap').innerHTML=`<table id="cheques-table"><thead><tr>
+    <th style="width:36px;"></th>
     <th>Date</th><th>N° chèque</th><th>Bénéficiaire</th><th>Type de mouvement</th>
     <th>Description</th><th>Libellé complémentaire</th><th class="r">Montant</th>
     <th>Statut</th><th>Encaissé le</th><th class="r">Actions</th>
   </tr></thead><tbody>${trs}</tbody></table>`;
+  initColResize('cheques-table');
 }
 
 function resetCheque(){
@@ -275,7 +288,9 @@ async function submitCheque(){
 }
 
 function openEditChq(ri){
-  const cc=Sheets.cols.cheque,r=allCheques[ri];editChqIdx=ri;
+  const cc=Sheets.cols.cheque,r=allCheques[ri];
+  if(r[cc.verified]==='TRUE'){showToast('⚠️ Chèque vérifié — décochez pour modifier');return;}
+  editChqIdx=ri;
   document.getElementById('chq-num').value=r[cc.num_cheque]||'';
   document.getElementById('chq-date').value=r[cc.date_emission]||'';
   document.getElementById('chq-benef').value=r[cc.beneficiaire]||'';
@@ -296,6 +311,27 @@ async function confirmDel(){
   catch(e){alert('Erreur : '+e.message);}
 }
 
+async function toggleVerifiedChq(ri,checked){
+  try{
+    await Sheets.updateCell(Sheets.config.sheets.cheques,ri+2,Sheets.cols.cheque.verified,checked?'TRUE':'FALSE');
+    await loadData();
+    showToast(checked?'Chèque verrouillé ✓':'Chèque déverrouillé');
+  }catch(e){alert('Erreur : '+e.message);}
+}
+function initColResize(tableId){
+  const table=document.getElementById(tableId);if(!table)return;
+  table.querySelectorAll('thead th').forEach(th=>{
+    if(th.querySelector('.col-resizer'))return;
+    const r=document.createElement('div');r.className='col-resizer';th.appendChild(r);
+    let startX,startW;
+    r.addEventListener('mousedown',e=>{
+      e.preventDefault();e.stopPropagation();startX=e.pageX;startW=th.offsetWidth;r.classList.add('resizing');
+      const onMove=ev=>{th.style.width=(startW+ev.pageX-startX)+'px';};
+      const onUp=()=>{r.classList.remove('resizing');document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);};
+      document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onUp);
+    });
+  });
+}
 function chipType(t){if(!t)return'depense';const l=t.toLowerCase();if(l.includes('adopt'))return'adoption';if(l.includes('don'))return'don';if(l.includes('adh'))return'adhesion';return'depense';}
 function formatDate(d){if(!d)return'—';const s=String(d).trim();if(/^\d{2}\/\d{2}\/\d{4}$/.test(s))return s;if(/^\d{4}-\d{2}-\d{2}$/.test(s)){const p=s.split('-');return`${p[2]}/${p[1]}/${p[0]}`;}return s;}
 function fmt(v){if(!v&&v!==0)return'—';return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
