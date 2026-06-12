@@ -440,7 +440,7 @@ function updateSoldeBanner(){
   const rows = allRows.filter(r => r[cb.periode] === per);
   const soldInit = Sheets.getSoldeInitial(per, 'banque');
   if (rows.length) {
-    const total = rows.reduce((s,r) => s + (parseFloat(r[cb.credit])||0) - (parseFloat(r[cb.debit])||0), 0);
+    const total = rows.reduce((s,r) => s + (parseMontant(r[cb.credit])||0) - (parseMontant(r[cb.debit])||0), 0);
     document.getElementById('solde-val').textContent = fmt(soldInit + total);
     const last = rows[rows.length-1];
     document.getElementById('solde-sub').textContent = `Dernière op. : ${last[cb.date]||'—'} — Solde initial : ${fmt(soldInit)}`;
@@ -462,12 +462,12 @@ function renderKPIs(){
   const cb  = Sheets.cols.banque;
   const per = Sidebar.getActivePeriode();
   const rows = allRows.filter(r => r[cb.periode] === per);
-  const inn  = rows.reduce((s,r) => s + (parseFloat(r[cb.credit])||0), 0);
-  const out  = rows.reduce((s,r) => s + (parseFloat(r[cb.debit])||0),  0);
+  const inn  = rows.reduce((s,r) => s + (parseMontant(r[cb.credit])||0), 0);
+  const out  = rows.reduce((s,r) => s + (parseMontant(r[cb.debit])||0),  0);
   const soldInit = Sheets.getSoldeInitial(per, 'banque');
   document.getElementById('kpi-bar').innerHTML = `
-    <div class="kpi"><div class="kpi-label">Entrées</div><div class="kpi-value" style="color:var(--green)">${fmt(inn)}</div><div class="kpi-sub">${rows.filter(r=>parseFloat(r[cb.credit])>0).length} op.</div></div>
-    <div class="kpi"><div class="kpi-label">Sorties</div><div class="kpi-value" style="color:var(--red)">${fmt(out)}</div><div class="kpi-sub">${rows.filter(r=>parseFloat(r[cb.debit])>0).length} op.</div></div>
+    <div class="kpi"><div class="kpi-label">Entrées</div><div class="kpi-value" style="color:var(--green)">${fmt(inn)}</div><div class="kpi-sub">${rows.filter(r=>parseMontant(r[cb.credit])>0).length} op.</div></div>
+    <div class="kpi"><div class="kpi-label">Sorties</div><div class="kpi-value" style="color:var(--red)">${fmt(out)}</div><div class="kpi-sub">${rows.filter(r=>parseMontant(r[cb.debit])>0).length} op.</div></div>
     <div class="kpi"><div class="kpi-label">Net période</div><div class="kpi-value" style="color:${inn-out>=0?'var(--green)':'var(--red)'}">${fmt(inn-out)}</div></div>
     <div class="kpi"><div class="kpi-label">Solde initial</div><div class="kpi-value" style="color:var(--blue)">${fmt(soldInit)}</div><div class="kpi-sub">Configuré dans Config</div></div>`;
 }
@@ -491,12 +491,12 @@ function getFilteredRows(){
   let rows = allRows.filter(r => r[cb.periode] === per);
   if (typeF)              rows = rows.filter(r => r[cb.type_mvt] === typeF);
   if (attribF==='vide')   rows = rows.filter(r => !r[cb.type_mvt] || r[cb.type_mvt].toString().trim() === '');
-  if (sensF==='credit')   rows = rows.filter(r => parseFloat(r[cb.credit]) > 0);
-  if (sensF==='debit')    rows = rows.filter(r => parseFloat(r[cb.debit])  > 0);
+  if (sensF==='credit')   rows = rows.filter(r => parseMontant(r[cb.credit]) > 0);
+  if (sensF==='debit')    rows = rows.filter(r => parseMontant(r[cb.debit])  > 0);
   if (dateFrom)           rows = rows.filter(r => dateToISO(r[cb.date]) >= dateFrom);
   if (dateTo)             rows = rows.filter(r => dateToISO(r[cb.date]) <= dateTo);
-  if (!isNaN(montMin))    rows = rows.filter(r => Math.abs(parseFloat(r[cb.credit]||r[cb.debit])||0) >= montMin);
-  if (!isNaN(montMax) && montMax>0) rows = rows.filter(r => Math.abs(parseFloat(r[cb.credit]||r[cb.debit])||0) <= montMax);
+  if (!isNaN(montMin))    rows = rows.filter(r => Math.abs(parseMontant(r[cb.credit]||r[cb.debit])||0) >= montMin);
+  if (!isNaN(montMax) && montMax>0) rows = rows.filter(r => Math.abs(parseMontant(r[cb.credit]||r[cb.debit])||0) <= montMax);
   if (flagF==='flagged')  rows = rows.filter(r => r[cb.flag_check] === 'TRUE');
   if (flagF==='rapproche')rows = rows.filter(r => r[cb.ref_cheque]||r[cb.ref_remise]);
   if (search)             rows = rows.filter(r => [r[cb.libelle],r[cb.type_mvt],r[cb.description],r[cb.nom]].join(' ').toLowerCase().includes(search));
@@ -534,7 +534,7 @@ function renderTable(){
   let soldeCumul = Sheets.getSoldeInitial(per, 'banque');
   const soldeMap = new Map();
   allPerRows.forEach(r => {
-    soldeCumul += (parseFloat(r[cb.credit])||0) - (parseFloat(r[cb.debit])||0);
+    soldeCumul += (parseMontant(r[cb.credit])||0) - (parseMontant(r[cb.debit])||0);
     soldeMap.set(r, soldeCumul);
   });
 
@@ -760,7 +760,7 @@ function openPanel(){
   linkedCheque  = null; linkedFacture = null; linkedRemise = null; linkedCaisse = null; linkedSuivi = null;
   ventItems     = [];
   const cb = Sheets.cols.banque, r = allRows[panelRowIdx];
-  const montant = parseFloat(r[cb.credit]||r[cb.debit]) || 0;
+  const montant = parseMontant(r[cb.credit]||r[cb.debit]) || 0;
   document.getElementById('panel-line-info').textContent = `${r[cb.date]||''} — ${r[cb.libelle]||''} — ${fmt(montant)}`;
   document.getElementById('rap-comment').value = r[cb.flag_comment]||'';
   document.getElementById('rap-flag').checked  = r[cb.flag_check] === 'TRUE';
@@ -826,7 +826,7 @@ function renderSuiviBankLines(){
     const chat = cfg.cols.nom_chat!=null ? g(cfg.cols.nom_chat) : '';
     const date = g(cfg.cols.date);
     cfg.cols.montants.forEach((m,mi)=>{
-      const val = m.fixed!==undefined ? m.fixed : parseFloat(row[m.col]||0)||0;
+      const val = m.fixed!==undefined ? m.fixed : parseMontant(row[m.col]||0)||0;
       if(!val) return;
       const selKey = `${key}:${ri}:${mi}`;
       const already = imported.includes(selKey);
@@ -882,7 +882,7 @@ function renderVentRows(montantTotal){
 
 function addVentRow(){
   const cb=Sheets.cols.banque, r=allRows[panelRowIdx];
-  const montantTotal=parseFloat(r[cb.credit]||r[cb.debit])||0;
+  const montantTotal=parseMontant(r[cb.credit]||r[cb.debit])||0;
   ventItems.push({montant:0,type_mvt:'',description:''});
   renderVentRows(montantTotal);
 }
@@ -924,7 +924,7 @@ function populateRapSelects(){
   sc2.innerHTML='<option value="">— Choisir une sortie caisse —</option>';
  allCaisseRows
   .map((r,i) => ({r, idx:i}))
-  .filter(({r}) => parseFloat(r[ccaisse.debit]) > 0 && r[ccaisse.rapproche] !== 'TRUE')
+  .filter(({r}) => parseMontant(r[ccaisse.debit]) > 0 && r[ccaisse.rapproche] !== 'TRUE')
   .forEach(({r, idx:i}) => {
       const brd = r[ccaisse.num_bordereau] ? ' — BRD: ' + r[ccaisse.num_bordereau] : '';
       sc2.innerHTML += '<option value="' + i + '">' + (r[ccaisse.source]||'') + ' | ' + (r[ccaisse.date]||'') + ' — ' + (r[ccaisse.libelle]||'') + ' — ' + fmt(r[ccaisse.debit]) + brd + '</option>';
@@ -1134,7 +1134,7 @@ async function saveFlag(){
 // HELPERS
 // ============================================================
 function parseMontant(s){if(!s)return NaN;return parseFloat(String(s).trim().replace(/\s/g,'').replace(',','.'));}
-function fmt(v){if(!v&&v!==0)return'—';const n=parseFloat(v);if(isNaN(n))return'—';return n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
+function fmt(v){if(!v&&v!==0)return'—';const n=parseMontant(String(v));if(isNaN(n))return'—';return n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
 function chipType(t){if(!t)return'depense';const l=t.toLowerCase();if(l.includes('adopt'))return'adoption';if(l.includes('don'))return'don';if(l.includes('adh'))return'adhesion';return'depense';}
 function dateToISO(d){if(!d)return'';const p=String(d).split('/');if(p.length===3&&p[0].length===2)return`${p[2]}-${p[1]}-${p[0]}`;return d;}
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
