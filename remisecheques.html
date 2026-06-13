@@ -58,10 +58,14 @@
   .rap-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;color:var(--purple,#6c5ce7);}
   .rap-btn.linked{color:var(--green);}
   .chip-suivi{font-size:9px;padding:1px 5px;border-radius:6px;background:var(--purple-bg,#f3f0ff);color:var(--purple,#6c5ce7);font-weight:500;cursor:pointer;}
-  table{table-layout:fixed;}
-  thead th{position:relative;overflow:hidden;}
-  .col-resizer{position:absolute;right:0;top:0;bottom:0;width:5px;cursor:col-resize;background:transparent;z-index:1;}
-  .col-resizer:hover,.col-resizer.resizing{background:var(--orange);opacity:0.5;}
+  .table-scroll-outer{position:relative;}
+  .table-scroll-top{overflow-x:auto;overflow-y:hidden;height:10px;background:var(--surface-2);border-bottom:0.5px solid var(--border);}
+  .table-scroll-top-inner{height:1px;}
+  .table-scroll-body{overflow-x:auto;overflow-y:auto;max-height:520px;}
+  table{table-layout:auto;min-width:100%;border-collapse:collapse;font-size:11px;}
+  thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 8px;border-bottom:0.5px solid var(--border);background:var(--surface-2);white-space:nowrap;position:sticky;top:0;z-index:2;position:relative;}
+  .col-resizer{position:absolute;right:0;top:0;bottom:0;width:5px;cursor:col-resize;z-index:3;}
+  .col-resizer:hover,.col-resizer.resizing{background:var(--orange);opacity:0.4;}
   tbody tr.verified-row>td{opacity:0.55;}
   /* Panneau bas de page */
   .panel-overlay{position:fixed;inset:0;background:rgba(61,43,31,0.3);z-index:150;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px);}
@@ -122,7 +126,10 @@
               </select>
             </div>
           </div>
-          <div id="table-wrap"><div style="padding:24px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i></div></div>
+          <div id="remises-table-outer" class="table-scroll-outer">
+            <div class="table-scroll-top"><div class="table-scroll-top-inner"></div></div>
+            <div class="table-scroll-body" id="table-wrap"><div style="padding:24px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i></div></div>
+          </div>
         </div>
       </div>
 
@@ -212,6 +219,7 @@
   </div>
 </div>
 
+<script src="table-utils.js"></script>
 <script src="auth.js"></script>
 <script src="sheets.js"></script>
 <script src="sidebar.js"></script>
@@ -237,6 +245,7 @@ function showToast(m){ const t=document.createElement('div');t.className='succes
 // ============================================================
 Auth.requireAuth(async()=>{
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
+    await Sheets.loadConfigFromSheet();
   Sidebar.build('remisecheques');
   const pers=Sheets.getPeriodes(), ap=Sidebar.getActivePeriode();
   document.getElementById('topbar-per').textContent=ap;
@@ -377,6 +386,7 @@ function renderTable(){
       <tbody>${trs}</tbody>
     </table>`;
   initColResize('remises-table');
+  syncScrollTop('remises-table');
 }
 
 async function toggleVerifiedRemise(ri,checked){
