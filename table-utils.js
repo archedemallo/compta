@@ -1,7 +1,7 @@
-// ============================================================
-// UTILITAIRES TABLEAU : RESIZE + SCROLL FIXE EN HAUT
-// Inclure après chaque renderTable()
-// ============================================================
+/* ============================================================
+   table-utils.js — Resize colonnes + scroll fixe en haut
+   À inclure dans toutes les pages avec tableaux
+   ============================================================ */
 
 function initColResize(tableId) {
   const table = document.getElementById(tableId);
@@ -18,7 +18,7 @@ function initColResize(tableId) {
       r.classList.add('resizing');
       const onMove = ev => {
         const newW = Math.max(40, startW + ev.pageX - startX);
-        th.style.width = newW + 'px';
+        th.style.width    = newW + 'px';
         th.style.minWidth = newW + 'px';
         syncScrollTop(tableId);
       };
@@ -36,29 +36,30 @@ function initColResize(tableId) {
 }
 
 function syncScrollTop(tableId) {
-  const outer = document.getElementById(tableId + '-outer');
+  const outer  = document.getElementById(tableId + '-outer');
   if (!outer) return;
-  const topBar  = outer.querySelector('.table-scroll-top');
-  const body    = outer.querySelector('.table-scroll-body');
-  const inner   = outer.querySelector('.table-scroll-top-inner');
-  const table   = document.getElementById(tableId);
+  const topBar = outer.querySelector('.tbl-scroll-top');
+  const body   = outer.querySelector('.tbl-scroll-body');
+  const inner  = outer.querySelector('.tbl-scroll-top-inner');
+  const table  = document.getElementById(tableId);
   if (!topBar || !body || !inner || !table) return;
-  // Synchroniser la largeur de l'inner avec la largeur réelle du tableau
+
   inner.style.width = table.scrollWidth + 'px';
-  // Synchroniser le scroll dans les deux sens
-  topBar._syncing = false;
-  body._syncing   = false;
-  topBar.onscroll = () => {
-    if (topBar._syncing) return;
-    body._syncing = true;
-    body.scrollLeft = topBar.scrollLeft;
-    setTimeout(() => body._syncing = false, 0);
-  };
-  body.onscroll = () => {
-    if (body._syncing) return;
-    topBar._syncing = true;
-    topBar.scrollLeft = body.scrollLeft;
-    setTimeout(() => topBar._syncing = false, 0);
-    syncScrollTop(tableId); // recalcule la largeur au scroll
-  };
+
+  if (!topBar._syncInit) {
+    topBar._syncInit = true;
+    topBar.addEventListener('scroll', () => {
+      if (topBar._syncing) return;
+      body._syncing = true;
+      body.scrollLeft = topBar.scrollLeft;
+      requestAnimationFrame(() => { body._syncing = false; });
+    });
+    body.addEventListener('scroll', () => {
+      if (body._syncing) return;
+      topBar._syncing = true;
+      topBar.scrollLeft = body.scrollLeft;
+      requestAnimationFrame(() => { topBar._syncing = false; });
+      syncScrollTop(tableId);
+    });
+  }
 }
