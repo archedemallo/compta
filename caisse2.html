@@ -238,6 +238,7 @@ const SOURCE='C2';
 
 Auth.requireAuth(async()=>{
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
+    await Sheets.loadConfigFromSheet();
   Sidebar.build('caisse2');
   const pers=Sheets.getPeriodes(), ap=Sidebar.getActivePeriode();
   document.getElementById('topbar-per').textContent=ap;

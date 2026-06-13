@@ -566,26 +566,25 @@ function getSoldeInitial(periode, compte) {
   try {
     const cfg = JSON.parse(localStorage.getItem('arche_soldes_initiaux') || '{}');
     return parseFloat(cfg?.[periode]?.[compte] || 0) || 0;
-  } catch(e) {
-    return 0;
-  }
+  } catch(e) { return 0; }
 }
-
-/**
- * Sauvegarde le solde initial pour une période et un compte.
- * @param {string} periode  — ex: "2025 - 2026"
- * @param {string} compte   — "banque" ou "caisse"
- * @param {number} montant
- */
-function saveSoldeInitial(periode, compte, montant) {
+async function saveSoldeInitial(periode, compte, montant) {
   try {
     const cfg = JSON.parse(localStorage.getItem('arche_soldes_initiaux') || '{}');
     if (!cfg[periode]) cfg[periode] = {};
     cfg[periode][compte] = parseFloat(montant) || 0;
+    cfg[periode].date    = todayFR();
     localStorage.setItem('arche_soldes_initiaux', JSON.stringify(cfg));
-  } catch(e) {
-    console.warn('Impossible de sauvegarder le solde initial:', e);
-  }
+    await saveConfigKey('soldes_initiaux', cfg);
+  } catch(e) { console.warn('saveSoldeInitial error:', e); }
+}
+async function saveSoldesInitiauxBatch(periode, soldes) {
+  try {
+    const cfg = JSON.parse(localStorage.getItem('arche_soldes_initiaux') || '{}');
+    cfg[periode] = { ...soldes, date: todayFR() };
+    localStorage.setItem('arche_soldes_initiaux', JSON.stringify(cfg));
+    await saveConfigKey('soldes_initiaux', cfg);
+  } catch(e) { console.warn('saveSoldesInitiauxBatch error:', e); }
 }
 
 // ---- RAPPROCHER UNE LIGNE CAISSE (depuis banque) ----
@@ -773,6 +772,53 @@ function detectDoublons(releveRows, existingRows) {
 // ============================================================
 // PÉRIODES ET PARAMÈTRES
 // ============================================================
+// ============================================================
+// CONFIG — stockée dans l'onglet Config du Google Sheet
+// Cache localStorage pour accès synchrone + écriture async sheet
+// ============================================================
+let _configSynced = false;
+
+async function loadConfigFromSheet() {
+  if (_configSynced) return;
+  try {
+    const rows = await readSheet(SHEETS_CONFIG.sheets.config);
+    rows.forEach(r => {
+      if (!r[0] || !r[1]) return;
+      const key = String(r[0]).trim();
+      const val = String(r[1]).trim();
+      const lsKeyMap = {
+        periodes:        'arche_periodes',
+        types_mvt:       'arche_types_mvt',
+        types_desc:      'arche_types_desc',
+        types_comp:      'arche_types_comp',
+        reglements:      'arche_reglements',
+        soldes_initiaux: 'arche_soldes_initiaux',
+        periode_active:  'arche_periode',
+      };
+      const lsKey = lsKeyMap[key];
+      if (lsKey) localStorage.setItem(lsKey, val);
+    });
+    _configSynced = true;
+  } catch(e) {
+    console.warn('loadConfigFromSheet error (fallback localStorage):', e);
+  }
+}
+
+async function saveConfigKey(key, value) {
+  const json = JSON.stringify(value);
+  try {
+    const rows = await readSheet(SHEETS_CONFIG.sheets.config);
+    const rowIdx = rows.findIndex(r => String(r[0]).trim() === key);
+    if (rowIdx >= 0) {
+      await updateRange(SHEETS_CONFIG.sheets.config, rowIdx + 1, 0, [[key, json]]);
+    } else {
+      await appendRows(SHEETS_CONFIG.sheets.config, [[key, json]]);
+    }
+  } catch(e) {
+    console.warn('saveConfigKey sheet error (sauvegardé en localStorage seulement):', e);
+  }
+}
+
 function getPeriodes() {
   const stored = localStorage.getItem('arche_periodes');
   if (stored) { try { return JSON.parse(stored); } catch(e) {} }
@@ -783,31 +829,51 @@ function getPeriodes() {
   for (let i = 2024; i <= start; i++) periodes.push(`${i} - ${i+1}`);
   return periodes;
 }
-function savePeriodes(p)         { localStorage.setItem('arche_periodes',    JSON.stringify(p)); }
+async function savePeriodes(p) {
+  localStorage.setItem('arche_periodes', JSON.stringify(p));
+  await saveConfigKey('periodes', p);
+}
+
 function getCurrentPeriode() {
+  const stored = localStorage.getItem('arche_periode');
+  if (stored) return stored;
   const d = new Date(), y = d.getFullYear(), m = d.getMonth()+1;
   return m >= 9 ? `${y} - ${y+1}` : `${y-1} - ${y}`;
 }
+async function setCurrentPeriode(p) {
+  localStorage.setItem('arche_periode', p);
+  await saveConfigKey('periode_active', p);
+}
+
 function getTypesMouvement() {
   const s = localStorage.getItem('arche_types_mvt');
   if (s) { try { return JSON.parse(s); } catch(e) {} }
   return ['Adoption','Don','Adhésion','Événement','Dépense alimentaire','Dépense vétérinaire','Dépense matériel','Dépense autre','Remboursement','Virement interne','Divers'];
 }
-function saveTypesMouvement(t)   { localStorage.setItem('arche_types_mvt',   JSON.stringify(t)); }
+async function saveTypesMouvement(t) {
+  localStorage.setItem('arche_types_mvt', JSON.stringify(t));
+  await saveConfigKey('types_mvt', t);
+}
 
 function getTypesComplementaires() {
   const s = localStorage.getItem('arche_types_comp');
   if (s) { try { return JSON.parse(s); } catch(e) {} }
   return ['Subvention','Parrainage','Vente en ligne','Collecte','Événement ponctuel','Urgence vétérinaire','Stérilisation','Vaccin','Médicaments','Matériel cage','Litière','Transport','Frais bancaires','Autre'];
 }
-function saveTypesComplementaires(t) { localStorage.setItem('arche_types_comp', JSON.stringify(t)); }
+async function saveTypesComplementaires(t) {
+  localStorage.setItem('arche_types_comp', JSON.stringify(t));
+  await saveConfigKey('types_comp', t);
+}
 
 function getModesReglement() {
   const s = localStorage.getItem('arche_reglements');
   if (s) { try { return JSON.parse(s); } catch(e) {} }
   return ['Espèces','Chèque','Virement','CB','PayPal','Prélèvement','Autre'];
 }
-function saveModesReglement(m)   { localStorage.setItem('arche_reglements',  JSON.stringify(m)); }
+async function saveModesReglement(m) {
+  localStorage.setItem('arche_reglements', JSON.stringify(m));
+  await saveConfigKey('reglements', m);
+}
 
 // ============================================================
 // UTILITAIRES
@@ -885,16 +951,18 @@ window.Sheets = {
   updateFlag, toggleVerified, appendRows, updateCell, updateRange, deleteRow,
   logAction,
   // Soldes initiaux
-  getSoldeInitial, saveSoldeInitial,
+  getSoldeInitial, saveSoldeInitial, saveSoldesInitiauxBatch,
   rapprocheCaisseOperation,
   // Calculs
   calculerTotalCaisse, detectDoublons,
-  // Paramètres
-  getPeriodes, savePeriodes, getCurrentPeriode,
+  // Paramètres (lecture synchrone depuis cache localStorage, écriture async vers sheet)
+  getPeriodes, savePeriodes, getCurrentPeriode, setCurrentPeriode,
   getTypesMouvement, saveTypesMouvement,
   getTypesComplementaires, saveTypesComplementaires,
   getModesReglement, saveModesReglement,
+  loadConfigFromSheet, saveConfigKey,
   getDescriptions: () => { try { return JSON.parse(localStorage.getItem('arche_types_desc')||'[]'); } catch(e){ return []; } },
+  saveDescriptions: async (arr) => { localStorage.setItem('arche_types_desc', JSON.stringify(arr)); await saveConfigKey('types_desc', arr); },
   // Utilitaires
   formatMoney, normalizeDate, todayISO, todayFR, genId, openFacture,
 };

@@ -59,7 +59,7 @@
   </div>
 
   <div class="page-content">
-    <div class="info-banner"><i class="ti ti-info-circle" style="flex-shrink:0;font-size:16px;"></i><span>Les paramètres sont stockés dans votre navigateur. Utilisez Export/Import pour transférer entre 2 PC.</span></div>
+    <div class="info-banner"><i class="ti ti-info-circle" style="flex-shrink:0;font-size:16px;"></i><span>Les paramètres sont stockés dans l'onglet <strong>Config</strong> de votre Google Sheet — accessibles depuis n'importe quel PC dès connexion Google.</span></div>
 
     <div class="config-grid">
 
@@ -217,6 +217,8 @@ const currentPeriode = Sheets.getCurrentPeriode();
 // ============================================================
 Auth.requireAuth(async () => {
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
+  // Charger la config depuis le Google Sheet (synchronise avec localStorage)
+  await Sheets.loadConfigFromSheet();
   Sidebar.build('config');
   initDefaults();
   renderAll();
@@ -304,61 +306,60 @@ function renderList(items, containerId, editKey) {
 // ============================================================
 // AJOUT / SUPPRESSION
 // ============================================================
-function addItem(key) {
-  const inputId = { type:'new-type', desc:'new-desc', reglement:'new-reglement' }[key];
-  const val     = document.getElementById(inputId)?.value.trim();
+async function addItem(key) {
+  const inputId = { type:"new-type", desc:"new-desc", reglement:"new-reglement" }[key];
+  const val = document.getElementById(inputId)?.value.trim();
   if (!val) return;
   const { items, save, render } = getKeyHandlers(key);
-  if (items.includes(val)) { alert('Cette valeur existe déjà.'); return; }
+  if (items.includes(val)) { alert("Cette valeur existe déjà."); return; }
   items.push(val);
-  save(items);
-  document.getElementById(inputId).value = '';
+  await save(items);
+  document.getElementById(inputId).value = "";
   render(items);
-  showToast('Ajouté !');
+  showToast("Ajouté !");
 }
 
-function deleteItem(key, index) {
+async function deleteItem(key, index) {
   const { items, save, render } = getKeyHandlers(key);
-  if (!confirm(`Supprimer "${items[index]}" ?`)) return;
+  if (!confirm("Supprimer \"" + items[index] + "\" ?")) return;
   items.splice(index, 1);
-  save(items);
+  await save(items);
   render(items);
-  showToast('Supprimé');
+  showToast("Supprimé");
 }
 
 function getKeyHandlers(key) {
   return {
-    'type':      { items: Sheets.getTypesMouvement(), save: Sheets.saveTypesMouvement, render: i => renderList(i,'types-list','type') },
-    'desc':      { items: getDescs(),                 save: saveDescs,                 render: i => renderList(i,'descs-list','desc') },
-    'reglement': { items: Sheets.getModesReglement(), save: Sheets.saveModesReglement, render: i => renderList(i,'reglements-list','reglement') },
+    "type":      { items: Sheets.getTypesMouvement(), save: Sheets.saveTypesMouvement, render: i => renderList(i,"types-list","type") },
+    "desc":      { items: Sheets.getDescriptions(),   save: Sheets.saveDescriptions,   render: i => renderList(i,"descs-list","desc") },
+    "reglement": { items: Sheets.getModesReglement(), save: Sheets.saveModesReglement, render: i => renderList(i,"reglements-list","reglement") },
   }[key];
 }
 
-function addPeriode() {
-  const val = document.getElementById('new-periode').value.trim();
+async function addPeriode() {
+  const val = document.getElementById("new-periode").value.trim();
   if (!val) return;
-  if (!/^\d{4}\s*-\s*\d{4}$/.test(val)) { alert('Format invalide. Utilisez : 2026 - 2027'); return; }
-  const formatted = val.replace(/\s*-\s*/, ' - ');
-  const periodes  = Sheets.getPeriodes();
-  if (periodes.includes(formatted)) { alert('Cette période existe déjà.'); return; }
+  if (!/^d{4}s*-s*d{4}$/.test(val)) { alert("Format invalide. Utilisez : 2026 - 2027"); return; }
+  const formatted = val.replace(/s*-s*/, " - ");
+  const periodes = Sheets.getPeriodes();
+  if (periodes.includes(formatted)) { alert("Cette période existe déjà."); return; }
   periodes.push(formatted);
-  Sheets.savePeriodes(periodes);
-  document.getElementById('new-periode').value = '';
+  await Sheets.savePeriodes(periodes);
+  document.getElementById("new-periode").value = "";
   renderPeriodes();
-  // Recharger le select des soldes
   initSoldesInitiaux();
-  showToast('Période ajoutée !');
+  showToast("Période ajoutée !");
 }
 
-function deletePeriode(i) {
+async function deletePeriode(i) {
   const periodes = Sheets.getPeriodes();
-  if (periodes.length <= 1) { alert('Vous devez conserver au moins une période.'); return; }
-  if (!confirm(`Supprimer "${periodes[i]}" ?`)) return;
+  if (periodes.length <= 1) { alert("Vous devez conserver au moins une période."); return; }
+  if (!confirm("Supprimer \"" + periodes[i] + "\" ?")) return;
   periodes.splice(i, 1);
-  Sheets.savePeriodes(periodes);
+  await Sheets.savePeriodes(periodes);
   renderPeriodes();
   initSoldesInitiaux();
-  showToast('Période supprimée');
+  showToast("Période supprimée");
 }
 
 // ============================================================
@@ -410,16 +411,14 @@ function getSoldesInitiaux() {
   catch(e) { return {}; }
 }
 
-function saveSoldesInitiaux() {
+async function saveSoldesInitiaux() {
   const per     = document.getElementById('solde-periode').value;
-  const soldes  = getSoldesInitiaux();
-  soldes[per]   = {
+  const soldes  = {
     banque:  parseFloat(document.getElementById('solde-banque').value)  || 0,
     caisse1: parseFloat(document.getElementById('solde-caisse1').value) || 0,
     caisse2: parseFloat(document.getElementById('solde-caisse2').value) || 0,
-    date:    new Date().toLocaleDateString('fr-FR'),
   };
-  localStorage.setItem('arche_soldes_initiaux', JSON.stringify(soldes));
+  await Sheets.saveSoldesInitiauxBatch(per, soldes);
   ['banque','caisse1','caisse2'].forEach(k => document.getElementById('saved-'+k).classList.remove('hidden'));
   renderSoldesSummary();
   showToast('Soldes initiaux enregistrés !');
