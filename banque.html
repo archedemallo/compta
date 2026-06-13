@@ -48,9 +48,15 @@
   .selection-bar{display:none;background:var(--amber-bg);border-bottom:0.5px solid rgba(133,79,11,0.2);padding:6px 12px;align-items:center;gap:8px;font-size:11px;color:var(--amber);}
   .selection-bar.visible{display:flex;}
 
-  /* Tableau — horizontal scroll */
-  #table-wrap{overflow-x:auto;max-height:520px;overflow-y:auto;}
-  table{width:100%;border-collapse:collapse;font-size:11px;min-width:1100px;}
+  /* Resize + scroll fixe */
+  .table-scroll-outer{position:relative;}
+  .table-scroll-top{overflow-x:auto;overflow-y:hidden;height:10px;background:var(--surface-2);border-bottom:0.5px solid var(--border);}
+  .table-scroll-top-inner{height:1px;}
+  .table-scroll-body{overflow-x:auto;overflow-y:auto;max-height:520px;}
+  #table-wrap{overflow:visible;}
+  table{table-layout:auto;min-width:100%;}
+  .col-resizer{position:absolute;right:0;top:0;bottom:0;width:5px;cursor:col-resize;z-index:3;}
+  .col-resizer:hover,.col-resizer.resizing{background:var(--orange);opacity:0.4;}
   thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 8px;border-bottom:0.5px solid var(--border);background:var(--surface-2);cursor:pointer;white-space:nowrap;user-select:none;position:sticky;top:0;z-index:2;}
   thead th:hover{background:var(--warm);}
   thead th.sorted .si{color:var(--orange);opacity:1;}
@@ -216,8 +222,11 @@
         </button>
       </div>
 
-      <div id="table-wrap">
-        <div style="padding:32px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>
+      <div id="banque-table-outer" class="table-scroll-outer">
+        <div class="table-scroll-top"><div class="table-scroll-top-inner"></div></div>
+        <div class="table-scroll-body" id="table-wrap">
+          <div style="padding:32px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>
+        </div>
       </div>
     </div>
 
@@ -353,6 +362,7 @@
   </div>
 </div>
 
+<script src="table-utils.js"></script>
 <script src="auth.js"></script>
 <script src="sheets.js"></script>
 <script src="sidebar.js"></script>
@@ -651,7 +661,7 @@ function renderTable(){
   }).join('');
 
   document.getElementById('table-wrap').innerHTML = `
-    <table>
+    <table id="banque-table">
       <thead><tr>
         <th style="width:36px;"></th>
         ${mkTh('Date',cb.date)}
@@ -676,6 +686,8 @@ function renderTable(){
       </tr></thead>
       <tbody>${trs}</tbody>
     </table>`;
+  initColResize('banque-table');
+  syncScrollTop('banque-table');
 
   // Restaurer la valeur du select type en mode édition
   if (editingIdx !== null) {
