@@ -71,10 +71,16 @@
   @keyframes spin{to{transform:rotate(360deg);}}
   .edit-banner{background:rgba(201,107,42,0.08);border:0.5px solid var(--orange);border-radius:var(--radius-sm);padding:8px 12px;font-size:11px;color:var(--orange);display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
   .chip-brd{font-size:9px;padding:1px 5px;border-radius:6px;background:var(--blue-bg);color:var(--blue);font-weight:500;}
-  table{table-layout:fixed;}
-  thead th{position:relative;overflow:hidden;}
-  .col-resizer{position:absolute;right:0;top:0;bottom:0;width:5px;cursor:col-resize;background:transparent;z-index:1;}
-  .col-resizer:hover,.col-resizer.resizing{background:var(--orange);opacity:0.5;}
+  /* Resize + scroll fixe */
+  .table-scroll-outer{position:relative;}
+  .table-scroll-top{overflow-x:auto;overflow-y:hidden;height:10px;background:var(--surface-2);border-bottom:0.5px solid var(--border);}
+  .table-scroll-top-inner{height:1px;}
+  .table-scroll-body{overflow-x:auto;overflow-y:auto;max-height:520px;}
+  table{table-layout:auto;min-width:100%;border-collapse:collapse;font-size:11px;}
+  thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 8px;border-bottom:0.5px solid var(--border);background:var(--surface-2);cursor:pointer;white-space:nowrap;user-select:none;position:sticky;top:0;z-index:2;position:relative;}
+  thead th:hover{background:var(--warm);}
+  .col-resizer{position:absolute;right:0;top:0;bottom:0;width:5px;cursor:col-resize;z-index:3;}
+  .col-resizer:hover,.col-resizer.resizing{background:var(--orange);opacity:0.4;}
   tbody tr.verified-row td{opacity:0.55;}
 </style>
 </head>
@@ -113,8 +119,11 @@
               <button class="btn btn-secondary btn-sm" onclick="clearFilters()"><i class="ti ti-x"></i> Effacer</button>
             </div>
           </div>
-          <div id="table-wrap" style="overflow-x:auto;max-height:600px;overflow-y:auto;">
-            <div style="padding:32px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>
+          <div id="caisse2-table-outer" class="table-scroll-outer">
+            <div class="table-scroll-top"><div class="table-scroll-top-inner"></div></div>
+            <div class="table-scroll-body" id="table-wrap">
+              <div style="padding:32px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>
+            </div>
           </div>
         </div>
       </div>
@@ -218,6 +227,7 @@
   </div>
 </div>
 
+<script src="table-utils.js"></script>
 <script src="auth.js"></script>
 <script src="sheets.js"></script>
 <script src="sidebar.js"></script>
@@ -384,6 +394,7 @@ function renderTable(){
       <tbody>${trs}</tbody>
     </table>`;
   initColResize('caisse2-table');
+  syncScrollTop('caisse2-table');
 }
 
 function setSort(col){if(sortCol===col)sortAsc=!sortAsc;else{sortCol=col;sortAsc=true;}renderTable();}
