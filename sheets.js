@@ -1,6 +1,6 @@
 /* ============================================================
    sheets.js — Lecture / Écriture Google Sheets
-   Arche de Mallo — Comptabilité — v2
+   Arche de Mallo — Comptabilité
    ============================================================ */
 
 // ---- CONFIGURATION ----
@@ -34,10 +34,12 @@ const SHEETS_CONFIG = {
 
 // Charger config depuis localStorage si disponible
 (function loadStoredConfig() {
-  const cfg = JSON.parse(localStorage.getItem('arche_sheets_config') || '{}');
-  if (cfg.spreadsheetId)   SHEETS_CONFIG.spreadsheetId   = cfg.spreadsheetId;
-  if (cfg.formulairesId)   SHEETS_CONFIG.formulairesId   = cfg.formulairesId;
-  if (cfg.facturesDriveId) SHEETS_CONFIG.facturesDriveId = cfg.facturesDriveId;
+  try {
+    const cfg = JSON.parse(localStorage.getItem('arche_sheets_config') || '{}');
+    if (cfg.spreadsheetId)   SHEETS_CONFIG.spreadsheetId   = cfg.spreadsheetId;
+    if (cfg.formulairesId)   SHEETS_CONFIG.formulairesId   = cfg.formulairesId;
+    if (cfg.facturesDriveId) SHEETS_CONFIG.facturesDriveId = cfg.facturesDriveId;
+  } catch(e) {}
 })();
 
 // ============================================================
@@ -63,31 +65,31 @@ const COLS_CAISSE = {
   lien_facture: 15,
   flag_check:   16,
   flag_comment: 17,
-  suivi_ref:    18,  // S — Référence (suivi source OU rapprochement banque)
+  suivi_ref:    18,  // S — Référence suivi / rapprochement banque
 };
 
 const COLS_BANQUE = {
-  date:           0,   // A — Date
-  libelle:        1,   // B — Libellé
-  debit:          2,   // C — Débit
-  credit:         3,   // D — Crédit
-  solde:          4,   // E — Solde
-  periode:        5,   // F — Période
-  type_mvt:       6,   // G — Type Mouvement
-  description:    7,   // H — Description
-  nom:            8,   // I — Ajouté par
-  type_comp:      9,   // J — Libellé complémentaire
-  num_facture:    10,  // K — Facture numéro
-  nom_chat:       11,  // L — Nom chat
-  num_don_fiscal: 12,  // M — Num don fiscal
-  flag_check:     13,  // N — A vérifier
-  ref_remise:     14,  // O — Bordereau remise
-  num_rem_espece: 15,  // P — Remise espèce
-  ref_cheque:     16,  // Q — Numéro chq
-  lien_facture:   17,  // R — Liens PDF
-  statut:         18,  // S — Statut
-  flag_comment:   19,  // T — Annotation
-  suivi_ref:      20,  // U — Référence Suivi (Adoption:rowIdx:montantIdx)
+  date:           0,
+  libelle:        1,
+  debit:          2,
+  credit:         3,
+  solde:          4,
+  periode:        5,
+  type_mvt:       6,
+  description:    7,
+  nom:            8,
+  type_comp:      9,
+  num_facture:    10,
+  nom_chat:       11,
+  num_don_fiscal: 12,
+  flag_check:     13,
+  ref_remise:     14,
+  num_rem_espece: 15,
+  ref_cheque:     16,
+  lien_facture:   17,
+  statut:         18,
+  flag_comment:   19,
+  suivi_ref:      20,
 };
 
 const COLS_CHEQUE = {
@@ -103,7 +105,7 @@ const COLS_CHEQUE = {
   statut:       9,
   date_encaiss: 10,
   ref_banque:   11,
-  verified:     12,  // M — Vérifié (TRUE/FALSE)
+  verified:     12,  // M — Vérifié
 };
 
 const COLS_REMISE = {
@@ -116,7 +118,7 @@ const COLS_REMISE = {
   statut:       6,
   date_encaiss: 7,
   ref_banque:   8,
-  verified:     9,   // J — Vérifié (TRUE/FALSE) — avant detail_start décalé à 10
+  verified:     9,   // J — Vérifié
   detail_start: 10,
 };
 
@@ -149,23 +151,70 @@ const COLS_JOURNAL = {
 };
 
 const COLS_IMPORT_RAP = {
-  id:                 0,   // A — ID unique ex: Adoption:12:0
-  onglet:             1,   // B — Adoption, Dons, etc.
-  statut:             2,   // C — en_attente / rapprochee
-  destination:        3,   // D — caisse / banque
-  date:               4,   // E — Date de l'opération
-  periode:            5,   // F — Période ex: 2025-2026
-  libelle:            6,   // G — Nom prénom
-  montant:            7,   // H — Montant
-  type_mvt:           8,   // I — Adoption, Don, Adhésion…
-  mode_reglement:     9,   // J — Espèces, Chèque, Virement, CB
-  nom_chat:           10,  // K — Nom du chat
-  num_cheque:         11,  // L — N° chèque ou bordereau
-  num_recu:           12,  // M — N° reçu fiscal
-  description:        13,  // N — Description libre
-  date_import:        14,  // O — Date de la copie depuis Suivi
-  date_rapprochement: 15,  // P — Date du rapprochement ou transfert
+  id:                 0,
+  onglet:             1,
+  statut:             2,
+  destination:        3,
+  date:               4,
+  periode:            5,
+  libelle:            6,
+  montant:            7,
+  type_mvt:           8,
+  mode_reglement:     9,
+  nom_chat:           10,
+  num_cheque:         11,
+  num_recu:           12,
+  description:        13,
+  date_import:        14,
+  date_rapprochement: 15,
 };
+
+// ============================================================
+// CONFIG DEPUIS GOOGLE SHEET
+// ============================================================
+let _configSynced = false;
+
+async function loadConfigFromSheet() {
+  if (_configSynced) return;
+  try {
+    const rows = await readSheet(SHEETS_CONFIG.sheets.config);
+    const keyMap = {
+      periodes:        'arche_periodes',
+      types_mvt:       'arche_types_mvt',
+      types_desc:      'arche_types_desc',
+      types_comp:      'arche_types_comp',
+      reglements:      'arche_reglements',
+      soldes_initiaux: 'arche_soldes_initiaux',
+      periode_active:  'arche_periode',
+    };
+    rows.forEach(r => {
+      if (!r[0] || r[1] === undefined) return;
+      const lsKey = keyMap[String(r[0]).trim()];
+      if (lsKey) {
+        const val = String(r[1]).trim();
+        if (val) localStorage.setItem(lsKey, val);
+      }
+    });
+    _configSynced = true;
+  } catch(e) {
+    console.warn('loadConfigFromSheet: fallback localStorage', e.message || e);
+  }
+}
+
+async function saveConfigKey(key, value) {
+  const json = JSON.stringify(value);
+  try {
+    const rows = await readSheet(SHEETS_CONFIG.sheets.config);
+    const rowIdx = rows.findIndex(r => String(r[0]).trim() === key);
+    if (rowIdx >= 0) {
+      await updateRange(SHEETS_CONFIG.sheets.config, rowIdx + 1, 0, [[key, json]]);
+    } else {
+      await appendRows(SHEETS_CONFIG.sheets.config, [[key, json]]);
+    }
+  } catch(e) {
+    console.warn('saveConfigKey sheet error:', e.message || e);
+  }
+}
 
 // ============================================================
 // FONCTIONS DE LECTURE
@@ -226,7 +275,7 @@ async function getFactures() {
 async function getJournal(limit) {
   const rows = await readSheet(SHEETS_CONFIG.sheets.journal);
   if (rows.length < 2) return [];
-  return rows.slice(1).slice(-(limit || 200)).reverse();
+  return rows.slice(1).slice(-(limit || 500)).reverse();
 }
 
 async function getFormulairesData(type) {
@@ -234,6 +283,15 @@ async function getFormulairesData(type) {
   if (!sheetName) return [];
   try { return await readSheet(sheetName, SHEETS_CONFIG.formulairesId); }
   catch(e) { return []; }
+}
+
+async function getImportRapprochement(statut) {
+  const rows = await readSheet(SHEETS_CONFIG.sheets.import_rap);
+  const data = rows.length > 1 ? rows.slice(1) : [];
+  data.forEach((r, i) => { r._sheetIndex = i; });
+  // Ignorer les lignes vides (après archivage)
+  const nonEmpty = data.filter(r => r[COLS_IMPORT_RAP.id] && String(r[COLS_IMPORT_RAP.id]).trim());
+  return statut ? nonEmpty.filter(r => r[COLS_IMPORT_RAP.statut] === statut) : nonEmpty;
 }
 
 // ============================================================
@@ -271,12 +329,20 @@ async function updateRange(sheetName, startRow, startCol, values) {
 }
 
 async function deleteRow(sheetName, rowIndex) {
-  const sheetRow  = rowIndex + 2;
-  const emptyRow  = [new Array(30).fill('')];
-  await updateRange(sheetName, sheetRow, 0, emptyRow);
+  await updateRange(sheetName, rowIndex + 2, 0, [new Array(30).fill('')]);
 }
 
-// ---- SAUVEGARDER OPÉRATION CAISSE ----
+async function toggleVerified(sheetKey, rowIndex, value) {
+  const sheetName = SHEETS_CONFIG.sheets[sheetKey];
+  const col = sheetKey === 'cheques' ? COLS_CHEQUE.verified
+            : sheetKey === 'remises' ? COLS_REMISE.verified
+            : null;
+  if (col === null) return;
+  await updateCell(sheetName, rowIndex + 2, col, value ? 'TRUE' : 'FALSE');
+  await logAction('MODIF', sheetName, `Ligne ${rowIndex+1}`, `Vérifié: ${value}`);
+}
+
+// ---- CAISSE ----
 async function saveCaisseOperation(op) {
   const row = new Array(19).fill('');
   row[COLS_CAISSE.source]       = op.source       || 'C1';
@@ -302,7 +368,6 @@ async function saveCaisseOperation(op) {
   if (!Auth.isAdmin()) await sendAlert(Auth.getUser(), 'Caisse', op);
 }
 
-// ---- MODIFIER OPÉRATION CAISSE ----
 async function updateCaisseOperation(rowIndex, op) {
   const sheetRow = rowIndex + 2;
   const row = new Array(19).fill('');
@@ -328,9 +393,9 @@ async function updateCaisseOperation(rowIndex, op) {
   await logAction('MODIF', 'Caisse', op.libelle, `Modifié le ${todayFR()}`);
 }
 
-// ---- SAUVEGARDER OPÉRATION BANQUE ----
+// ---- BANQUE ----
 async function saveBanqueOperation(op) {
-  const row = new Array(20).fill('');
+  const row = new Array(21).fill('');
   row[COLS_BANQUE.date]           = op.date           || '';
   row[COLS_BANQUE.libelle]        = op.libelle        || '';
   row[COLS_BANQUE.debit]          = op.debit          || '';
@@ -351,15 +416,15 @@ async function saveBanqueOperation(op) {
   row[COLS_BANQUE.lien_facture]   = op.lien_facture   || '';
   row[COLS_BANQUE.statut]         = op.statut         || '';
   row[COLS_BANQUE.flag_comment]   = '';
+  row[COLS_BANQUE.suivi_ref]      = op.suivi_ref      || '';
   await appendRows(SHEETS_CONFIG.sheets.banque, [row]);
   await logAction('AJOUT', 'Banque', op.libelle, `${op.date} — ${op.type_mvt} — ${op.credit || op.debit}€`);
   if (!Auth.isAdmin()) await sendAlert(Auth.getUser(), 'Banque', op);
 }
 
-// ---- MODIFIER OPÉRATION BANQUE ----
 async function updateBanqueOperation(rowIndex, op) {
   const sheetRow = rowIndex + 2;
-  const row = new Array(20).fill('');
+  const row = new Array(21).fill('');
   row[COLS_BANQUE.date]           = op.date           || '';
   row[COLS_BANQUE.libelle]        = op.libelle        || '';
   row[COLS_BANQUE.debit]          = op.debit          || '';
@@ -380,11 +445,12 @@ async function updateBanqueOperation(rowIndex, op) {
   row[COLS_BANQUE.lien_facture]   = op.lien_facture   || '';
   row[COLS_BANQUE.statut]         = op.statut         || '';
   row[COLS_BANQUE.flag_comment]   = op.flag_comment   || '';
+  row[COLS_BANQUE.suivi_ref]      = op.suivi_ref      || '';
   await updateRange(SHEETS_CONFIG.sheets.banque, sheetRow, 0, [row]);
   await logAction('MODIF', 'Banque', op.libelle, `Modifié le ${todayFR()}`);
 }
 
-// ---- SAUVEGARDER CHÈQUE ----
+// ---- CHÈQUES ----
 async function saveCheque(cheque) {
   const id  = cheque.id || genId('CHQ');
   const row = new Array(13).fill('');
@@ -406,28 +472,48 @@ async function saveCheque(cheque) {
   return id;
 }
 
-// ---- ENCAISSER UN CHÈQUE ----
+async function updateCheque(rowIndex, cheque) {
+  const sheetRow = rowIndex + 2;
+  const row = new Array(13).fill('');
+  row[COLS_CHEQUE.id]            = cheque.id            || '';
+  row[COLS_CHEQUE.num_cheque]    = cheque.num_cheque    || '';
+  row[COLS_CHEQUE.date_emission] = cheque.date_emission || '';
+  row[COLS_CHEQUE.beneficiaire]  = cheque.beneficiaire  || '';
+  row[COLS_CHEQUE.montant]       = cheque.montant       || '';
+  row[COLS_CHEQUE.type_mvt]      = cheque.type_mvt      || '';
+  row[COLS_CHEQUE.type_comp]     = cheque.type_comp     || '';
+  row[COLS_CHEQUE.description]   = cheque.description   || '';
+  row[COLS_CHEQUE.periode]       = cheque.periode       || '';
+  row[COLS_CHEQUE.statut]        = cheque.statut        || 'en_attente';
+  row[COLS_CHEQUE.date_encaiss]  = cheque.date_encaiss  || '';
+  row[COLS_CHEQUE.ref_banque]    = cheque.ref_banque    || '';
+  row[COLS_CHEQUE.verified]      = cheque.verified      || 'FALSE';
+  await updateRange(SHEETS_CONFIG.sheets.cheques, sheetRow, 0, [row]);
+  await logAction('MODIF', 'Cheques', cheque.beneficiaire, `Modifié le ${todayFR()}`);
+}
+
 async function encaisserCheque(chequeRowIndex, dateBanque, refBanque) {
   const sheetRow = chequeRowIndex + 2;
-  await updateCell(SHEETS_CONFIG.sheets.cheques, sheetRow, COLS_CHEQUE.statut,      'encaisse');
-  await updateCell(SHEETS_CONFIG.sheets.cheques, sheetRow, COLS_CHEQUE.date_encaiss, dateBanque);
-  await updateCell(SHEETS_CONFIG.sheets.cheques, sheetRow, COLS_CHEQUE.ref_banque,   refBanque);
+  await updateCell(SHEETS_CONFIG.sheets.cheques, sheetRow, COLS_CHEQUE.statut,       'encaisse');
+  await updateCell(SHEETS_CONFIG.sheets.cheques, sheetRow, COLS_CHEQUE.date_encaiss,  dateBanque);
+  await updateCell(SHEETS_CONFIG.sheets.cheques, sheetRow, COLS_CHEQUE.ref_banque,    refBanque);
   await logAction('MODIF', 'Cheques', `Ligne ${chequeRowIndex+1}`, `Encaissé le ${dateBanque}`);
 }
 
-// ---- SAUVEGARDER REMISE DE CHÈQUES ----
+// ---- REMISES ----
 async function saveRemise(remise) {
   const id  = remise.id || genId('BRD');
-  const mainRow = new Array(9 + remise.cheques.length * 8).fill('');
+  const mainRow = new Array(10 + remise.cheques.length * 8).fill('');
   mainRow[COLS_REMISE.id]            = id;
   mainRow[COLS_REMISE.date_remise]   = remise.date_remise   || '';
   mainRow[COLS_REMISE.num_bordereau] = remise.num_bordereau || id;
   mainRow[COLS_REMISE.nb_cheques]    = remise.cheques.length;
-  mainRow[COLS_REMISE.montant_total] = remise.cheques.reduce((s, c) => s + (parseFloat(c.montant)||0), 0);
+  mainRow[COLS_REMISE.montant_total] = remise.cheques.reduce((s,c) => s+(parseFloat(c.montant)||0), 0);
   mainRow[COLS_REMISE.periode]       = remise.periode || '';
   mainRow[COLS_REMISE.statut]        = 'en_attente';
   mainRow[COLS_REMISE.date_encaiss]  = '';
   mainRow[COLS_REMISE.ref_banque]    = '';
+  mainRow[COLS_REMISE.verified]      = 'FALSE';
   remise.cheques.forEach((c, i) => {
     const base = COLS_REMISE.detail_start + i * 8;
     mainRow[base]     = c.donateur    || '';
@@ -444,7 +530,6 @@ async function saveRemise(remise) {
   return id;
 }
 
-// ---- ENCAISSER UNE REMISE ----
 async function encaisserRemise(remiseRowIndex, dateBanque, refBanque) {
   const sheetRow = remiseRowIndex + 2;
   await updateCell(SHEETS_CONFIG.sheets.remises, sheetRow, COLS_REMISE.statut,       'encaissee');
@@ -453,20 +538,20 @@ async function encaisserRemise(remiseRowIndex, dateBanque, refBanque) {
   await logAction('MODIF', 'Remises', `Ligne ${remiseRowIndex+1}`, `Encaissée le ${dateBanque}`);
 }
 
-// ---- MODIFIER REMISE ----
 async function updateRemise(rowIndex, remise) {
   const id = remise.id || genId('BRD');
   const sheetRow = rowIndex + 2;
-  const mainRow = new Array(9 + remise.cheques.length * 8).fill('');
+  const mainRow = new Array(10 + remise.cheques.length * 8).fill('');
   mainRow[COLS_REMISE.id]            = id;
   mainRow[COLS_REMISE.date_remise]   = remise.date_remise   || '';
   mainRow[COLS_REMISE.num_bordereau] = remise.num_bordereau || id;
   mainRow[COLS_REMISE.nb_cheques]    = remise.cheques.length;
-  mainRow[COLS_REMISE.montant_total] = remise.cheques.reduce((s,c) => s + (parseFloat(c.montant)||0), 0);
+  mainRow[COLS_REMISE.montant_total] = remise.cheques.reduce((s,c) => s+(parseFloat(c.montant)||0), 0);
   mainRow[COLS_REMISE.periode]       = remise.periode || '';
   mainRow[COLS_REMISE.statut]        = remise.statut  || 'en_attente';
   mainRow[COLS_REMISE.date_encaiss]  = remise.date_encaiss || '';
   mainRow[COLS_REMISE.ref_banque]    = remise.ref_banque    || '';
+  mainRow[COLS_REMISE.verified]      = remise.verified      || 'FALSE';
   remise.cheques.forEach((c, i) => {
     const base = COLS_REMISE.detail_start + i * 8;
     mainRow[base]     = c.donateur    || '';
@@ -482,7 +567,7 @@ async function updateRemise(rowIndex, remise) {
   await logAction('MODIF', 'Remises', id, `Modifié le ${todayFR()}`);
 }
 
-// ---- SAUVEGARDER FACTURE ----
+// ---- FACTURES ----
 async function saveFacture(facture) {
   const id  = facture.id || genId('FAC');
   const row = new Array(13).fill('');
@@ -504,7 +589,6 @@ async function saveFacture(facture) {
   return id;
 }
 
-// ---- MODIFIER FACTURE ----
 async function updateFacture(rowIndex, facture) {
   const sheetRow = rowIndex + 2;
   const row = new Array(13).fill('');
@@ -549,45 +633,10 @@ async function updateFlag(sheetName, rowIndex, isChecked, comment) {
   const sheetRow   = rowIndex + 2;
   await updateCell(sheetName, sheetRow, colCheck,   isChecked ? 'TRUE' : 'FALSE');
   await updateCell(sheetName, sheetRow, colComment, comment || '');
-  await logAction('MODIF', sheetName, `Ligne ${rowIndex+1}`, `Flag: ${isChecked}, Commentaire: ${comment}`);
+  await logAction('MODIF', sheetName, `Ligne ${rowIndex+1}`, `Flag: ${isChecked}`);
 }
 
-// ============================================================
-// SOLDES INITIAUX
-// ============================================================
-
-/**
- * Récupère le solde initial configuré pour une période et un compte.
- * @param {string} periode  — ex: "2025 - 2026"
- * @param {string} compte   — "banque" ou "caisse"
- * @returns {number}
- */
-function getSoldeInitial(periode, compte) {
-  try {
-    const cfg = JSON.parse(localStorage.getItem('arche_soldes_initiaux') || '{}');
-    return parseFloat(cfg?.[periode]?.[compte] || 0) || 0;
-  } catch(e) { return 0; }
-}
-async function saveSoldeInitial(periode, compte, montant) {
-  try {
-    const cfg = JSON.parse(localStorage.getItem('arche_soldes_initiaux') || '{}');
-    if (!cfg[periode]) cfg[periode] = {};
-    cfg[periode][compte] = parseFloat(montant) || 0;
-    cfg[periode].date    = todayFR();
-    localStorage.setItem('arche_soldes_initiaux', JSON.stringify(cfg));
-    await saveConfigKey('soldes_initiaux', cfg);
-  } catch(e) { console.warn('saveSoldeInitial error:', e); }
-}
-async function saveSoldesInitiauxBatch(periode, soldes) {
-  try {
-    const cfg = JSON.parse(localStorage.getItem('arche_soldes_initiaux') || '{}');
-    cfg[periode] = { ...soldes, date: todayFR() };
-    localStorage.setItem('arche_soldes_initiaux', JSON.stringify(cfg));
-    await saveConfigKey('soldes_initiaux', cfg);
-  } catch(e) { console.warn('saveSoldesInitiauxBatch error:', e); }
-}
-
-// ---- RAPPROCHER UNE LIGNE CAISSE (depuis banque) ----
+// ---- RAPPROCHEMENT CAISSE ----
 async function rapprocheCaisseOperation(rowIndex, refBanque) {
   const sheetRow = rowIndex + 2;
   await updateCell(SHEETS_CONFIG.sheets.caisse, sheetRow, COLS_CAISSE.suivi_ref, refBanque || 'Banque');
@@ -598,31 +647,24 @@ async function rapprocheCaisseOperation(rowIndex, refBanque) {
 // IMPORT RAPPROCHEMENT
 // ============================================================
 
-async function getImportRapprochement(statut) {
-  const rows = await readSheet(SHEETS_CONFIG.sheets.import_rap);
-  const data = rows.length > 1 ? rows.slice(1) : [];
-  data.forEach((r, i) => { r._sheetIndex = i; });
-  return statut ? data.filter(r => r[COLS_IMPORT_RAP.statut] === statut) : data;
-}
-
 async function saveImportRapprochement(op) {
   const ci = COLS_IMPORT_RAP;
   const row = new Array(16).fill('');
-  row[ci.id]           = op.id           || '';
-  row[ci.onglet]       = op.onglet       || '';
-  row[ci.statut]       = 'en_attente';
-  row[ci.destination]  = op.destination  || '';
-  row[ci.date]         = op.date         || '';
-  row[ci.periode]      = op.periode      || '';
-  row[ci.libelle]      = op.libelle      || '';
-  row[ci.montant]      = op.montant      || '';
-  row[ci.type_mvt]     = op.type_mvt     || '';
-  row[ci.mode_reglement] = op.mode_reglement || '';
-  row[ci.nom_chat]     = op.nom_chat     || '';
-  row[ci.num_cheque]   = op.num_cheque   || '';
-  row[ci.num_recu]     = op.num_recu     || '';
-  row[ci.description]  = op.description  || '';
-  row[ci.date_import]  = todayFR();
+  row[ci.id]             = op.id            || '';
+  row[ci.onglet]         = op.onglet        || '';
+  row[ci.statut]         = 'en_attente';
+  row[ci.destination]    = op.destination   || '';
+  row[ci.date]           = op.date          || '';
+  row[ci.periode]        = op.periode       || '';
+  row[ci.libelle]        = op.libelle       || '';
+  row[ci.montant]        = op.montant       || '';
+  row[ci.type_mvt]       = op.type_mvt      || '';
+  row[ci.mode_reglement] = op.mode_reglement|| '';
+  row[ci.nom_chat]       = op.nom_chat      || '';
+  row[ci.num_cheque]     = op.num_cheque    || '';
+  row[ci.num_recu]       = op.num_recu      || '';
+  row[ci.description]    = op.description   || '';
+  row[ci.date_import]    = todayFR();
   row[ci.date_rapprochement] = '';
   await appendRows(SHEETS_CONFIG.sheets.import_rap, [row]);
   await logAction('AJOUT', 'Import_Rapprochement', op.id, `${op.onglet} — ${op.libelle} — ${op.montant}€`);
@@ -632,83 +674,51 @@ async function updateImportRapprochement(rowIndex, op) {
   const ci = COLS_IMPORT_RAP;
   const sheetRow = rowIndex + 2;
   const row = new Array(16).fill('');
-  row[ci.id]           = op.id           || '';
-  row[ci.onglet]       = op.onglet       || '';
-  row[ci.statut]       = op.statut       || 'en_attente';
-  row[ci.destination]  = op.destination  || '';
-  row[ci.date]         = op.date         || '';
-  row[ci.periode]      = op.periode      || '';
-  row[ci.libelle]      = op.libelle      || '';
-  row[ci.montant]      = op.montant      || '';
-  row[ci.type_mvt]     = op.type_mvt     || '';
-  row[ci.mode_reglement] = op.mode_reglement || '';
-  row[ci.nom_chat]     = op.nom_chat     || '';
-  row[ci.num_cheque]   = op.num_cheque   || '';
-  row[ci.num_recu]     = op.num_recu     || '';
-  row[ci.description]  = op.description  || '';
-  row[ci.date_import]  = op.date_import  || '';
+  row[ci.id]             = op.id            || '';
+  row[ci.onglet]         = op.onglet        || '';
+  row[ci.statut]         = op.statut        || 'en_attente';
+  row[ci.destination]    = op.destination   || '';
+  row[ci.date]           = op.date          || '';
+  row[ci.periode]        = op.periode       || '';
+  row[ci.libelle]        = op.libelle       || '';
+  row[ci.montant]        = op.montant       || '';
+  row[ci.type_mvt]       = op.type_mvt      || '';
+  row[ci.mode_reglement] = op.mode_reglement|| '';
+  row[ci.nom_chat]       = op.nom_chat      || '';
+  row[ci.num_cheque]     = op.num_cheque    || '';
+  row[ci.num_recu]       = op.num_recu      || '';
+  row[ci.description]    = op.description   || '';
+  row[ci.date_import]    = op.date_import   || '';
   row[ci.date_rapprochement] = op.date_rapprochement || '';
   await updateRange(SHEETS_CONFIG.sheets.import_rap, sheetRow, 0, [row]);
   await logAction('MODIF', 'Import_Rapprochement', op.id, `Modifié le ${todayFR()}`);
 }
 
 async function archiverImportRapprochement(rowIndex, datRapprochement) {
-  // 1. Lire la ligne
   const rows = await readSheet(SHEETS_CONFIG.sheets.import_rap);
   const r = rows[rowIndex + 1];
   if (!r) return;
-  // 2. Copier dans Import_historique
   const hist = [...r];
-  hist[COLS_IMPORT_RAP.statut]              = 'rapprochee';
-  hist[COLS_IMPORT_RAP.date_rapprochement]  = datRapprochement || todayFR();
+  hist[COLS_IMPORT_RAP.statut]             = 'rapprochee';
+  hist[COLS_IMPORT_RAP.date_rapprochement] = datRapprochement || todayFR();
   await appendRows(SHEETS_CONFIG.sheets.import_hist, [hist]);
-  // 3. Effacer la ligne dans Import_Rapprochement
   await updateRange(SHEETS_CONFIG.sheets.import_rap, rowIndex + 2, 0, [new Array(16).fill('')]);
-  await logAction('MODIF', 'Import_Rapprochement', r[COLS_IMPORT_RAP.id] || '', 'Archivé dans Import_historique');
+  await logAction('MODIF', 'Import_Rapprochement', r[COLS_IMPORT_RAP.id] || '', 'Archivé');
 }
 
 async function importRapExistsId(id) {
-  // Vérifie si un ID est déjà dans Import_Rapprochement OU Import_historique
-  const [rap, hist] = await Promise.all([
-    readSheet(SHEETS_CONFIG.sheets.import_rap),
-    readSheet(SHEETS_CONFIG.sheets.import_hist),
-  ]);
-  const ci = COLS_IMPORT_RAP;
-  const allRows = [...(rap.slice(1)), ...(hist.slice(1))];
-  return allRows.some(r => r[ci.id] === id);
-}
-
-// ---- TOGGLE VÉRIFIÉ (Chèques, Remises, Caisse) ----
-async function toggleVerified(sheetKey, rowIndex, value) {
-  const sheetName = SHEETS_CONFIG.sheets[sheetKey];
-  const col = sheetKey === 'cheques' ? COLS_CHEQUE.verified
-            : sheetKey === 'remises' ? COLS_REMISE.verified
-            : null;
-  if (col === null) return;
-  const sheetRow = rowIndex + 2;
-  await updateCell(sheetName, sheetRow, col, value ? 'TRUE' : 'FALSE');
-  await logAction('MODIF', sheetName, `Ligne ${rowIndex+1}`, `Vérifié: ${value}`);
-}
-
-// ---- MODIFIER CHÈQUE ----
-async function updateCheque(rowIndex, cheque) {
-  const sheetRow = rowIndex + 2;
-  const row = new Array(13).fill('');
-  row[COLS_CHEQUE.id]            = cheque.id            || '';
-  row[COLS_CHEQUE.num_cheque]    = cheque.num_cheque    || '';
-  row[COLS_CHEQUE.date_emission] = cheque.date_emission || '';
-  row[COLS_CHEQUE.beneficiaire]  = cheque.beneficiaire  || '';
-  row[COLS_CHEQUE.montant]       = cheque.montant       || '';
-  row[COLS_CHEQUE.type_mvt]      = cheque.type_mvt      || '';
-  row[COLS_CHEQUE.type_comp]     = cheque.type_comp     || '';
-  row[COLS_CHEQUE.description]   = cheque.description   || '';
-  row[COLS_CHEQUE.periode]       = cheque.periode       || '';
-  row[COLS_CHEQUE.statut]        = cheque.statut        || 'en_attente';
-  row[COLS_CHEQUE.date_encaiss]  = cheque.date_encaiss  || '';
-  row[COLS_CHEQUE.ref_banque]    = cheque.ref_banque    || '';
-  row[COLS_CHEQUE.verified]      = cheque.verified      || 'FALSE';
-  await updateRange(SHEETS_CONFIG.sheets.cheques, sheetRow, 0, [row]);
-  await logAction('MODIF', 'Cheques', cheque.beneficiaire, `Modifié le ${todayFR()}`);
+  try {
+    const [rap, hist] = await Promise.all([
+      readSheet(SHEETS_CONFIG.sheets.import_rap),
+      readSheet(SHEETS_CONFIG.sheets.import_hist),
+    ]);
+    const ci = COLS_IMPORT_RAP;
+    const allRows = [...(rap.slice(1)), ...(hist.slice(1))];
+    return allRows.some(r => r[ci.id] && String(r[ci.id]) === String(id));
+  } catch(e) {
+    console.warn('importRapExistsId error:', e);
+    return false; // En cas d'erreur, on laisse passer pour ne pas bloquer
+  }
 }
 
 // ============================================================
@@ -744,6 +754,36 @@ async function sendAlert(user, source, operation) {
 }
 
 // ============================================================
+// SOLDES INITIAUX
+// ============================================================
+function getSoldeInitial(periode, compte) {
+  try {
+    const cfg = JSON.parse(localStorage.getItem('arche_soldes_initiaux') || '{}');
+    return parseFloat(cfg?.[periode]?.[compte] || 0) || 0;
+  } catch(e) { return 0; }
+}
+
+async function saveSoldeInitial(periode, compte, montant) {
+  try {
+    const cfg = JSON.parse(localStorage.getItem('arche_soldes_initiaux') || '{}');
+    if (!cfg[periode]) cfg[periode] = {};
+    cfg[periode][compte] = parseFloat(montant) || 0;
+    cfg[periode].date    = todayFR();
+    localStorage.setItem('arche_soldes_initiaux', JSON.stringify(cfg));
+    await saveConfigKey('soldes_initiaux', cfg);
+  } catch(e) { console.warn('saveSoldeInitial error:', e); }
+}
+
+async function saveSoldesInitiauxBatch(periode, soldes) {
+  try {
+    const cfg = JSON.parse(localStorage.getItem('arche_soldes_initiaux') || '{}');
+    cfg[periode] = { ...soldes, date: todayFR() };
+    localStorage.setItem('arche_soldes_initiaux', JSON.stringify(cfg));
+    await saveConfigKey('soldes_initiaux', cfg);
+  } catch(e) { console.warn('saveSoldesInitiauxBatch error:', e); }
+}
+
+// ============================================================
 // CALCULS
 // ============================================================
 function calculerTotalCaisse(c) {
@@ -770,60 +810,12 @@ function detectDoublons(releveRows, existingRows) {
 }
 
 // ============================================================
-// PÉRIODES ET PARAMÈTRES
+// PARAMÈTRES
 // ============================================================
-// ============================================================
-// CONFIG — stockée dans l'onglet Config du Google Sheet
-// Cache localStorage pour accès synchrone + écriture async sheet
-// ============================================================
-let _configSynced = false;
-
-async function loadConfigFromSheet() {
-  if (_configSynced) return;
-  try {
-    const rows = await readSheet(SHEETS_CONFIG.sheets.config);
-    rows.forEach(r => {
-      if (!r[0] || !r[1]) return;
-      const key = String(r[0]).trim();
-      const val = String(r[1]).trim();
-      const lsKeyMap = {
-        periodes:        'arche_periodes',
-        types_mvt:       'arche_types_mvt',
-        types_desc:      'arche_types_desc',
-        types_comp:      'arche_types_comp',
-        reglements:      'arche_reglements',
-        soldes_initiaux: 'arche_soldes_initiaux',
-        periode_active:  'arche_periode',
-      };
-      const lsKey = lsKeyMap[key];
-      if (lsKey) localStorage.setItem(lsKey, val);
-    });
-    _configSynced = true;
-  } catch(e) {
-    console.warn('loadConfigFromSheet error (fallback localStorage):', e);
-  }
-}
-
-async function saveConfigKey(key, value) {
-  const json = JSON.stringify(value);
-  try {
-    const rows = await readSheet(SHEETS_CONFIG.sheets.config);
-    const rowIdx = rows.findIndex(r => String(r[0]).trim() === key);
-    if (rowIdx >= 0) {
-      await updateRange(SHEETS_CONFIG.sheets.config, rowIdx + 1, 0, [[key, json]]);
-    } else {
-      await appendRows(SHEETS_CONFIG.sheets.config, [[key, json]]);
-    }
-  } catch(e) {
-    console.warn('saveConfigKey sheet error (sauvegardé en localStorage seulement):', e);
-  }
-}
-
 function getPeriodes() {
-  const stored = localStorage.getItem('arche_periodes');
-  if (stored) { try { return JSON.parse(stored); } catch(e) {} }
-  const y = new Date().getFullYear();
-  const m = new Date().getMonth() + 1;
+  const s = localStorage.getItem('arche_periodes');
+  if (s) { try { const p = JSON.parse(s); if (p.length) return p; } catch(e) {} }
+  const y = new Date().getFullYear(), m = new Date().getMonth() + 1;
   const start = m >= 9 ? y : y - 1;
   const periodes = [];
   for (let i = 2024; i <= start; i++) periodes.push(`${i} - ${i+1}`);
@@ -835,8 +827,8 @@ async function savePeriodes(p) {
 }
 
 function getCurrentPeriode() {
-  const stored = localStorage.getItem('arche_periode');
-  if (stored) return stored;
+  const s = localStorage.getItem('arche_periode');
+  if (s && s !== 'undefined') return s;
   const d = new Date(), y = d.getFullYear(), m = d.getMonth()+1;
   return m >= 9 ? `${y} - ${y+1}` : `${y-1} - ${y}`;
 }
@@ -873,6 +865,16 @@ function getModesReglement() {
 async function saveModesReglement(m) {
   localStorage.setItem('arche_reglements', JSON.stringify(m));
   await saveConfigKey('reglements', m);
+}
+
+function getDescriptions() {
+  const s = localStorage.getItem('arche_types_desc');
+  if (s) { try { return JSON.parse(s); } catch(e) {} }
+  return [];
+}
+async function saveDescriptions(arr) {
+  localStorage.setItem('arche_types_desc', JSON.stringify(arr));
+  await saveConfigKey('types_desc', arr);
 }
 
 // ============================================================
@@ -935,6 +937,8 @@ window.Sheets = {
     facture: COLS_FACTURE, caissePhysique: COLS_CAISSE_PHYSIQUE,
     journal: COLS_JOURNAL, importRap: COLS_IMPORT_RAP,
   },
+  // Config sheet
+  loadConfigFromSheet, saveConfigKey,
   // Lecture
   getCaisseOperations, getBanqueOperations, getCaissePhysique,
   getCheques, getRemises, getFactures, getJournal, getFormulairesData,
@@ -943,26 +947,23 @@ window.Sheets = {
   saveCaisseOperation,  updateCaisseOperation,
   saveBanqueOperation,  updateBanqueOperation,
   saveCaissePhysique,
-  saveCheque,           encaisserCheque, updateCheque,
-  saveRemise,           encaisserRemise, updateRemise,
-  saveFacture,          updateFacture,
+  saveCheque, updateCheque, encaisserCheque,
+  saveRemise, encaisserRemise, updateRemise,
+  saveFacture, updateFacture,
   saveImportRapprochement, updateImportRapprochement,
   archiverImportRapprochement, importRapExistsId,
   updateFlag, toggleVerified, appendRows, updateCell, updateRange, deleteRow,
-  logAction,
-  // Soldes initiaux
+  logAction, rapprocheCaisseOperation,
+  // Soldes
   getSoldeInitial, saveSoldeInitial, saveSoldesInitiauxBatch,
-  rapprocheCaisseOperation,
   // Calculs
   calculerTotalCaisse, detectDoublons,
-  // Paramètres (lecture synchrone depuis cache localStorage, écriture async vers sheet)
+  // Paramètres
   getPeriodes, savePeriodes, getCurrentPeriode, setCurrentPeriode,
   getTypesMouvement, saveTypesMouvement,
   getTypesComplementaires, saveTypesComplementaires,
   getModesReglement, saveModesReglement,
-  loadConfigFromSheet, saveConfigKey,
-  getDescriptions: () => { try { return JSON.parse(localStorage.getItem('arche_types_desc')||'[]'); } catch(e){ return []; } },
-  saveDescriptions: async (arr) => { localStorage.setItem('arche_types_desc', JSON.stringify(arr)); await saveConfigKey('types_desc', arr); },
+  getDescriptions, saveDescriptions,
   // Utilitaires
   formatMoney, normalizeDate, todayISO, todayFR, genId, openFacture,
 };
