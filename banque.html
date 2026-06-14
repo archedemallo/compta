@@ -403,6 +403,7 @@ Auth.requireAuth(async(user)=>{
     return;
   }
   Sidebar.build('banque');
+  await Sheets.loadConfigFromSheet();
   const ap = Sidebar.getActivePeriode();
   document.getElementById('topbar-per').textContent = ap;
   document.getElementById('solde-per').textContent  = ap;
