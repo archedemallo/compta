@@ -276,6 +276,7 @@ let selection = {};      // { 'onglet:rowIdx:montantIdx': { checked, row, onglet
 // ============================================================
 Auth.requireAuth(async () => {
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
+  await Sheets.loadConfigFromSheet();
   Sidebar.build('import-suivi');
   loadImported();
   buildTabs();
@@ -677,14 +678,9 @@ async function confirmImport() {
     const id        = `${s.onglet}:${s.ri}:${s.mi}`;
 
     try {
-      // Vérification doublon
+      // Vérification doublon — en cas d'erreur on laisse passer
       let exists = false;
-      try {
-        exists = await Sheets.importRapExistsId(id);
-      } catch(e) {
-        console.warn('importRapExistsId error:', e);
-        // En cas d'erreur de vérification, on continue quand même
-      }
+      try { exists = await Sheets.importRapExistsId(id); } catch(e) { console.warn('importRapExistsId error:', e); }
       if (exists) { skipped++; continue; }
 
       await Sheets.saveImportRapprochement({
