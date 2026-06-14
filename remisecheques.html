@@ -390,11 +390,10 @@ function renderTable(){
 }
 
 async function toggleVerifiedRemise(ri,checked){
-  try{
-    await Sheets.updateCell(Sheets.config.sheets.remises,ri+2,Sheets.cols.remise.verified,checked?'TRUE':'FALSE');
-    await loadData();
-    showToast(checked?'Remise verrouillée ✓':'Remise déverrouillée');
-  }catch(e){alert('Erreur : '+e.message);}
+  // La colonne "Vérifié" n'existe pas encore dans la feuille Remises_cheques.
+  // Pour l'activer : ajouter une colonne J "verified" dans le sheet et
+  // mettre verified:9, detail_start:10 dans COLS_REMISE de sheets.js.
+  showToast(checked ? '⚠️ Colonne "verified" non configurée dans le sheet' : 'Décoché');
 }
 function initColResize(tableId){
   const table=document.getElementById(tableId);if(!table)return;
