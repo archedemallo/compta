@@ -175,9 +175,11 @@
   <div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap;overflow-x:auto;">
     <input class="f-input f-input-lg" type="text" id="fl-search" placeholder="🔍 Rechercher…" oninput="renderTable()" style="width:160px;">
     <select class="f-select" id="fl-type" onchange="renderTable()"><option value="">Tous types</option></select>
-    <select class="f-select" id="fl-attrib" onchange="renderTable()" style="width:90px;">
-      <option value="">Attrib.</option>
-      <option value="vide">Non attrib.</option>
+   <select class="f-select" id="fl-attrib" onchange="renderTable()" style="width:100px;">
+  <option value="">Tous</option>
+  <option value="attrib">Attribués</option>
+  <option value="vide">Non attrib.</option>
+</select>
     </select>
     <select class="f-select" id="fl-sens" onchange="renderTable()" style="width:70px;">
       <option value="">D+C</option>
