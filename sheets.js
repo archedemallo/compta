@@ -118,7 +118,8 @@ const COLS_REMISE = {
   statut:       6,
   date_encaiss: 7,
   ref_banque:   8,
-  detail_start: 9,   // J — Donateur1, Montant1, Chèque1, Type1, Desc1, LibComp1, Chat1, Reçu1…
+  verified:     9,   // J — Vérifié (TRUE/FALSE) — colonne ajoutée dans le sheet
+  detail_start: 10,  // K — Donateur1, Montant1, Chèque1, Type1, Desc1, LibComp1, Chat1, Reçu1…
 };
 
 const COLS_FACTURE = {
@@ -333,7 +334,9 @@ async function deleteRow(sheetName, rowIndex) {
 
 async function toggleVerified(sheetKey, rowIndex, value) {
   const sheetName = SHEETS_CONFIG.sheets[sheetKey];
-  const col = sheetKey === 'cheques' ? COLS_CHEQUE.verified : null;
+  const col = sheetKey === 'cheques' ? COLS_CHEQUE.verified
+            : sheetKey === 'remises' ? COLS_REMISE.verified
+            : null;
   if (col === null) return;
   await updateCell(sheetName, rowIndex + 2, col, value ? 'TRUE' : 'FALSE');
   await logAction('MODIF', sheetName, `Ligne ${rowIndex+1}`, `Vérifié: ${value}`);
@@ -510,6 +513,7 @@ async function saveRemise(remise) {
   mainRow[COLS_REMISE.statut]        = 'en_attente';
   mainRow[COLS_REMISE.date_encaiss]  = '';
   mainRow[COLS_REMISE.ref_banque]    = '';
+  mainRow[COLS_REMISE.verified]      = 'FALSE';
   remise.cheques.forEach((c, i) => {
     const base = COLS_REMISE.detail_start + i * 8;
     mainRow[base]     = c.donateur    || '';
@@ -547,6 +551,7 @@ async function updateRemise(rowIndex, remise) {
   mainRow[COLS_REMISE.statut]        = remise.statut  || 'en_attente';
   mainRow[COLS_REMISE.date_encaiss]  = remise.date_encaiss || '';
   mainRow[COLS_REMISE.ref_banque]    = remise.ref_banque    || '';
+  mainRow[COLS_REMISE.verified]      = remise.verified      || 'FALSE';
   remise.cheques.forEach((c, i) => {
     const base = COLS_REMISE.detail_start + i * 8;
     mainRow[base]     = c.donateur    || '';
