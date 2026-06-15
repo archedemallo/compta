@@ -49,16 +49,15 @@
   .selection-bar.visible{display:flex;}
 
   /* Resize + scroll fixe */
-  .table-scroll-outer{position:relative;}
+  .table-scroll-outer{position:relative;flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
   .table-scroll-top{overflow-x:auto;overflow-y:hidden;height:10px;background:var(--surface-2);border-bottom:0.5px solid var(--border);}
   .table-scroll-top-inner{height:1px;}
-  .tbl-scroll-body{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 280px);}
+  .tbl-scroll-body{overflow-x:auto;overflow-y:auto;flex:1;min-height:0;}
   #table-wrap{overflow:visible;}
   table{table-layout:auto;min-width:100%;}
   .col-resizer{position:absolute;right:0;top:0;bottom:0;width:5px;cursor:col-resize;z-index:3;}
   .col-resizer:hover,.col-resizer.resizing{background:var(--orange);opacity:0.4;}
-  /* APRÈS */
-thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 8px;border-bottom:0.5px solid var(--border);background:var(--surface-2) !important;cursor:pointer;white-space:nowrap;user-select:none;position:sticky;top:0;z-index:4;}
+  thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 8px;border-bottom:0.5px solid var(--border);background:var(--surface-2)!important;cursor:pointer;white-space:nowrap;user-select:none;position:sticky;top:0;z-index:4;}
   thead th:hover{background:var(--warm);}
   thead th.sorted .si{color:var(--orange);opacity:1;}
   thead th .si{font-size:9px;margin-left:2px;opacity:0.3;}
@@ -147,7 +146,7 @@ thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-
     <div class="topbar-title"><i class="ti ti-building-bank" style="color:var(--orange)"></i> Banque</div>
     <div class="topbar-right"><span style="font-size:11px;color:var(--text-3);" id="topbar-per"></span></div>
   </div>
-  <div class="page-content">
+  <div class="page-content" style="display:flex;flex-direction:column;height:calc(100vh - 48px);overflow:hidden;padding-bottom:0;">
 
     <!-- KPIs -->
     <div class="kpi-bar" id="kpi-bar">
@@ -169,7 +168,7 @@ thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-
     </div>
 
     <!-- LISTE -->
-    <div class="list-card" style="border-radius:0 0 var(--radius) var(--radius);border-top:none;">
+    <div class="list-card" style="border-radius:0 0 var(--radius) var(--radius);border-top:none;flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;margin-bottom:0;">
       <!-- Filtres compacts 2 lignes -->
       <!-- REMPLACER les deux div.filters-row par : -->
 <div class="list-head">
