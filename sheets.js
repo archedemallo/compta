@@ -222,7 +222,7 @@ async function readRange(spreadsheetId, range) {
 }
 
 async function readSheet(sheetName, spreadsheetId, colRange) {
-  return readRange(spreadsheetId || SHEETS_CONFIG.spreadsheetId, `${sheetName}!A:${colRange || 'CZ'}`);
+  return readRange(spreadsheetId || SHEETS_CONFIG.spreadsheetId, `${sheetName}!A:${colRange || 'Z'}`);
 }
 
 async function getCaisseOperations(periode) {
