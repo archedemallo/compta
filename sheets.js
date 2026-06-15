@@ -169,7 +169,7 @@ let _configSynced = false;
 async function loadConfigFromSheet() {
   if (_configSynced) return;
   try {
-    const rows = await readSheet(SHEETS_CONFIG.sheets.config);
+    const rows = await readSheet(SHEETS_CONFIG.sheets.config, null, 'B');
     const keyMap = {
       periodes:        'arche_periodes',
       types_mvt:       'arche_types_mvt',
@@ -196,7 +196,7 @@ async function loadConfigFromSheet() {
 async function saveConfigKey(key, value) {
   const json = JSON.stringify(value);
   try {
-    const rows = await readSheet(SHEETS_CONFIG.sheets.config);
+    const rows = await readSheet(SHEETS_CONFIG.sheets.config, null, 'B');
     const rowIdx = rows.findIndex(r => String(r[0]).trim() === key);
     if (rowIdx >= 0) {
       await updateRange(SHEETS_CONFIG.sheets.config, rowIdx + 1, 0, [[key, json]]);
@@ -221,8 +221,8 @@ async function readRange(spreadsheetId, range) {
   return response.result.values || [];
 }
 
-async function readSheet(sheetName, spreadsheetId) {
-  return readRange(spreadsheetId || SHEETS_CONFIG.spreadsheetId, `${sheetName}!A:CZ`);
+async function readSheet(sheetName, spreadsheetId, colRange) {
+  return readRange(spreadsheetId || SHEETS_CONFIG.spreadsheetId, `${sheetName}!A:${colRange || 'CZ'}`);
 }
 
 async function getCaisseOperations(periode) {
