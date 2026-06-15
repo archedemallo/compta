@@ -5,7 +5,7 @@
 
 // ---- CONFIGURATION ----
 const SHEETS_CONFIG = {
-  spreadsheetId:   'VOTRE_SPREADSHEET_ID',
+  spreadsheetId:   '1y6yD4AohP7T10GE7mmguIqNWSnwla9t1mewBpCDej_Y',
   formulairesId:   '1y6yD4AohP7T10GE7mmguIqNWSnwla9t1mewBpCDej_Y',
   facturesDriveId: 'VOTRE_DOSSIER_DRIVE_ID',
   sheets: {
@@ -32,15 +32,7 @@ const SHEETS_CONFIG = {
   },
 };
 
-// Charger config depuis localStorage si disponible
-(function loadStoredConfig() {
-  try {
-    const cfg = JSON.parse(localStorage.getItem('arche_sheets_config') || '{}');
-    if (cfg.spreadsheetId)   SHEETS_CONFIG.spreadsheetId   = cfg.spreadsheetId;
-    if (cfg.formulairesId)   SHEETS_CONFIG.formulairesId   = cfg.formulairesId;
-    if (cfg.facturesDriveId) SHEETS_CONFIG.facturesDriveId = cfg.facturesDriveId;
-  } catch(e) {}
-})();
+// spreadsheetId codé en dur — pas de surcharge localStorage nécessaire
 
 // ============================================================
 // DÉFINITION DES COLONNES
