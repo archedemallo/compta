@@ -378,7 +378,7 @@ let editingIdx  = null;   // index dans allRows de la ligne en cours d'édition
 let sortCol=-1, sortAsc=true;
 let ventItems = [];
 let panelRowIdx = null;
-let linkedCheque = null, linkedFacture = null, linkedRemise = null, linkedCaisse = null, linkedSuivi = null;
+let linkedCheque = null, linkedFactures = [], linkedRemise = null, linkedCaisse = null, linkedSuivi = null;
 let suiviBankData = {};  // données Suivi chargées
 let activeSuiviBankTab = 'Adoption';
 const SUIVI_BANK_ID = '1y6yD4AohP7T10GE7mmguIqNWSnwla9t1mewBpCDej_Y';
@@ -414,10 +414,19 @@ Auth.requireAuth(async(user)=>{
 });
 
 function populateFilterTypes(){
-  const types = Sheets.getTypesMouvement();
-  const fl    = document.getElementById('fl-type');
+  // Peuplé dynamiquement après chargement — voir updateDynamicFilters()
+}
+
+function updateDynamicFilters(){
+  const cb  = Sheets.cols.banque;
+  const per = Sidebar.getActivePeriode();
+  const rows = allRows.filter(r => r[cb.periode] === per);
+  const types = [...new Set(rows.map(r => r[cb.type_mvt]).filter(Boolean))].sort();
+  const cur = document.getElementById('fl-type')?.value || '';
+  const fl  = document.getElementById('fl-type');
+  if (!fl) return;
   fl.innerHTML = '<option value="">Tous types</option>';
-  types.forEach(t => fl.innerHTML += `<option>${t}</option>`);
+  types.forEach(t => fl.innerHTML += `<option ${t===cur?'selected':''}>${escH(t)}</option>`);
 }
 
 async function loadData(){
@@ -438,6 +447,7 @@ async function loadData(){
     ]);
     Sidebar.setLastUpdate();
     updateSoldeBanner();
+    updateDynamicFilters();
     renderKPIs();
     renderTable();
   } catch(e) {
@@ -449,6 +459,7 @@ function onPeriodeChange(p){
   document.getElementById('topbar-per').textContent = p;
   document.getElementById('solde-per').textContent  = p;
   updateSoldeBanner();
+  updateDynamicFilters();
   renderKPIs();
   renderTable();
 }
@@ -808,7 +819,7 @@ function clearSelection(){
 function openPanel(){
   if (selectedIdx === null) return;
   panelRowIdx   = selectedIdx;
-  linkedCheque  = null; linkedFacture = null; linkedRemise = null; linkedCaisse = null; linkedSuivi = null;
+  linkedCheque  = null; linkedFactures = []; linkedRemise = null; linkedCaisse = null; linkedSuivi = null;
   ventItems     = [];
   const cb = Sheets.cols.banque, r = allRows[panelRowIdx];
   const montant = parseMontant(r[cb.credit]||r[cb.debit]) || 0;
@@ -818,7 +829,7 @@ function openPanel(){
 
   // Vider les zones liées
   document.getElementById('rap-cheque-linked').innerHTML  = '';
-  document.getElementById('rap-facture-linked').innerHTML = '';
+  document.getElementById('rap-facture-linked').innerHTML = linkedFactures.length ? renderFacturesLinked() : '';
   document.getElementById('rap-remise-linked').innerHTML  = '';
   document.getElementById('rap-caisse-linked').innerHTML  = '';
   document.getElementById('rap-suivi-linked').innerHTML   = '';
@@ -982,18 +993,32 @@ function lierCheque(){
     </div>`;
 }
 
+function renderFacturesLinked(){
+  const cf=Sheets.cols.facture;
+  return linkedFactures.map((lf,i)=>{
+    const pdfBtn=lf.data[cf.lien_pdf]?`<button class="pdf-btn" onclick="Sheets.openFacture('${escH(lf.data[cf.lien_pdf])}')" title="Voir"><i class="ti ti-file-type-pdf"></i></button>`:'';
+    return `<div class="rap-linked" style="margin-bottom:4px;">
+      <span class="rap-linked-label"><strong>${lf.data[cf.fournisseur]||'?'}</strong> — ${fmt(lf.data[cf.montant_ttc])} — ${lf.data[cf.date_facture]||''} ${pdfBtn}</span>
+      <button class="rap-remove" onclick="removeFactureLinked(${i})"><i class="ti ti-x"></i></button>
+    </div>`;
+  }).join('');
+}
+
+function removeFactureLinked(i){
+  linkedFactures.splice(i,1);
+  document.getElementById('rap-facture-linked').innerHTML=renderFacturesLinked();
+}
+
 function lierFacture(){
   const idx=parseInt(document.getElementById('rap-facture-select').value);
   if(isNaN(idx)||idx<0)return;
   const cf=Sheets.cols.facture, r=allFactures.filter(f=>f[cf.statut]!=='payee')[idx];
   if(!r)return;
-  linkedFacture={idx: r._sheetIndex, data:r};
-  const pdfBtn=r[cf.lien_pdf]?`<button class="pdf-btn" onclick="Sheets.openFacture('${escH(r[cf.lien_pdf])}')" title="Voir"><i class="ti ti-file-type-pdf"></i></button>`:'';
-  document.getElementById('rap-facture-linked').innerHTML=`
-    <div class="rap-linked">
-      <span class="rap-linked-label"><strong>${r[cf.fournisseur]||'?'}</strong> — ${fmt(r[cf.montant_ttc])} — ${r[cf.date_facture]||''} ${pdfBtn}</span>
-      <button class="rap-remove" onclick="linkedFacture=null;document.getElementById('rap-facture-linked').innerHTML='';"><i class="ti ti-x"></i></button>
-    </div>`;
+  // Éviter doublon
+  if(linkedFactures.find(lf=>lf.idx===r._sheetIndex)){showToast('Facture déjà liée');return;}
+  linkedFactures.push({idx:r._sheetIndex,data:r});
+  document.getElementById('rap-facture-linked').innerHTML=renderFacturesLinked();
+  document.getElementById('rap-facture-select').selectedIndex=0;
 }
 
 function lierRemise(){
@@ -1058,30 +1083,33 @@ async function savePanel(){
     // Lier facture → reporter les infos + marquer payée
     // Compatible avec un chèque lié simultanément : le type_mvt vient du chèque si présent,
     // la facture est marquée payée et son N° est noté dans la ligne banque
-    if(linkedFacture){
-      const cf = Sheets.cols.facture, fi = linkedFacture.idx;
-      const fac = linkedFacture.data;
-      await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.statut,          'payee');
-      await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.date_reglement,   r[cb.date]||Sheets.todayFR());
-      // Reporter N° chèque sur la facture si lié ensemble
-      if(linkedCheque){
-        const cc=Sheets.cols.cheque;
-        await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.mode_reglement, 'Chèque');
-        await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.commentaire,    `Chèque N°${linkedCheque.data[cc.num_cheque]||'?'}`);
+    if(linkedFactures.length>0){
+      const cf=Sheets.cols.facture;
+      const numFactures=[];
+      for(const lf of linkedFactures){
+        const fi=lf.idx, fac=lf.data;
+        await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.statut,         'payee');
+        await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.date_reglement,  r[cb.date]||Sheets.todayFR());
+        if(linkedCheque){
+          const cc=Sheets.cols.cheque;
+          await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.mode_reglement,'Chèque');
+          await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.commentaire,   `Chèque N°${linkedCheque.data[cc.num_cheque]||'?'}`);
+        }
+        numFactures.push(fac[cf.num_facture]||'');
+        if(fac[cf.lien_pdf])
+          await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.lien_facture, fac[cf.lien_pdf]);
       }
-      // Écrire N° facture dans banque (ne pas écraser type_mvt si chèque déjà lié)
-      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.num_facture, fac[cf.num_facture]||'');
+      // Écrire les N° factures dans banque (séparés par virgule si plusieurs)
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.num_facture, numFactures.join(', '));
       if(!linkedCheque){
-        // Seulement si pas de chèque lié — sinon le chèque a priorité sur type_mvt/description
-        await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp,   fac[cf.fournisseur]||'');
-        await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, fac[cf.description]||'');
-        await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,    fac[cf.categorie]  ||'');
+        const fac0=linkedFactures[0].data;
+        await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp,   fac0[cf.fournisseur]||'');
+        await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, fac0[cf.description]||'');
+        await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,    fac0[cf.categorie]  ||'');
       } else {
-        // Si chèque + facture : mettre le fournisseur en libellé complémentaire
-        await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp, fac[cf.fournisseur]||'');
+        const fournisseurs=linkedFactures.map(lf=>lf.data[cf.fournisseur]||'').filter(Boolean).join(', ');
+        await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp, fournisseurs);
       }
-      if(fac[cf.lien_pdf])
-        await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.lien_facture, fac[cf.lien_pdf]);
     }
 
 
