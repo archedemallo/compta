@@ -41,7 +41,7 @@
   .tbl-scroll-body::-webkit-scrollbar{width:6px;height:6px;}
   .tbl-scroll-body::-webkit-scrollbar-thumb{background:rgba(61,43,31,0.2);border-radius:3px;}
   table{border-collapse:collapse;font-size:11px;min-width:100%;}
-  thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:7px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);cursor:pointer;white-space:nowrap;user-select:none;position:sticky;top:0;z-index:2;}
+  thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:7px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2)!important;cursor:pointer;white-space:nowrap;user-select:none;position:sticky;top:0;z-index:4;}
   thead th:hover{background:var(--warm);}
   thead th .sort-icon{font-size:10px;margin-left:3px;opacity:0.5;}
   thead th.sorted .sort-icon{opacity:1;color:var(--orange);}
@@ -52,7 +52,9 @@
   tbody tr:last-child td{border-bottom:none;}
   tbody tr:hover{background:var(--cream);}
   tbody tr.editing{background:rgba(201,107,42,0.06);outline:1px solid var(--orange);}
-  tbody tr.verified-row td{opacity:0.6;}
+  tbody tr.verified-row{background:rgba(59,109,17,0.04);}
+  tbody tr.verified-row td{color:var(--text-3);}
+  .lock-icon{font-size:12px;color:var(--green);opacity:0.8;}
   .r{text-align:right;font-variant-numeric:tabular-nums;}
   .amount-c{color:var(--green);font-weight:500;}
   .amount-d{color:var(--red);font-weight:500;}
@@ -270,9 +272,20 @@ function populateSelects() {
   fd.innerHTML = '<option value="">—</option>';
   descs.forEach(d => fd.innerHTML += `<option>${escH(d)}</option>`);
 
+  // fl-type sera peuplé dynamiquement après chargement des données
+}
+
+// Peuple le filtre Type uniquement avec les valeurs présentes dans les données
+function updateDynamicFilters() {
+  const cc  = Sheets.cols.caisse;
+  const per = document.getElementById('fl-per')?.value || Sidebar.getActivePeriode();
+  const rows = allRows.filter(r => r[cc.periode] === per);
+  const types = [...new Set(rows.map(r => r[cc.type_mvt]).filter(Boolean))].sort();
+  const cur = document.getElementById('fl-type')?.value || '';
   const flt = document.getElementById('fl-type');
+  if (!flt) return;
   flt.innerHTML = '<option value="">Tous types</option>';
-  types.forEach(t => flt.innerHTML += `<option>${escH(t)}</option>`);
+  types.forEach(t => flt.innerHTML += `<option ${t===cur?'selected':''}>${escH(t)}</option>`);
 }
 
 async function loadData() {
@@ -281,6 +294,7 @@ async function loadData() {
   const all = await Sheets.getCaisseOperations();
   allRows   = all.filter(SHEET_FILTER);
   Sidebar.setLastUpdate();
+  updateDynamicFilters();
   renderKPIs();
   renderTable();
 }
@@ -289,9 +303,9 @@ function onPeriodeChange(p) {
   document.getElementById('f-per').value  = p;
   document.getElementById('fl-per').value = p;
   document.getElementById('topbar-per').textContent = p;
-  renderKPIs(); renderTable();
+  updateDynamicFilters(); renderKPIs(); renderTable();
 }
-function onFilterPeriodeChange() { renderKPIs(); renderTable(); }
+function onFilterPeriodeChange() { updateDynamicFilters(); renderKPIs(); renderTable(); }
 
 // ============================================================
 // KPIs — 4 cases
@@ -400,7 +414,9 @@ function renderTable() {
       <td style="text-align:center;font-size:12px;">${r[cc.suivi_ref]
         ?`<span style="color:var(--green);" title="${escH(r[cc.suivi_ref])}"><i class="ti ti-check"></i></span>`:'—'}</td>
       <td class="r" style="white-space:nowrap;">
-        <button class="edit-btn" onclick="openEdit(${ri})" title="Modifier" ${isVerified?'disabled style="opacity:0.3;cursor:not-allowed;"':''}><i class="ti ti-pencil"></i></button>
+        ${isVerified
+          ? `<span class="lock-icon" title="Ligne vérifiée — décochez pour modifier"><i class="ti ti-lock"></i></span>`
+          : `<button class="edit-btn" onclick="openEdit(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>`}
         <button class="del-btn"  onclick="openDel(${ri})"  title="Supprimer" ${isVerified?'disabled style="opacity:0.3;cursor:not-allowed;"':''}><i class="ti ti-trash"></i></button>
         <button class="flag-btn ${flagged?'on':''}" onclick="openFlag(${ri},'${escH(r[cc.libelle]||'')}','${escH(comment)}',${flagged})" title="Annoter"><i class="ti ti-flag${flagged?'-filled':''}"></i></button>
       </td>
