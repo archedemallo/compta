@@ -252,14 +252,31 @@ Auth.requireAuth(async()=>{
 async function loadData(){
   allRows=await Sheets.getFactures();
   Sidebar.setLastUpdate();
+  updateDynamicFilters();
   renderKPIs();
   renderTable();
+}
+
+function updateDynamicFilters(){
+  const cf=Sheets.cols.facture;
+  const per=document.getElementById('fl-per')?.value||'';
+  const rows=per?allRows.filter(r=>r[cf.periode]===per):allRows;
+  // Catégories présentes
+  const cats=[...new Set(rows.map(r=>r[cf.categorie]).filter(Boolean))].sort();
+  const curCat=document.getElementById('fl-cat')?.value||'';
+  const flCat=document.getElementById('fl-cat');
+  if(flCat){flCat.innerHTML='<option value="">Toutes catégories</option>';cats.forEach(c=>flCat.innerHTML+=`<option ${c===curCat?'selected':''}>${escH(c)}</option>`);}
+  // Fournisseurs présents
+  const fours=[...new Set(rows.map(r=>r[cf.fournisseur]).filter(Boolean))].sort();
+  const curDesc=document.getElementById('fl-desc')?.value||'';
+  const flDesc=document.getElementById('fl-desc');
+  if(flDesc){flDesc.innerHTML='<option value="">Tous fournisseurs</option>';fours.forEach(f=>flDesc.innerHTML+=`<option ${f===curDesc?'selected':''}>${escH(f)}</option>`);}
 }
 
 function onPeriodeChange(p){
   document.getElementById('topbar-per').textContent=p;
   document.getElementById('fl-per').value=p;
-  renderKPIs();renderTable();
+  updateDynamicFilters();renderKPIs();renderTable();
 }
 
 function renderKPIs(){
