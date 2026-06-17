@@ -55,6 +55,11 @@
   .sens-btn.credit.active{background:var(--green);color:white;}
   .sens-btn.debit{border-color:var(--red);color:var(--red);}
   .sens-btn.debit.active{background:var(--red);color:white;}
+
+  /* ---- FILTRES TOUJOURS VISIBLES ---- */
+  .list-head{position:sticky;top:0;z-index:10;background:var(--surface);}
+  .selection-bar{position:sticky;top:0;z-index:9;}
+
 </style>
 </head>
 <body>
@@ -228,7 +233,19 @@ async function loadData() {
 
   allRows = [...caisseImp, ...banqueImp];
   Sidebar.setLastUpdate();
+  updateDynamicFilters();
   renderKPIs(); renderTable();
+}
+
+function updateDynamicFilters() {
+  // Onglets présents (extraits du suivi_ref ex: "Adoption:12:0")
+  const onglets = [...new Set(allRows.map(({ row, cols }) => {
+    const ref = row[cols.suivi_ref] || '';
+    return ref.split(':')[0];
+  }).filter(Boolean))].sort();
+  const curO = document.getElementById('fl-onglet')?.value || '';
+  const fo = document.getElementById('fl-onglet');
+  if(fo){fo.innerHTML='<option value="">Tous onglets</option>';onglets.forEach(o=>fo.innerHTML+=`<option ${o===curO?'selected':''}>${escH(o)}</option>`);}
 }
 
 function renderKPIs() {
