@@ -55,6 +55,10 @@
   .spinner{display:inline-block;animation:spin 1s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
   .info-encaiss{background:var(--blue-bg);border:0.5px solid rgba(24,95,165,0.15);border-radius:var(--radius-sm);padding:8px 12px;font-size:11px;color:var(--blue);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  /* ---- FILTRES TOUJOURS VISIBLES ---- */
+  .list-head{position:sticky;top:0;z-index:10;background:var(--surface);}
+  .selection-bar{position:sticky;top:0;z-index:9;}
+
 </style>
 </head>
 <body>
@@ -340,11 +344,20 @@ async function confirmDel(){
 }
 
 async function toggleVerifiedChq(ri,checked){
+  const cc=Sheets.cols.cheque, r=allCheques[ri];
+  if(!r) return;
+  // Mise à jour immédiate en mémoire
+  r[cc.verified]=checked?'TRUE':'FALSE';
+  renderTable();
   try{
-    await Sheets.updateCell(Sheets.config.sheets.cheques,ri+2,Sheets.cols.cheque.verified,checked?'TRUE':'FALSE');
-    await loadData();
+    await Sheets.updateCell(Sheets.config.sheets.cheques,ri+2,cc.verified,checked?'TRUE':'FALSE');
     showToast(checked?'Chèque verrouillé ✓':'Chèque déverrouillé');
-  }catch(e){alert('Erreur : '+e.message);}
+    loadData(); // reload silencieux
+  }catch(e){
+    r[cc.verified]=checked?'FALSE':'TRUE';
+    renderTable();
+    alert('Erreur : '+e.message);
+  }
 }
 function initColResize(tableId){
   const table=document.getElementById(tableId);if(!table)return;
