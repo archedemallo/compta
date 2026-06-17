@@ -78,6 +78,11 @@
   @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
   .spinner{display:inline-block;animation:spin 1s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ---- FILTRES TOUJOURS VISIBLES ---- */
+  .list-head{position:sticky;top:0;z-index:10;background:var(--surface);}
+  .selection-bar{position:sticky;top:0;z-index:9;}
+
 </style>
 </head>
 <body>
