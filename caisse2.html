@@ -86,6 +86,10 @@
   @keyframes spin{to{transform:rotate(360deg);}}
   .edit-banner{background:rgba(201,107,42,0.08);border:0.5px solid var(--orange);border-radius:var(--radius-sm);padding:8px 12px;font-size:11px;color:var(--orange);display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
   .chip-brd{font-size:9px;padding:1px 5px;border-radius:6px;background:var(--blue-bg);color:var(--blue);font-weight:500;}
+  /* ---- FILTRES TOUJOURS VISIBLES ---- */
+  .list-head{position:sticky;top:0;z-index:10;background:var(--surface);}
+  .selection-bar{position:sticky;top:0;z-index:9;}
+
 </style>
 </head>
 <body>
@@ -469,12 +473,20 @@ async function toggleVerified(ri, checked) {
   const cc = Sheets.cols.caisse;
   const r  = allRows[ri];
   if (!r) return;
+  // Mise à jour immédiate en mémoire → case reste cochée sans attendre le sheet
+  r[cc.flag_check] = checked ? 'VERIFIE' : 'FALSE';
+  if (checked && editIdx === ri) cancelEdit();
+  renderTable();
   try {
     await Sheets.updateCell(Sheets.config.sheets.caisse, ri+2, cc.flag_check, checked ? 'VERIFIE' : 'FALSE');
-    if (checked && editIdx === ri) cancelEdit();
-    await loadData();
     showToast(checked ? 'Ligne verrouillée ✓' : 'Ligne déverrouillée');
-  } catch(e) { alert('Erreur : ' + e.message); }
+    loadData(); // reload silencieux en arrière-plan
+  } catch(e) {
+    // En cas d'erreur, annuler la mise à jour mémoire
+    r[cc.flag_check] = checked ? 'FALSE' : 'VERIFIE';
+    renderTable();
+    alert('Erreur : ' + e.message);
+  }
 }
 
 // ============================================================
