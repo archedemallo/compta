@@ -17,7 +17,7 @@
 
   #table-wrap{overflow-x:auto;max-height:560px;overflow-y:auto;}
   table{width:100%;border-collapse:collapse;font-size:11px;min-width:900px;}
-  thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 8px;border-bottom:0.5px solid var(--border);background:var(--surface-2);white-space:nowrap;position:sticky;top:0;z-index:2;}
+  thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 8px;border-bottom:0.5px solid var(--border);background:var(--surface-2);white-space:nowrap;position:sticky;top:0;z-index:4;}
   tbody td{padding:5px 8px;border-bottom:0.5px solid var(--border);vertical-align:middle;white-space:nowrap;}
   tbody tr:last-child td{border-bottom:none;}
   tbody tr:hover{background:var(--cream);}
@@ -59,6 +59,11 @@
   .dest-caisse{background:var(--green-bg);color:var(--green);font-size:9px;padding:2px 6px;border-radius:6px;font-weight:600;}
   .dest-banque{background:var(--blue-bg);color:var(--blue);font-size:9px;padding:2px 6px;border-radius:6px;font-weight:600;}
   .mode-chip{font-size:9px;padding:2px 6px;border-radius:6px;background:var(--surface-2);color:var(--text-2);}
+
+  /* ---- FILTRES TOUJOURS VISIBLES ---- */
+  .list-head{position:sticky;top:0;z-index:10;background:var(--surface);}
+  .selection-bar{position:sticky;top:0;z-index:9;}
+
 </style>
 </head>
 <body>
@@ -251,11 +256,28 @@ async function loadData() {
   try {
     allRows = await Sheets.getImportRapprochement('en_attente');
     Sidebar.setLastUpdate();
+    updateDynamicFilters();
     renderKPIs();
     renderTable();
   } catch(e) {
     document.getElementById('table-wrap').innerHTML = `<div style="padding:32px;text-align:center;color:var(--red);">Erreur : ${e.message}</div>`;
   }
+}
+
+function updateDynamicFilters() {
+  const ci = Sheets.cols.importRap;
+  const onglets = [...new Set(allRows.map(r => r[ci.onglet]).filter(Boolean))].sort();
+  const modes   = [...new Set(allRows.map(r => r[ci.mode_reglement]).filter(Boolean))].sort();
+  const dests   = [...new Set(allRows.map(r => r[ci.destination]).filter(Boolean))].sort();
+  const curO = document.getElementById('fl-onglet')?.value||'';
+  const curM = document.getElementById('fl-mode')?.value||'';
+  const curD = document.getElementById('fl-dest')?.value||'';
+  const fo = document.getElementById('fl-onglet');
+  if(fo){fo.innerHTML='<option value="">Tous onglets</option>';onglets.forEach(o=>fo.innerHTML+=`<option ${o===curO?'selected':''}>${escH(o)}</option>`);}
+  const fm = document.getElementById('fl-mode');
+  if(fm){fm.innerHTML='<option value="">Tous modes</option>';modes.forEach(m=>fm.innerHTML+=`<option ${m===curM?'selected':''}>${escH(m)}</option>`);}
+  const fd = document.getElementById('fl-dest');
+  if(fd){fd.innerHTML='<option value="">Toutes dest.</option>';dests.forEach(d=>fd.innerHTML+=`<option ${d===curD?'selected':''}>${escH(d)}</option>`);}
 }
 
 // ============================================================
