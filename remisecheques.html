@@ -97,6 +97,10 @@
   .rap-linked-label{flex:1;color:var(--green);}
   .rap-remove{background:none;border:none;cursor:pointer;color:var(--red);font-size:14px;padding:0;}
   .f-input-rap{font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;width:100%;box-sizing:border-box;}
+  /* ---- FILTRES TOUJOURS VISIBLES ---- */
+  .list-head{position:sticky;top:0;z-index:10;background:var(--surface);}
+  .selection-bar{position:sticky;top:0;z-index:9;}
+
 </style>
 </head>
 <body>
@@ -400,11 +404,20 @@ function renderTable(){
 }
 
 async function toggleVerifiedRemise(ri,checked){
+  const cr=Sheets.cols.remise, r=allRemises[ri];
+  if(!r) return;
+  // Mise à jour immédiate en mémoire
+  r[cr.verified]=checked?'TRUE':'FALSE';
+  renderTable();
   try{
-    await Sheets.updateCell(Sheets.config.sheets.remises,ri+2,Sheets.cols.remise.verified,checked?'TRUE':'FALSE');
-    await loadData();
+    await Sheets.updateCell(Sheets.config.sheets.remises,ri+2,cr.verified,checked?'TRUE':'FALSE');
     showToast(checked?'Remise verrouillée ✓':'Remise déverrouillée');
-  }catch(e){alert('Erreur : '+e.message);}
+    loadData(); // reload silencieux
+  }catch(e){
+    r[cr.verified]=checked?'FALSE':'TRUE';
+    renderTable();
+    alert('Erreur : '+e.message);
+  }
 }
 function initColResize(tableId){
   const table=document.getElementById(tableId);if(!table)return;
