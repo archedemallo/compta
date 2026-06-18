@@ -322,7 +322,7 @@ function renderTable(){
     const id=r[cr.id]||String(ri);
     const s=r[cr.statut]||'';
     const isOpen=openRows.has(id);
-    const isVerified=r[cr.verified]==='TRUE';
+    const isVerified=String(r[cr.verified]).toUpperCase()==='TRUE';
     const badge=s==='en_attente'
       ?'<span class="chip" style="background:var(--amber-bg);color:var(--amber);">En attente</span>'
       :'<span class="chip" style="background:var(--green-bg);color:var(--green);">Encaissée</span>';
