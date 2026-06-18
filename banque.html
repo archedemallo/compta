@@ -141,6 +141,12 @@
   /* ---- FILTRES TOUJOURS VISIBLES ---- */
   .list-head{position:sticky;top:0;z-index:10;background:var(--surface);}
   .selection-bar{position:sticky;top:0;z-index:9;}
+  /* Popup factures */
+  .factures-popup{position:fixed;z-index:500;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-md);padding:12px 14px;min-width:320px;font-size:11px;}
+  .factures-popup-title{font-size:12px;font-weight:600;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+  .factures-popup-close{background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-3);}
+  .factures-popup-item{padding:5px 0;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px;}
+  .factures-popup-item:last-child{border-bottom:none;}
 
 </style>
 </head>
@@ -665,7 +671,12 @@ function renderTable(){
       <td><span class="chip chip-${chipType(r[cb.type_mvt])}">${r[cb.type_mvt]||''}</span></td>
       <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--text-3);" title="${escH(descVal)}">${escH(descVal)}</td>
       <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--text-3);">${escH(typeComp)}</td>
-      <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--text-3);">${escH(numFacture)}</td>
+      <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--text-3);">
+        ${numFacture && numFacture.includes(',')
+          ? `<button onclick="event.stopPropagation();showFacturesPopup(event,'${escH(numFacture)}')" style="background:none;border:none;cursor:pointer;font-size:10px;color:var(--blue);padding:0;" title="Voir les factures liées"><i class="ti ti-files"></i> ${numFacture.split(',').length} factures</button>`
+          : escH(numFacture)
+        }
+      </td>
       <td style="font-size:10px;color:var(--text-3);">${escH(nomChat)}</td>
       <td style="font-size:10px;color:var(--text-3);">${escH(numDonFiscal)}</td>
       <td style="font-size:10px;">${r[cb.ref_remise]?`<span class="chip-brd">${escH(r[cb.ref_remise])}</span>`:''}</td>
@@ -743,15 +754,18 @@ function openEdit(ri){
 // ============================================================
 async function toggleVerifie(ri, checked) {
   const cb = Sheets.cols.banque;
-  const sheetRow = ri + 2; // ligne sheet (données démarrent à 2)
+  // Mise à jour mémoire IMMÉDIATE → case reste cochée visuellement
+  allRows[ri][cb.statut] = checked ? 'verifie' : '';
+  if (checked && editingIdx === ri) { editingIdx = null; }
+  renderTable();
   try {
-    await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.statut, checked ? 'verifie' : '');
-    allRows[ri][cb.statut] = checked ? 'verifie' : ''; // mise à jour locale sans reload
-    if (checked && editingIdx === ri) { editingIdx = null; } // annule l'édition si en cours
-    renderTable();
+    await Sheets.updateCell(Sheets.config.sheets.banque, ri+2, cb.statut, checked ? 'verifie' : '');
+    showToast(checked ? 'Ligne vérifiée ✓' : 'Ligne déverrouillée');
   } catch(e) {
-    alert('Erreur lors de la mise à jour : ' + (e.message || e));
-    renderTable(); // rétablit l'état visuel
+    // Annuler si erreur
+    allRows[ri][cb.statut] = checked ? '' : 'verifie';
+    renderTable();
+    alert('Erreur : ' + (e.message || e));
   }
 }
 
@@ -1204,6 +1218,34 @@ async function saveFlag(){
 // HELPERS
 // ============================================================
 function parseMontant(s){if(!s)return NaN;return parseFloat(String(s).trim().replace(/\s/g,'').replace(',','.'));}
+function showFacturesPopup(event, numFacturesStr) {
+  document.getElementById('factures-popup')?.remove();
+  const nums = numFacturesStr.split(',').map(s => s.trim()).filter(Boolean);
+  const cf = Sheets.cols.facture;
+  const items = nums.map(n => {
+    const fac = allFactures.find(f => (f[cf.num_facture]||'') === n);
+    const pdfBtn = fac?.[cf.lien_pdf]
+      ? `<button onclick="Sheets.openFacture('${escH(fac[cf.lien_pdf])}')" style="background:none;border:none;cursor:pointer;color:var(--blue);font-size:13px;" title="Voir PDF"><i class="ti ti-file-type-pdf"></i></button>`
+      : '';
+    const fournisseur = fac?.[cf.fournisseur] || '';
+    const montant = fac?.[cf.montant_ttc] ? fmt(fac[cf.montant_ttc]) : '';
+    return `<div class="factures-popup-item"><span style="flex:1;"><strong>${escH(n)}</strong>${fournisseur?' — '+escH(fournisseur):''}${montant?' — '+montant:''}</span>${pdfBtn}</div>`;
+  }).join('');
+  const popup = document.createElement('div');
+  popup.id = 'factures-popup';
+  popup.className = 'factures-popup';
+  popup.innerHTML = `<div class="factures-popup-title">Factures liées <button class="factures-popup-close" onclick="document.getElementById('factures-popup').remove()">×</button></div>${items}`;
+  document.body.appendChild(popup);
+  const x = Math.min(event.clientX, window.innerWidth - 340);
+  const y = Math.min(event.clientY + 10, window.innerHeight - 200);
+  popup.style.left = x + 'px';
+  popup.style.top  = y + 'px';
+  setTimeout(() => document.addEventListener('click', function h(){
+    document.getElementById('factures-popup')?.remove();
+    document.removeEventListener('click', h);
+  }), 100);
+}
+
 function fmt(v){if(!v&&v!==0)return'—';const n=parseMontant(String(v));if(isNaN(n))return'—';return n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
 function chipType(t){if(!t)return'depense';const l=t.toLowerCase();if(l.includes('adopt'))return'adoption';if(l.includes('don'))return'don';if(l.includes('adh'))return'adhesion';return'depense';}
 function dateToISO(d){if(!d)return'';const p=String(d).split('/');if(p.length===3&&p[0].length===2)return`${p[2]}-${p[1]}-${p[0]}`;return d;}
