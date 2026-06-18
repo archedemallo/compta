@@ -242,7 +242,7 @@ function renderTable(){
   const trs=rows.map(r=>{
     const ri=allCheques.indexOf(r);
     const s=r[cc.statut]||'';
-    const isVerified=r[cc.verified]==='TRUE';
+    const isVerified=String(r[cc.verified]).toUpperCase()==='TRUE';
     const badge=s==='en_attente'
       ?'<span class="chip" style="background:var(--amber-bg);color:var(--amber);">En attente</span>'
       :s==='encaisse'
@@ -321,7 +321,7 @@ async function submitCheque(){
 
 function openEditChq(ri){
   const cc=Sheets.cols.cheque,r=allCheques[ri];
-  if(r[cc.verified]==='TRUE'){showToast('⚠️ Chèque vérifié — décochez pour modifier');return;}
+  if(String(r[cc.verified]).toUpperCase()==='TRUE'){showToast('⚠️ Chèque vérifié — décochez pour modifier');return;}
   editChqIdx=ri;
   document.getElementById('chq-num').value=r[cc.num_cheque]||'';
   document.getElementById('chq-date').value=r[cc.date_emission]||'';
