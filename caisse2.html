@@ -480,12 +480,12 @@ async function toggleVerified(ri, checked) {
   try {
     await Sheets.updateCell(Sheets.config.sheets.caisse, ri+2, cc.flag_check, checked ? 'VERIFIE' : 'FALSE');
     showToast(checked ? 'Ligne verrouillée ✓' : 'Ligne déverrouillée');
-    loadData(); // reload silencieux en arrière-plan
   } catch(e) {
-    // En cas d'erreur, annuler la mise à jour mémoire
     r[cc.flag_check] = checked ? 'FALSE' : 'VERIFIE';
     renderTable();
     alert('Erreur : ' + e.message);
+  }
+}
   }
 }
 
