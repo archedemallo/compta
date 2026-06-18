@@ -697,7 +697,10 @@ async function updateImportRapprochement(rowIndex, op) {
 async function archiverImportRapprochement(rowIndex, datRapprochement) {
   const rows = await readSheet(SHEETS_CONFIG.sheets.import_rap);
   const r = rows[rowIndex + 1];
-  if (!r) return;
+  if (!r) {
+    console.error('archiverImportRapprochement: rowIndex=' + rowIndex + ', rows.length=' + rows.length);
+    throw new Error('Ligne ' + (rowIndex + 1) + ' introuvable (total: ' + rows.length + ' lignes)');
+  }
   const hist = [...r];
   hist[COLS_IMPORT_RAP.statut]             = 'rapprochee';
   hist[COLS_IMPORT_RAP.date_rapprochement] = datRapprochement || todayFR();
