@@ -7,52 +7,33 @@
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
-  /* Onglets */
   .tabs-bar{display:flex;gap:0;border-bottom:0.5px solid var(--border);margin-bottom:16px;overflow-x:auto;}
   .tab-btn{padding:8px 16px;font-size:12px;font-weight:500;color:var(--text-3);border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all 0.15s;}
   .tab-btn:hover{color:var(--text-2);}
   .tab-btn.active{color:var(--orange);border-bottom-color:var(--orange);}
   .tab-badge{display:inline-block;font-size:9px;padding:1px 5px;border-radius:10px;background:var(--orange);color:white;margin-left:5px;font-weight:600;}
-
-  /* Barre de filtres */
   .filters-bar{display:flex;gap:6px;flex-wrap:nowrap;align-items:center;overflow-x:auto;margin-bottom:12px;}
   .f-select{font-size:11px;padding:4px 8px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text-2);font-family:'DM Sans',sans-serif;}
   .f-input{font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;width:140px;}
-
-  /* Tableau */
   .list-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;}
   table{width:100%;border-collapse:collapse;font-size:11px;}
   thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:7px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);white-space:nowrap;}
   tbody td{padding:7px 10px;border-bottom:0.5px solid var(--border);vertical-align:middle;}
   tbody tr:last-child td{border-bottom:none;}
   tbody tr:hover{background:var(--cream);}
-  tbody tr.selected{background:rgba(201,107,42,0.06);}
-  .r{text-align:right;font-variant-numeric:tabular-nums;}
-
-  /* Checkbox style */
   .row-check{width:15px;height:15px;accent-color:var(--orange);cursor:pointer;}
-
-  /* Chips destination */
   .chip-caisse{background:var(--amber-bg);color:var(--amber);}
   .chip-banque{background:var(--blue-bg);color:var(--blue);}
-
-  /* Montant sélectionnable (Adoption / Adhésion) */
   .montant-choice{display:flex;flex-direction:column;gap:4px;}
   .montant-line{display:flex;align-items:center;gap:6px;font-size:10px;}
   .montant-line input[type=checkbox]{width:13px;height:13px;accent-color:var(--orange);cursor:pointer;}
   .montant-lbl{color:var(--text-3);}
   .montant-val{font-weight:500;color:var(--text);}
-
-  /* Barre d'actions bas de page */
   .action-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--surface);border-top:0.5px solid var(--border);border-radius:0 0 var(--radius) var(--radius);position:sticky;bottom:0;z-index:10;}
   .action-bar-info{font-size:11px;color:var(--text-3);}
   .action-bar-btns{display:flex;gap:8px;align-items:center;}
-
-  /* Info box */
   .info-box{background:var(--blue-bg);border:0.5px solid rgba(24,95,165,0.15);border-radius:var(--radius-sm);padding:8px 12px;font-size:11px;color:var(--blue);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
   .warn-box{background:var(--amber-bg);border:0.5px solid rgba(133,79,11,0.15);border-radius:var(--radius-sm);padding:8px 12px;font-size:11px;color:var(--amber);display:flex;align-items:center;gap:8px;}
-
-  /* Modales */
   .modal-overlay{position:fixed;inset:0;background:rgba(61,43,31,0.35);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
   .modal{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-md);width:500px;max-width:95vw;max-height:90vh;overflow-y:auto;}
   .modal-header{padding:14px 18px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--surface);z-index:1;}
@@ -63,18 +44,12 @@
   .form-group{margin-bottom:10px;}
   .form-label{display:block;font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
   .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-
-  /* Spinner */
   .spinner{display:inline-block;animation:spin 1s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
   .success-toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:white;padding:10px 18px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;z-index:999;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-md);animation:slideIn 0.25s ease;}
   @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
-
-  /* Ligne déjà importée */
   tbody tr.already-imported{opacity:0.4;}
   tbody tr.already-imported td{text-decoration:line-through;}
-
-  /* KPI */
   .kpi-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
   .kpi{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;}
   .kpi-label{font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
@@ -88,21 +63,23 @@
     <div class="topbar-title"><i class="ti ti-download" style="color:var(--orange)"></i> Import depuis Suivi</div>
     <div class="topbar-right">
       <button class="btn btn-secondary btn-sm" onclick="reloadAll()"><i class="ti ti-refresh"></i> Actualiser</button>
+      <a href="import-suivi-refresh.html" class="btn btn-secondary btn-sm"><i class="ti ti-database-import"></i> Rafraîchir Suivi</a>
       <a href="import-suivi-archive.html" class="btn btn-secondary btn-sm"><i class="ti ti-history"></i> Déjà importés</a>
     </div>
   </div>
 
   <div class="page-content">
-    <div class="info-box"><i class="ti ti-info-circle"></i> Les données sont lues en temps réel depuis le Google Sheet <strong>Suivi</strong>. Sélectionnez les lignes à importer puis cliquez sur "Importer la sélection".</div>
+    <div class="info-box"><i class="ti ti-info-circle"></i>
+      Les données sont lues depuis la copie locale <strong>Suivi_*</strong> du sheet Compta.
+      Utilisez <strong>Rafraîchir Suivi</strong> pour mettre à jour depuis le Google Sheet Suivi.
+    </div>
 
     <div class="kpi-bar" id="kpi-bar">
       <div class="kpi"><div class="kpi-label">Chargement…</div><div class="kpi-value" style="color:var(--text-3)">—</div></div>
     </div>
 
-    <!-- Onglets par catégorie -->
     <div class="tabs-bar" id="tabs-bar"></div>
 
-    <!-- Filtres -->
     <div class="filters-bar">
       <input class="f-input" type="text" id="fl-search" placeholder="Rechercher…" oninput="renderCurrentTab()">
       <select class="f-select" id="fl-dest" onchange="renderCurrentTab()">
@@ -116,7 +93,6 @@
       <button class="btn btn-secondary btn-sm" onclick="clearFilters()"><i class="ti ti-x"></i> Effacer</button>
     </div>
 
-    <!-- Tableau courant -->
     <div class="list-card">
       <div id="table-wrap">
         <div style="padding:40px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement des données Suivi…</div>
@@ -156,151 +132,170 @@
 <script src="sidebar.js"></script>
 <script>
 // ============================================================
-// CONFIG SUIVI
+// CONFIG — mapping colonnes dans les onglets Suivi_* du Compta
+// IMPORTANT : les onglets Suivi_* ont une colonne _id en position 0
+// donc tous les indices sont décalés de +1 par rapport à l'original
 // ============================================================
-const SUIVI_ID = '1y6yD4AohP7T10GE7mmguIqNWSnwla9t1mewBpCDej_Y';
-
-// Définition des onglets et leur mapping de colonnes (index 0-based)
 const ONGLETS = {
   Adoption: {
-    label: 'Adoptions',
-    icon: 'ti-heart',
+    label: 'Adoptions', icon: 'ti-heart',
+    compta: 'Suivi_Adoption',
     cols: {
-      date: 2,          // C - dateAdoption
-      nom: 17,          // R
-      prenom: 18,       // S
-      nom_chat: 4,      // E - nomUsuel
-      mode_reglement: 42, // AQ - check_paiement
-      num_cheque: 30,   // AF - cheque1
-      // Montants multiples
+      date: 3,           // col C (+ offset 1 pour _id)
+      nom: 18,           // col R
+      prenom: 19,        // col S
+      nom_chat: 5,       // col E - nomUsuel
+      mode_reglement: 43,// col AQ - check_paiement
+      num_cheque: 31,    // col AF - cheque1
       montants: [
-        { col: 29, label: 'Total participation' },  // AD
-        { col: 28, label: 'Reste à payer' },         // AC
+        { col: 30, label: 'Total participation' }, // AD
+        { col: 29, label: 'Reste à payer' },        // AC
       ],
     },
-    type_mvt: 'Adoption',
-    description: 'Adoption',
+    type_mvt: 'Adoption', description: 'Adoption',
   },
   Reservation_Chat: {
-    label: 'Rés. Chat',
-    icon: 'ti-cat',
+    label: 'Rés. Chat', icon: 'ti-cat',
+    compta: 'Suivi_Reservation_Chat',
     cols: {
-      date: 2,          // C - dateReservation
-      nom: 10,          // K - nomComplet
-      prenom: null,
-      nom_chat: 5,      // F - nomChat
-      mode_reglement: 19, // T - check_paiement
-      num_cheque: 17,   // R - numeroPaiement
+      date: 3, nom: 11, prenom: null, nom_chat: 6,
+      mode_reglement: 20, num_cheque: 18,
       montants: [{ col: null, label: 'Réservation', fixed: 50 }],
     },
-    type_mvt: 'Adoption',
-    description: 'Reservation',
+    type_mvt: 'Adoption', description: 'Reservation',
   },
   Reservation_Chaton: {
-    label: 'Rés. Chaton',
-    icon: 'ti-cat',
+    label: 'Rés. Chaton', icon: 'ti-cat',
+    compta: 'Suivi_Reservation_Chaton',
     cols: {
-      date: 2,          // C - dateReservation
-      nom: 11,          // L - nomComplet
-      prenom: null,
-      nom_chat: 6,      // G - nomChat
-      mode_reglement: 21, // V - check_paiement
-      num_cheque: 19,   // T - numeroPaiement
+      date: 3, nom: 12, prenom: null, nom_chat: 7,
+      mode_reglement: 22, num_cheque: 20,
       montants: [{ col: null, label: 'Réservation', fixed: 50 }],
     },
-    type_mvt: 'Adoption',
-    description: 'Reservation',
+    type_mvt: 'Adoption', description: 'Reservation',
   },
   Contrat_reservation_chat: {
-    label: 'Contrat rés.',
-    icon: 'ti-file-text',
+    label: 'Contrat rés.', icon: 'ti-file-text',
+    compta: 'Suivi_Contrat_reservation_chat',
     cols: {
-      date: 2,          // C - dateReservation
-      nom: 10,          // K - nomComplet
-      prenom: null,
-      nom_chat: 5,      // F - nomChat
-      mode_reglement: 19, // T - check_paiement
-      num_cheque: 17,   // R - numeroPaiement
+      date: 3, nom: 11, prenom: null, nom_chat: 6,
+      mode_reglement: 20, num_cheque: 18,
       montants: [{ col: null, label: 'Réservation', fixed: 50 }],
     },
-    type_mvt: 'Adoption',
-    description: 'Reservation',
+    type_mvt: 'Adoption', description: 'Reservation',
   },
   Dons: {
-    label: 'Dons',
-    icon: 'ti-gift',
+    label: 'Dons', icon: 'ti-gift',
+    compta: 'Suivi_Dons',
     cols: {
-      date: 2,          // C - dateEntete
-      nom: 7,           // H
-      prenom: 8,        // I
-      nom_chat: null,
-      mode_reglement: 17, // R - check_paiement
-      num_cheque: 5,    // F - numeroCheque
-      num_recu: 6,      // G - numeroRecuFiscal
-      montants: [{ col: 4, label: 'Montant don' }], // E
+      date: 3, nom: 8, prenom: 9, nom_chat: null,
+      mode_reglement: 18, num_cheque: 6, num_recu: 7,
+      montants: [{ col: 5, label: 'Montant don' }],
     },
-    type_mvt: 'Dons',
-    description: 'Dons',
+    type_mvt: 'Dons', description: 'Dons',
   },
   Adhesion: {
-    label: 'Adhésions',
-    icon: 'ti-id-badge',
+    label: 'Adhésions', icon: 'ti-id-badge',
+    compta: 'Suivi_Adhesion',
     cols: {
-      date: 2,          // C - dateAdhesion
-      nom: 4,           // E
-      prenom: 5,        // F
-      nom_chat: null,
-      mode_reglement: 16, // Q - check_paiement (à venir)
-      num_cheque: 14,   // O - numeroPaiement
+      date: 3, nom: 5, prenom: 6, nom_chat: null,
+      mode_reglement: 17, num_cheque: 15,
       montants: [
-        { col: 12, label: 'Don bienfaiteur' },   // M
-        { col: 13, label: 'Don sympathisant' },  // N
-        { col: 14, label: 'Paiement adhésion' }, // O
+        { col: 13, label: 'Don bienfaiteur' },
+        { col: 14, label: 'Don sympathisant' },
+        { col: 15, label: 'Paiement adhésion' },
       ],
     },
-    type_mvt: 'Adhesion',
-    description: 'Adhesion',
+    type_mvt: 'Adhesion', description: 'Adhesion',
   },
 };
 
 // ============================================================
 // ÉTAT
 // ============================================================
-let allData = {};        // { onglet: [rows] }
-let imported = [];       // IDs déjà importés (depuis localStorage)
+let allData = {};       // { onglet: [rows] } — rows lues depuis Suivi_* Compta
+let importedIds = new Set(); // IDs déjà dans Import_Rapprochement ou Import_historique
 let activeTab = 'Adoption';
-let selection = {};      // { 'onglet:rowIdx:montantIdx': { checked, row, onglet, montant } }
+let selection = {};
 
 // ============================================================
 // INIT
 // ============================================================
 Auth.requireAuth(async () => {
-  await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
   await Sheets.loadConfigFromSheet();
   Sidebar.build('import-suivi');
-  loadImported();
   buildTabs();
   await reloadAll();
 });
 
-function onPeriodeChange(p) { /* pas de filtre période ici */ }
+function onPeriodeChange(p) {}
 
 // ============================================================
-// IMPORT DÉJÀ EFFECTUÉS (localStorage)
+// CHARGEMENT DES IDS DÉJÀ IMPORTÉS
+// (depuis Import_Rapprochement + Import_historique)
 // ============================================================
-function loadImported() {
-  try { imported = JSON.parse(localStorage.getItem('arche_suivi_imported') || '[]'); }
-  catch(e) { imported = []; }
+async function loadImportedIds() {
+  importedIds = new Set();
+  try {
+    const [rap, hist] = await Promise.all([
+      Sheets.getImportRapprochement(),       // toutes les lignes (pas de filtre statut)
+      Sheets.readSheet('Import_historique'),
+    ]);
+    const ci = Sheets.cols.importRap;
+    // Import_Rapprochement
+    (rap || []).forEach(r => {
+      const id = r[ci.id];
+      if (id) importedIds.add(String(id));
+    });
+    // Import_historique (même structure, col 0 = id)
+    (hist || []).slice(1).forEach(r => {
+      const id = r[ci.id];
+      if (id) importedIds.add(String(id));
+    });
+  } catch(e) {
+    console.warn('loadImportedIds error:', e);
+  }
 }
-function saveImported() {
-  localStorage.setItem('arche_suivi_imported', JSON.stringify(imported));
+
+// ============================================================
+// CHARGEMENT DEPUIS LES ONGLETS Suivi_* DU COMPTA
+// ============================================================
+async function reloadAll() {
+  document.getElementById('table-wrap').innerHTML =
+    '<div style="padding:40px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>';
+
+  // Charger en parallèle : données Suivi_* + IDs déjà importés
+  await Promise.all([
+    loadImportedIds(),
+    ...Object.entries(ONGLETS).map(async ([key, cfg]) => {
+      try {
+        const rows = await Sheets.readSheet(cfg.compta);
+        // rows[0] = en-tête (_id, Date, Heure, ...), rows[1..] = données
+        allData[key] = rows && rows.length > 1 ? rows.slice(1) : [];
+      } catch(e) {
+        allData[key] = [];
+        console.warn(`Erreur chargement ${cfg.compta}:`, e);
+      }
+    })
+  ]);
+
+  updateBadges();
+  updateKPIs();
+  renderCurrentTab();
 }
-function isImported(onglet, rowIdx, montantIdx) {
-  return imported.some(i => i.onglet === onglet && i.rowIdx === rowIdx && i.montantIdx === montantIdx);
+
+// ID d'une ligne = l'_id stocké en colonne 0 lors du rafraîchissement
+function getRowId(onglet, row, ri) {
+  // col 0 = _id (ajouté par import-suivi-refresh.html)
+  const storedId = (row[0] || '').toString().trim();
+  if (storedId) return `${onglet}:${storedId}`;
+  // Fallback si pas d'_id : index
+  return `${onglet}:row_${ri}`;
 }
-function markImported(onglet, rowIdx, montantIdx, opRef) {
-  imported.push({ onglet, rowIdx, montantIdx, opRef, date: new Date().toISOString() });
-  saveImported();
+
+function isImported(onglet, row, ri, mi) {
+  const id = `${getRowId(onglet, row, ri)}:${mi}`;
+  return importedIds.has(id);
 }
 
 // ============================================================
@@ -321,44 +316,21 @@ function switchTab(key) {
   activeTab = key;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + key)?.classList.add('active');
-  renderCurrentTab();
-}
-
-// ============================================================
-// CHARGEMENT DEPUIS SUIVI
-// ============================================================
-async function reloadAll() {
-  document.getElementById('table-wrap').innerHTML =
-    '<div style="padding:40px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>';
-
-  const keys = Object.keys(ONGLETS);
-  await Promise.all(keys.map(async key => {
-    try {
-      const resp = await gapi.client.sheets.spreadsheets.values.get({
-        spreadsheetId: SUIVI_ID,
-        range: `${key}!A2:AQ`, // toutes les colonnes depuis la ligne 2
-      });
-      allData[key] = (resp.result.values || []).filter(r => r && r.length > 1);
-    } catch(e) {
-      allData[key] = [];
-      console.warn(`Erreur chargement onglet ${key}:`, e);
-    }
-  }));
-
-  updateBadges();
-  updateKPIs();
+  selection = {};
   renderCurrentTab();
 }
 
 function updateBadges() {
-  Object.entries(ONGLETS).forEach(([key]) => {
+  Object.entries(ONGLETS).forEach(([key, cfg]) => {
     const rows = allData[key] || [];
-    const nonImportes = rows.filter((r, ri) => {
-      const cfg = ONGLETS[key];
-      return cfg.cols.montants.some((m, mi) => !isImported(key, ri, mi));
-    }).length;
+    const nonImportes = rows.filter((row, ri) =>
+      cfg.cols.montants.some((m, mi) => {
+        const montant = m.fixed !== undefined ? m.fixed : parseFloat(row[m.col] || 0) || 0;
+        return montant && !isImported(key, row, ri, mi);
+      })
+    ).length;
     const badge = document.getElementById('badge-' + key);
-    if (badge) badge.textContent = nonImportes;
+    if (badge) badge.textContent = nonImportes || '✓';
   });
 }
 
@@ -371,9 +343,9 @@ function updateKPIs() {
         const montant = m.fixed !== undefined ? m.fixed : parseFloat(row[m.col] || 0) || 0;
         if (!montant) return;
         totalLignes++;
-        if (!isImported(key, ri, mi)) {
+        if (!isImported(key, row, ri, mi)) {
           totalNonImp++;
-          const dest = getDestination(row[cfg.cols.mode_reglement]);
+          const dest = getDestination(getCellVal(row, cfg.cols.mode_reglement));
           if (dest === 'caisse') totalCaisse += montant;
           else totalBanque += montant;
         }
@@ -398,7 +370,13 @@ function renderCurrentTab() {
   const destF = document.getElementById('fl-dest')?.value || '';
   const hideImported = document.getElementById('fl-hide-imported')?.checked || false;
 
-  // Filtrage
+  if (!rows.length) {
+    document.getElementById('table-wrap').innerHTML =
+      '<div style="padding:32px;text-align:center;color:var(--text-3);font-size:12px;">Aucune donnée — utilisez <strong>Rafraîchir Suivi</strong> pour copier les données.</div>';
+    updateSelectionInfo();
+    return;
+  }
+
   let filtered = rows.map((row, ri) => ({ row, ri })).filter(({ row, ri }) => {
     const nom = getCellVal(row, cfg.cols.nom);
     const prenom = getCellVal(row, cfg.cols.prenom);
@@ -410,7 +388,7 @@ function renderCurrentTab() {
     if (hideImported) {
       const allDone = cfg.cols.montants.every((m, mi) => {
         const montant = m.fixed !== undefined ? m.fixed : parseFloat(row[m.col] || 0) || 0;
-        return !montant || isImported(key, ri, mi);
+        return !montant || isImported(key, row, ri, mi);
       });
       if (allDone) return false;
     }
@@ -424,7 +402,6 @@ function renderCurrentTab() {
     return;
   }
 
-  // Colonnes spécifiques selon l'onglet
   const hasChat = cfg.cols.nom_chat !== null;
   const hasPrenom = cfg.cols.prenom !== null;
   const multiMontants = cfg.cols.montants.length > 1;
@@ -439,12 +416,11 @@ function renderCurrentTab() {
     const modeLabel = modeRaw || 'Chèque';
     const numCheque = getCellVal(row, cfg.cols.num_cheque);
 
-    // Montants (cases à cocher si multiple)
     const montantsHtml = cfg.cols.montants.map((m, mi) => {
       const montant = m.fixed !== undefined ? m.fixed : parseFloat(row[m.col] || 0) || 0;
       if (!montant) return '';
       const selKey = `${key}:${ri}:${mi}`;
-      const alreadyDone = isImported(key, ri, mi);
+      const alreadyDone = isImported(key, row, ri, mi);
       const checked = selection[selKey]?.checked || false;
       if (multiMontants) {
         return `<div class="montant-line">
@@ -452,7 +428,7 @@ function renderCurrentTab() {
             ${checked ? 'checked' : ''} ${alreadyDone ? 'disabled' : ''}
             onchange="toggleLine('${selKey}','${key}',${ri},${mi},${montant},'${escH(m.label)}')">
           <span class="montant-lbl">${m.label} :</span>
-          <span class="montant-val ${alreadyDone ? 'text-muted' : ''}">${fmt(montant)}</span>
+          <span class="montant-val">${fmt(montant)}</span>
           ${alreadyDone ? '<span style="font-size:9px;background:var(--green-bg);color:var(--green);padding:1px 5px;border-radius:8px;">✓ Importé</span>' : ''}
         </div>`;
       } else {
@@ -460,7 +436,7 @@ function renderCurrentTab() {
           <input type="checkbox" class="row-check" data-key="${selKey}"
             ${checked ? 'checked' : ''} ${alreadyDone ? 'disabled' : ''}
             onchange="toggleLine('${selKey}','${key}',${ri},${mi},${montant},'${escH(m.label)}')">
-          <span class="montant-val ${alreadyDone ? 'text-muted' : ''}" style="font-weight:500;">${fmt(montant)}</span>
+          <span class="montant-val" style="font-weight:500;">${fmt(montant)}</span>
           ${alreadyDone ? '<span style="font-size:9px;background:var(--green-bg);color:var(--green);padding:1px 5px;border-radius:8px;">✓ Importé</span>' : ''}
         </div>`;
       }
@@ -468,7 +444,7 @@ function renderCurrentTab() {
 
     const allImported = cfg.cols.montants.every((m, mi) => {
       const montant = m.fixed !== undefined ? m.fixed : parseFloat(row[m.col] || 0) || 0;
-      return !montant || isImported(key, ri, mi);
+      return !montant || isImported(key, row, ri, mi);
     });
 
     return `<tr class="${allImported ? 'already-imported' : ''}">
@@ -508,10 +484,7 @@ function toggleLine(selKey, onglet, ri, mi, montant, label) {
   if (cb.checked) {
     const cfg = ONGLETS[onglet];
     const row = allData[onglet][ri];
-    selection[selKey] = {
-      checked: true, onglet, ri, mi, montant, label,
-      row, cfg,
-    };
+    selection[selKey] = { checked: true, onglet, ri, mi, montant, label, row, cfg };
   } else {
     delete selection[selKey];
   }
@@ -525,7 +498,7 @@ function selectAll() {
   rows.forEach((row, ri) => {
     cfg.cols.montants.forEach((m, mi) => {
       const montant = m.fixed !== undefined ? m.fixed : parseFloat(row[m.col] || 0) || 0;
-      if (!montant || isImported(key, ri, mi)) return;
+      if (!montant || isImported(key, row, ri, mi)) return;
       const selKey = `${key}:${ri}:${mi}`;
       selection[selKey] = { checked: true, onglet: key, ri, mi, montant, label: m.label, row, cfg };
     });
@@ -553,7 +526,6 @@ function updateSelectionInfo() {
 function openImportModal() {
   const selKeys = Object.keys(selection);
   if (!selKeys.length) return;
-
   const per = Sidebar.getActivePeriode();
   let html = '';
 
@@ -675,10 +647,13 @@ async function confirmImport() {
     const bordereau = card.querySelector('.imp-bordereau').value.trim();
     const recu      = card.querySelector('.imp-recu').value.trim();
     const dest      = getDestination(mode);
-    const id        = `${s.onglet}:${s.ri}:${s.mi}`;
+
+    // ID = onglet:_id_ligne:index_montant
+    const row = allData[s.onglet][s.ri];
+    const rowId = getRowId(s.onglet, row, s.ri);
+    const id = `${rowId}:${s.mi}`;
 
     try {
-      // Vérification doublon — en cas d'erreur on laisse passer
       let exists = false;
       try { exists = await Sheets.importRapExistsId(id); } catch(e) { console.warn('importRapExistsId error:', e); }
       if (exists) { skipped++; continue; }
@@ -698,7 +673,9 @@ async function confirmImport() {
         num_recu:       recu,
         description:    desc,
       });
-      markImported(s.onglet, s.ri, s.mi, `${dest}:${date}:${libelle}`);
+
+      // Marquer localement pour mise à jour immédiate de l'affichage
+      importedIds.add(id);
       ok++;
     } catch(e) {
       console.error('confirmImport error for', id, ':', e);
@@ -725,8 +702,8 @@ async function confirmImport() {
 // ============================================================
 function getDestination(modeRaw) {
   const mode = (modeRaw || '').trim().toLowerCase();
-  if (mode === 'espèces' || mode === 'especes' || mode === 'Espèce') return 'caisse';
-  return 'banque'; // chèque, virement, cb, vide = banque
+  if (mode === 'espèces' || mode === 'especes' || mode === 'espèce') return 'caisse';
+  return 'banque';
 }
 
 function getCellVal(row, colIdx) {
