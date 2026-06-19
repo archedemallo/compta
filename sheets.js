@@ -697,10 +697,7 @@ async function updateImportRapprochement(rowIndex, op) {
 async function archiverImportRapprochement(rowIndex, datRapprochement) {
   const rows = await readSheet(SHEETS_CONFIG.sheets.import_rap);
   const r = rows[rowIndex + 1];
-  if (!r) {
-    console.error('archiverImportRapprochement: rowIndex=' + rowIndex + ', rows.length=' + rows.length);
-    throw new Error('Ligne ' + (rowIndex + 1) + ' introuvable (total: ' + rows.length + ' lignes)');
-  }
+  if (!r) return;
   const hist = [...r];
   hist[COLS_IMPORT_RAP.statut]             = 'rapprochee';
   hist[COLS_IMPORT_RAP.date_rapprochement] = datRapprochement || todayFR();
@@ -943,6 +940,7 @@ window.Sheets = {
   // Config sheet
   loadConfigFromSheet, saveConfigKey,
   // Lecture
+  readSheet,
   getCaisseOperations, getBanqueOperations, getCaissePhysique,
   getCheques, getRemises, getFactures, getJournal, getFormulairesData,
   getImportRapprochement,
