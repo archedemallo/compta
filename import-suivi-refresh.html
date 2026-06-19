@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rafraîchir Suivi — Arche de Mallo</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  .refresh-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px;}
+  .refresh-title{font-size:13px;font-weight:600;margin-bottom:4px;}
+  .refresh-sub{font-size:11px;color:var(--text-3);margin-bottom:16px;}
+  .onglet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:16px;}
+  .onglet-item{background:var(--surface-2);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;font-size:11px;}
+  .onglet-name{font-weight:500;}
+  .onglet-status{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;}
+  .status-ok{background:var(--green-bg);color:var(--green);}
+  .status-wait{background:var(--amber-bg);color:var(--amber);}
+  .status-err{background:#fdecea;color:#c0392b;}
+  .status-idle{background:var(--surface-3,#f0ece6);color:var(--text-3);}
+  .log-box{background:var(--surface-2);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:10px;font-family:monospace;color:var(--text-2);max-height:220px;overflow-y:auto;line-height:1.7;}
+  .log-line{padding:1px 0;}
+  .log-ok{color:var(--green);}
+  .log-err{color:#c0392b;}
+  .log-info{color:var(--blue);}
+  .log-warn{color:var(--amber);}
+  .last-refresh{font-size:10px;color:var(--text-3);margin-top:6px;}
+  .spinner{display:inline-block;animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .info-box{background:var(--blue-bg);border:0.5px solid rgba(24,95,165,0.15);border-radius:var(--radius-sm);padding:8px 12px;font-size:11px;color:var(--blue);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+  .success-toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:white;padding:10px 18px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;z-index:999;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-md);animation:slideIn 0.25s ease;}
+  @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .kpi-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+  .kpi{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;}
+  .kpi-label{font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
+  .kpi-value{font-size:20px;font-weight:600;}
+</style>
+</head>
+<body>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title"><i class="ti ti-refresh" style="color:var(--orange)"></i> Rafraîchir données Suivi</div>
+    <div class="topbar-right">
+      <a href="import-suivi.html" class="btn btn-secondary btn-sm"><i class="ti ti-download"></i> Import Suivi</a>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <div class="info-box"><i class="ti ti-info-circle"></i>
+      Cette page copie les données du Google Sheet <strong>Suivi</strong> vers les onglets <strong>Suivi_*</strong> du sheet Compta.
+      Les lignes existantes sont mises à jour, les nouvelles ajoutées. Rien n'est supprimé.
+    </div>
+
+    <div class="kpi-bar">
+      <div class="kpi"><div class="kpi-label">Dernier rafraîchissement</div><div class="kpi-value" id="kpi-last" style="font-size:13px;color:var(--text-3);">—</div></div>
+      <div class="kpi"><div class="kpi-label">Lignes copiées</div><div class="kpi-value" id="kpi-count" style="color:var(--orange);">—</div></div>
+      <div class="kpi"><div class="kpi-label">Onglets traités</div><div class="kpi-value" id="kpi-onglets" style="color:var(--blue);">—</div></div>
+    </div>
+
+    <div class="refresh-card">
+      <div class="refresh-title">Onglets à synchroniser</div>
+      <div class="refresh-sub">Chaque onglet du Suivi est copié dans l'onglet correspondant du sheet Compta (Suivi_Adoption, Suivi_Dons, etc.)</div>
+      <div class="onglet-grid" id="onglet-grid">
+        <!-- rempli dynamiquement -->
+      </div>
+      <button class="btn btn-primary" id="btn-refresh" onclick="doRefresh()">
+        <i class="ti ti-refresh"></i> Lancer le rafraîchissement
+      </button>
+      <div class="last-refresh" id="last-refresh-info"></div>
+    </div>
+
+    <div class="refresh-card">
+      <div class="refresh-title">Journal d'exécution</div>
+      <div class="log-box" id="log-box"><span style="color:var(--text-3);">En attente du rafraîchissement…</span></div>
+    </div>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script src="sheets.js"></script>
+<script src="sidebar.js"></script>
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const SUIVI_ID = '1y6yD4AohP7T10GE7mmguIqNWSnwla9t1mewBpCDej_Y';
+
+// Mapping : nom onglet dans Suivi → nom onglet dans Compta
+// COL_ID : index de la colonne utilisée pour construire l'ID unique (0-based)
+// On utilise Date(0) + Heure(1) comme clé composite pour l'unicité
+const ONGLETS_MAP = [
+  { suivi: 'Adoption',                   compta: 'Suivi_Adoption',                  label: 'Adoptions' },
+  { suivi: 'Dons',                        compta: 'Suivi_Dons',                       label: 'Dons' },
+  { suivi: 'Adhesion',                    compta: 'Suivi_Adhesion',                   label: 'Adhésions' },
+  { suivi: 'Reservation_Chat',            compta: 'Suivi_Reservation_Chat',           label: 'Rés. Chat' },
+  { suivi: 'Reservation_Chaton',          compta: 'Suivi_Reservation_Chaton',         label: 'Rés. Chaton' },
+  { suivi: 'Contrat_reservation_chat',    compta: 'Suivi_Contrat_reservation_chat',   label: 'Contrat rés.' },
+  { suivi: 'Depot_Chat',                  compta: 'Suivi_Depot_Chat',                 label: 'Dépôt chat' },
+  { suivi: 'Abandon',                     compta: 'Suivi_Abandon',                    label: 'Abandons' },
+  { suivi: 'Formulaire_depot_chat',       compta: 'Suivi_Formulaire_depot_chat',      label: 'Formulaire dépôt' },
+  { suivi: 'Famille_Accueil_Provisoir',   compta: 'Suivi_Famille_Accueil_Provisoir',  label: 'FA Provisoire' },
+  { suivi: 'Famille_Accueil_Chat_Libr',   compta: 'Suivi_Famille_Accueil_Chat_Libr',  label: 'FA Chat libre' },
+  { suivi: 'Famille_Accueil_Adoption',    compta: 'Suivi_Famille_Accueil_Adoption',   label: 'FA Adoption' },
+  { suivi: 'Certificat_Engagement',       compta: 'Suivi_Certificat_Engagement',      label: 'Cert. engagement' },
+];
+
+// ============================================================
+// ÉTAT
+// ============================================================
+let statuts = {}; // { compta: 'idle'|'running'|'ok'|'error' }
+ONGLETS_MAP.forEach(o => { statuts[o.compta] = 'idle'; });
+
+// ============================================================
+// INIT
+// ============================================================
+Auth.requireAuth(async () => {
+  await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
+  await Sheets.loadConfigFromSheet();
+  Sidebar.build('import-suivi');
+  renderGrid();
+  loadLastRefreshInfo();
+});
+
+// ============================================================
+// RENDU GRILLE
+// ============================================================
+function renderGrid() {
+  const grid = document.getElementById('onglet-grid');
+  grid.innerHTML = ONGLETS_MAP.map(o => {
+    const s = statuts[o.compta] || 'idle';
+    const statusLabel = { idle: 'En attente', running: '…', ok: 'OK', error: 'Erreur' }[s];
+    const statusClass = { idle: 'status-idle', running: 'status-wait', ok: 'status-ok', error: 'status-err' }[s];
+    return `<div class="onglet-item" id="item-${o.compta}">
+      <div>
+        <div class="onglet-name">${o.label}</div>
+        <div style="font-size:9px;color:var(--text-3);margin-top:2px;">${o.suivi} → ${o.compta}</div>
+      </div>
+      <span class="onglet-status ${statusClass}" id="status-${o.compta}">${statusLabel}</span>
+    </div>`;
+  }).join('');
+}
+
+function setStatut(compta, statut, count) {
+  statuts[compta] = statut;
+  const el = document.getElementById('status-' + compta);
+  if (!el) return;
+  const labels = { idle: 'En attente', running: '<i class="ti ti-loader-2 spinner"></i>', ok: count !== undefined ? `✓ ${count} lignes` : '✓ OK', error: '✗ Erreur' };
+  const classes = { idle: 'status-idle', running: 'status-wait', ok: 'status-ok', error: 'status-err' };
+  el.innerHTML = labels[statut];
+  el.className = 'onglet-status ' + classes[statut];
+}
+
+// ============================================================
+// LOG
+// ============================================================
+function log(msg, type = 'info') {
+  const box = document.getElementById('log-box');
+  const time = new Date().toLocaleTimeString('fr-FR');
+  const cls = { info: 'log-info', ok: 'log-ok', err: 'log-err', warn: 'log-warn' }[type] || 'log-info';
+  box.innerHTML += `<div class="log-line ${cls}">[${time}] ${msg}</div>`;
+  box.scrollTop = box.scrollHeight;
+}
+
+function clearLog() {
+  document.getElementById('log-box').innerHTML = '';
+}
+
+// ============================================================
+// LAST REFRESH INFO (localStorage)
+// ============================================================
+function loadLastRefreshInfo() {
+  try {
+    const info = JSON.parse(localStorage.getItem('arche_suivi_last_refresh') || 'null');
+    if (info) {
+      document.getElementById('kpi-last').textContent = info.date || '—';
+      document.getElementById('kpi-count').textContent = info.total || '—';
+      document.getElementById('kpi-onglets').textContent = info.onglets || '—';
+      document.getElementById('last-refresh-info').textContent =
+        `Dernier rafraîchissement : ${info.date} — ${info.total} lignes sur ${info.onglets} onglets`;
+    }
+  } catch(e) {}
+}
+
+function saveLastRefreshInfo(total, onglets) {
+  const date = new Date().toLocaleString('fr-FR');
+  localStorage.setItem('arche_suivi_last_refresh', JSON.stringify({ date, total, onglets }));
+  document.getElementById('kpi-last').textContent = date;
+  document.getElementById('kpi-count').textContent = total;
+  document.getElementById('kpi-onglets').textContent = onglets;
+  document.getElementById('last-refresh-info').textContent =
+    `Dernier rafraîchissement : ${date} — ${total} lignes sur ${onglets} onglets`;
+}
+
+// ============================================================
+// LECTURE SUIVI
+// ============================================================
+async function readSuiviSheet(sheetName) {
+  try {
+    const resp = await gapi.client.sheets.spreadsheets.values.get({
+      spreadsheetId: SUIVI_ID,
+      range: `${sheetName}!A1:AQ`,
+    });
+    return resp.result.values || [];
+  } catch(e) {
+    throw new Error(`Lecture Suivi/${sheetName} impossible : ${e.message || e}`);
+  }
+}
+
+// ============================================================
+// LECTURE COMPTA (onglet Suivi_*)
+// ============================================================
+async function readComptaSheet(sheetName) {
+  try {
+    const rows = await Sheets.readSheet(sheetName);
+    return rows || [];
+  } catch(e) {
+    return [];
+  }
+}
+
+// ============================================================
+// ÉCRITURE COMPTA
+// ============================================================
+async function writeComptaSheet(sheetName, rows) {
+  // rows = tableau de tableaux (avec en-tête en rows[0])
+  const spreadsheetId = Sheets.config.spreadsheetId || Sheets.getSpreadsheetId();
+  const range = `${sheetName}!A1`;
+  await gapi.client.sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range,
+    valueInputOption: 'RAW',
+    resource: { values: rows },
+  });
+}
+
+// ============================================================
+// RAFRAÎCHISSEMENT D'UN ONGLET
+// ============================================================
+async function refreshOnglet(mapping) {
+  const { suivi, compta, label } = mapping;
+  setStatut(compta, 'running');
+  log(`Traitement : ${label} (${suivi} → ${compta})…`);
+
+  try {
+    // 1. Lire les données depuis Suivi
+    const suiviRows = await readSuiviSheet(suivi);
+    if (!suiviRows.length) {
+      log(`  ${label} : onglet vide dans Suivi`, 'warn');
+      setStatut(compta, 'ok', 0);
+      return 0;
+    }
+
+    const header = suiviRows[0]; // ligne d'en-tête du Suivi
+    const dataRows = suiviRows.slice(1).filter(r => r && r.length > 1 && r.some(v => v));
+
+    log(`  ${label} : ${dataRows.length} lignes lues depuis Suivi`);
+
+    // 2. Lire les données existantes dans Compta
+    const comptaRows = await readComptaSheet(compta);
+
+    // 3. Construire un index des lignes existantes par ID (Date+Heure)
+    // La première colonne du Compta est '_id' (ajouté par nous), puis les colonnes Suivi
+    let existingIds = new Set();
+    let comptaHeader = null;
+
+    if (comptaRows.length > 0) {
+      comptaHeader = comptaRows[0];
+      // L'ID est en colonne 0 (_id)
+      for (let i = 1; i < comptaRows.length; i++) {
+        const id = comptaRows[i][0];
+        if (id) existingIds.add(String(id));
+      }
+    }
+
+    // 4. Construire la nouvelle liste complète
+    // En-tête Compta : ['_id', ...colonnes Suivi]
+    const newHeader = ['_id', ...header];
+
+    // Map existant : id → row (pour mise à jour)
+    const existingMap = {};
+    if (comptaRows.length > 1) {
+      for (let i = 1; i < comptaRows.length; i++) {
+        const id = comptaRows[i][0];
+        if (id) existingMap[String(id)] = comptaRows[i];
+      }
+    }
+
+    let added = 0, updated = 0;
+    const newData = [newHeader];
+
+    // Traiter toutes les lignes du Suivi
+    for (let i = 0; i < dataRows.length; i++) {
+      const row = dataRows[i];
+      // ID = Date (col 0) + '|' + Heure (col 1)
+      const date = (row[0] || '').toString().trim();
+      const heure = (row[1] || '').toString().trim();
+      const id = date && heure ? `${date}|${heure}` : `row_${i}`;
+
+      const newRow = [id, ...row];
+
+      if (existingIds.has(id)) {
+        // Mise à jour : garder la ligne existante mais mettre à jour les données Suivi
+        // (on écrase tout sauf l'_id)
+        updated++;
+      } else {
+        added++;
+      }
+      newData.push(newRow);
+      delete existingMap[id]; // retirer du map pour détecter les orphelins
+    }
+
+    // Lignes orphelines (dans Compta mais plus dans Suivi) : on les garde à la fin
+    const orphans = Object.values(existingMap);
+    if (orphans.length > 0) {
+      log(`  ${label} : ${orphans.length} ligne(s) orpheline(s) conservée(s)`, 'warn');
+      newData.push(...orphans);
+    }
+
+    // 5. Écrire dans Compta (remplacement complet de l'onglet)
+    await writeComptaSheet(compta, newData);
+
+    log(`  ${label} : ${added} ajoutées, ${updated} mises à jour ✓`, 'ok');
+    setStatut(compta, 'ok', dataRows.length);
+    return dataRows.length;
+
+  } catch(e) {
+    log(`  ${label} : ERREUR — ${e.message || e}`, 'err');
+    setStatut(compta, 'error');
+    return 0;
+  }
+}
+
+// ============================================================
+// RAFRAÎCHISSEMENT GLOBAL
+// ============================================================
+async function doRefresh() {
+  const btn = document.getElementById('btn-refresh');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader-2 spinner"></i> Rafraîchissement en cours…';
+  clearLog();
+
+  // Reset statuts
+  ONGLETS_MAP.forEach(o => setStatut(o.compta, 'idle'));
+
+  log('Démarrage du rafraîchissement…', 'info');
+
+  let totalLines = 0;
+  let okOnglets = 0;
+
+  // Traitement séquentiel pour éviter les conflits de quota API
+  for (const mapping of ONGLETS_MAP) {
+    const count = await refreshOnglet(mapping);
+    if (statuts[mapping.compta] === 'ok') {
+      totalLines += count;
+      okOnglets++;
+    }
+  }
+
+  log(`Terminé : ${totalLines} lignes copiées sur ${okOnglets}/${ONGLETS_MAP.length} onglets.`, 'ok');
+  saveLastRefreshInfo(totalLines, okOnglets);
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="ti ti-refresh"></i> Lancer le rafraîchissement';
+
+  showToast(`Rafraîchissement terminé — ${totalLines} lignes copiées`);
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'success-toast';
+  t.innerHTML = `<i class="ti ti-check"></i> ${msg}`;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+</script>
+</body>
+</html>
