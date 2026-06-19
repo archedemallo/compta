@@ -99,8 +99,8 @@ const ONGLETS_MAP = [
   { suivi: 'Depot_Chat',                  compta: 'Suivi_Depot_Chat',                 label: 'Dépôt chat' },
   { suivi: 'Abandon',                     compta: 'Suivi_Abandon',                    label: 'Abandons' },
   { suivi: 'Formulaire_depot_chat',       compta: 'Suivi_Formulaire_depot_chat',      label: 'Formulaire dépôt' },
-  { suivi: 'Famille_Accueil_Provisoir',   compta: 'Suivi_Famille_Accueil_Provisoir',  label: 'FA Provisoire' },
-  { suivi: 'Famille_Accueil_Chat_Libr',   compta: 'Suivi_Famille_Accueil_Chat_Libr',  label: 'FA Chat libre' },
+  { suivi: 'Suivi_Famille_Accueil_Provisoire',   compta: 'Suivi_Famille_Accueil_Provisoir',  label: 'FA Provisoire' },
+  { suivi: 'Suivi_Famille_Accueil_Chat_Libre',   compta: 'Suivi_Famille_Accueil_Chat_Libr',  label: 'FA Chat libre' },
   { suivi: 'Famille_Accueil_Adoption',    compta: 'Suivi_Famille_Accueil_Adoption',   label: 'FA Adoption' },
   { suivi: 'Certificat_Engagement',       compta: 'Suivi_Certificat_Engagement',      label: 'Cert. engagement' },
 ];
@@ -117,7 +117,7 @@ ONGLETS_MAP.forEach(o => { statuts[o.compta] = 'idle'; });
 Auth.requireAuth(async () => {
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
   await Sheets.loadConfigFromSheet();
-  Sidebar.build('import-suivi');
+  Sidebar.build('import-suivi-refresh');
   renderGrid();
   loadLastRefreshInfo();
 });
