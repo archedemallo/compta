@@ -619,7 +619,7 @@ function renderTable(){
     const soldeCalc = soldeMap.has(r) ? fmt(soldeMap.get(r)) : '—';
 
     // Extraire les champs directs (plus de JSON)
-    const numFacture    = r[cb.num_facture]    || '';
+    const numFacture    = String(r[cb.num_facture]    || '');
     const nomChat       = r[cb.nom_chat]       || '';
     const numDonFiscal  = r[cb.num_don_fiscal] || '';
     const numBordChq    = r[cb.ref_cheque]     || '';
