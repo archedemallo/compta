@@ -591,6 +591,8 @@ function renderTable(){
   // Récupérer les types pour le select d'édition
   const types = Sheets.getTypesMouvement();
   const typeOpts = types.map(t=>`<option value="${escH(t)}">${t}</option>`).join('');
+  const descs = Sheets.getDescriptions();
+  const descOpts = `<option value=""></option>` + descs.map(d=>`<option value="${escH(d)}">${d}</option>`).join('');
 
   const trs = rows.map(r => {
     const ri      = allRows.indexOf(r);
@@ -617,7 +619,7 @@ function renderTable(){
     const soldeCalc = soldeMap.has(r) ? fmt(soldeMap.get(r)) : '—';
 
     // Extraire les champs directs (plus de JSON)
-    const numFacture    = String(r[cb.num_facture] ?? '');
+    const numFacture    = r[cb.num_facture]    || '';
     const nomChat       = r[cb.nom_chat]       || '';
     const numDonFiscal  = r[cb.num_don_fiscal] || '';
     const numBordChq    = r[cb.ref_cheque]     || '';
@@ -639,7 +641,7 @@ function renderTable(){
           <td class="r"><input type="text" id="ei-credit" value="${r[cb.credit]||''}" style="width:70px;text-align:right;"></td>
           <td class="r" style="color:var(--text-3);font-size:10px;">${soldeCalc}</td>
           <td><select id="ei-type" style="width:110px;">${typeOpts}</select></td>
-          <td><input type="text" id="ei-description" value="${escH(descVal)}" style="width:90px;" placeholder="Description…"></td>
+          <td><select id="ei-description" style="width:110px;">${descOpts}</select></td>
           <td><input type="text" id="ei-type-comp" value="${escH(typeComp)}" style="width:90px;" placeholder="Libellé comp."></td>
           <td><input type="text" id="ei-num-facture" value="${escH(numFacture)}" style="width:80px;" placeholder="N° facture"></td>
           <td><input type="text" id="ei-nom-chat" value="${escH(nomChat)}" style="width:80px;"></td>
@@ -724,6 +726,8 @@ function renderTable(){
     const r = allRows[editingIdx];
     const sel = document.getElementById('ei-type');
     if (sel && r) sel.value = r[Sheets.cols.banque.type_mvt] || '';
+    const selDesc = document.getElementById('ei-description');
+    if (selDesc && r) selDesc.value = r[Sheets.cols.banque.description] || '';
   }
 }
 
