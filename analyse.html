@@ -108,6 +108,9 @@
       <button class="tab-btn" onclick="switchTab('chat')" id="tab-btn-chat">
         <i class="ti ti-paw"></i> Coût par chat
       </button>
+      <button class="tab-btn" onclick="switchTab('fournisseurs')" id="tab-btn-fournisseurs">
+        <i class="ti ti-truck"></i> Fournisseurs
+      </button>
     </div>
 
     <!-- CHARGEMENT -->
@@ -159,6 +162,26 @@
         <div class="card">
           <div class="card-head"><div class="card-title"><i class="ti ti-arrow-up-right"></i> Dépenses — répartition</div></div>
           <div class="card-body" id="ag-bar-depenses"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ONGLET 3 : FOURNISSEURS (en construction)                    -->
+    <!-- ============================================================ -->
+    <div id="tab-fournisseurs" class="tab-pane" style="display:none;">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:64px 32px;text-align:center;gap:16px;">
+        <div style="width:56px;height:56px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;">
+          <i class="ti ti-tools" style="font-size:26px;color:var(--orange);"></i>
+        </div>
+        <div style="font-size:16px;font-weight:600;color:var(--text);">En construction</div>
+        <div style="font-size:12px;color:var(--text-3);max-width:380px;line-height:1.7;">
+          Cet onglet affichera les dépenses regroupées par <strong>fournisseur</strong>.<br>
+          Il sera disponible dès que la colonne <code style="font-size:11px;background:var(--surface-2);padding:2px 6px;border-radius:4px;border:0.5px solid var(--border);">Fournisseur</code> sera ajoutée dans le Google Sheet.
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--text-3);background:var(--surface-2);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 18px;">
+          <i class="ti ti-info-circle" style="font-size:13px;vertical-align:-2px;margin-right:4px;"></i>
+          Prévu : totaux par fournisseur · filtre par période · comparatif années
         </div>
       </div>
     </div>
@@ -303,7 +326,7 @@ function renderAll() {
 // ONGLETS
 // ============================================================
 function switchTab(tab) {
-  ['ag','chat'].forEach(t => {
+  ['ag','chat','fournisseurs'].forEach(t => {
     document.getElementById('tab-btn-' + t).classList.toggle('active', t === tab);
     document.getElementById('tab-' + t).classList.toggle('active', t === tab);
     document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
