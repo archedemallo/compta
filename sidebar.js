@@ -110,6 +110,11 @@ function buildSidebar(activePage) {
 
   const sidebar = document.getElementById('sidebar');
   if (sidebar) sidebar.innerHTML = html;
+
+  // Mettre à jour avatar et nom utilisateur maintenant que la sidebar est dans le DOM
+  if (typeof Auth !== 'undefined' && Auth.updateSidebarUser) {
+    Auth.updateSidebarUser();
+  }
 }
 
 // ---- PÉRIODE ----
