@@ -29,6 +29,9 @@ function buildSidebar(activePage) {
     { id: 'import-suivi',         label: 'Import Suivi - Formulaires',    icon: 'ti-download', href: 'import-suivi.html' },
     { id: 'import-rapprochement', label: 'Import Rapprochement',           icon: 'ti-arrows-transfer-down', href: 'import-rapprochement.html' },
      
+    { section: 'Analyses' },
+    { id: 'analyse',   label: 'Analyse / AG',        icon: 'ti-chart-pie',      href: 'analyse.html' },
+
     { section: 'Partage' },
     { id: 'synthese',  label: 'Vue synthèse',       icon: 'ti-eye',            href: 'synthese.html' },
     { id: 'alertes',   label: 'Journal / Alertes',  icon: 'ti-bell',           href: 'alertes.html', badge: true, adminOnly: true },
