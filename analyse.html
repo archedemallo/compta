@@ -271,10 +271,10 @@ async function loadData() {
   document.getElementById('tab-chat').style.display = 'none';
   try {
     [allCaisse, allBanque, allFactures, allCheques] = await Promise.all([
-      Sheets.getCaisseOperations(),
-      Sheets.getBanqueOperations(),
-      Sheets.getFactures(),
-      Sheets.getCheques(),
+      getCaisseOperations(),
+      getBanqueOperations(),
+      getFactures(),
+      getCheques(),
     ]);
     Sidebar.setLastUpdate();
   } catch(e) { console.error('loadData error', e); }
@@ -347,7 +347,7 @@ async function saveAgConfig() {
   const json = JSON.stringify(agConfig);
   localStorage.setItem('arche_ag_categories', json);
   try {
-    await Sheets.saveConfigKey('ag_categories', agConfig);
+    await saveConfigKey('ag_categories', agConfig);
     showToast('Configuration AG sauvegardée !');
   } catch(e) {
     showToast('Sauvegardé localement (erreur sheet)', true);
@@ -377,9 +377,6 @@ function renderAgConfigTable() {
 // ONGLET AG
 // ============================================================
 function renderAG() {
-  const cc = Sheets.COLS_CAISSE_REF || getCols('caisse');
-  const cb = Sheets.COLS_BANQUE_REF || getCols('banque');
-
   const caisse = allCaisse.slice(1).filter(r => r && r[6] === activePer);
   const banque  = allBanque.slice(1).filter(r => r && r[5] === activePer);
 
@@ -501,26 +498,14 @@ function renderBars(containerId, items, colorClass, total) {
 // ============================================================
 // ONGLET CHAT
 // ============================================================
-function getCaisseCol(k) {
-  const map = {date:1,type_mvt:7,debit:3,credit:4,libelle:2,periode:6,description:9,nom_chat:12};
-  return map[k];
-}
-function getBanqueCol(k) {
-  const map = {date:0,type_mvt:6,debit:2,credit:3,libelle:1,periode:5,description:7,nom_chat:11};
-  return map[k];
-}
-function getFactureCol(k) {
-  const map = {date:3,categorie:5,montant:4,description:6,periode:11};
-  return map[k];
-}
-function getChequeCol(k) {
-  const map = {date:2,type_mvt:5,montant:4,beneficiaire:3,periode:8};
-  return map[k];
-}
+function getCaisseCol(k) { return COLS_CAISSE[k]; }
+function getBanqueCol(k) { return COLS_BANQUE[k]; }
+function getFactureCol(k) { return COLS_FACTURE[k]; }
+function getChequeCol(k)  { return COLS_CHEQUE[k]; }
 
 function renderChatInit() {
   // Périodes disponibles
-  const periodes = Sheets.getPeriodes();
+  const periodes = getPeriodes();
   chatPeriodes = [activePer]; // par défaut la période active cochée
 
   const checksEl = document.getElementById('chat-periode-checks');
