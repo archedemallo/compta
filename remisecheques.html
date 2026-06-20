@@ -80,6 +80,10 @@
   .rap-section{margin-bottom:14px;}
   .rap-section-title{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;display:flex;align-items:center;gap:6px;padding-bottom:4px;border-bottom:0.5px solid var(--border);}
   .rap-section-title i{color:var(--orange);}
+  .main-tabs{display:flex;gap:0;border-bottom:0.5px solid var(--border);margin-bottom:14px;}
+  .main-tab{padding:8px 18px;font-size:12px;font-weight:500;color:var(--text-3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all 0.15s;}
+  .main-tab:hover{color:var(--text-2);}
+  .main-tab.active{color:var(--orange);border-bottom-color:var(--orange);}
   .suivi-tabs{display:flex;gap:0;border-bottom:0.5px solid var(--border);margin-bottom:10px;overflow-x:auto;}
   .suivi-tab{padding:6px 14px;font-size:11px;font-weight:500;color:var(--text-3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all 0.15s;}
   .suivi-tab:hover{color:var(--text-2);}
@@ -114,9 +118,36 @@
 
     <div class="info-box"><i class="ti ti-info-circle"></i> Les remises de chèques n'apparaissent dans la banque qu'au moment où vous les encaissez via une opération bancaire.</div>
 
+    <div class="main-tabs">
+      <button class="main-tab active" id="tab-remises" onclick="switchMainTab('remises')"><i class="ti ti-stack" style="font-size:13px;vertical-align:-2px;margin-right:4px;"></i> Remises</button>
+      <button class="main-tab" id="tab-cheques" onclick="switchMainTab('cheques')"><i class="ti ti-checks" style="font-size:13px;vertical-align:-2px;margin-right:4px;"></i> Détail chèques</button>
+    </div>
+
     <div class="kpi-row" id="kpi-remises"></div>
 
-    <div class="split-layout">
+    <!-- PANNEAU DÉTAIL CHÈQUES -->
+    <div id="panel-cheques" style="display:none;">
+      <div class="list-card">
+        <div class="list-head">
+          <div style="font-size:12px;font-weight:600;white-space:nowrap;">Tous les chèques remis en banque</div>
+          <div style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center;margin-top:6px;">
+            <input class="f-input" type="text" id="dc-search-nom" placeholder="Nom…" oninput="renderDetailCheques()" style="width:130px;">
+            <input class="f-input" type="text" id="dc-search-cheque" placeholder="N° chèque…" oninput="renderDetailCheques()" style="width:110px;">
+            <input class="f-input" type="number" id="dc-filter-min" placeholder="Min €" oninput="renderDetailCheques()" style="width:80px;">
+            <input class="f-input" type="number" id="dc-filter-max" placeholder="Max €" oninput="renderDetailCheques()" style="width:80px;">
+            <input class="f-input" type="date" id="dc-filter-date-from" onchange="renderDetailCheques()" style="width:130px;">
+            <input class="f-input" type="date" id="dc-filter-date-to" onchange="renderDetailCheques()" style="width:130px;">
+            <button class="btn btn-secondary btn-sm" onclick="clearDetailFilters()"><i class="ti ti-x"></i> Effacer</button>
+          </div>
+        </div>
+        <div class="table-scroll-outer">
+          <div class="table-scroll-top"><div class="table-scroll-top-inner"></div></div>
+          <div class="table-scroll-body" id="detail-cheques-wrap" style="max-height:600px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="panel-remises" class="split-layout">
       <!-- LISTE -->
       <div>
         <div class="list-card">
@@ -249,6 +280,120 @@ function showToast(m){ const t=document.createElement('div');t.className='succes
 // ============================================================
 // AUTH + INIT
 // ============================================================
+// ============================================================
+// ONGLETS PRINCIPAUX
+// ============================================================
+let activeMainTab = 'remises';
+
+function switchMainTab(tab) {
+  activeMainTab = tab;
+  document.getElementById('panel-remises').style.display = tab === 'remises' ? '' : 'none';
+  document.getElementById('panel-cheques').style.display = tab === 'cheques' ? '' : 'none';
+  document.getElementById('tab-remises').classList.toggle('active', tab === 'remises');
+  document.getElementById('tab-cheques').classList.toggle('active', tab === 'cheques');
+  if (tab === 'cheques') renderDetailCheques();
+}
+
+// ============================================================
+// DÉTAIL CHÈQUES
+// ============================================================
+function renderDetailCheques() {
+  const cr = Sheets.cols.remise;
+  const nomF    = (document.getElementById('dc-search-nom')?.value || '').toLowerCase();
+  const chqF    = (document.getElementById('dc-search-cheque')?.value || '').toLowerCase();
+  const minF    = parseFloat(document.getElementById('dc-filter-min')?.value) || 0;
+  const maxF    = parseFloat(document.getElementById('dc-filter-max')?.value) || Infinity;
+  const dateFrom = document.getElementById('dc-filter-date-from')?.value || '';
+  const dateTo   = document.getElementById('dc-filter-date-to')?.value || '';
+
+  // Extraire tous les chèques individuels de toutes les remises
+  const allCheques = [];
+  allRemises.forEach(r => {
+    const nb = parseInt(r[cr.nb_cheques]) || 0;
+    const dateRemise = r[cr.date_remise] || '';
+    const numBord = r[cr.num_bordereau] || '';
+    const statut = r[cr.statut] || '';
+    for (let i = 0; i < nb; i++) {
+      const base = cr.detail_start + i * 8;
+      allCheques.push({
+        date:       dateRemise,
+        bordereau:  numBord,
+        statut,
+        donateur:   r[base]   || '',
+        montant:    parseFloat(r[base+1]) || 0,
+        num_cheque: r[base+2] || '',
+        type_mvt:   r[base+3] || '',
+        description:r[base+4] || '',
+        nom_chat:   r[base+6] || '',
+      });
+    }
+  });
+
+  // Appliquer les filtres
+  let filtered = allCheques.filter(c => {
+    if (nomF && !c.donateur.toLowerCase().includes(nomF)) return false;
+    if (chqF && !c.num_cheque.toLowerCase().includes(chqF)) return false;
+    if (c.montant < minF || c.montant > maxF) return false;
+    if (dateFrom || dateTo) {
+      // Convertir date DD/MM/YYYY en YYYY-MM-DD pour comparaison
+      const dParts = c.date.split('/');
+      const dISO = dParts.length === 3 ? `${dParts[2]}-${dParts[1]}-${dParts[0]}` : c.date;
+      if (dateFrom && dISO < dateFrom) return false;
+      if (dateTo   && dISO > dateTo)   return false;
+    }
+    return true;
+  });
+
+  const totalMontant = filtered.reduce((s, c) => s + c.montant, 0);
+
+  if (!filtered.length) {
+    document.getElementById('detail-cheques-wrap').innerHTML =
+      '<div style="padding:24px;text-align:center;color:var(--text-3);font-size:12px;">Aucun chèque pour ces filtres</div>';
+    return;
+  }
+
+  const trs = filtered.map(c => `<tr>
+    <td style="color:var(--text-3);white-space:nowrap;">${formatDate(c.date)}</td>
+    <td style="font-weight:500;">${escH(c.donateur)}</td>
+    <td style="color:var(--text-3);">${escH(c.num_cheque)}</td>
+    <td class="r" style="font-weight:500;">${fmt(c.montant)}</td>
+    <td><span class="chip chip-${chipType(c.type_mvt)}">${escH(c.type_mvt)||'—'}</span></td>
+    <td style="color:var(--text-3);">${escH(c.description)||'—'}</td>
+    <td style="color:var(--text-3);">${escH(c.nom_chat)||'—'}</td>
+    <td style="color:var(--text-3);">${escH(c.bordereau)}</td>
+    <td>${c.statut === 'encaissee'
+      ? '<span class="chip" style="background:var(--green-bg);color:var(--green);">Encaissé</span>'
+      : '<span class="chip" style="background:var(--amber-bg);color:var(--amber);">En attente</span>'}</td>
+  </tr>`).join('');
+
+  document.getElementById('detail-cheques-wrap').innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Date remise</th>
+        <th>Nom</th>
+        <th>N° chèque</th>
+        <th class="r">Montant</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Nom chat</th>
+        <th>N° bordereau</th>
+        <th>Statut</th>
+      </tr></thead>
+      <tbody>${trs}</tbody>
+      <tfoot><tr>
+        <td colspan="3" style="font-size:10px;color:var(--text-3);padding:6px 8px;">${filtered.length} chèque(s)</td>
+        <td class="r" style="font-weight:600;padding:6px 8px;">${fmt(totalMontant)}</td>
+        <td colspan="5"></td>
+      </tr></tfoot>
+    </table>`;
+}
+
+function clearDetailFilters() {
+  ['dc-search-nom','dc-search-cheque','dc-filter-min','dc-filter-max','dc-filter-date-from','dc-filter-date-to']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  renderDetailCheques();
+}
+
 Auth.requireAuth(async()=>{
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
     await Sheets.loadConfigFromSheet();
@@ -322,7 +467,7 @@ function renderTable(){
     const id=r[cr.id]||String(ri);
     const s=r[cr.statut]||'';
     const isOpen=openRows.has(id);
-    const isVerified=String(r[cr.verified]).toUpperCase()==='TRUE';
+    const isVerified=r[cr.verified]==='TRUE';
     const badge=s==='en_attente'
       ?'<span class="chip" style="background:var(--amber-bg);color:var(--amber);">En attente</span>'
       :'<span class="chip" style="background:var(--green-bg);color:var(--green);">Encaissée</span>';
