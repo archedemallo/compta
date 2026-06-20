@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notes — Arche de Mallo</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  .notes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+    align-items: start;
+  }
+
+  .note-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.15s;
+  }
+  .note-card:focus-within {
+    border-color: var(--orange);
+    box-shadow: 0 0 0 3px rgba(230,100,50,0.1);
+  }
+
+  .note-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px 8px;
+    border-bottom: 0.5px solid var(--border);
+  }
+
+  .note-title-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    min-width: 0;
+  }
+  .note-title-input::placeholder { color: var(--text-3); font-weight: 400; }
+
+  .note-actions {
+    display: flex;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .note-card:hover .note-actions,
+  .note-card:focus-within .note-actions { opacity: 1; }
+
+  .note-action-btn {
+    width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    border: none; background: transparent; cursor: pointer;
+    border-radius: 5px;
+    color: var(--text-3);
+    font-size: 14px;
+    transition: background 0.1s, color 0.1s;
+  }
+  .note-action-btn:hover { background: var(--surface-2); color: var(--text); }
+  .note-action-btn.delete:hover { background: var(--red-bg); color: var(--red); }
+
+  .note-body {
+    flex: 1;
+  }
+  .note-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: none;
+    background: transparent;
+    resize: none;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    padding: 10px 12px 12px;
+    outline: none;
+    min-height: 110px;
+  }
+  .note-textarea::placeholder { color: var(--text-3); }
+
+  .note-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px 8px;
+    border-top: 0.5px solid var(--border);
+  }
+  .note-meta {
+    font-size: 9px;
+    color: var(--text-3);
+  }
+  .note-save-indicator {
+    font-size: 9px;
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .note-save-indicator.visible { opacity: 1; }
+
+  /* Carte "Nouvelle note" */
+  .note-add-card {
+    background: transparent;
+    border: 0.5px dashed var(--border-mid);
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 32px 16px;
+    cursor: pointer;
+    color: var(--text-3);
+    font-size: 12px;
+    transition: all 0.15s;
+    min-height: 160px;
+  }
+  .note-add-card:hover {
+    border-color: var(--orange);
+    color: var(--orange);
+    background: var(--warm);
+  }
+  .note-add-card i { font-size: 24px; }
+
+  /* Toolbar */
+  .notes-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .notes-count {
+    font-size: 11px;
+    color: var(--text-3);
+  }
+  .btn-save-all {
+    font-size: 11px;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    border: 0.5px solid var(--border-mid);
+    background: var(--surface);
+    color: var(--text-2);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+  }
+  .btn-save-all:hover { background: var(--orange); color: white; border-color: var(--orange); }
+
+  /* Confirm suppression */
+  .delete-confirm {
+    position: absolute;
+    background: var(--surface);
+    border: 0.5px solid var(--border-mid);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    padding: 12px 14px;
+    font-size: 11px;
+    color: var(--text);
+    z-index: 100;
+    min-width: 200px;
+    right: 0;
+    top: 32px;
+  }
+  .delete-confirm-btns { display: flex; gap: 6px; margin-top: 10px; justify-content: flex-end; }
+  .btn-cancel-del { font-size: 11px; padding: 4px 10px; border-radius: 5px; border: 0.5px solid var(--border); background: transparent; cursor: pointer; font-family: 'DM Sans', sans-serif; color: var(--text-2); }
+  .btn-confirm-del { font-size: 11px; padding: 4px 10px; border-radius: 5px; border: none; background: var(--red); color: white; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+
+  /* Loading */
+  .loading-wrap { padding: 64px; text-align: center; color: var(--text-3); }
+  .spinner { display: inline-block; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 20px; right: 20px;
+    background: var(--green); color: white;
+    padding: 9px 16px; border-radius: var(--radius-sm);
+    font-size: 11px; font-weight: 500;
+    display: flex; align-items: center; gap: 7px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    z-index: 999; animation: slideup 0.2s ease;
+  }
+  .toast.error { background: var(--red); }
+  @keyframes slideup { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+</style>
+</head>
+<body>
+<aside class="sidebar" id="sidebar"></aside>
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">
+      <i class="ti ti-notes" style="color:var(--orange);margin-right:8px;"></i>Notes
+    </div>
+    <div class="topbar-right" style="font-size:11px;color:var(--text-3);" id="topbar-info"></div>
+  </div>
+
+  <div class="page-content">
+    <div id="loading-wrap" class="loading-wrap">
+      <i class="ti ti-loader-2 spinner" style="font-size:28px;"></i><br><br>Chargement des notes…
+    </div>
+
+    <div id="notes-main" style="display:none;">
+      <div class="notes-toolbar">
+        <span class="notes-count" id="notes-count"></span>
+        <button class="btn-save-all" onclick="saveAllNotes()">
+          <i class="ti ti-device-floppy"></i> Tout sauvegarder
+        </button>
+      </div>
+      <div class="notes-grid" id="notes-grid"></div>
+    </div>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script src="sheets.js"></script>
+<script src="sidebar.js"></script>
+<script>
+const CONFIG_KEY = 'notes_partages';
+let notes = [];   // [{ id, titre, texte, auteur, dateModif }]
+let saveTimers = {};
+
+// ============================================================
+// INIT
+// ============================================================
+Auth.requireAuth(async (user) => {
+  await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
+  Sidebar.build('notes');
+  await loadNotes();
+});
+
+async function loadNotes() {
+  document.getElementById('loading-wrap').style.display = 'block';
+  document.getElementById('notes-main').style.display = 'none';
+  try {
+    const rows = await readSheet(SHEETS_CONFIG.sheets.config);
+    const row = rows.find(r => String(r[0]).trim() === CONFIG_KEY);
+    if (row && row[1]) {
+      notes = JSON.parse(String(row[1]));
+    } else {
+      notes = [];
+    }
+  } catch(e) {
+    console.warn('Erreur chargement notes:', e);
+    notes = [];
+  }
+  document.getElementById('loading-wrap').style.display = 'none';
+  document.getElementById('notes-main').style.display = 'block';
+  renderGrid();
+}
+
+// ============================================================
+// RENDU
+// ============================================================
+function renderGrid() {
+  const grid = document.getElementById('notes-grid');
+  const count = notes.length;
+  document.getElementById('notes-count').textContent =
+    count === 0 ? 'Aucune note' : count === 1 ? '1 note' : count + ' notes';
+
+  grid.innerHTML = notes.map((note, idx) => `
+    <div class="note-card" id="card-${note.id}">
+      <div class="note-header">
+        <input
+          class="note-title-input"
+          placeholder="Titre de la note…"
+          value="${escHtml(note.titre)}"
+          oninput="onTitleChange('${note.id}', this.value)"
+        >
+        <div class="note-actions">
+          <button class="note-action-btn" title="Copier le texte" onclick="copyNote('${note.id}')">
+            <i class="ti ti-copy"></i>
+          </button>
+          <div style="position:relative;">
+            <button class="note-action-btn delete" title="Supprimer" onclick="confirmDelete('${note.id}', this)">
+              <i class="ti ti-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="note-body">
+        <textarea
+          class="note-textarea"
+          placeholder="Écris ici… tu peux coller du texte, des listes, des liens…"
+          oninput="onTextChange('${note.id}', this)"
+        >${escHtml(note.texte)}</textarea>
+      </div>
+      <div class="note-footer">
+        <span class="note-meta" id="meta-${note.id}">${formatMeta(note)}</span>
+        <span class="note-save-indicator" id="saved-${note.id}">
+          <i class="ti ti-check"></i> Sauvegardé
+        </span>
+      </div>
+    </div>
+  `).join('') + `
+    <div class="note-add-card" onclick="addNote()">
+      <i class="ti ti-plus"></i>
+      Nouvelle note
+    </div>
+  `;
+
+  // Ajuster hauteur des textareas
+  grid.querySelectorAll('.note-textarea').forEach(ta => autoResize(ta));
+}
+
+// ============================================================
+// MODIFICATIONS
+// ============================================================
+function onTitleChange(id, value) {
+  const note = notes.find(n => n.id === id);
+  if (!note) return;
+  note.titre = value;
+  scheduleSave(id);
+}
+
+function onTextChange(id, el) {
+  autoResize(el);
+  const note = notes.find(n => n.id === id);
+  if (!note) return;
+  note.texte = el.value;
+  scheduleSave(id);
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.max(110, el.scrollHeight) + 'px';
+}
+
+// Sauvegarde automatique avec délai (1.5s après la dernière frappe)
+function scheduleSave(id) {
+  clearTimeout(saveTimers[id]);
+  saveTimers[id] = setTimeout(() => saveNote(id), 1500);
+}
+
+// ============================================================
+// AJOUTER / SUPPRIMER
+// ============================================================
+function addNote() {
+  const user = Auth.getUser();
+  const note = {
+    id: 'note_' + Date.now(),
+    titre: '',
+    texte: '',
+    auteur: user ? user.name || user.email : '?',
+    dateModif: new Date().toISOString(),
+  };
+  notes.unshift(note);
+  renderGrid();
+  // Focus sur le titre de la nouvelle carte
+  const input = document.querySelector(`#card-${note.id} .note-title-input`);
+  if (input) input.focus();
+}
+
+function confirmDelete(id, btn) {
+  // Fermer tout popup ouvert
+  document.querySelectorAll('.delete-confirm').forEach(el => el.remove());
+
+  const popup = document.createElement('div');
+  popup.className = 'delete-confirm';
+  popup.innerHTML = `
+    <div style="font-weight:600;margin-bottom:4px;">Supprimer cette note ?</div>
+    <div style="color:var(--text-3);">Cette action est irréversible.</div>
+    <div class="delete-confirm-btns">
+      <button class="btn-cancel-del" onclick="this.closest('.delete-confirm').remove()">Annuler</button>
+      <button class="btn-confirm-del" onclick="deleteNote('${id}')">Supprimer</button>
+    </div>
+  `;
+  btn.closest('div[style*="position"]').appendChild(popup);
+
+  // Fermer si clic ailleurs
+  setTimeout(() => {
+    document.addEventListener('click', function handler(e) {
+      if (!popup.contains(e.target)) {
+        popup.remove();
+        document.removeEventListener('click', handler);
+      }
+    });
+  }, 50);
+}
+
+async function deleteNote(id) {
+  document.querySelectorAll('.delete-confirm').forEach(el => el.remove());
+  const card = document.getElementById('card-' + id);
+  if (card) {
+    card.style.opacity = '0.4';
+    card.style.transform = 'scale(0.97)';
+    card.style.transition = 'all 0.2s';
+  }
+  notes = notes.filter(n => n.id !== id);
+  await persistNotes();
+  renderGrid();
+  showToast('Note supprimée');
+}
+
+// ============================================================
+// COPIER
+// ============================================================
+function copyNote(id) {
+  const note = notes.find(n => n.id === id);
+  if (!note) return;
+  const text = (note.titre ? note.titre + '\n\n' : '') + note.texte;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Note copiée dans le presse-papier');
+  }).catch(() => {
+    showToast('Impossible de copier (droits navigateur)', true);
+  });
+}
+
+// ============================================================
+// SAUVEGARDE
+// ============================================================
+async function saveNote(id) {
+  const note = notes.find(n => n.id === id);
+  if (!note) return;
+  const user = Auth.getUser();
+  note.auteur = user ? user.name || user.email : '?';
+  note.dateModif = new Date().toISOString();
+  // Mettre à jour le meta affiché
+  const metaEl = document.getElementById('meta-' + id);
+  if (metaEl) metaEl.textContent = formatMeta(note);
+  await persistNotes();
+  // Indicateur vert
+  const savedEl = document.getElementById('saved-' + id);
+  if (savedEl) {
+    savedEl.classList.add('visible');
+    setTimeout(() => savedEl.classList.remove('visible'), 2000);
+  }
+}
+
+async function saveAllNotes() {
+  // Vider tous les timers en attente
+  Object.keys(saveTimers).forEach(id => clearTimeout(saveTimers[id]));
+  saveTimers = {};
+  const user = Auth.getUser();
+  const now = new Date().toISOString();
+  notes.forEach(n => {
+    n.auteur = user ? user.name || user.email : '?';
+    n.dateModif = now;
+  });
+  await persistNotes();
+  showToast('Toutes les notes sauvegardées');
+  renderGrid();
+}
+
+async function persistNotes() {
+  try {
+    await saveConfigKey(CONFIG_KEY, notes);
+  } catch(e) {
+    console.error('Erreur sauvegarde notes:', e);
+    showToast('Erreur de sauvegarde', true);
+  }
+}
+
+// ============================================================
+// UTILITAIRES
+// ============================================================
+function formatMeta(note) {
+  if (!note.dateModif) return '';
+  const d = new Date(note.dateModif);
+  const dateStr = d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'2-digit' });
+  const timeStr = d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+  return (note.auteur ? note.auteur + ' · ' : '') + dateStr + ' ' + timeStr;
+}
+
+function escHtml(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, isError = false) {
+  const t = document.createElement('div');
+  t.className = 'toast' + (isError ? ' error' : '');
+  t.innerHTML = `<i class="ti ti-${isError ? 'alert-circle' : 'check'}"></i>${msg}`;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+</script>
+</body>
+</html>
