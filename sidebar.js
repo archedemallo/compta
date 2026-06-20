@@ -32,6 +32,9 @@ function buildSidebar(activePage) {
     { section: 'Analyses' },
     { id: 'analyse',   label: 'Analyse / AG',        icon: 'ti-chart-pie',      href: 'analyse.html' },
 
+    { section: 'Outils' },
+    { id: 'notes',     label: 'Notes',               icon: 'ti-notes',          href: 'notes.html' },
+
     { section: 'Partage' },
     { id: 'synthese',  label: 'Vue synthèse',       icon: 'ti-eye',            href: 'synthese.html' },
     { id: 'alertes',   label: 'Journal / Alertes',  icon: 'ti-bell',           href: 'alertes.html', badge: true, adminOnly: true },
