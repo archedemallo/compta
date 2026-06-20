@@ -28,7 +28,6 @@ function buildSidebar(activePage) {
     { id: 'import-suivi-refresh',  label: 'Rafraîchir Suivi',              icon: 'ti-database-import', href: 'import-suivi-refresh.html' },
     { id: 'import-suivi',         label: 'Import Suivi - Formulaires',    icon: 'ti-download', href: 'import-suivi.html' },
     { id: 'import-rapprochement', label: 'Import Rapprochement',           icon: 'ti-arrows-transfer-down', href: 'import-rapprochement.html' },
-    { id: 'import-suivi-archive', label: 'Déjà importés',   icon: 'ti-history',  href: 'import-suivi-archive.html' },
      
     { section: 'Partage' },
     { id: 'synthese',  label: 'Vue synthèse',       icon: 'ti-eye',            href: 'synthese.html' },
