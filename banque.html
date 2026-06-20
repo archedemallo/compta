@@ -556,7 +556,7 @@ function getFilteredRows(){
   if (flagF==='rapproche') rows = rows.filter(r => r[cb.ref_cheque]||r[cb.ref_remise]);
   if (flagF==='verifie')   rows = rows.filter(r => r[cb.statut] === 'verifie');
   if (flagF==='non-verifie') rows = rows.filter(r => r[cb.statut] !== 'verifie');
-  if (search)             rows = rows.filter(r => [r[cb.libelle],r[cb.type_mvt],r[cb.description],r[cb.nom]].join(' ').toLowerCase().includes(search));
+  if (search)             rows = rows.filter(r => [r[cb.libelle],r[cb.type_mvt],r[cb.description],r[cb.nom],r[cb.num_facture],r[cb.ref_cheque],r[cb.ref_remise],r[cb.num_don_fiscal],r[cb.num_rem_espece],r[cb.libelle_comp]].join(' ').toLowerCase().includes(search));
   return rows;
 }
 
