@@ -215,23 +215,40 @@ function onPeriodeChange(p) {
 }
 
 async function loadData() {
-  // Charger caisse + banque, filtrer sur suivi_ref présent
-  const [caisse, banque] = await Promise.all([
+  // Source 1 : Caisse avec suivi_ref (imports espèces)
+  // Source 2 : Import_historique (imports banque rapprochés)
+  const [caisse, importHist] = await Promise.all([
     Sheets.getCaisseOperations(),
-    Sheets.getBanqueOperations(),
+    Sheets.getImportRapprochement('rapprochee').catch(() => []),
   ]);
   const cc = Sheets.cols.caisse;
-  const cb = Sheets.cols.banque;
+  const ci = Sheets.cols.importRap;
 
-  // On garde uniquement les lignes avec un suivi_ref
+  // Lignes Caisse avec suivi_ref (ex: "Adoption:12:0")
   const caisseImp = caisse
     .map((r, i) => ({ row: r, idx: i, source: 'caisse', cols: cc }))
-    .filter(({ row }) => row[cc.suivi_ref]);
-  const banqueImp = banque
-    .map((r, i) => ({ row: r, idx: i, source: 'banque', cols: cb }))
-    .filter(({ row }) => row[cb.suivi_ref]);
+    .filter(({ row }) => row[cc.suivi_ref] && !row[cc.suivi_ref].startsWith('true') && row[cc.suivi_ref].includes(':'));
 
-  allRows = [...caisseImp, ...banqueImp];
+  // Lignes Import_historique (rapprochements banque + transferts caisse)
+  const histImp = importHist
+    .map((r, i) => ({
+      row: {
+        // On adapte les colonnes pour l'affichage uniforme
+        [cc.date]:       r[ci.date]           || '',
+        [cc.libelle]:    r[ci.libelle]        || '',
+        [cc.credit]:     r[ci.montant]        || '',
+        [cc.type_mvt]:   r[ci.type_mvt]       || '',
+        [cc.periode]:    r[ci.periode]        || '',
+        [cc.nom_chat]:   r[ci.nom_chat]       || '',
+        [cc.suivi_ref]:  r[ci.id]             || '',
+        _dest:           r[ci.destination]    || '',
+        _mode:           r[ci.mode_reglement] || '',
+        _date_rap:       r[ci.date_rapprochement] || '',
+      },
+      idx: i, source: r[ci.destination] === 'caisse' ? 'caisse' : 'banque', cols: cc,
+    }));
+
+  allRows = [...caisseImp, ...histImp];
   Sidebar.setLastUpdate();
   updateDynamicFilters();
   renderKPIs(); renderTable();
