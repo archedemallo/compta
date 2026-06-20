@@ -219,4 +219,5 @@ window.Auth = {
   canWrite,
   getUser:     () => currentUser,
   adminEmail:  AUTH_CONFIG.adminEmail,
+  updateSidebarUser,
 };
