@@ -80,10 +80,12 @@
   .rap-section{margin-bottom:14px;}
   .rap-section-title{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;display:flex;align-items:center;gap:6px;padding-bottom:4px;border-bottom:0.5px solid var(--border);}
   .rap-section-title i{color:var(--orange);}
-  .main-tabs{display:flex;gap:0;border-bottom:0.5px solid var(--border);margin-bottom:14px;}
-  .main-tab{padding:8px 18px;font-size:12px;font-weight:500;color:var(--text-3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all 0.15s;}
-  .main-tab:hover{color:var(--text-2);}
-  .main-tab.active{color:var(--orange);border-bottom-color:var(--orange);}
+  .main-tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:14px;}
+  .main-tab{display:flex;align-items:center;gap:7px;padding:10px 20px;font-size:12px;font-weight:500;color:var(--text-3);background:transparent;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all 0.15s;border-radius:8px 8px 0 0;}
+  .main-tab:hover{color:var(--text-2);background:var(--surface-2);}
+  .main-tab.active{color:var(--orange);border-bottom-color:var(--orange);background:rgba(194,90,26,0.07);}
+  .main-tab .tab-badge{font-size:10px;padding:2px 7px;border-radius:10px;background:var(--surface-3,#ece8e3);color:var(--text-3);font-weight:600;}
+  .main-tab.active .tab-badge{background:var(--orange);color:white;}
   .suivi-tabs{display:flex;gap:0;border-bottom:0.5px solid var(--border);margin-bottom:10px;overflow-x:auto;}
   .suivi-tab{padding:6px 14px;font-size:11px;font-weight:500;color:var(--text-3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all 0.15s;}
   .suivi-tab:hover{color:var(--text-2);}
@@ -119,8 +121,16 @@
     <div class="info-box"><i class="ti ti-info-circle"></i> Les remises de chèques n'apparaissent dans la banque qu'au moment où vous les encaissez via une opération bancaire.</div>
 
     <div class="main-tabs">
-      <button class="main-tab active" id="tab-remises" onclick="switchMainTab('remises')"><i class="ti ti-stack" style="font-size:13px;vertical-align:-2px;margin-right:4px;"></i> Remises</button>
-      <button class="main-tab" id="tab-cheques" onclick="switchMainTab('cheques')"><i class="ti ti-checks" style="font-size:13px;vertical-align:-2px;margin-right:4px;"></i> Détail chèques</button>
+      <button class="main-tab active" id="tab-remises" onclick="switchMainTab('remises')">
+        <i class="ti ti-stack" style="font-size:15px;" aria-hidden="true"></i>
+        Remises
+        <span class="tab-badge" id="badge-tab-remises">…</span>
+      </button>
+      <button class="main-tab" id="tab-cheques" onclick="switchMainTab('cheques')">
+        <i class="ti ti-checks" style="font-size:15px;" aria-hidden="true"></i>
+        Détail chèques
+        <span class="tab-badge" id="badge-tab-cheques">…</span>
+      </button>
     </div>
 
     <div class="kpi-row" id="kpi-remises"></div>
@@ -433,7 +443,19 @@ function onPeriodeChange(p){
 // ============================================================
 // KPIs
 // ============================================================
+function updateTabBadges(){
+  const cr = Sheets.cols.remise;
+  const per = document.getElementById('fl-per')?.value || '';
+  const rows = allRemises.filter(r => !per || r[cr.periode] === per);
+  const totalCheques = rows.reduce((s,r) => s + (parseInt(r[cr.nb_cheques])||0), 0);
+  const b1 = document.getElementById('badge-tab-remises');
+  const b2 = document.getElementById('badge-tab-cheques');
+  if (b1) b1.textContent = rows.length;
+  if (b2) b2.textContent = totalCheques;
+}
+
 function renderKPIs(){
+  updateTabBadges();
   const cr=Sheets.cols.remise;
   const per=document.getElementById('fl-per')?.value||'';
   const filtered=per?allRemises.filter(r=>r[cr.periode]===per):allRemises;
