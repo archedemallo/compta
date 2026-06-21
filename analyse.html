@@ -134,7 +134,7 @@
         <button class="btn-ag-save" onclick="saveAgConfig()"><i class="ti ti-device-floppy"></i> Sauvegarder</button>
       </div>
       <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center;">
-        <button class="btn btn-secondary btn-sm" onclick="toggleAgConfig()"><i class="ti ti-settings"></i> Config catégories</button>
+        <button class="btn btn-secondary btn-sm" class="edit-action" onclick="toggleAgConfig()"><i class="ti ti-settings"></i> Config catégories</button>
         <span id="ag-periode-label" style="font-size:11px;color:var(--text-3);"></span>
       </div>
 
@@ -284,6 +284,7 @@ const CB = window.COLS_BANQUE || null;
 Auth.requireAuth(async (user) => {
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
   Sidebar.build('analyse');
+  await Auth.applyUserRights('analyse');
   activePer = Sidebar.getActivePeriode();
   await loadData();
 });
