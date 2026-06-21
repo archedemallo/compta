@@ -585,7 +585,7 @@ function openEdit(ri) {
   const cc = Sheets.cols.caisse, r = allRows[ri];
   if (r[cc.flag_check] === 'VERIFIE') { showToast('⚠️ Ligne vérifiée — décochez pour modifier'); return; }
   editIdx = ri;
-  document.getElementById('f-date').value      = r[cc.date]        || '';
+  document.getElementById('f-date').value      = dateToISO(r[cc.date] || '');
   document.getElementById('f-montant').value   = r[cc.credit] || r[cc.debit] || '';
   document.getElementById('f-libelle').value   = r[cc.libelle]     || '';
   document.getElementById('f-type').value      = r[cc.type_mvt]    || '';
