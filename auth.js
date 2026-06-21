@@ -220,4 +220,55 @@ window.Auth = {
   getUser:     () => currentUser,
   adminEmail:  AUTH_CONFIG.adminEmail,
   updateSidebarUser: updateUserUI,
+  getUserRights,
+  applyUserRights,
+  loadUserRights,
 };
+
+// ---- DROITS UTILISATEUR ----
+// Droits en cache pour la session (chargés depuis le Config sheet)
+let _userRights = null;
+
+async function loadUserRights() {
+  if (isAdmin()) return; // l'admin a tous les droits, pas besoin de charger
+  try {
+    const rows = await readSheet(SHEETS_CONFIG.sheets.config);
+    const row  = rows.find(r => String(r[0]).trim() === 'users_rights');
+    if (row && row[1]) {
+      const allRights = JSON.parse(String(row[1]));
+      const email     = currentUser ? currentUser.email : '';
+      _userRights     = allRights[email] || {};
+    }
+  } catch(e) {
+    console.warn('Impossible de charger les droits utilisateur:', e);
+    _userRights = {};
+  }
+}
+
+function getUserRights() {
+  return _userRights;
+}
+
+// Appelé dans chaque page après Sidebar.build()
+// pageId = identifiant de la page (ex: 'caisse', 'banque', 'caisse1physique'…)
+async function applyUserRights(pageId) {
+  if (isAdmin()) return; // admin : accès complet, rien à faire
+
+  if (!_userRights) await loadUserRights();
+
+  const right = _userRights ? (_userRights[pageId] || 'aucun') : 'aucun';
+
+  if (right === 'aucun') {
+    // Rediriger vers l'accueil avec un message
+    sessionStorage.setItem('arche_access_denied', pageId);
+    window.location.href = 'index.html';
+    return;
+  }
+
+  if (right === 'lecture') {
+    // Masquer tous les boutons d'action via CSS
+    document.body.classList.add('readonly-mode');
+  }
+
+  // 'saisie' ou 'acces' : rien à faire, accès complet
+}
