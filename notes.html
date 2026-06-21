@@ -217,7 +217,7 @@
     <div id="notes-main" style="display:none;">
       <div class="notes-toolbar">
         <span class="notes-count" id="notes-count"></span>
-        <button class="btn-save-all" onclick="saveAllNotes()">
+        <button class="btn-save-all edit-action" onclick="saveAllNotes()">
           <i class="ti ti-device-floppy"></i> Tout sauvegarder
         </button>
       </div>
@@ -240,6 +240,7 @@ let saveTimers = {};
 Auth.requireAuth(async (user) => {
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
   Sidebar.build('notes');
+  await Auth.applyUserRights('notes');
   await loadNotes();
 });
 
@@ -282,11 +283,11 @@ function renderGrid() {
           oninput="onTitleChange('${note.id}', this.value)"
         >
         <div class="note-actions">
-          <button class="note-action-btn" title="Copier le texte" onclick="copyNote('${note.id}')">
+          <button class="note-action-btn edit-action" title="Copier le texte" onclick="copyNote('${note.id}')">
             <i class="ti ti-copy"></i>
           </button>
           <div style="position:relative;">
-            <button class="note-action-btn delete" title="Supprimer" onclick="confirmDelete('${note.id}', this)">
+            <button class="note-action-btn delete edit-action" title="Supprimer" onclick="confirmDelete('${note.id}', this)">
               <i class="ti ti-trash"></i>
             </button>
           </div>
@@ -307,7 +308,7 @@ function renderGrid() {
       </div>
     </div>
   `).join('') + `
-    <div class="note-add-card" onclick="addNote()">
+    <div class="note-add-card edit-action" onclick="addNote()">
       <i class="ti ti-plus"></i>
       Nouvelle note
     </div>
