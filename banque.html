@@ -604,6 +604,8 @@ function renderTable(){
   const typeOpts = types.map(t=>`<option value="${escH(t)}">${t}</option>`).join('');
   const descs = Sheets.getDescriptions();
   const descOpts = `<option value=""></option>` + descs.map(d=>`<option value="${escH(d)}">${d}</option>`).join('');
+  const fourns = Sheets.getFournisseurs();
+  const fournOpts = `<option value=""></option>` + fourns.map(f=>`<option value="${escH(f)}">${f}</option>`).join('');
 
   const trs = rows.map(r => {
     const ri      = allRows.indexOf(r);
@@ -651,6 +653,7 @@ function renderTable(){
           <td class="r"><input type="text" id="ei-debit" value="${r[cb.debit]||''}" style="width:70px;text-align:right;" placeholder="Débit"></td>
           <td class="r"><input type="text" id="ei-credit" value="${r[cb.credit]||''}" style="width:70px;text-align:right;" placeholder="Crédit"></td>
           <td class="r" style="color:var(--text-3);font-size:10px;">${soldeCalc}</td>
+          <td><select id="ei-fourn" style="width:110px;">${fournOpts}</select></td>
           <td><select id="ei-type" style="width:110px;">${typeOpts}</select></td>
           <td><select id="ei-description" style="width:110px;">${descOpts}</select></td>
           <td><input type="text" id="ei-type-comp" value="${escH(typeComp)}" style="width:90px;" placeholder="Libellé comp."></td>
@@ -681,6 +684,7 @@ function renderTable(){
       <td class="r amount-d">${r[cb.debit]  ? fmt(r[cb.debit])  : ''}</td>
       <td class="r amount-c">${r[cb.credit] ? fmt(r[cb.credit]) : ''}</td>
       <td class="r" style="color:var(--text-3);font-size:10px;">${soldeCalc}</td>
+      <td style="font-size:10px;color:var(--text-3);">${escH(r[cb.fournisseur]||'')||'—'}</td>
       <td><span class="chip chip-${chipType(r[cb.type_mvt])}">${r[cb.type_mvt]||''}</span></td>
       <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--text-3);" title="${escH(descVal)}">${escH(descVal)}</td>
       <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--text-3);">${escH(typeComp)}</td>
@@ -712,6 +716,7 @@ function renderTable(){
         <th class="r">Débit${si(-1)}</th>
         <th class="r">Crédit${si(-1)}</th>
         <th class="r">Solde calc.${si(-1)}</th>
+        ${mkTh('Fournisseur',cb.fournisseur)}
         ${mkTh('Type mvt',cb.type_mvt)}
         <th>Description${si(-1)}</th>
         <th>Libellé comp.${si(-1)}</th>
@@ -739,6 +744,8 @@ function renderTable(){
     if (sel && r) sel.value = r[Sheets.cols.banque.type_mvt] || '';
     const selDesc = document.getElementById('ei-description');
     if (selDesc && r) selDesc.value = r[Sheets.cols.banque.description] || '';
+    const selFourn = document.getElementById('ei-fourn');
+    if (selFourn && r) selFourn.value = r[Sheets.cols.banque.fournisseur] || '';
   }
 }
 
@@ -800,6 +807,7 @@ async function saveInlineEdit(ri){
     credit:         document.getElementById('ei-credit')?.value.trim().replace(',','.') || '',
     solde:          r[cb.solde]          || '',
     periode:        r[cb.periode]        || '',
+    fournisseur:    document.getElementById('ei-fourn')?.value.trim()        || r[cb.fournisseur] || '',
     type_mvt:       document.getElementById('ei-type')?.value               || r[cb.type_mvt] || '',
     description:    document.getElementById('ei-description')?.value.trim() || r[cb.description] || '',
     nom:            r[cb.nom]            || '',
