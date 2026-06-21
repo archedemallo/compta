@@ -108,6 +108,7 @@ const COLS_CHEQUE = {
   date_encaiss: 10,
   ref_banque:   11,
   verified:     12,  // M — Vérifié
+  fournisseur:  13,  // N — Fournisseur
 };
 
 const COLS_REMISE = {
@@ -393,6 +394,7 @@ async function updateCaisseOperation(rowIndex, op) {
   row[COLS_CAISSE.flag_check]   = op.flag_check    || 'FALSE';
   row[COLS_CAISSE.flag_comment] = op.flag_comment  || '';
   row[COLS_CAISSE.suivi_ref]    = op.suivi_ref     || '';
+  row[COLS_CAISSE.fournisseur]  = op.fournisseur   || '';
   await updateRange(SHEETS_CONFIG.sheets.caisse, sheetRow, 0, [row]);
   await logAction('MODIF', 'Caisse', op.libelle, `Modifié le ${todayFR()}`);
 }
@@ -473,6 +475,7 @@ async function saveCheque(cheque) {
   row[COLS_CHEQUE.date_encaiss]  = '';
   row[COLS_CHEQUE.ref_banque]    = '';
   row[COLS_CHEQUE.verified]      = 'FALSE';
+  row[COLS_CHEQUE.fournisseur]   = cheque.fournisseur   || '';
   await appendRows(SHEETS_CONFIG.sheets.cheques, [row]);
   await logAction('AJOUT', 'Cheques', cheque.beneficiaire, `N°${cheque.num_cheque} — ${cheque.montant}€`);
   return id;
@@ -494,6 +497,7 @@ async function updateCheque(rowIndex, cheque) {
   row[COLS_CHEQUE.date_encaiss]  = cheque.date_encaiss  || '';
   row[COLS_CHEQUE.ref_banque]    = cheque.ref_banque    || '';
   row[COLS_CHEQUE.verified]      = cheque.verified      || 'FALSE';
+  row[COLS_CHEQUE.fournisseur]   = cheque.fournisseur   || '';
   await updateRange(SHEETS_CONFIG.sheets.cheques, sheetRow, 0, [row]);
   await logAction('MODIF', 'Cheques', cheque.beneficiaire, `Modifié le ${todayFR()}`);
 }
