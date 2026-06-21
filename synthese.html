@@ -123,6 +123,7 @@
       <button class="synth-btn" onclick="showSection('top-donateurs')"><i class="ti ti-heart"></i> Top donateurs</button>
       <button class="synth-btn" onclick="showSection('adoptions')"><i class="ti ti-home"></i> Adoptions</button>
       <button class="synth-btn" onclick="showSection('dons')"><i class="ti ti-coin"></i> Dons</button>
+      <button class="synth-btn" onclick="showSection('subventions')"><i class="ti ti-award"></i> Subventions</button>
       <button class="synth-btn" onclick="showSection('cheques-att')"><i class="ti ti-writing"></i> Chèques en attente</button>
       <button class="synth-btn" onclick="showSection('remises-att')"><i class="ti ti-stack"></i> Remises en attente</button>
       <button class="synth-btn" onclick="showSection('rapprochement')"><i class="ti ti-scale"></i> Rapprochement caisse</button>
@@ -132,7 +133,7 @@
       <button class="synth-btn" onclick="showSection('evenements')"><i class="ti ti-confetti"></i> Événements</button>
       <button class="synth-btn" onclick="showSection('totaux-periode')"><i class="ti ti-sum"></i> Totaux période</button>
       <button class="synth-btn" onclick="showSection('rapport-annuel')"><i class="ti ti-file-analytics"></i> Rapport annuel</button>
-      <button class="synth-btn edit-action" onclick="showSection('saisie-rapide')"><i class="ti ti-pencil"></i> Saisie rapide</button>
+      <button class="synth-btn" onclick="showSection('saisie-rapide')"><i class="ti ti-pencil"></i> Saisie rapide</button>
     </div>
 
     <!-- LOADING -->
@@ -162,7 +163,6 @@ let charts={};
 Auth.requireAuth(async(user)=>{
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
   Sidebar.build('synthese');
-  await Auth.applyUserRights('synthese');
   activePer=Sidebar.getActivePeriode();
   buildPeriodPicker();
 
@@ -206,7 +206,7 @@ function selectPer(p){activePer=p;Sidebar.setPeriode(p);buildPeriodPicker();dest
 function showSection(id){
   activeSection=id;
   document.querySelectorAll('.synth-btn').forEach((b,i)=>{
-    const sections=['vue-generale','flux-mensuels','evolution','repartition','top-fournisseurs','top-donateurs','adoptions','dons','cheques-att','remises-att','rapprochement','depenses-cat','comparaison','tresorerie','evenements','totaux-periode','rapport-annuel','saisie-rapide'];
+    const sections=['vue-generale','flux-mensuels','evolution','repartition','top-fournisseurs','top-donateurs','adoptions','dons','subventions','cheques-att','remises-att','rapprochement','depenses-cat','comparaison','tresorerie','evenements','totaux-periode','rapport-annuel','saisie-rapide'];
     b.classList.toggle('active',sections[i]===id);
   });
   destroyCharts();
@@ -255,6 +255,25 @@ function parseDateFR(s){
 
 function getMoisCourant(){return new Date().toLocaleDateString('fr-FR',{month:'long',year:'numeric'});}
 
+function get12MoisPeriode(per){
+  // per = "2025 - 2026" → sept 2025 … août 2026
+  const parts=(per||'').split(' - ').map(Number);
+  if(parts.length!==2||!parts[0])return get12Mois();
+  const [y1,y2]=parts;
+  const mois=[];
+  for(let i=0;i<12;i++){
+    const mMonth=(8+i)%12; // 8=sept … 7=août
+    const mYear=i<4?y1:y2;
+    const d=new Date(mYear,mMonth,1);
+    mois.push({label:d.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'}),full:d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}),date:d});
+  }
+  return mois;
+}
+function getPrevPeriode(per){
+  const parts=(per||'').split(' - ').map(Number);
+  if(parts.length!==2||!parts[0])return '';
+  return `${parts[0]-1} - ${parts[1]-1}`;
+}
 function get12Mois(){
   const mois=[];
   const now=new Date();
@@ -279,6 +298,7 @@ function renderSection(id){
     case 'top-donateurs':    el.innerHTML=renderTopDonateurs();  break;
     case 'adoptions':        el.innerHTML=renderAdoptions();     setTimeout(initAdoptionsChart,50); break;
     case 'dons':             el.innerHTML=renderDons();          setTimeout(initDonsChart,50); break;
+    case 'subventions':      el.innerHTML=renderSubventions();   setTimeout(initSubventionsChart,50); break;
     case 'cheques-att':      el.innerHTML=renderChequesAtt();    break;
     case 'remises-att':      el.innerHTML=renderRemisesAtt();    break;
     case 'rapprochement':    el.innerHTML=renderRapprochement(); break;
@@ -494,19 +514,99 @@ function initAdoptionsChart(){
 // ============================================================
 // 8. DONS
 // ============================================================
-function renderDons(){
-  return `<div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-coin"></i> Suivi des dons — 12 mois</div></div><div class="card-body"><canvas id="chart-dons"></canvas></div></div>`;
+function _rowsTypeAll(keyword){
+  return [...allCaisse,...allBanque].filter(r=>(r[cc().type_mvt]||r[cb().type_mvt]||'').toLowerCase().includes(keyword));
 }
-function initDonsChart(){
-  const mois12=get12Mois();
-  const montants=mois12.map(m=>{
+function _rowsTypePer(keyword,per){
+  return [...allCaisse,...allBanque].filter(r=>{
+    const t=(r[cc().type_mvt]||r[cb().type_mvt]||'').toLowerCase();
+    const p=r[cc().periode]||r[cb().periode]||'';
+    return t.includes(keyword)&&p===per;
+  });
+}
+function _sumCredit(rows){return rows.reduce((s,r)=>s+(parseFloat(r[cc().credit]||r[cb().credit])||0),0);}
+function _montantsParMois(keyword,mois12){
+  return mois12.map(m=>{
     let tot=0;
-    [...allCaisse,...allBanque].forEach(r=>{const t=(r[cc().type_mvt]||r[cb().type_mvt]||'').toLowerCase();const d=r[cc().date]||r[cb().date]||'';const v=parseFloat(r[cc().credit]||r[cb().credit])||0;if(t.includes('don')&&rowInMonth(d,m.full))tot+=v;});
+    _rowsTypeAll(keyword).forEach(r=>{
+      const d=r[cc().date]||r[cb().date]||'';
+      const v=parseFloat(r[cc().credit]||r[cb().credit])||0;
+      if(rowInMonth(d,m.full))tot+=v;
+    });
     return tot;
   });
-  const ctx=document.getElementById('chart-dons');if(!ctx)return;
-  charts.dons=new Chart(ctx,{type:'bar',data:{labels:mois12.map(m=>m.label),datasets:[{label:'Montant dons (€)',data:montants,backgroundColor:'rgba(59,109,17,0.7)',borderColor:'rgb(59,109,17)',borderWidth:1}]},options:{responsive:true,scales:{y:{beginAtZero:true,ticks:{callback:v=>v+'€'}}}}});
 }
+function _listeDonateurs(rows){
+  const map={};
+  rows.forEach(r=>{
+    const nom=r[cc().nom]||r[cb().nom]||r[cc().libelle]||r[cb().libelle]||'Anonyme';
+    const v=parseFloat(r[cc().credit]||r[cb().credit])||0;
+    if(!map[nom])map[nom]={total:0,nb:0};
+    map[nom].total+=v; map[nom].nb++;
+  });
+  return Object.entries(map).sort((a,b)=>b[1].total-a[1].total);
+}
+
+function _renderDonSection(keyword,icon,label,chartId){
+  const mois12=get12MoisPeriode(activePer);
+  const prevPer=getPrevPeriode(activePer);
+  const rowsCur=_rowsTypePer(keyword,activePer);
+  const totCur=_sumCredit(rowsCur);
+  const totPrev=_sumCredit(_rowsTypePer(keyword,prevPer));
+  const evol=totPrev>0?((totCur-totPrev)/totPrev*100):null;
+  const donateurs=_listeDonateurs(rowsCur);
+
+  const listeHtml=donateurs.length
+    ? `<table><thead><tr><th>#</th><th>Nom / Libellé</th><th class="r">Nb</th><th class="r">Total</th></tr></thead><tbody>
+      ${donateurs.map(([nom,d],i)=>`<tr>
+        <td style="color:var(--text-3);">${i+1}</td>
+        <td><strong>${nom}</strong></td>
+        <td class="r" style="color:var(--text-3);">${d.nb}</td>
+        <td class="r amount-c">${fmt(d.total)}</td>
+      </tr>`).join('')}
+      </tbody></table>`
+    : `<div style="color:var(--text-3);font-size:12px;padding:8px 0;">Aucun enregistrement pour la période ${activePer}</div>`;
+
+  return `
+  <div class="kpi-top" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px;">
+    <div class="kpi"><div class="kpi-label">${label} — ${activePer}</div><div class="kpi-value v-green">${fmt(totCur)}</div><div class="kpi-sub">${rowsCur.length} opération(s)</div></div>
+    <div class="kpi"><div class="kpi-label">Période précédente (${prevPer||'N/A'})</div><div class="kpi-value" style="color:var(--text-3);">${fmt(totPrev)}</div></div>
+    <div class="kpi"><div class="kpi-label">Évolution</div><div class="kpi-value ${evol===null?'':evol>=0?'v-green':'v-red'}">${evol===null?'—':(evol>=0?'+':'')+evol.toFixed(1)+' %'}</div></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="card-title"><i class="${icon}"></i> Suivi mensuel — ${activePer} vs ${prevPer||'N-1'}</div></div>
+    <div class="card-body"><canvas id="${chartId}" style="max-height:280px;"></canvas></div>
+  </div>
+  <div class="card" style="margin-top:14px;">
+    <div class="card-head"><div class="card-title"><i class="ti ti-users"></i> Liste — ${activePer}</div></div>
+    <div class="card-body">${listeHtml}</div>
+  </div>`;
+}
+
+function _initGroupChart(keyword,chartId,colorCur,colorPrev){
+  const mois12=get12MoisPeriode(activePer);
+  const prevPer=getPrevPeriode(activePer);
+  const prevMois12=get12MoisPeriode(prevPer);
+  const montantsCur=_montantsParMois(keyword,mois12);
+  const montantsPrev=_montantsParMois(keyword,prevMois12);
+  const ctx=document.getElementById(chartId);if(!ctx)return;
+  return new Chart(ctx,{type:'bar',data:{
+    labels:mois12.map(m=>m.label),
+    datasets:[
+      {label:`${activePer}`,data:montantsCur,backgroundColor:colorCur.bg,borderColor:colorCur.border,borderWidth:1,borderRadius:3},
+      {label:`${prevPer||'N-1'}`,data:montantsPrev,backgroundColor:colorPrev.bg,borderColor:colorPrev.border,borderWidth:1,borderRadius:3}
+    ]
+  },options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true,ticks:{callback:v=>v+'€'}},x:{stacked:false}}}});
+}
+
+function renderDons(){return _renderDonSection('don','ti ti-coin','Total dons','chart-dons');}
+function initDonsChart(){charts.dons=_initGroupChart('don','chart-dons',{bg:'rgba(59,109,17,0.75)',border:'rgb(59,109,17)'},{bg:'rgba(59,109,17,0.2)',border:'rgba(59,109,17,0.5)'})||charts.dons;}
+
+// ============================================================
+// 8b. SUBVENTIONS
+// ============================================================
+function renderSubventions(){return _renderDonSection('subvention','ti ti-award','Total subventions','chart-subventions');}
+function initSubventionsChart(){charts.subventions=_initGroupChart('subvention','chart-subventions',{bg:'rgba(37,99,235,0.75)',border:'rgb(37,99,235)'},{bg:'rgba(37,99,235,0.2)',border:'rgba(37,99,235,0.5)'})||charts.subventions;}
 
 // ============================================================
 // 9. CHÈQUES EN ATTENTE
