@@ -66,6 +66,7 @@ const COLS_CAISSE = {
   flag_check:   16,
   flag_comment: 17,
   suivi_ref:    18,  // S — Référence suivi / rapprochement banque
+  fournisseur:  19,  // T — Fournisseur
 };
 
 const COLS_BANQUE = {
@@ -90,6 +91,7 @@ const COLS_BANQUE = {
   statut:         18,
   flag_comment:   19,
   suivi_ref:      20,
+  fournisseur:    21,  // V — Fournisseur
 };
 
 const COLS_CHEQUE = {
@@ -186,6 +188,7 @@ async function loadConfigFromSheet() {
       reglements:      'arche_reglements',
       soldes_initiaux: 'arche_soldes_initiaux',
       periode_active:  'arche_periode',
+      types_fourn:     'arche_types_fourn',
     };
     rows.forEach(r => {
       if (!r[0] || r[1] === undefined) return;
@@ -363,6 +366,7 @@ async function saveCaisseOperation(op) {
   row[COLS_CAISSE.flag_check]   = 'FALSE';
   row[COLS_CAISSE.flag_comment] = '';
   row[COLS_CAISSE.suivi_ref]    = op.suivi_ref     || '';
+  row[COLS_CAISSE.fournisseur]  = op.fournisseur   || '';
   await appendRows(SHEETS_CONFIG.sheets.caisse, [row]);
   await logAction('AJOUT', 'Caisse', op.libelle, `${op.date} — ${op.type_mvt} — ${op.credit || op.debit}€`);
   if (!Auth.isAdmin()) await sendAlert(Auth.getUser(), 'Caisse', op);
@@ -417,6 +421,7 @@ async function saveBanqueOperation(op) {
   row[COLS_BANQUE.statut]         = op.statut         || '';
   row[COLS_BANQUE.flag_comment]   = '';
   row[COLS_BANQUE.suivi_ref]      = op.suivi_ref      || '';
+  row[COLS_BANQUE.fournisseur]    = op.fournisseur    || '';
   await appendRows(SHEETS_CONFIG.sheets.banque, [row]);
   await logAction('AJOUT', 'Banque', op.libelle, `${op.date} — ${op.type_mvt} — ${op.credit || op.debit}€`);
   if (!Auth.isAdmin()) await sendAlert(Auth.getUser(), 'Banque', op);
@@ -446,6 +451,7 @@ async function updateBanqueOperation(rowIndex, op) {
   row[COLS_BANQUE.statut]         = op.statut         || '';
   row[COLS_BANQUE.flag_comment]   = op.flag_comment   || '';
   row[COLS_BANQUE.suivi_ref]      = op.suivi_ref      || '';
+  row[COLS_BANQUE.fournisseur]    = op.fournisseur    || '';
   await updateRange(SHEETS_CONFIG.sheets.banque, sheetRow, 0, [row]);
   await logAction('MODIF', 'Banque', op.libelle, `Modifié le ${todayFR()}`);
 }
@@ -877,6 +883,17 @@ async function saveDescriptions(arr) {
   await saveConfigKey('types_desc', arr);
 }
 
+function getFournisseurs() {
+  const s = localStorage.getItem('arche_types_fourn');
+  if (s) { try { return JSON.parse(s); } catch(e) {} }
+  return [];
+}
+async function saveFournisseurs(arr) {
+  arr = [...arr].sort((a,b) => a.localeCompare(b,'fr',{sensitivity:'base'}));
+  localStorage.setItem('arche_types_fourn', JSON.stringify(arr));
+  await saveConfigKey('types_fourn', arr);
+}
+
 // ============================================================
 // UTILITAIRES
 // ============================================================
@@ -965,6 +982,7 @@ window.Sheets = {
   getTypesComplementaires, saveTypesComplementaires,
   getModesReglement, saveModesReglement,
   getDescriptions, saveDescriptions,
+  getFournisseurs, saveFournisseurs,
   // Utilitaires
   formatMoney, normalizeDate, todayISO, todayFR, genId, openFacture,
 };
