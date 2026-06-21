@@ -210,12 +210,40 @@ async function readSuiviSheet(sheetName) {
 // ============================================================
 // LECTURE COMPTA (onglet Suivi_*)
 // ============================================================
+// LECTURE COMPTA — range A:AQ pour éviter les 400 sur onglets étroits
+// ============================================================
 async function readComptaSheet(sheetName) {
   try {
-    const rows = await Sheets.readSheet(sheetName);
-    return rows || [];
+    const spreadsheetId = Sheets.config.spreadsheetId;
+    const response = await gapi.client.sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${sheetName}!A:AQ`,
+      valueRenderOption: 'UNFORMATTED_VALUE',
+      dateTimeRenderOption: 'FORMATTED_STRING',
+    });
+    return response.result.values || [];
   } catch(e) {
+    // Onglet absent ou vide → retourner tableau vide sans erreur
     return [];
+  }
+}
+
+// ============================================================
+// CRÉER L'ONGLET S'IL N'EXISTE PAS
+// ============================================================
+async function ensureSheet(sheetName) {
+  const spreadsheetId = Sheets.config.spreadsheetId;
+  try {
+    const meta = await gapi.client.sheets.spreadsheets.get({ spreadsheetId });
+    const exists = meta.result.sheets.some(s => s.properties.title === sheetName);
+    if (exists) return;
+    await gapi.client.sheets.spreadsheets.batchUpdate({
+      spreadsheetId,
+      resource: { requests: [{ addSheet: { properties: { title: sheetName } } }] }
+    });
+    log(`  Onglet "${sheetName}" créé dans Compta`, 'info');
+  } catch(e) {
+    throw new Error(`Impossible de créer l'onglet "${sheetName}" : ${e.message || e}`);
   }
 }
 
@@ -223,8 +251,8 @@ async function readComptaSheet(sheetName) {
 // ÉCRITURE COMPTA
 // ============================================================
 async function writeComptaSheet(sheetName, rows) {
-  // rows = tableau de tableaux (avec en-tête en rows[0])
-  const spreadsheetId = Sheets.config.spreadsheetId || Sheets.getSpreadsheetId();
+  const spreadsheetId = Sheets.config.spreadsheetId;
+  await ensureSheet(sheetName);
   const range = `${sheetName}!A1`;
   await gapi.client.sheets.spreadsheets.values.update({
     spreadsheetId,
