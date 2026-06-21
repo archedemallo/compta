@@ -120,7 +120,6 @@
       <button class="synth-btn" onclick="showSection('evolution')"><i class="ti ti-trending-up"></i> Évolution 12 mois</button>
       <button class="synth-btn" onclick="showSection('repartition')"><i class="ti ti-chart-pie"></i> Répartition</button>
       <button class="synth-btn" onclick="showSection('top-fournisseurs')"><i class="ti ti-building-store"></i> Top fournisseurs</button>
-      <button class="synth-btn" onclick="showSection('top-donateurs')"><i class="ti ti-heart"></i> Top donateurs</button>
       <button class="synth-btn" onclick="showSection('adoptions')"><i class="ti ti-home"></i> Adoptions</button>
       <button class="synth-btn" onclick="showSection('dons')"><i class="ti ti-coin"></i> Dons</button>
       <button class="synth-btn" onclick="showSection('subventions')"><i class="ti ti-award"></i> Subventions</button>
@@ -133,7 +132,6 @@
       <button class="synth-btn" onclick="showSection('evenements')"><i class="ti ti-confetti"></i> Événements</button>
       <button class="synth-btn" onclick="showSection('totaux-periode')"><i class="ti ti-sum"></i> Totaux période</button>
       <button class="synth-btn" onclick="showSection('rapport-annuel')"><i class="ti ti-file-analytics"></i> Rapport annuel</button>
-      <button class="synth-btn" onclick="showSection('saisie-rapide')"><i class="ti ti-pencil"></i> Saisie rapide</button>
     </div>
 
     <!-- LOADING -->
@@ -206,7 +204,7 @@ function selectPer(p){activePer=p;Sidebar.setPeriode(p);buildPeriodPicker();dest
 function showSection(id){
   activeSection=id;
   document.querySelectorAll('.synth-btn').forEach((b,i)=>{
-    const sections=['vue-generale','flux-mensuels','evolution','repartition','top-fournisseurs','top-donateurs','adoptions','dons','subventions','cheques-att','remises-att','rapprochement','depenses-cat','comparaison','tresorerie','evenements','totaux-periode','rapport-annuel','saisie-rapide'];
+    const sections=['vue-generale','flux-mensuels','evolution','repartition','top-fournisseurs','adoptions','dons','subventions','cheques-att','remises-att','rapprochement','depenses-cat','comparaison','tresorerie','evenements','totaux-periode','rapport-annuel'];
     b.classList.toggle('active',sections[i]===id);
   });
   destroyCharts();
@@ -256,14 +254,14 @@ function parseDateFR(s){
 function getMoisCourant(){return new Date().toLocaleDateString('fr-FR',{month:'long',year:'numeric'});}
 
 function get12MoisPeriode(per){
-  // per = "2025 - 2026" → sept 2025 … août 2026
+  // per = "2025 - 2026" → nov 2025 … oct 2026
   const parts=(per||'').split(' - ').map(Number);
   if(parts.length!==2||!parts[0])return get12Mois();
   const [y1,y2]=parts;
   const mois=[];
   for(let i=0;i<12;i++){
-    const mMonth=(8+i)%12; // 8=sept … 7=août
-    const mYear=i<4?y1:y2;
+    const mMonth=(10+i)%12; // 10=nov, 11=déc, 0=jan … 9=oct
+    const mYear=i<2?y1:y2;  // nov+déc = y1, jan…oct = y2
     const d=new Date(mYear,mMonth,1);
     mois.push({label:d.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'}),full:d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}),date:d});
   }
@@ -514,41 +512,56 @@ function initAdoptionsChart(){
 // ============================================================
 // 8. DONS
 // ============================================================
-function _rowsTypeAll(keyword){
-  return [...allCaisse,...allBanque].filter(r=>(r[cc().type_mvt]||r[cb().type_mvt]||'').toLowerCase().includes(keyword));
+
+// Discriminateur : col 0 = 'C1'/'C2' → caisse, sinon → banque
+function _isCaisse(r){const v=String(r[0]||'');return v==='C1'||v==='C2';}
+
+function _getField(r,caisseIdx,banqueIdx){
+  return _isCaisse(r)?r[caisseIdx]:r[banqueIdx];
 }
+
 function _rowsTypePer(keyword,per){
-  return [...allCaisse,...allBanque].filter(r=>{
-    const t=(r[cc().type_mvt]||r[cb().type_mvt]||'').toLowerCase();
-    const p=r[cc().periode]||r[cb().periode]||'';
-    return t.includes(keyword)&&p===per;
+  const fromCaisse=allCaisse.filter(r=>{
+    const t=(r[cc().type_mvt]||'').toLowerCase();
+    return t.includes(keyword)&&(r[cc().periode]||'')===per;
   });
+  const fromBanque=allBanque.filter(r=>{
+    const t=(r[cb().type_mvt]||'').toLowerCase();
+    return t.includes(keyword)&&(r[cb().periode]||'')===per;
+  });
+  return[...fromCaisse,...fromBanque];
 }
-function _sumCredit(rows){return rows.reduce((s,r)=>s+(parseFloat(r[cc().credit]||r[cb().credit])||0),0);}
+
+function _rowsTypeAllMois(keyword,moisFull){
+  const fromCaisse=allCaisse.filter(r=>(r[cc().type_mvt]||'').toLowerCase().includes(keyword)&&rowInMonth(r[cc().date]||'',moisFull));
+  const fromBanque=allBanque.filter(r=>(r[cb().type_mvt]||'').toLowerCase().includes(keyword)&&rowInMonth(r[cb().date]||'',moisFull));
+  return[...fromCaisse,...fromBanque];
+}
+
+function _sumCredit(rows){
+  return rows.reduce((s,r)=>s+(parseFloat(_isCaisse(r)?r[cc().credit]:r[cb().credit])||0),0);
+}
+
 function _montantsParMois(keyword,mois12){
   return mois12.map(m=>{
-    let tot=0;
-    _rowsTypeAll(keyword).forEach(r=>{
-      const d=r[cc().date]||r[cb().date]||'';
-      const v=parseFloat(r[cc().credit]||r[cb().credit])||0;
-      if(rowInMonth(d,m.full))tot+=v;
-    });
-    return tot;
+    return _rowsTypeAllMois(keyword,m.full).reduce((s,r)=>s+(parseFloat(_isCaisse(r)?r[cc().credit]:r[cb().credit])||0),0);
   });
 }
+
 function _listeDonateurs(rows){
   const map={};
   rows.forEach(r=>{
-    const nom=r[cc().nom]||r[cb().nom]||r[cc().libelle]||r[cb().libelle]||'Anonyme';
-    const v=parseFloat(r[cc().credit]||r[cb().credit])||0;
-    if(!map[nom])map[nom]={total:0,nb:0};
+    const isCaisse=_isCaisse(r);
+    const nom=(isCaisse?(r[cc().nom]||r[cc().libelle]):(r[cb().nom]||r[cb().libelle]))||'Anonyme';
+    const v=parseFloat(isCaisse?r[cc().credit]:r[cb().credit])||0;
+    if(!map[nom])map[nom]={total:0,nb:0,operations:[]};
     map[nom].total+=v; map[nom].nb++;
+    map[nom].operations.push({date:isCaisse?r[cc().date]:r[cb().date],montant:v});
   });
   return Object.entries(map).sort((a,b)=>b[1].total-a[1].total);
 }
 
 function _renderDonSection(keyword,icon,label,chartId){
-  const mois12=get12MoisPeriode(activePer);
   const prevPer=getPrevPeriode(activePer);
   const rowsCur=_rowsTypePer(keyword,activePer);
   const totCur=_sumCredit(rowsCur);
@@ -556,29 +569,44 @@ function _renderDonSection(keyword,icon,label,chartId){
   const evol=totPrev>0?((totCur-totPrev)/totPrev*100):null;
   const donateurs=_listeDonateurs(rowsCur);
 
-  const listeHtml=donateurs.length
-    ? `<table><thead><tr><th>#</th><th>Nom / Libellé</th><th class="r">Nb</th><th class="r">Total</th></tr></thead><tbody>
-      ${donateurs.map(([nom,d],i)=>`<tr>
-        <td style="color:var(--text-3);">${i+1}</td>
-        <td><strong>${nom}</strong></td>
-        <td class="r" style="color:var(--text-3);">${d.nb}</td>
-        <td class="r amount-c">${fmt(d.total)}</td>
-      </tr>`).join('')}
-      </tbody></table>`
-    : `<div style="color:var(--text-3);font-size:12px;padding:8px 0;">Aucun enregistrement pour la période ${activePer}</div>`;
+  // Groupes de 10 en colonnes
+  const BLOC=10;
+  const nbBlocs=Math.ceil(donateurs.length/BLOC)||1;
+  const gridCols=Math.min(nbBlocs,4); // max 4 colonnes
+  let listeHtml='';
+  if(donateurs.length===0){
+    listeHtml=`<div style="color:var(--text-3);font-size:12px;padding:8px 0;">Aucun enregistrement pour la période ${activePer}</div>`;
+  } else {
+    const blocs=[];
+    for(let b=0;b<nbBlocs;b++){
+      const slice=donateurs.slice(b*BLOC,(b+1)*BLOC);
+      const startIdx=b*BLOC+1;
+      blocs.push(`<div>
+        <table><thead><tr><th>#</th><th>Nom / Libellé</th><th class="r">Nb</th><th class="r">Total</th></tr></thead><tbody>
+        ${slice.map(([nom,d],i)=>`<tr>
+          <td style="color:var(--text-3);width:24px;">${startIdx+i}</td>
+          <td style="font-size:11px;">${nom}</td>
+          <td class="r" style="color:var(--text-3);width:30px;">${d.nb}</td>
+          <td class="r amount-c" style="width:80px;white-space:nowrap;">${fmt(d.total)}</td>
+        </tr>`).join('')}
+        </tbody></table>
+      </div>`);
+    }
+    listeHtml=`<div style="display:grid;grid-template-columns:repeat(${gridCols},1fr);gap:16px;align-items:start;">${blocs.join('')}</div>`;
+  }
 
   return `
   <div class="kpi-top" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px;">
-    <div class="kpi"><div class="kpi-label">${label} — ${activePer}</div><div class="kpi-value v-green">${fmt(totCur)}</div><div class="kpi-sub">${rowsCur.length} opération(s)</div></div>
+    <div class="kpi"><div class="kpi-label">${label} — ${activePer}</div><div class="kpi-value v-green">${fmt(totCur)}</div><div class="kpi-sub">${rowsCur.length} opération(s) · ${donateurs.length} donateurs</div></div>
     <div class="kpi"><div class="kpi-label">Période précédente (${prevPer||'N/A'})</div><div class="kpi-value" style="color:var(--text-3);">${fmt(totPrev)}</div></div>
     <div class="kpi"><div class="kpi-label">Évolution</div><div class="kpi-value ${evol===null?'':evol>=0?'v-green':'v-red'}">${evol===null?'—':(evol>=0?'+':'')+evol.toFixed(1)+' %'}</div></div>
   </div>
   <div class="card">
     <div class="card-head"><div class="card-title"><i class="${icon}"></i> Suivi mensuel — ${activePer} vs ${prevPer||'N-1'}</div></div>
-    <div class="card-body"><canvas id="${chartId}" style="max-height:280px;"></canvas></div>
+    <div class="card-body"><canvas id="${chartId}" style="max-height:260px;"></canvas></div>
   </div>
   <div class="card" style="margin-top:14px;">
-    <div class="card-head"><div class="card-title"><i class="ti ti-users"></i> Liste — ${activePer}</div></div>
+    <div class="card-head"><div class="card-title"><i class="ti ti-users"></i> Liste des donateurs — ${activePer} <span style="font-weight:400;color:var(--text-3);margin-left:8px;">${donateurs.length} personnes</span></div></div>
     <div class="card-body">${listeHtml}</div>
   </div>`;
 }
