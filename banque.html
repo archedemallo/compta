@@ -282,7 +282,7 @@
           <select id="rap-cheque-select" style="padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);font-size:11px;font-family:'DM Sans',sans-serif;">
             <option value="">— Choisir un chèque en attente —</option>
           </select>
-          <button class="btn btn-primary btn-sm" onclick="lierCheque()"><i class="ti ti-check"></i> Lier</button>
+          <button class="btn btn-primary btn-sm edit-action" onclick="lierCheque()"><i class="ti ti-check"></i> Lier</button>
         </div>
         <div id="rap-cheque-linked"></div>
       </div>
@@ -294,7 +294,7 @@
           <select id="rap-facture-select" style="padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);font-size:11px;font-family:'DM Sans',sans-serif;">
             <option value="">— Choisir une facture non réglée —</option>
           </select>
-          <button class="btn btn-primary btn-sm" onclick="lierFacture()"><i class="ti ti-check"></i> Lier</button>
+          <button class="btn btn-primary btn-sm edit-action" onclick="lierFacture()"><i class="ti ti-check"></i> Lier</button>
         </div>
         <div id="rap-facture-linked"></div>
       </div>
@@ -306,7 +306,7 @@
           <select id="rap-remise-select" style="padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);font-size:11px;font-family:'DM Sans',sans-serif;">
             <option value="">— Choisir une remise en attente —</option>
           </select>
-          <button class="btn btn-primary btn-sm" onclick="lierRemise()"><i class="ti ti-check"></i> Lier</button>
+          <button class="btn btn-primary btn-sm edit-action" onclick="lierRemise()"><i class="ti ti-check"></i> Lier</button>
         </div>
         <div id="rap-remise-linked"></div>
       </div>
@@ -319,7 +319,7 @@
           <select id="rap-caisse-select" style="padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);font-size:11px;font-family:'DM Sans',sans-serif;">
             <option value="">— Choisir une sortie caisse —</option>
           </select>
-          <button class="btn btn-primary btn-sm" onclick="lierCaisse()"><i class="ti ti-check"></i> Lier</button>
+          <button class="btn btn-primary btn-sm edit-action" onclick="lierCaisse()"><i class="ti ti-check"></i> Lier</button>
         </div>
         <div id="rap-caisse-linked"></div>
       </div>
@@ -349,7 +349,7 @@
     </div>
     <div class="panel-footer">
       <button class="btn btn-secondary" onclick="closePanel()">Annuler</button>
-      <button class="btn btn-primary" onclick="savePanel()"><i class="ti ti-device-floppy"></i> Enregistrer le rapprochement</button>
+      <button class="btn btn-primary" ><i class="ti ti-device-floppy"></i> Enregistrer le rapprochement</button>
     </div>
   </div>
 </div>
@@ -359,7 +359,7 @@
   <div class="modal">
     <div class="modal-header"><span class="modal-title"><i class="ti ti-trash" style="color:var(--red)"></i> Supprimer la ligne</span><button class="modal-close" onclick="closeDel()">×</button></div>
     <div class="modal-body"><div style="font-size:12px;">Êtes-vous sûr de vouloir supprimer cette opération ?</div><div class="confirm-detail" id="del-detail"></div></div>
-    <div class="modal-footer"><button class="btn btn-secondary btn-sm" onclick="closeDel()">Annuler</button><button class="btn btn-danger btn-sm" onclick="confirmDel()"><i class="ti ti-trash"></i> Supprimer</button></div>
+    <div class="modal-footer"><button class="btn btn-secondary btn-sm" onclick="closeDel()">Annuler</button><button class="btn btn-danger btn-sm edit-action" onclick="confirmDel()"><i class="ti ti-trash"></i> Supprimer</button></div>
   </div>
 </div>
 
@@ -372,7 +372,7 @@
       <div class="form-group"><label class="form-label">Commentaire</label><textarea id="flag-comment" rows="3" placeholder="Info à vérifier…" style="padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);font-size:11px;font-family:'DM Sans',sans-serif;resize:vertical;"></textarea></div>
       <label style="display:flex;align-items:center;gap:8px;font-size:11px;cursor:pointer;margin-top:8px;"><input type="checkbox" id="flag-resolved" style="width:14px;height:14px;accent-color:var(--orange);"> Marquer comme résolu</label>
     </div>
-    <div class="modal-footer"><button class="btn btn-secondary btn-sm" onclick="closeFlag()">Annuler</button><button class="btn btn-primary btn-sm" onclick="saveFlag()">Enregistrer</button></div>
+    <div class="modal-footer"><button class="btn btn-secondary btn-sm" onclick="closeFlag()">Annuler</button><button class="btn btn-primary btn-sm edit-action" onclick="saveFlag()">Enregistrer</button></div>
   </div>
 </div>
 
@@ -417,6 +417,7 @@ Auth.requireAuth(async(user)=>{
     return;
   }
   Sidebar.build('banque');
+  await Auth.applyUserRights('banque');
   await Sheets.loadConfigFromSheet();
   const ap = Sidebar.getActivePeriode();
   document.getElementById('topbar-per').textContent = ap;
@@ -645,7 +646,7 @@ function renderTable(){
       return `
         <tr class="edit-inline-row" id="edit-row-${ri}">
           <td style="white-space:nowrap;">
-            <button class="save-inline-btn" onclick="saveInlineEdit(${ri})"><i class="ti ti-check"></i> OK</button>
+            <button class="save-inline-btn edit-action" onclick="saveInlineEdit(${ri})"><i class="ti ti-check"></i> OK</button>
             <button class="cancel-inline-btn" onclick="cancelEdit()">✕</button>
           </td>
           <td><input type="text" id="ei-date" value="${escH(r[cb.date]||'')}" style="width:82px;" placeholder="jj/mm/aaaa"></td>
@@ -676,7 +677,7 @@ function renderTable(){
       <td style="white-space:nowrap;">
         ${verifie
           ? `<span class="lock-icon" title="Ligne vérifiée — décochez pour modifier"><i class="ti ti-lock"></i></span>`
-          : `<button class="edit-btn" onclick="event.stopPropagation();openEdit(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>`
+          : `<button class="edit-btn edit-action" onclick="event.stopPropagation();openEdit(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>`
         }
       </td>
       <td style="color:var(--text-3);white-space:nowrap;font-size:10px;">${r[cb.date]||''}</td>
