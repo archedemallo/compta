@@ -636,12 +636,7 @@ function _renderDonSection(keyword,icon,label,chartId,cfg){
 
   return `
   <div class="kpi-top" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px;">
-    <div class="kpi"><div class="kpi-label">${label} — ${activePer}</div><div class="kpi-value v-green">${fmt(totCur)}</div><div class="kpi-sub">
-  ${keyword === 'subvention'
-    ? `Nombre de subventions perçues : ${personnes.length}`
-    : `${personnes.length} personnes`
-  }
-</div>
+    <div class="kpi"><div class="kpi-label">${label} — ${activePer}</div><div class="kpi-value v-green">${fmt(totCur)}</div><div class="kpi-sub">${personnes.length} personne(s)</div></div>
     <div class="kpi"><div class="kpi-label">Période précédente (${prevPer||'N/A'})</div><div class="kpi-value" style="color:var(--text-3);">${fmt(totPrev)}</div></div>
     <div class="kpi"><div class="kpi-label">Évolution</div><div class="kpi-value ${evol===null?'':evol>=0?'v-green':'v-red'}">${evol===null?'—':(evol>=0?'+':'')+evol.toFixed(1)+' %'}</div></div>
   </div>
