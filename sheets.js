@@ -110,6 +110,7 @@ const COLS_CHEQUE = {
   ref_banque:   11,
   verified:     12,  // M — Vérifié
   fournisseur:  13,  // N — Fournisseur
+  nom_chat:     14,  // O — Nom du chat
 };
 
 const COLS_REMISE = {
@@ -140,6 +141,7 @@ const COLS_FACTURE = {
   commentaire:   10,
   periode:       11,
   statut:        12,
+  nom_chat:      13,  // N — Nom du chat
 };
 
 const COLS_CAISSE_PHYSIQUE = {
@@ -524,7 +526,7 @@ async function updateBanqueOperation(rowIndex, op) {
 // ---- CHÈQUES ----
 async function saveCheque(cheque) {
   const id  = cheque.id || genId('CHQ');
-  const row = new Array(13).fill('');
+  const row = new Array(15).fill('');
   row[COLS_CHEQUE.id]            = id;
   row[COLS_CHEQUE.num_cheque]    = cheque.num_cheque    || '';
   row[COLS_CHEQUE.date_emission] = cheque.date_emission || '';
@@ -539,6 +541,7 @@ async function saveCheque(cheque) {
   row[COLS_CHEQUE.ref_banque]    = '';
   row[COLS_CHEQUE.verified]      = 'FALSE';
   row[COLS_CHEQUE.fournisseur]   = cheque.fournisseur   || '';
+  row[COLS_CHEQUE.nom_chat]      = cheque.nom_chat      || '';
   await appendRows(SHEETS_CONFIG.sheets.cheques, [row]);
   await logAction('AJOUT', 'Cheques', cheque.beneficiaire, `N°${cheque.num_cheque} — ${cheque.montant}€`);
   return id;
@@ -546,7 +549,7 @@ async function saveCheque(cheque) {
 
 async function updateCheque(rowIndex, cheque) {
   const sheetRow = rowIndex + 2;
-  const row = new Array(13).fill('');
+  const row = new Array(15).fill('');
   row[COLS_CHEQUE.id]            = cheque.id            || '';
   row[COLS_CHEQUE.num_cheque]    = cheque.num_cheque    || '';
   row[COLS_CHEQUE.date_emission] = cheque.date_emission || '';
@@ -561,6 +564,7 @@ async function updateCheque(rowIndex, cheque) {
   row[COLS_CHEQUE.ref_banque]    = cheque.ref_banque    || '';
   row[COLS_CHEQUE.verified]      = cheque.verified      || 'FALSE';
   row[COLS_CHEQUE.fournisseur]   = cheque.fournisseur   || '';
+  row[COLS_CHEQUE.nom_chat]      = cheque.nom_chat      || '';
   await updateRange(SHEETS_CONFIG.sheets.cheques, sheetRow, 0, [row]);
   await logAction('MODIF', 'Cheques', cheque.beneficiaire, `Modifié le ${todayFR()}`);
 }
@@ -643,7 +647,7 @@ async function updateRemise(rowIndex, remise) {
 // ---- FACTURES ----
 async function saveFacture(facture) {
   const id  = facture.id || genId('FAC');
-  const row = new Array(13).fill('');
+  const row = new Array(14).fill('');
   row[COLS_FACTURE.id]            = id;
   row[COLS_FACTURE.num_facture]   = facture.num_facture   || '';
   row[COLS_FACTURE.fournisseur]   = facture.fournisseur   || '';
@@ -657,6 +661,7 @@ async function saveFacture(facture) {
   row[COLS_FACTURE.commentaire]   = facture.commentaire   || '';
   row[COLS_FACTURE.periode]       = facture.periode       || '';
   row[COLS_FACTURE.statut]        = facture.statut        || '';
+  row[COLS_FACTURE.nom_chat]      = facture.nom_chat      || '';
   await appendRows(SHEETS_CONFIG.sheets.factures, [row]);
   await logAction('AJOUT', 'Factures', facture.fournisseur, `${facture.montant_ttc}€`);
   return id;
@@ -664,7 +669,7 @@ async function saveFacture(facture) {
 
 async function updateFacture(rowIndex, facture) {
   const sheetRow = rowIndex + 2;
-  const row = new Array(13).fill('');
+  const row = new Array(14).fill('');
   row[COLS_FACTURE.id]            = facture.id            || '';
   row[COLS_FACTURE.num_facture]   = facture.num_facture   || '';
   row[COLS_FACTURE.fournisseur]   = facture.fournisseur   || '';
@@ -678,6 +683,7 @@ async function updateFacture(rowIndex, facture) {
   row[COLS_FACTURE.commentaire]   = facture.commentaire   || '';
   row[COLS_FACTURE.periode]       = facture.periode       || '';
   row[COLS_FACTURE.statut]        = facture.statut        || '';
+  row[COLS_FACTURE.nom_chat]      = facture.nom_chat      || '';
   await updateRange(SHEETS_CONFIG.sheets.factures, sheetRow, 0, [row]);
   await logAction('MODIF', 'Factures', facture.fournisseur, `Modifié le ${todayFR()}`);
 }
