@@ -143,7 +143,7 @@
           </div>
           <div id="chq-err" class="hidden" style="color:var(--red);font-size:11px;padding:6px 0;"></div>
           <div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);">
-            <button class="btn btn-primary" style="flex:1" id="chq-submit" onclick="submitCheque()"><i class="ti ti-device-floppy"></i> Enregistrer</button>
+            <button class="btn btn-primary" style="flex:1" id="chq-submit" class="edit-action" onclick="submitCheque()"><i class="ti ti-device-floppy"></i> Enregistrer</button>
             <button class="btn btn-secondary" onclick="resetCheque()"><i class="ti ti-refresh"></i> Vider</button>
           </div>
         </div>
@@ -157,7 +157,7 @@
   <div class="modal">
     <div class="modal-header"><span class="modal-title"><i class="ti ti-trash" style="color:var(--red)"></i> Supprimer le chèque</span><button class="modal-close" onclick="closeDel()">×</button></div>
     <div class="modal-body"><div style="font-size:12px;">Êtes-vous sûr de vouloir supprimer ce chèque ?</div><div class="confirm-detail" id="del-detail"></div></div>
-    <div class="modal-footer"><button class="btn btn-secondary btn-sm" onclick="closeDel()">Annuler</button><button class="btn btn-danger btn-sm" onclick="confirmDel()"><i class="ti ti-trash"></i> Supprimer</button></div>
+    <div class="modal-footer"><button class="btn btn-secondary btn-sm" onclick="closeDel()">Annuler</button><button class="btn btn-danger btn-sm edit-action" onclick="confirmDel()"><i class="ti ti-trash"></i> Supprimer</button></div>
   </div>
 </div>
 
@@ -172,6 +172,7 @@ Auth.requireAuth(async()=>{
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
     await Sheets.loadConfigFromSheet();
   Sidebar.build('cheques');
+  await Auth.applyUserRights('cheques');
   const pers=Sheets.getPeriodes(), ap=Sidebar.getActivePeriode();
   document.getElementById('topbar-per').textContent=ap;
 
@@ -274,8 +275,8 @@ function renderTable(){
       <td class="r" style="white-space:nowrap;">
         ${isVerified
           ? `<span class="lock-icon" title="Chèque vérifié — décochez pour modifier"><i class="ti ti-lock"></i></span>`
-          : s==='en_attente' ? `<button class="edit-btn" onclick="openEditChq(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>` : ''}
-        <button class="del-btn" onclick="openDel(${ri},'${escH(r[cc.num_cheque]||'')} — ${escH(r[cc.beneficiaire]||'')}')"><i class="ti ti-trash"></i></button>
+          : s==='en_attente' ? `<button class="edit-btn edit-action" onclick="openEditChq(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>` : ''}
+        <button class="del-btn edit-action" onclick="openDel(${ri},'${escH(r[cc.num_cheque]||'')} — ${escH(r[cc.beneficiaire]||'')}')"><i class="ti ti-trash"></i></button>
       </td>
     </tr>`;
   }).join('');
