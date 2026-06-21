@@ -13,34 +13,34 @@ function buildSidebar(activePage) {
 
     { section: 'Comptabilité' },
     { id: 'caisse',    label: 'Caisse1 — saisie',    icon: 'ti-cash',           href: 'caisse.html' },
-    { id: 'caisse2',    label: 'Caisse2 — saisie',    icon: 'ti-cash',           href: 'caisse2.html' }, 
-    { id: 'banque',    label: 'Banque — saisie',    icon: 'ti-building-bank',  href: 'banque.html' },
-    { id: 'cheques',       label: 'Chèques émis',      icon: 'ti-writing',        href: 'cheques.html' },
+    { id: 'caisse2',   label: 'Caisse2 — saisie',    icon: 'ti-cash',           href: 'caisse2.html' },
+    { id: 'banque',    label: 'Banque — saisie',      icon: 'ti-building-bank',  href: 'banque.html' },
+    { id: 'cheques',       label: 'Chèques émis',       icon: 'ti-writing',        href: 'cheques.html' },
     { id: 'remisecheques', label: 'Remises de chèques', icon: 'ti-stack',          href: 'remisecheques.html' },
-    { id: 'factures',  label: 'Factures',            icon: 'ti-file-invoice',   href: 'factures.html' },
-    { id: 'import',    label: 'Import relevé',       icon: 'ti-upload',         href: 'import.html' },
+    { id: 'factures',  label: 'Factures',             icon: 'ti-file-invoice',   href: 'factures.html' },
+    { id: 'import',    label: 'Import relevé',        icon: 'ti-upload',         href: 'import.html' },
 
     { section: 'Caisses physiques' },
-    { id: 'caisse1physique',   label: 'Caisse 1',           icon: 'ti-safe',           href: 'caisse-physique1.html' },
-    { id: 'caisse2physique',   label: 'Caisse 2',           icon: 'ti-safe',           href: 'caisse-physique2.html' },
+    { id: 'caisse1physique', label: 'Caisse 1', icon: 'ti-safe', href: 'caisse-physique1.html' },
+    { id: 'caisse2physique', label: 'Caisse 2', icon: 'ti-safe', href: 'caisse-physique2.html' },
 
     { section: 'Import' },
-    { id: 'import-suivi-refresh',  label: 'Rafraîchir Suivi',              icon: 'ti-database-import', href: 'import-suivi-refresh.html' },
-    { id: 'import-suivi',         label: 'Import Suivi - Formulaires',    icon: 'ti-download', href: 'import-suivi.html' },
-    { id: 'import-rapprochement', label: 'Import Rapprochement',           icon: 'ti-arrows-transfer-down', href: 'import-rapprochement.html' },
-     
+    { id: 'import-suivi-refresh',  label: 'Rafraîchir Suivi',           icon: 'ti-database-import',      href: 'import-suivi-refresh.html' },
+    { id: 'import-suivi',          label: 'Import Suivi - Formulaires', icon: 'ti-download',             href: 'import-suivi.html' },
+    { id: 'import-rapprochement',  label: 'Import Rapprochement',       icon: 'ti-arrows-transfer-down', href: 'import-rapprochement.html' },
+
     { section: 'Analyses' },
-    { id: 'analyse',   label: 'Analyse / AG',        icon: 'ti-chart-pie',      href: 'analyse.html' },
+    { id: 'analyse', label: 'Analyse / AG', icon: 'ti-chart-pie', href: 'analyse.html' },
 
     { section: 'Outils' },
-    { id: 'notes',     label: 'Notes',               icon: 'ti-notes',          href: 'notes.html' },
+    { id: 'notes', label: 'Notes', icon: 'ti-notes', href: 'notes.html' },
 
     { section: 'Partage' },
-    { id: 'synthese',  label: 'Vue synthèse',       icon: 'ti-eye',            href: 'synthese.html' },
-    { id: 'alertes',   label: 'Journal / Alertes',  icon: 'ti-bell',           href: 'alertes.html', badge: true, adminOnly: true },
+    { id: 'synthese', label: 'Vue synthèse',     icon: 'ti-eye',      href: 'synthese.html' },
+    { id: 'alertes',  label: 'Journal / Alertes', icon: 'ti-bell',    href: 'alertes.html', badge: true, adminOnly: true },
 
     { section: 'Administration' },
-    { id: 'config',    label: 'Configuration',      icon: 'ti-settings',       href: 'config.html' },
+    { id: 'config', label: 'Configuration', icon: 'ti-settings', href: 'config.html' },
   ];
 
   // Options du sélecteur de période
@@ -48,18 +48,29 @@ function buildSidebar(activePage) {
     `<option value="${p}" ${p === stored ? 'selected' : ''}>${p}</option>`
   ).join('');
 
+  // Droits utilisateur chargés (si disponibles)
+  const userRights = Auth.getUserRights ? Auth.getUserRights() : null;
+
   // Items de navigation
   const navItems = nav.map(item => {
     if (item.section) {
       return `<div class="nav-section">${item.section}</div>`;
     }
-    // Masquer les items admin si non-admin
+
+    // Toujours masquer les items adminOnly si non-admin
     if (item.adminOnly) {
       try {
         const user = Auth.getUser();
         if (!user || !user.isAdmin) return '';
       } catch(e) { return ''; }
     }
+
+    // Masquer si l'utilisateur n'a pas accès à cette page (droit = 'aucun')
+    if (userRights && !Auth.isAdmin()) {
+      const right = userRights[item.id];
+      if (right === 'aucun') return '';
+    }
+
     const isActive = item.id === activePage;
     const badge    = item.badge ? `<span class="nav-badge" id="badge-alertes">0</span>` : '';
     return `
@@ -116,7 +127,6 @@ function buildSidebar(activePage) {
   const sidebar = document.getElementById('sidebar');
   if (sidebar) sidebar.innerHTML = html;
 
-  // Mettre à jour avatar et nom utilisateur maintenant que la sidebar est dans le DOM
   if (typeof Auth !== 'undefined' && Auth.updateSidebarUser) {
     Auth.updateSidebarUser();
   }
@@ -127,7 +137,6 @@ function setPeriode(value) {
   localStorage.setItem('arche_periode', value);
   const display = document.getElementById('sidebar-period-display');
   if (display) display.textContent = value;
-  // Recharger les données de la page courante
   if (typeof onPeriodeChange === 'function') onPeriodeChange(value);
 }
 
