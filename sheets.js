@@ -889,7 +889,7 @@ function getPeriodes() {
   const s = localStorage.getItem('arche_periodes');
   if (s) { try { const p = JSON.parse(s); if (p.length) return p; } catch(e) {} }
   const y = new Date().getFullYear(), m = new Date().getMonth() + 1;
-  const start = m >= 9 ? y : y - 1;
+  const start = m >= 11 ? y : y - 1;
   const periodes = [];
   for (let i = 2024; i <= start; i++) periodes.push(`${i} - ${i+1}`);
   return periodes;
@@ -903,7 +903,7 @@ function getCurrentPeriode() {
   const s = localStorage.getItem('arche_periode');
   if (s && s !== 'undefined') return s;
   const d = new Date(), y = d.getFullYear(), m = d.getMonth()+1;
-  return m >= 9 ? `${y} - ${y+1}` : `${y-1} - ${y}`;
+  return m >= 11 ? `${y} - ${y+1}` : `${y-1} - ${y}`;
 }
 async function setCurrentPeriode(p) {
   localStorage.setItem('arche_periode', p);
