@@ -172,6 +172,10 @@
             <select id="f-desc"></select>
           </div>
           <div class="form-group">
+            <label class="form-label">Fournisseur</label>
+            <select id="f-fourn"></select>
+          </div>
+          <div class="form-group">
             <label class="form-label">Libellé complémentaire</label>
             <input type="text" id="f-type-comp" placeholder="Précisions libres…">
           </div>
@@ -275,6 +279,11 @@ function populateSelects() {
   const fd = document.getElementById('f-desc');
   fd.innerHTML = '<option value="">—</option>';
   descs.forEach(d => fd.innerHTML += `<option>${escH(d)}</option>`);
+
+  const fourns = Sheets.getFournisseurs();
+  const ff = document.getElementById('f-fourn');
+  ff.innerHTML = '<option value="">—</option>';
+  fourns.forEach(f => ff.innerHTML += `<option>${escH(f)}</option>`);
 
   // fl-type sera peuplé dynamiquement après chargement des données
 }
@@ -409,6 +418,7 @@ function renderTable() {
       <td class="r amount-d">${r[cc.debit]?fmt(r[cc.debit]):''}</td>
       <td class="r amount-c">${r[cc.credit]?fmt(r[cc.credit]):''}</td>
       <td class="r" style="color:${solde>=0?'var(--green)':'var(--red)'};font-size:10px;font-weight:500;">${fmt(solde)}</td>
+      <td style="font-size:10px;color:var(--text-3);">${escH(r[cc.fournisseur]||'')||'—'}</td>
       <td><span class="chip chip-${chipType(r[cc.type_mvt])}">${r[cc.type_mvt]||''}</span></td>
       <td class="td-trunc-sm" title="${escH(r[cc.description]||'')}">${r[cc.description]||''}</td>
       <td class="td-trunc-sm" title="${escH(r[cc.type_comp]||'')}">${r[cc.type_comp]||''}</td>
@@ -438,6 +448,7 @@ function renderTable() {
         ${mkTh('Débit',cc.debit,'r')}
         ${mkTh('Crédit',cc.credit,'r')}
         ${mkTh('Solde',cc.solde,'r')}
+        ${mkTh('Fournisseur',cc.fournisseur)}
         ${mkTh('Type mouvement',cc.type_mvt)}
         ${mkTh('Description',cc.description)}
         ${mkTh('Libellé comp.',cc.type_comp)}
@@ -502,6 +513,7 @@ function resetForm() {
   });
   document.getElementById('f-type').selectedIndex = 0;
   document.getElementById('f-desc').selectedIndex = 0;
+  document.getElementById('f-fourn').selectedIndex = 0;
   document.getElementById('form-err').classList.add('hidden');
   cancelEdit();
 }
@@ -539,6 +551,7 @@ async function submitForm() {
     credit:       activeSens === 'credit' ? montant : '',
     periode:      document.getElementById('f-per').value,
     type_mvt,
+    fournisseur:  document.getElementById('f-fourn').value,
     description:  document.getElementById('f-desc').value,
     type_comp:    document.getElementById('f-type-comp').value.trim(),
     nom:          libelle,
@@ -576,6 +589,7 @@ function openEdit(ri) {
   document.getElementById('f-montant').value   = r[cc.credit] || r[cc.debit] || '';
   document.getElementById('f-libelle').value   = r[cc.libelle]     || '';
   document.getElementById('f-type').value      = r[cc.type_mvt]    || '';
+  document.getElementById('f-fourn').value     = r[cc.fournisseur] || '';
   document.getElementById('f-desc').value      = r[cc.description] || '';
   document.getElementById('f-type-comp').value = r[cc.type_comp]   || '';
   document.getElementById('f-chat').value      = r[cc.nom_chat]    || '';
