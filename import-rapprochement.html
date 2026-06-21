@@ -349,7 +349,7 @@ function renderTable() {
       <td><input type="checkbox" ${isSel ? 'checked' : ''} onclick="event.stopPropagation();toggleSelect(${idx})" style="accent-color:var(--orange);"></td>
       <td style="font-size:9px;color:var(--text-3);">${escH(r[ci.id] || '')}</td>
       <td><span class="chip">${escH(r[ci.onglet] || '')}</span></td>
-      <td style="color:var(--text-3);font-size:10px;">${escH(r[ci.date] || '')}</td>
+      <td style="color:var(--text-3);font-size:10px;">${fmtDate(r[ci.date])}</td>
       <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;">${escH(r[ci.libelle] || '')}</td>
       <td class="r amount">${fmt(r[ci.montant])}</td>
       <td>${escH(r[ci.type_mvt] || '')}</td>
@@ -358,7 +358,7 @@ function renderTable() {
       <td style="font-size:10px;color:var(--text-3);">${escH(r[ci.nom_chat] || '')}</td>
       <td style="font-size:10px;color:var(--text-3);">${escH(r[ci.num_cheque] || '')}</td>
       <td style="font-size:10px;color:var(--text-3);">${escH(r[ci.num_recu] || '')}</td>
-      <td style="font-size:10px;color:var(--text-3);">${escH(r[ci.date_import] || '')}</td>
+      <td style="font-size:10px;color:var(--text-3);">${fmtDate(r[ci.date_import])}</td>
       <td style="white-space:nowrap;">
         <button class="btn-icon btn-edit" onclick="event.stopPropagation();openEdit(${idx})" title="Modifier"><i class="ti ti-pencil"></i></button>
         ${btnTransfer}
@@ -576,6 +576,22 @@ async function transfertSelectionCaisse() {
 // ============================================================
 // HELPERS
 // ============================================================
+function fmtDate(v) {
+  if (!v) return '—';
+  const s = String(v).trim();
+  // Numéro de série Excel (ex: 46031)
+  const n = parseFloat(s);
+  if (!isNaN(n) && n > 40000 && n < 60000) {
+    const d = new Date(Math.round((n - 25569) * 86400 * 1000));
+    return d.toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit', year:'numeric'});
+  }
+  // Déjà au format jj/mm/aaaa ou aaaa-mm-jj
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const p = s.split('-'); return `${p[2]}/${p[1]}/${p[0]}`;
+  }
+  return s;
+}
 function fmt(v) { if (!v && v !== 0) return '—'; const n = parseFloat(v); if (isNaN(n)) return '—'; return n.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €'; }
 function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;'); }
 function showToast(m) { const t = document.createElement('div'); t.className = 'success-toast'; t.innerHTML = `<i class="ti ti-check"></i> ${m}`; document.body.appendChild(t); setTimeout(() => t.remove(), 3500); }
