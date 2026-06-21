@@ -115,7 +115,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary btn-sm" onclick="closeFlag()">Annuler</button>
-      <button class="btn btn-primary btn-sm" onclick="saveFlag()">Enregistrer</button>
+      <button class="btn btn-primary btn-sm edit-action" onclick="saveFlag()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -140,6 +140,7 @@ let flagTarget = null; // { source, rowIndex, libelle }
 Auth.requireAuth(async (user) => {
   await loadGapiSheets();
   Sidebar.build('dashboard');
+  await Auth.applyUserRights('dashboard');
   activePer = Sidebar.getActivePeriode();
   buildPeriodPicker();
   await loadData();
