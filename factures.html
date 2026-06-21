@@ -189,7 +189,7 @@
 
           <div id="form-err" class="hidden" style="color:var(--red);font-size:11px;padding:6px 0;"></div>
           <div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);">
-            <button class="btn btn-primary" style="flex:1;" id="btn-submit" onclick="submit()"><i class="ti ti-device-floppy"></i> Enregistrer</button>
+            <button class="btn btn-primary" style="flex:1;" id="btn-submit" class="edit-action" onclick="submit()"><i class="ti ti-device-floppy"></i> Enregistrer</button>
             <button class="btn btn-secondary" onclick="reset()"><i class="ti ti-refresh"></i> Vider</button>
           </div>
         </div>
@@ -203,7 +203,7 @@
   <div class="modal">
     <div class="modal-header"><span class="modal-title"><i class="ti ti-trash" style="color:var(--red)"></i> Supprimer la facture</span><button class="modal-close" onclick="closeDel()">×</button></div>
     <div class="modal-body"><div style="font-size:12px;">Êtes-vous sûr de vouloir supprimer cette facture ?</div><div class="confirm-detail" id="del-detail"></div></div>
-    <div class="modal-footer"><button class="btn btn-secondary btn-sm" onclick="closeDel()">Annuler</button><button class="btn btn-danger btn-sm" onclick="confirmDel()"><i class="ti ti-trash"></i> Supprimer</button></div>
+    <div class="modal-footer"><button class="btn btn-secondary btn-sm" onclick="closeDel()">Annuler</button><button class="btn btn-danger btn-sm edit-action" onclick="confirmDel()"><i class="ti ti-trash"></i> Supprimer</button></div>
   </div>
 </div>
 
@@ -216,6 +216,7 @@ let allRows=[], editIdx=null, delIdx=null;
 Auth.requireAuth(async()=>{
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
   Sidebar.build('factures');
+  await Auth.applyUserRights('factures');
   const pers=Sheets.getPeriodes(), ap=Sidebar.getActivePeriode();
   document.getElementById('topbar-per').textContent=ap;
 
