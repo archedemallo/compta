@@ -304,7 +304,7 @@ function updateDynamicFilters() {
 async function loadData() {
   document.getElementById('table-wrap').innerHTML =
     '<div style="padding:32px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>';
-  const all = await Sheets.getCaisseOperations();
+  const all = await Sheets.getCaisse2Operations();
   allRows   = all.filter(SHEET_FILTER);
   Sidebar.setLastUpdate();
   updateDynamicFilters();
@@ -489,7 +489,7 @@ async function toggleVerified(ri, checked) {
   if (checked && editIdx === ri) cancelEdit();
   renderTable();
   try {
-    await Sheets.updateCell(Sheets.config.sheets.caisse, ri+2, cc.flag_check, checked ? 'VERIFIE' : 'FALSE');
+    await Sheets.updateCell(Sheets.config.sheets.caisse_2, ri+2, cc.flag_check, checked ? 'VERIFIE' : 'FALSE');
     showToast(checked ? 'Ligne verrouillée ✓' : 'Ligne déverrouillée');
   } catch(e) {
     r[cc.flag_check] = checked ? 'FALSE' : 'VERIFIE';
@@ -570,10 +570,10 @@ async function submitForm() {
       op.flag_check   = r[cc.flag_check]   || 'FALSE';
       op.flag_comment = r[cc.flag_comment] || '';
       op.suivi_ref    = r[cc.suivi_ref]    || '';
-      await Sheets.updateCaisseOperation(editIdx, op);
+      await Sheets.updateCaisse2Operation(editIdx, op);
       showToast('Opération modifiée !');
     } else {
-      await Sheets.saveCaisseOperation(op);
+      await Sheets.saveCaisse2Operation(op);
       showToast('Opération enregistrée !');
     }
     resetForm(); await loadData();
@@ -585,7 +585,7 @@ function openEdit(ri) {
   const cc = Sheets.cols.caisse, r = allRows[ri];
   if (r[cc.flag_check] === 'VERIFIE') { showToast('⚠️ Ligne vérifiée — décochez pour modifier'); return; }
   editIdx = ri;
-  document.getElementById('f-date').value      = r[cc.date]        || '';
+  document.getElementById('f-date').value      = dateToISO(r[cc.date] || '');
   document.getElementById('f-montant').value   = r[cc.credit] || r[cc.debit] || '';
   document.getElementById('f-libelle').value   = r[cc.libelle]     || '';
   document.getElementById('f-type').value      = r[cc.type_mvt]    || '';
@@ -621,7 +621,7 @@ function closeDel() { document.getElementById('modal-del').classList.add('hidden
 async function confirmDel() {
   if (delIdx === null) return;
   try {
-    await Sheets.deleteRow(Sheets.config.sheets.caisse, delIdx);
+    await Sheets.deleteRow(Sheets.config.sheets.caisse_2, delIdx);
     closeDel(); showToast('Supprimée'); await loadData();
   } catch(e) { alert('Erreur : ' + e.message); }
 }
