@@ -636,7 +636,7 @@ function _renderDonSection(keyword,icon,label,chartId,cfg){
 
   return `
   <div class="kpi-top" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px;">
-    <div class="kpi"><div class="kpi-label">${label} — ${activePer}</div><div class="kpi-value v-green">${fmt(totCur)}</div><div class="kpi-sub">${personnes.length} personne(s)</div></div>
+    <div class="kpi"><div class="kpi-label">${label} — ${activePer}</div><div class="kpi-value v-green">${fmt(totCur)}</div><div class="kpi-sub">${cfg.kpiSub(personnes)}</div></div>
     <div class="kpi"><div class="kpi-label">Période précédente (${prevPer||'N/A'})</div><div class="kpi-value" style="color:var(--text-3);">${fmt(totPrev)}</div></div>
     <div class="kpi"><div class="kpi-label">Évolution</div><div class="kpi-value ${evol===null?'':evol>=0?'v-green':'v-red'}">${evol===null?'—':(evol>=0?'+':'')+evol.toFixed(1)+' %'}</div></div>
   </div>
@@ -669,6 +669,7 @@ const CFG_DONS={
   getNomCaisse: r=>String(r[cc().libelle]||'').trim()||'Anonyme',
   getNomBanque: r=>String(r[cb().type_comp]||r[cb().libelle]||'').trim()||'Anonyme',
   multiColonne: true,
+  kpiSub: p=>`${p.length} personne${p.length>1?'s':''}`,
 };
 function renderDons(){return _renderDonSection('don','ti ti-coin','Total dons','chart-dons',CFG_DONS);}
 function initDonsChart(){charts.dons=_initGroupChart('don','chart-dons',{bg:'rgba(59,109,17,0.75)',border:'rgb(59,109,17)'},{bg:'rgba(59,109,17,0.2)',border:'rgba(59,109,17,0.5)'})||charts.dons;}
@@ -681,6 +682,7 @@ const CFG_SUBV={
   getNomCaisse: r=>String(r[cc().libelle]||'').trim()||'Anonyme',
   getNomBanque: r=>String(r[cb().description]||r[cb().libelle]||'').trim()||'Anonyme',
   multiColonne: false,
+  kpiSub: p=>{const nb=p.reduce((s,[,d])=>s+d.nb,0);return `${nb} subvention${nb>1?'s':''} perçue${nb>1?'s':''}`;},
 };
 function renderSubventions(){return _renderDonSection('subvention','ti ti-award','Total subventions','chart-subventions',CFG_SUBV);}
 function initSubventionsChart(){charts.subventions=_initGroupChart('subvention','chart-subventions',{bg:'rgba(37,99,235,0.75)',border:'rgb(37,99,235)'},{bg:'rgba(37,99,235,0.2)',border:'rgba(37,99,235,0.5)'})||charts.subventions;}
@@ -697,14 +699,15 @@ function renderChequesAtt(){
     <div class="kpi"><div class="kpi-label">Encaissés total</div><div class="kpi-value v-green">${allCheques.filter(r=>r[Sheets.cols.cheque.statut]==='encaisse').length}</div></div>
   </div>
   <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-writing"></i> Chèques en attente d'encaissement</div></div>
-  <table><thead><tr><th>Date émission</th><th>N° chèque</th><th>Bénéficiaire</th><th>Type</th><th class="r">Montant</th></tr></thead>
+  <table><thead><tr><th>Date émission</th><th>N° chèque</th><th>Bénéficiaire</th><th>Nom chat</th><th>Type</th><th class="r">Montant</th></tr></thead>
   <tbody>${att.length?att.map(r=>`<tr>
     <td style="color:var(--text-3);">${r[Sheets.cols.cheque.date_emission]||'—'}</td>
     <td style="font-weight:500;">N°${r[Sheets.cols.cheque.num_cheque]||'—'}</td>
     <td>${r[Sheets.cols.cheque.beneficiaire]||'—'}</td>
+    <td style="color:var(--text-3);font-size:11px;">${r[Sheets.cols.cheque.nom_chat]||'—'}</td>
     <td><span class="chip chip-${chipType(r[Sheets.cols.cheque.type_mvt])}">${r[Sheets.cols.cheque.type_mvt]||'—'}</span></td>
     <td class="r amount-d">${fmt(r[Sheets.cols.cheque.montant])}</td>
-  </tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-3);">Aucun chèque en attente</td></tr>'}</tbody></table></div>`;
+  </tr>`).join(''):'<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-3);">Aucun chèque en attente</td></tr>'}</tbody></table></div>`;
 }
 
 // ============================================================
