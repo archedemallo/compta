@@ -188,7 +188,7 @@ const ONGLETS = {
     label: 'Dons', icon: 'ti-gift',
     compta: 'Suivi_Dons',
     cols: {
-      date: 3, nom: 8, prenom: 9, nom_chat: null,
+      date: 3, nom: 8, prenom: 9, raison_sociale: 10, nom_chat: null,
       mode_reglement: 18, num_cheque: 6, num_recu: 7,
       montants: [{ col: 5, label: 'Montant don' }],
     },
@@ -379,8 +379,8 @@ function renderCurrentTab() {
   }
 
   let filtered = rows.map((row, ri) => ({ row, ri })).filter(({ row, ri }) => {
-    const nom = getCellVal(row, cfg.cols.nom);
-    const prenom = getCellVal(row, cfg.cols.prenom);
+    const nom = getNom(row, cfg);
+    const prenom = '';
     const chat = getCellVal(row, cfg.cols.nom_chat);
     const date = getCellVal(row, cfg.cols.date);
     if (search && ![nom, prenom, chat, date].join(' ').toLowerCase().includes(search)) return false;
@@ -409,8 +409,7 @@ function renderCurrentTab() {
 
   const trs = filtered.map(({ row, ri }) => {
     const date = getCellVal(row, cfg.cols.date);
-    const nom = getCellVal(row, cfg.cols.nom);
-    const prenom = hasPrenom ? getCellVal(row, cfg.cols.prenom) : '';
+    const nom = getNom(row, cfg);
     const chat = hasChat ? getCellVal(row, cfg.cols.nom_chat) : '';
     const modeRaw = getCellVal(row, cfg.cols.mode_reglement);
     const dest = getDestination(modeRaw);
@@ -450,7 +449,7 @@ function renderCurrentTab() {
 
     return `<tr class="${allImported ? 'already-imported' : ''}">
       <td style="color:var(--text-3);white-space:nowrap;">${formatDate(date)}</td>
-      <td style="font-weight:500;">${nom}${prenom ? ' ' + prenom : ''}</td>
+      <td style="font-weight:500;">${escH(nom)}</td>
       ${hasChat ? `<td style="color:var(--text-3);">${chat}</td>` : ''}
       <td><div class="montant-choice">${montantsHtml || '—'}</div></td>
       <td><span class="chip chip-${dest}">${modeLabel}</span></td>
@@ -536,7 +535,7 @@ function openImportModal() {
     const row = s.row;
     const dest = getDestination(getCellVal(row, cfg.cols.mode_reglement));
     const modeRaw = getCellVal(row, cfg.cols.mode_reglement) || 'Chèque';
-    const nom = getCellVal(row, cfg.cols.nom) + (cfg.cols.prenom !== null ? ' ' + getCellVal(row, cfg.cols.prenom) : '');
+    const nom = getNom(row, cfg);
     const chat = cfg.cols.nom_chat !== null ? getCellVal(row, cfg.cols.nom_chat) : '';
     const date = formatDateISO(getCellVal(row, cfg.cols.date));
     const numCheque = getCellVal(row, cfg.cols.num_cheque);
@@ -710,6 +709,20 @@ function getDestination(modeRaw) {
 function getCellVal(row, colIdx) {
   if (colIdx === null || colIdx === undefined) return '';
   return (row[colIdx] || '').toString().trim();
+}
+
+// Retourne le nom avec fallback sur raisonSociale si nom vide
+function getNom(row, cfg) {
+  const nom    = getCellVal(row, cfg.cols.nom);
+  const prenom = cfg.cols.prenom !== null ? getCellVal(row, cfg.cols.prenom) : '';
+  const full   = [nom, prenom].filter(Boolean).join(' ').trim();
+  if (full) return full;
+  // Fallback raisonSociale (col J = index 9 dans Suivi)
+  if (cfg.cols.raison_sociale !== undefined) {
+    const rs = getCellVal(row, cfg.cols.raison_sociale);
+    if (rs) return rs;
+  }
+  return '—';
 }
 
 function formatDate(d) {
