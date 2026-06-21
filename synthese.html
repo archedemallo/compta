@@ -132,7 +132,7 @@
       <button class="synth-btn" onclick="showSection('evenements')"><i class="ti ti-confetti"></i> Événements</button>
       <button class="synth-btn" onclick="showSection('totaux-periode')"><i class="ti ti-sum"></i> Totaux période</button>
       <button class="synth-btn" onclick="showSection('rapport-annuel')"><i class="ti ti-file-analytics"></i> Rapport annuel</button>
-      <button class="synth-btn" onclick="showSection('saisie-rapide')"><i class="ti ti-pencil"></i> Saisie rapide</button>
+      <button class="synth-btn edit-action" onclick="showSection('saisie-rapide')"><i class="ti ti-pencil"></i> Saisie rapide</button>
     </div>
 
     <!-- LOADING -->
@@ -162,6 +162,7 @@ let charts={};
 Auth.requireAuth(async(user)=>{
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
   Sidebar.build('synthese');
+  await Auth.applyUserRights('synthese');
   activePer=Sidebar.getActivePeriode();
   buildPeriodPicker();
 
