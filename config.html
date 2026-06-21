@@ -7,12 +7,22 @@
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
+  /* ---- ONGLETS ---- */
+  .tab-bar{display:flex;gap:0;border-bottom:0.5px solid var(--border);margin-bottom:20px;background:var(--surface);}
+  .tab-btn{padding:10px 22px;font-size:12px;font-weight:600;border:none;background:transparent;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--text-3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s;display:flex;align-items:center;gap:7px;}
+  .tab-btn:hover{color:var(--text);background:var(--warm);}
+  .tab-btn.active{color:var(--orange);border-bottom-color:var(--orange);}
+  .tab-pane{display:none;} .tab-pane.active{display:block;}
+
+  /* ---- CARDS ---- */
   .config-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
   .config-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;}
   .config-head{padding:13px 16px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
   .config-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;}
   .config-title i{color:var(--orange);font-size:16px;}
   .config-body{padding:14px 16px;}
+
+  /* ---- LISTES ---- */
   .item-list{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;max-height:280px;overflow-y:auto;}
   .item-row{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface-2);border:0.5px solid var(--border);border-radius:var(--radius-sm);}
   .item-label{flex:1;font-size:12px;}
@@ -23,15 +33,44 @@
   .periode-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface-2);border:0.5px solid var(--border);border-radius:var(--radius-sm);}
   .periode-label{flex:1;font-size:13px;font-weight:500;}
   .periode-active{font-size:10px;padding:2px 6px;border-radius:8px;background:var(--green-bg);color:var(--green);}
-  .user-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface-2);border:0.5px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;}
+
+  /* ---- SOLDES ---- */
+  .solde-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  .solde-item{display:flex;flex-direction:column;gap:4px;}
+  .solde-label{font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;}
+  .solde-saved{font-size:10px;color:var(--green);margin-top:2px;}
+
+  /* ---- UTILISATEURS ---- */
+  .user-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface-2);border:0.5px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;}
   .user-avatar{width:34px;height:34px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:600;flex-shrink:0;}
-  .user-info{flex:1;} .user-email{font-size:12px;font-weight:500;} .user-role{font-size:10px;color:var(--text-3);}
-  .role-badge{font-size:10px;padding:2px 8px;border-radius:8px;}
-  .role-admin{background:var(--orange);color:white;} .role-reader{background:var(--blue-bg);color:var(--blue);}
+  .user-info{flex:1;min-width:0;}
+  .user-email{font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .user-role{font-size:10px;color:var(--text-3);}
+  .role-badge{font-size:10px;padding:2px 8px;border-radius:8px;white-space:nowrap;}
+  .role-admin{background:var(--orange);color:white;}
+  .role-reader{background:var(--blue-bg);color:var(--blue);}
+  .user-del-btn{background:none;border:none;cursor:pointer;color:var(--text-3);font-size:15px;padding:2px;}
+  .user-del-btn:hover{color:var(--red);}
+
+  /* ---- DROITS TABLE ---- */
+  .rights-table{width:100%;border-collapse:collapse;font-size:11px;}
+  .rights-table th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:6px 8px;border-bottom:0.5px solid var(--border);background:var(--surface-2);}
+  .rights-table td{padding:6px 8px;border-bottom:0.5px solid var(--border);}
+  .rights-table tr:last-child td{border-bottom:none;}
+  .rights-table select{font-size:11px;padding:3px 6px;border-radius:4px;border:0.5px solid var(--border-mid);background:var(--surface);font-family:'DM Sans',sans-serif;color:var(--text);}
+  .rights-section-header td{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-3);background:var(--surface-2)!important;padding:8px 8px 4px;}
+  .rights-table .lock-cell{font-size:10px;color:var(--text-3);display:flex;align-items:center;gap:4px;}
+
+  /* ---- ALERTS CHECKBOX ---- */
+  .alert-toggle{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface-2);border:0.5px solid var(--border);border-radius:var(--radius-sm);margin-top:8px;}
+  .alert-toggle label{font-size:12px;cursor:pointer;flex:1;}
+  .alert-toggle input[type=checkbox]{accent-color:var(--orange);width:15px;height:15px;}
+
+  /* ---- MISC ---- */
   .info-banner{background:var(--blue-bg);border:0.5px solid rgba(24,95,165,0.2);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--blue);display:flex;gap:8px;margin-bottom:14px;}
   .warn-banner{background:var(--amber-bg);border:0.5px solid rgba(133,79,11,0.2);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--amber);display:flex;gap:8px;}
   .modal-overlay{position:fixed;inset:0;background:rgba(61,43,31,0.35);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
-  .modal{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-md);width:380px;max-width:95vw;}
+  .modal{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-md);width:420px;max-width:95vw;}
   .modal-header{padding:14px 18px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
   .modal-title{font-size:13px;font-weight:600;}
   .modal-close{background:none;border:none;font-size:18px;color:var(--text-3);cursor:pointer;}
@@ -39,13 +78,14 @@
   .success-toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:white;padding:10px 18px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;z-index:999;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-md);animation:slideIn 0.25s ease;}
   @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
   code{background:var(--surface-2);padding:2px 5px;border-radius:3px;font-size:10px;font-family:monospace;}
-  .solde-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
-  .solde-item{display:flex;flex-direction:column;gap:4px;}
-  .solde-label{font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;}
-  .solde-saved{font-size:10px;color:var(--green);margin-top:2px;}
   .spinner{display:inline-block;animation:spin 1s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
-  .saving-indicator{font-size:10px;color:var(--text-3);margin-left:8px;display:none;}
+  .btn-save-rights{margin-top:14px;}
+  .user-tab-select{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .user-tab-pill{font-size:11px;padding:5px 12px;border-radius:20px;border:0.5px solid var(--border-mid);background:transparent;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--text-2);transition:all 0.15s;}
+  .user-tab-pill.active{background:var(--orange);color:white;border-color:var(--orange);}
+  .full-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px;}
+  .full-card .config-body{padding:14px 16px;}
 </style>
 </head>
 <body>
@@ -60,152 +100,202 @@
   </div>
 
   <div class="page-content">
-    <!-- Bandeau info : config stockée dans Google Sheet -->
     <div class="info-banner">
       <i class="ti ti-cloud" style="flex-shrink:0;font-size:16px;"></i>
-      <span>Les paramètres sont stockés dans l'onglet <strong>Config</strong> de votre Google Sheet — disponibles sur n'importe quel PC dès connexion Google. <span id="sync-status" style="color:var(--text-3);"></span></span>
+      <span>Les paramètres sont stockés dans l'onglet <strong>Config</strong> de votre Google Sheet. <span id="sync-status" style="color:var(--text-3);"></span></span>
     </div>
 
-    <div class="config-grid">
+    <!-- ONGLETS -->
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('params')" id="tab-btn-params">
+        <i class="ti ti-sliders"></i> Paramètres
+      </button>
+      <button class="tab-btn" onclick="switchTab('listes')" id="tab-btn-listes">
+        <i class="ti ti-list"></i> Listes de saisie
+      </button>
+      <button class="tab-btn" onclick="switchTab('users')" id="tab-btn-users">
+        <i class="ti ti-users"></i> Utilisateurs &amp; Accès
+      </button>
+    </div>
 
-      <!-- PÉRIODES -->
-      <div class="config-card">
-        <div class="config-head"><div class="config-title"><i class="ti ti-calendar"></i> Périodes comptables</div></div>
-        <div class="config-body">
-          <div class="item-list" id="periodes-list"></div>
-          <div class="add-row">
-            <input type="text" id="new-periode" placeholder="Ex: 2026 - 2027">
-            <button class="btn btn-primary btn-sm" onclick="addPeriode()"><i class="ti ti-plus"></i> Ajouter</button>
+    <!-- ============================================================ -->
+    <!-- ONGLET 1 : PARAMÈTRES                                        -->
+    <!-- ============================================================ -->
+    <div id="tab-params" class="tab-pane active">
+      <div class="config-grid">
+
+        <!-- PÉRIODES -->
+        <div class="config-card">
+          <div class="config-head"><div class="config-title"><i class="ti ti-calendar"></i> Périodes comptables</div></div>
+          <div class="config-body">
+            <div class="item-list" id="periodes-list"></div>
+            <div class="add-row">
+              <input type="text" id="new-periode" placeholder="Ex: 2026 - 2027">
+              <button class="btn btn-primary btn-sm" onclick="addPeriode()"><i class="ti ti-plus"></i> Ajouter</button>
+            </div>
+            <div style="margin-top:8px;font-size:10px;color:var(--text-3);">Format : <code>AAAA - AAAA</code> (espaces autour du tiret)</div>
           </div>
-          <div style="margin-top:8px;font-size:10px;color:var(--text-3);">Format : <code>AAAA - AAAA</code> (espaces autour du tiret)</div>
         </div>
+
+        <!-- SOLDES INITIAUX -->
+        <div class="config-card">
+          <div class="config-head">
+            <div class="config-title"><i class="ti ti-wallet"></i> Soldes initiaux par période</div>
+            <button class="btn btn-primary btn-sm" id="btn-save-soldes" onclick="saveSoldesInitiaux()">
+              <i class="ti ti-device-floppy"></i> Enregistrer
+            </button>
+          </div>
+          <div class="config-body">
+            <div style="font-size:11px;color:var(--text-3);margin-bottom:12px;">Solde de départ au début de chaque période.</div>
+            <div style="margin-bottom:12px;">
+              <label style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:6px;display:block;">Période</label>
+              <select id="solde-periode" onchange="loadSoldesForPeriode()"
+                style="padding:6px 10px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);font-size:12px;font-family:'DM Sans',sans-serif;width:100%;"></select>
+            </div>
+            <div class="solde-grid">
+              <div class="solde-item">
+                <label class="solde-label">Banque (€)</label>
+                <input type="number" id="solde-banque" step="0.01" placeholder="0,00">
+                <span class="solde-saved hidden" id="saved-banque"><i class="ti ti-check"></i> OK</span>
+              </div>
+              <div class="solde-item">
+                <label class="solde-label">Caisse 1 (€)</label>
+                <input type="number" id="solde-caisse1" step="0.01" placeholder="0,00">
+                <span class="solde-saved hidden" id="saved-caisse1"><i class="ti ti-check"></i> OK</span>
+              </div>
+              <div class="solde-item">
+                <label class="solde-label">Caisse 2 (€)</label>
+                <input type="number" id="solde-caisse2" step="0.01" placeholder="0,00">
+                <span class="solde-saved hidden" id="saved-caisse2"><i class="ti ti-check"></i> OK</span>
+              </div>
+            </div>
+            <div style="margin-top:10px;font-size:10px;color:var(--text-3);">
+              Soldes enregistrés : <span id="soldes-summary">Chargement…</span>
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      <!-- UTILISATEURS -->
-      <div class="config-card">
-        <div class="config-head"><div class="config-title"><i class="ti ti-users"></i> Utilisateurs autorisés</div></div>
+      <!-- STATUT CONNEXION -->
+      <div class="full-card">
+        <div class="config-head"><div class="config-title"><i class="ti ti-database"></i> Statut connexion Google Sheets</div></div>
         <div class="config-body">
-          <div id="users-list"></div>
-          <div class="warn-banner" style="margin-top:12px;">
-            <i class="ti ti-alert-triangle" style="flex-shrink:0;font-size:16px;"></i>
-            <span>Pour ajouter/supprimer un utilisateur, modifiez <code>authorizedUsers</code> dans <code>auth.js</code> et redéployez.</span>
+          <div id="sheets-status"><div style="font-size:12px;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Vérification…</div></div>
+          <div style="margin-top:8px;font-size:10px;color:var(--text-3);">
+            ID configuré dans <code>sheets.js</code> : <code id="sheets-id-display">—</code>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- TYPES DE MOUVEMENT -->
-      <div class="config-card">
+    <!-- ============================================================ -->
+    <!-- ONGLET 2 : LISTES DE SAISIE                                  -->
+    <!-- ============================================================ -->
+    <div id="tab-listes" class="tab-pane">
+      <div class="config-grid">
+
+        <!-- TYPES DE MOUVEMENT -->
+        <div class="config-card">
+          <div class="config-head">
+            <div class="config-title"><i class="ti ti-tags"></i> Types de mouvement</div>
+            <button class="btn btn-secondary btn-sm" onclick="sortList('type')" title="Trier A→Z"><i class="ti ti-sort-ascending-letters"></i> A→Z</button>
+          </div>
+          <div class="config-body">
+            <div class="item-list" id="types-list"></div>
+            <div class="add-row">
+              <input type="text" id="new-type" placeholder="Ex: Subvention">
+              <button class="btn btn-primary btn-sm" onclick="addItem('type')"><i class="ti ti-plus"></i> Ajouter</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- DESCRIPTIONS -->
+        <div class="config-card">
+          <div class="config-head">
+            <div class="config-title"><i class="ti ti-align-left"></i> Descriptions</div>
+            <button class="btn btn-secondary btn-sm" onclick="sortList('desc')" title="Trier A→Z"><i class="ti ti-sort-ascending-letters"></i> A→Z</button>
+          </div>
+          <div class="config-body">
+            <div class="item-list" id="descs-list"></div>
+            <div class="add-row">
+              <input type="text" id="new-desc" placeholder="Ex: Soirée Novillars">
+              <button class="btn btn-primary btn-sm" onclick="addItem('desc')"><i class="ti ti-plus"></i> Ajouter</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODES RÈGLEMENT -->
+        <div class="config-card">
+          <div class="config-head">
+            <div class="config-title"><i class="ti ti-credit-card"></i> Modes de règlement</div>
+            <button class="btn btn-secondary btn-sm" onclick="sortList('reglement')" title="Trier A→Z"><i class="ti ti-sort-ascending-letters"></i> A→Z</button>
+          </div>
+          <div class="config-body">
+            <div class="item-list" id="reglements-list"></div>
+            <div class="add-row">
+              <input type="text" id="new-reglement" placeholder="Ex: Lydia">
+              <button class="btn btn-primary btn-sm" onclick="addItem('reglement')"><i class="ti ti-plus"></i> Ajouter</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- FOURNISSEURS -->
+        <div class="config-card">
+          <div class="config-head">
+            <div class="config-title"><i class="ti ti-building-store"></i> Fournisseurs</div>
+            <button class="btn btn-secondary btn-sm" onclick="sortList('fourn')" title="Trier A→Z"><i class="ti ti-sort-ascending-letters"></i> A→Z</button>
+          </div>
+          <div class="config-body">
+            <div class="item-list" id="fourns-list"></div>
+            <div class="add-row">
+              <input type="text" id="new-fourn" placeholder="Ex: Vétérinaire Dupont">
+              <button class="btn btn-primary btn-sm" onclick="addItem('fourn')"><i class="ti ti-plus"></i> Ajouter</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ONGLET 3 : UTILISATEURS & ACCÈS                              -->
+    <!-- ============================================================ -->
+    <div id="tab-users" class="tab-pane">
+
+      <!-- Liste des utilisateurs -->
+      <div class="full-card" style="margin-bottom:14px;">
         <div class="config-head">
-          <div class="config-title"><i class="ti ti-tags"></i> Types de mouvement</div>
-          <button class="btn btn-secondary btn-sm" onclick="sortList('type')" title="Trier A→Z"><i class="ti ti-sort-ascending-letters"></i> Trier A→Z</button>
+          <div class="config-title"><i class="ti ti-users"></i> Utilisateurs autorisés</div>
         </div>
         <div class="config-body">
-          <div class="item-list" id="types-list"></div>
+          <div id="users-list" style="margin-bottom:14px;"></div>
           <div class="add-row">
-            <input type="text" id="new-type" placeholder="Ex: Subvention">
-            <button class="btn btn-primary btn-sm" onclick="addItem('type')"><i class="ti ti-plus"></i> Ajouter</button>
+            <input type="email" id="new-user-email" placeholder="email@exemple.fr" style="flex:1;">
+            <button class="btn btn-primary btn-sm" onclick="addUser()"><i class="ti ti-plus"></i> Ajouter</button>
           </div>
+          <div style="margin-top:8px;font-size:10px;color:var(--text-3);">L'utilisateur devra se connecter avec ce compte Google.</div>
         </div>
       </div>
 
-      <!-- DESCRIPTIONS -->
-      <div class="config-card">
+      <!-- Droits par utilisateur -->
+      <div class="full-card">
         <div class="config-head">
-          <div class="config-title"><i class="ti ti-align-left"></i> Descriptions</div>
-          <button class="btn btn-secondary btn-sm" onclick="sortList('desc')" title="Trier A→Z"><i class="ti ti-sort-ascending-letters"></i> Trier A→Z</button>
-        </div>
-        <div class="config-body">
-          <div class="item-list" id="descs-list"></div>
-          <div class="add-row">
-            <input type="text" id="new-desc" placeholder="Ex: Soirée Novillars">
-            <button class="btn btn-primary btn-sm" onclick="addItem('desc')"><i class="ti ti-plus"></i> Ajouter</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- MODES RÈGLEMENT -->
-      <div class="config-card">
-        <div class="config-head">
-          <div class="config-title"><i class="ti ti-credit-card"></i> Modes de règlement</div>
-          <button class="btn btn-secondary btn-sm" onclick="sortList('reglement')" title="Trier A→Z"><i class="ti ti-sort-ascending-letters"></i> Trier A→Z</button>
-        </div>
-        <div class="config-body">
-          <div class="item-list" id="reglements-list"></div>
-          <div class="add-row">
-            <input type="text" id="new-reglement" placeholder="Ex: Lydia">
-            <button class="btn btn-primary btn-sm" onclick="addItem('reglement')"><i class="ti ti-plus"></i> Ajouter</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- FOURNISSEURS -->
-      <div class="config-card">
-        <div class="config-head">
-          <div class="config-title"><i class="ti ti-building-store"></i> Fournisseurs</div>
-          <button class="btn btn-secondary btn-sm" onclick="sortList('fourn')" title="Trier A→Z"><i class="ti ti-sort-ascending-letters"></i> Trier A→Z</button>
-        </div>
-        <div class="config-body">
-          <div class="item-list" id="fourns-list"></div>
-          <div class="add-row">
-            <input type="text" id="new-fourn" placeholder="Ex: Vétérinaire Dupont">
-            <button class="btn btn-primary btn-sm" onclick="addItem('fourn')"><i class="ti ti-plus"></i> Ajouter</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- SOLDES INITIAUX -->
-      <div class="config-card">
-        <div class="config-head">
-          <div class="config-title"><i class="ti ti-wallet"></i> Soldes initiaux par période</div>
-          <button class="btn btn-primary btn-sm" id="btn-save-soldes" onclick="saveSoldesInitiaux()">
-            <i class="ti ti-device-floppy"></i> Enregistrer
+          <div class="config-title"><i class="ti ti-shield-lock"></i> Droits par page</div>
+          <button class="btn btn-primary btn-sm btn-save-rights" onclick="saveAllRights()">
+            <i class="ti ti-device-floppy"></i> Sauvegarder
           </button>
         </div>
         <div class="config-body">
-          <div style="font-size:11px;color:var(--text-3);margin-bottom:12px;">Solde de départ au début de chaque période. Repris automatiquement dans les KPIs.</div>
-          <div style="margin-bottom:12px;">
-            <label style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:6px;display:block;">Période</label>
-            <select id="solde-periode" onchange="loadSoldesForPeriode()"
-              style="padding:6px 10px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);font-size:12px;font-family:'DM Sans',sans-serif;width:100%;"></select>
-          </div>
-          <div class="solde-grid">
-            <div class="solde-item">
-              <label class="solde-label">Banque (€)</label>
-              <input type="number" id="solde-banque" step="0.01" placeholder="0,00">
-              <span class="solde-saved hidden" id="saved-banque"><i class="ti ti-check"></i> Enregistré</span>
-            </div>
-            <div class="solde-item">
-              <label class="solde-label">Caisse 1 (€)</label>
-              <input type="number" id="solde-caisse1" step="0.01" placeholder="0,00">
-              <span class="solde-saved hidden" id="saved-caisse1"><i class="ti ti-check"></i> Enregistré</span>
-            </div>
-            <div class="solde-item">
-              <label class="solde-label">Caisse 2 (€)</label>
-              <input type="number" id="solde-caisse2" step="0.01" placeholder="0,00">
-              <span class="solde-saved hidden" id="saved-caisse2"><i class="ti ti-check"></i> Enregistré</span>
-            </div>
-          </div>
-          <div style="margin-top:10px;font-size:10px;color:var(--text-3);">
-            Soldes enregistrés : <span id="soldes-summary">Chargement…</span>
-          </div>
+          <div class="user-tab-select" id="rights-user-tabs"></div>
+          <div id="rights-table-wrap"></div>
         </div>
       </div>
 
     </div>
 
-    <!-- STATUT CONNEXION -->
-    <div style="margin-top:14px;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;">
-      <div style="font-size:12px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
-        <i class="ti ti-database" style="color:var(--orange)"></i> Statut connexion Google Sheets
-      </div>
-      <div id="sheets-status"><div style="font-size:12px;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Vérification…</div></div>
-      <div style="margin-top:8px;font-size:10px;color:var(--text-3);">
-        ID configuré dans <code>sheets.js</code> : <code id="sheets-id-display">—</code>
-      </div>
-    </div>
-
-  </div>
-</div>
+  </div><!-- /page-content -->
+</div><!-- /main -->
 
 <!-- MODAL EDIT -->
 <div class="modal-overlay hidden" id="modal-edit">
@@ -250,7 +340,36 @@ const DEFAULT_DESCS = [
 ];
 const DEFAULT_REGLEMENTS = ['Espèces','Chèque','Virement','CB','PayPal','Prélèvement','Autre'];
 
+// Définition des pages et leurs niveaux d'accès possibles
+const PAGES_RIGHTS = [
+  { section: 'Comptabilité' },
+  { id:'caisse',         label:'Caisse 1 — Saisie',       levels:['aucun','lecture','saisie'] },
+  { id:'caisse2',        label:'Caisse 2 — Saisie',       levels:['aucun','lecture','saisie'] },
+  { id:'banque',         label:'Banque — Saisie',         levels:['aucun','lecture','saisie'] },
+  { id:'cheques',        label:'Chèques émis',             levels:['aucun','lecture','saisie'] },
+  { id:'remisecheques',  label:'Remises de chèques',       levels:['aucun','lecture','saisie'] },
+  { id:'factures',       label:'Factures',                 levels:['aucun','lecture','saisie'] },
+  { id:'import',         label:'Import relevé',            levels:['aucun','acces'] },
+  { section: 'Caisses physiques' },
+  { id:'caisse1physique',label:'Caisse physique 1',        levels:['aucun','lecture','saisie'] },
+  { id:'caisse2physique',label:'Caisse physique 2',        levels:['aucun','lecture','saisie'] },
+  { section: 'Import' },
+  { id:'import-suivi-refresh',  label:'Rafraîchir Suivi',        levels:['aucun','acces'] },
+  { id:'import-suivi',          label:'Import Suivi - Formulaires', levels:['aucun','acces'] },
+  { id:'import-rapprochement',  label:'Import Rapprochement',    levels:['aucun','acces'] },
+  { section: 'Analyses & Outils' },
+  { id:'analyse',        label:'Analyse / AG',             levels:['aucun','acces'] },
+  { id:'notes',          label:'Notes',                    levels:['aucun','acces'] },
+  { section: 'Partage' },
+  { id:'synthese',       label:'Vue synthèse',             levels:['aucun','acces'] },
+  { section: 'Administration' },
+  { id:'dashboard',      label:'Vue générale',             levels:['aucun','acces'] },
+];
+
 let editCtx = null;
+let allRights = {};       // { email: { pageId: level, alertes: bool } }
+let selectedRightsUser = null;
+let nonAdminUsers = [];   // emails hors admin
 
 // ============================================================
 // INIT
@@ -259,20 +378,20 @@ Auth.requireAuth(async () => {
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
   Sidebar.build('config');
 
-  // Charger config depuis le sheet (synchronise localStorage)
   const syncEl = document.getElementById('sync-status');
   syncEl.innerHTML = '<i class="ti ti-loader-2 spinner"></i> Synchronisation…';
   try {
     await Sheets.loadConfigFromSheet();
-    syncEl.innerHTML = '<i class="ti ti-check" style="color:var(--green);"></i> Synchronisé avec Google Sheet';
+    syncEl.innerHTML = '<i class="ti ti-check" style="color:var(--green);"></i> Synchronisé';
   } catch(e) {
-    syncEl.innerHTML = '<i class="ti ti-alert-triangle" style="color:var(--amber);"></i> Mode hors-ligne (localStorage)';
+    syncEl.innerHTML = '<i class="ti ti-alert-triangle" style="color:var(--amber);"></i> Mode hors-ligne';
   }
 
   initDefaults();
   renderAll();
   initSoldesInitiaux();
   checkSheetsConnection();
+  await loadUsersAndRights();
 });
 
 function initDefaults() {
@@ -283,65 +402,51 @@ function initDefaults() {
 }
 
 // ============================================================
-// RENDER
+// ONGLETS
+// ============================================================
+function switchTab(tab) {
+  ['params','listes','users'].forEach(t => {
+    document.getElementById('tab-btn-' + t).classList.toggle('active', t === tab);
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+}
+
+// ============================================================
+// RENDER LISTES
 // ============================================================
 function renderAll() {
   renderPeriodes();
-  renderUsers();
   renderList(Sheets.getTypesMouvement(), 'types-list',      'type');
   renderList(Sheets.getDescriptions(),   'descs-list',      'desc');
   renderList(Sheets.getModesReglement(), 'reglements-list', 'reglement');
-  renderList(Sheets.getFournisseurs(),    'fourns-list',      'fourn');
+  renderList(Sheets.getFournisseurs(),   'fourns-list',     'fourn');
 }
 
 function renderPeriodes() {
-  const periodes      = Sheets.getPeriodes();
-  const currentPer    = Sheets.getCurrentPeriode();
+  const periodes   = Sheets.getPeriodes();
+  const currentPer = Sheets.getCurrentPeriode();
   document.getElementById('periodes-list').innerHTML = periodes.map((p, i) => `
     <div class="periode-row">
       <span class="periode-label">${p}</span>
       ${p === currentPer ? '<span class="periode-active">Actuelle</span>' : ''}
       ${periodes.length > 1
-        ? `<button class="item-del" onclick="deletePeriode(${i})" title="Supprimer"><i class="ti ti-trash"></i></button>`
+        ? `<button class="item-del" onclick="deletePeriode(${i})"><i class="ti ti-trash"></i></button>`
         : ''}
     </div>`).join('');
-}
-
-function renderUsers() {
-  const currentUser      = Auth.getUser();
-  const authorizedUsers  = (typeof AUTH_CONFIG !== 'undefined' && AUTH_CONFIG.authorizedUsers) || [];
-  const adminEmail       = (typeof AUTH_CONFIG !== 'undefined' && AUTH_CONFIG.adminEmail) || '';
-  const list = document.getElementById('users-list');
-  if (!authorizedUsers.length) {
-    list.innerHTML = '<div style="font-size:12px;color:var(--text-3);">Aucun utilisateur configuré dans auth.js</div>';
-    return;
-  }
-  list.innerHTML = authorizedUsers.map(email => {
-    const isAdmin   = email === adminEmail;
-    const isCurrent = email === currentUser?.email;
-    const initials  = email.slice(0, 2).toUpperCase();
-    return `<div class="user-row">
-      <div class="user-avatar" style="${isAdmin?'':'background:var(--blue);'}">${initials}</div>
-      <div class="user-info">
-        <div class="user-email">${email}${isCurrent?' <span style="font-size:9px;background:var(--green-bg);color:var(--green);padding:1px 5px;border-radius:8px;">Vous</span>':''}</div>
-        <div class="user-role">${isAdmin?'Accès complet':'Peut saisir — alertes envoyées à l\'admin'}</div>
-      </div>
-      <span class="role-badge ${isAdmin?'role-admin':'role-reader'}">${isAdmin?'Admin':'Éditeur'}</span>
-    </div>`;
-  }).join('');
 }
 
 function renderList(items, containerId, editKey) {
   document.getElementById(containerId).innerHTML = items.map((item, i) => `
     <div class="item-row">
       <span class="item-label">${item}</span>
-      <button class="item-edit" onclick="openEdit('${editKey}',${i},'${escH(item)}')" title="Modifier"><i class="ti ti-pencil"></i></button>
-      <button class="item-del"  onclick="deleteItem('${editKey}',${i})" title="Supprimer"><i class="ti ti-trash"></i></button>
+      <button class="item-edit" onclick="openEdit('${editKey}',${i},'${escH(item)}')"><i class="ti ti-pencil"></i></button>
+      <button class="item-del" onclick="deleteItem('${editKey}',${i})"><i class="ti ti-trash"></i></button>
     </div>`).join('');
 }
 
 // ============================================================
-// AJOUT / SUPPRESSION — toutes async → sauvegarde dans sheet
+// AJOUT / SUPPRESSION LISTES
 // ============================================================
 async function addItem(key) {
   const inputId = { type:'new-type', desc:'new-desc', reglement:'new-reglement', fourn:'new-fourn' }[key];
@@ -370,7 +475,7 @@ function getKeyHandlers(key) {
     'type':      { items: Sheets.getTypesMouvement(), save: Sheets.saveTypesMouvement, render: i => renderList(i,'types-list','type') },
     'desc':      { items: Sheets.getDescriptions(),   save: Sheets.saveDescriptions,   render: i => renderList(i,'descs-list','desc') },
     'reglement': { items: Sheets.getModesReglement(), save: Sheets.saveModesReglement, render: i => renderList(i,'reglements-list','reglement') },
-    'fourn':      { items: Sheets.getFournisseurs(),    save: Sheets.saveFournisseurs,    render: i => renderList(i,'fourns-list','fourn') },
+    'fourn':     { items: Sheets.getFournisseurs(),   save: Sheets.saveFournisseurs,   render: i => renderList(i,'fourns-list','fourn') },
   }[key];
 }
 
@@ -385,7 +490,6 @@ async function sortList(key) {
 async function addPeriode() {
   const val = document.getElementById('new-periode').value.trim();
   if (!val) return;
-  // Accepte "2026-2027" ou "2026 - 2027"
   if (!/^\d{4}\s*[-–]\s*\d{4}$/.test(val)) {
     alert('Format invalide. Exemples valides : 2026 - 2027  ou  2026-2027'); return;
   }
@@ -434,21 +538,21 @@ async function saveEdit() {
 }
 
 // ============================================================
-// SOLDES INITIAUX — async → sauvegarde dans sheet
+// SOLDES INITIAUX
 // ============================================================
 function initSoldesInitiaux() {
   const periodes = Sheets.getPeriodes();
-  const sel      = document.getElementById('solde-periode');
-  const ap       = Sidebar.getActivePeriode();
-  sel.innerHTML  = periodes.map(p => `<option value="${p}" ${p===ap?'selected':''}>${p}</option>`).join('');
+  const sel = document.getElementById('solde-periode');
+  const ap  = Sidebar.getActivePeriode();
+  sel.innerHTML = periodes.map(p => `<option value="${p}" ${p===ap?'selected':''}>${p}</option>`).join('');
   loadSoldesForPeriode();
   renderSoldesSummary();
 }
 
 function loadSoldesForPeriode() {
-  const per  = document.getElementById('solde-periode').value;
-  const cfg  = JSON.parse(localStorage.getItem('arche_soldes_initiaux') || '{}');
-  const s    = cfg[per] || {};
+  const per = document.getElementById('solde-periode').value;
+  const cfg = JSON.parse(localStorage.getItem('arche_soldes_initiaux') || '{}');
+  const s   = cfg[per] || {};
   document.getElementById('solde-banque').value   = s.banque  !== undefined ? s.banque  : '';
   document.getElementById('solde-caisse1').value  = s.caisse1 !== undefined ? s.caisse1 : '';
   document.getElementById('solde-caisse2').value  = s.caisse2 !== undefined ? s.caisse2 : '';
@@ -456,8 +560,8 @@ function loadSoldesForPeriode() {
 }
 
 async function saveSoldesInitiaux() {
-  const per    = document.getElementById('solde-periode').value;
-  const btn    = document.getElementById('btn-save-soldes');
+  const per = document.getElementById('solde-periode').value;
+  const btn = document.getElementById('btn-save-soldes');
   btn.disabled = true;
   btn.innerHTML = '<i class="ti ti-loader-2 spinner"></i> Enregistrement…';
   const soldes = {
@@ -469,9 +573,9 @@ async function saveSoldesInitiaux() {
     await Sheets.saveSoldesInitiauxBatch(per, soldes);
     ['banque','caisse1','caisse2'].forEach(k => document.getElementById('saved-'+k).classList.remove('hidden'));
     renderSoldesSummary();
-    showToast('Soldes enregistrés dans Google Sheet !');
+    showToast('Soldes enregistrés !');
   } catch(e) {
-    alert('Erreur lors de la sauvegarde : ' + (e.message || e));
+    alert('Erreur : ' + (e.message || e));
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="ti ti-device-floppy"></i> Enregistrer';
@@ -481,10 +585,187 @@ async function saveSoldesInitiaux() {
 function renderSoldesSummary() {
   const cfg   = JSON.parse(localStorage.getItem('arche_soldes_initiaux') || '{}');
   const parts = Object.entries(cfg).map(([per, s]) =>
-    `<strong>${per}</strong> : Banque ${fmt(s.banque)} / C1 ${fmt(s.caisse1)} / C2 ${fmt(s.caisse2)}`
+    `<strong>${per}</strong> : B ${fmt(s.banque)} / C1 ${fmt(s.caisse1)} / C2 ${fmt(s.caisse2)}`
   );
   document.getElementById('soldes-summary').innerHTML =
-    parts.length ? parts.join(' — ') : 'Aucun solde initial enregistré';
+    parts.length ? parts.join(' — ') : 'Aucun solde enregistré';
+}
+
+// ============================================================
+// UTILISATEURS & DROITS
+// ============================================================
+async function loadUsersAndRights() {
+  // Charger la liste des utilisateurs depuis le Config sheet
+  try {
+    const rows = await readSheet(SHEETS_CONFIG.sheets.config);
+    const usersRow  = rows.find(r => String(r[0]).trim() === 'users_list');
+    const rightsRow = rows.find(r => String(r[0]).trim() === 'users_rights');
+    if (usersRow && usersRow[1]) {
+      nonAdminUsers = JSON.parse(String(usersRow[1]));
+    } else {
+      // Migration : récupérer depuis auth.js si disponible
+      nonAdminUsers = (typeof AUTH_CONFIG !== 'undefined' && AUTH_CONFIG.authorizedUsers || [])
+        .filter(e => e !== AUTH_CONFIG.adminEmail);
+    }
+    if (rightsRow && rightsRow[1]) {
+      allRights = JSON.parse(String(rightsRow[1]));
+    } else {
+      allRights = {};
+    }
+  } catch(e) {
+    console.warn('Erreur chargement users/rights:', e);
+    nonAdminUsers = [];
+    allRights = {};
+  }
+
+  renderUsersList();
+  renderRightsPanel();
+}
+
+function renderUsersList() {
+  const adminEmail  = Auth.adminEmail;
+  const currentUser = Auth.getUser();
+  const wrap        = document.getElementById('users-list');
+
+  const allUsers = [adminEmail, ...nonAdminUsers];
+  wrap.innerHTML = allUsers.map(email => {
+    const isAdmin   = email === adminEmail;
+    const isCurrent = email === currentUser?.email;
+    const initials  = email.slice(0,2).toUpperCase();
+    return `<div class="user-row">
+      <div class="user-avatar" style="${isAdmin?'':'background:var(--blue);'}">${initials}</div>
+      <div class="user-info">
+        <div class="user-email">${email}${isCurrent?' <span style="font-size:9px;background:var(--green-bg);color:var(--green);padding:1px 5px;border-radius:8px;">Vous</span>':''}</div>
+        <div class="user-role">${isAdmin?'Accès complet — administrateur':'Accès selon droits ci-dessous'}</div>
+      </div>
+      <span class="role-badge ${isAdmin?'role-admin':'role-reader'}">${isAdmin?'Admin':'Éditeur'}</span>
+      ${!isAdmin ? `<button class="user-del-btn" onclick="removeUser('${escH(email)}')" title="Supprimer"><i class="ti ti-trash"></i></button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+async function addUser() {
+  const email = document.getElementById('new-user-email').value.trim().toLowerCase();
+  if (!email || !email.includes('@')) { alert('Email invalide.'); return; }
+  if (email === Auth.adminEmail) { alert('Cet email est déjà l\'administrateur.'); return; }
+  if (nonAdminUsers.includes(email)) { alert('Cet utilisateur existe déjà.'); return; }
+  nonAdminUsers.push(email);
+  // Initialiser droits par défaut (tout à aucun)
+  if (!allRights[email]) {
+    allRights[email] = {};
+    PAGES_RIGHTS.filter(p => p.id).forEach(p => {
+      allRights[email][p.id] = 'aucun';
+    });
+    allRights[email]['alertes'] = true;
+  }
+  await persistUsersAndRights();
+  document.getElementById('new-user-email').value = '';
+  renderUsersList();
+  renderRightsPanel();
+  showToast('Utilisateur ajouté !');
+}
+
+async function removeUser(email) {
+  if (!confirm(`Supprimer l'accès de ${email} ?`)) return;
+  nonAdminUsers = nonAdminUsers.filter(e => e !== email);
+  delete allRights[email];
+  if (selectedRightsUser === email) selectedRightsUser = nonAdminUsers[0] || null;
+  await persistUsersAndRights();
+  renderUsersList();
+  renderRightsPanel();
+  showToast('Utilisateur supprimé');
+}
+
+function renderRightsPanel() {
+  const tabsEl = document.getElementById('rights-user-tabs');
+  const wrapEl = document.getElementById('rights-table-wrap');
+
+  if (!nonAdminUsers.length) {
+    tabsEl.innerHTML = '';
+    wrapEl.innerHTML = '<div style="font-size:12px;color:var(--text-3);padding:8px 0;">Aucun utilisateur non-admin. Ajoutez-en un ci-dessus.</div>';
+    return;
+  }
+
+  if (!selectedRightsUser || !nonAdminUsers.includes(selectedRightsUser)) {
+    selectedRightsUser = nonAdminUsers[0];
+  }
+
+  // Onglets utilisateurs
+  tabsEl.innerHTML = nonAdminUsers.map(email => `
+    <button class="user-tab-pill ${email === selectedRightsUser ? 'active' : ''}" onclick="selectRightsUser('${escH(email)}')">
+      ${email.split('@')[0]}
+    </button>
+  `).join('');
+
+  // Table des droits pour l'utilisateur sélectionné
+  const rights = allRights[selectedRightsUser] || {};
+
+  let html = `<table class="rights-table">
+    <thead><tr>
+      <th>Page</th>
+      <th>Accès</th>
+    </tr></thead>
+    <tbody>`;
+
+  PAGES_RIGHTS.forEach(page => {
+    if (page.section) {
+      html += `<tr class="rights-section-header"><td colspan="2">${page.section}</td></tr>`;
+      return;
+    }
+    const current = rights[page.id] || page.levels[0];
+    const options = page.levels.map(l =>
+      `<option value="${l}" ${l === current ? 'selected' : ''}>${l.charAt(0).toUpperCase() + l.slice(1)}</option>`
+    ).join('');
+    html += `<tr>
+      <td>${page.label}</td>
+      <td><select id="right-${page.id}" onchange="onRightChange('${page.id}', this.value)">${options}</select></td>
+    </tr>`;
+  });
+
+  // Case alertes email
+  const alertesOn = rights['alertes'] !== false;
+  html += `</tbody></table>
+    <div class="alert-toggle" style="margin-top:14px;">
+      <input type="checkbox" id="right-alertes" ${alertesOn ? 'checked' : ''} onchange="onRightChange('alertes', this.checked)">
+      <label for="right-alertes"><strong>Alertes email</strong> — envoyer une alerte à l'admin lors de chaque saisie</label>
+    </div>`;
+
+  wrapEl.innerHTML = html;
+}
+
+function selectRightsUser(email) {
+  selectedRightsUser = email;
+  renderRightsPanel();
+}
+
+function onRightChange(pageId, value) {
+  if (!selectedRightsUser) return;
+  if (!allRights[selectedRightsUser]) allRights[selectedRightsUser] = {};
+  allRights[selectedRightsUser][pageId] = value;
+}
+
+async function saveAllRights() {
+  // Lire toutes les selects pour s'assurer d'avoir les valeurs à jour
+  PAGES_RIGHTS.filter(p => p.id).forEach(page => {
+    const el = document.getElementById('right-' + page.id);
+    if (el && selectedRightsUser) {
+      if (!allRights[selectedRightsUser]) allRights[selectedRightsUser] = {};
+      allRights[selectedRightsUser][page.id] = el.value;
+    }
+  });
+  const alertesEl = document.getElementById('right-alertes');
+  if (alertesEl && selectedRightsUser) {
+    allRights[selectedRightsUser]['alertes'] = alertesEl.checked;
+  }
+  await persistUsersAndRights();
+  showToast('Droits sauvegardés !');
+}
+
+async function persistUsersAndRights() {
+  await Promise.all([
+    saveConfigKey('users_list', nonAdminUsers),
+    saveConfigKey('users_rights', allRights),
+  ]);
 }
 
 // ============================================================
@@ -495,27 +776,25 @@ async function checkSheetsConnection() {
   const displayEl = document.getElementById('sheets-id-display');
   const id        = Sheets.config.spreadsheetId;
   displayEl.textContent = id || 'Non configuré';
-
   if (!id || id === 'VOTRE_SPREADSHEET_ID') {
-    statusEl.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--amber-bg);border-radius:var(--radius-sm);font-size:12px;color:var(--amber);">
+    statusEl.innerHTML = `<div style="font-size:12px;color:var(--amber);">
       <i class="ti ti-alert-triangle"></i> Google Sheets non configuré. Renseignez l'ID dans <code>sheets.js</code>.
-    </div>`;
-    return;
+    </div>`; return;
   }
   try {
     await gapi.client.sheets.spreadsheets.get({ spreadsheetId: id });
-    statusEl.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--green-bg);border:0.5px solid rgba(59,109,17,0.2);border-radius:var(--radius-sm);font-size:12px;color:var(--green);">
+    statusEl.innerHTML = `<div style="font-size:12px;color:var(--green);">
       <i class="ti ti-circle-check"></i> <strong>Connexion réussie !</strong> Les données sont accessibles.
     </div>`;
   } catch(e) {
-    statusEl.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--red-bg);border-radius:var(--radius-sm);font-size:12px;color:var(--red);">
-      <i class="ti ti-x"></i> Connexion impossible : ${e.result?.error?.message||'Vérifiez l\'ID dans sheets.js et que le fichier est partagé avec votre compte Google.'}
+    statusEl.innerHTML = `<div style="font-size:12px;color:var(--red);">
+      <i class="ti ti-x"></i> Connexion impossible : ${e.result?.error?.message||'Vérifiez l\'ID dans sheets.js.'}
     </div>`;
   }
 }
 
 // ============================================================
-// EXPORT / IMPORT JSON (sauvegarde locale)
+// EXPORT / IMPORT JSON
 // ============================================================
 function exportConfig() {
   const cfg = {
@@ -549,7 +828,7 @@ async function importConfig(input) {
       }
       renderAll();
       initSoldesInitiaux();
-      showToast('Configuration importée et sauvegardée dans Google Sheet !');
+      showToast('Configuration importée !');
     } catch(err) { alert('Fichier invalide : ' + err.message); }
   };
   reader.readAsText(input.files[0]);
