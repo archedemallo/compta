@@ -329,25 +329,25 @@ function renderDetailCheques() {
         date:       dateRemise,
         bordereau:  numBord,
         statut,
-        donateur:   r[base]   || '',
+        donateur:   String(r[base]   || ''),
         montant:    parseFloat(r[base+1]) || 0,
-        num_cheque: r[base+2] || '',
-        type_mvt:   r[base+3] || '',
-        description:r[base+4] || '',
-        nom_chat:   r[base+6] || '',
+        num_cheque: String(r[base+2] || ''),
+        type_mvt:   String(r[base+3] || ''),
+        description:String(r[base+4] || ''),
+        nom_chat:   String(r[base+6] || ''),
       });
     }
   });
 
   // Appliquer les filtres
   let filtered = allCheques.filter(c => {
-    if (nomF && !c.donateur.toLowerCase().includes(nomF)) return false;
-    if (chqF && !c.num_cheque.toLowerCase().includes(chqF)) return false;
+    if (nomF && !String(c.donateur||'').toLowerCase().includes(nomF)) return false;
+    if (chqF && !String(c.num_cheque||'').toLowerCase().includes(chqF)) return false;
     if (c.montant < minF || c.montant > maxF) return false;
     if (dateFrom || dateTo) {
       // Convertir date DD/MM/YYYY en YYYY-MM-DD pour comparaison
-      const dParts = c.date.split('/');
-      const dISO = dParts.length === 3 ? `${dParts[2]}-${dParts[1]}-${dParts[0]}` : c.date;
+      const dParts = String(c.date||'').split('/');
+      const dISO = dParts.length === 3 ? `${dParts[2]}-${dParts[1]}-${dParts[0]}` : String(c.date||'');
       if (dateFrom && dISO < dateFrom) return false;
       if (dateTo   && dISO > dateTo)   return false;
     }
