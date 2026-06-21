@@ -140,7 +140,7 @@
 
       <div style="display:flex;gap:8px;">
         <button class="btn btn-secondary" onclick="goStep(1)"><i class="ti ti-arrow-left"></i> Retour</button>
-        <button class="btn btn-primary"   onclick="processMapping()"><i class="ti ti-arrow-right"></i> Continuer</button>
+        <button class="btn btn-primary edit-action" onclick="processMapping()"><i class="ti ti-arrow-right"></i> Continuer</button>
       </div>
     </div>
 
@@ -169,7 +169,7 @@
             <div style="width:8px;height:8px;border-radius:50%;background:var(--border);margin-left:8px;"></div><span id="cnt-tot">0</span> total
           </div>
           <button class="btn btn-secondary" onclick="goStep(2)"><i class="ti ti-arrow-left"></i> Retour</button>
-          <button class="btn btn-primary"   onclick="goStep(4)" id="btn-go"><i class="ti ti-database-import"></i> Importer</button>
+          <button class="btn btn-primary"   onclick="goStep(4)" id="btn-go" class="edit-action"><i class="ti ti-database-import"></i> Importer</button>
         </div>
       </div>
 
@@ -227,6 +227,7 @@ let rawData=[], headers=[], importRows=[], existingRows=[];
 Auth.requireAuth(async()=>{
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
   Sidebar.build('import');
+  await Auth.applyUserRights('import');
   await Auth.applyUserRights('import');
   const per=Sheets.getPeriodes(), ap=Sidebar.getActivePeriode();
   const sel=document.getElementById('import-periode');
