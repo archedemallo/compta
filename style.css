@@ -692,3 +692,27 @@ textarea { resize: vertical; min-height: 60px; }
    RESPONSIVE
    ============================================================ */
 /* PC uniquement — pas de responsive mobile */
+
+
+/* ============================================================
+   MODE LECTURE SEULE — masque tous les boutons d'action
+   ============================================================ */
+.readonly-mode .edit-action {
+  display: none !important;
+}
+/* Bandeau discret pour indiquer le mode lecture */
+.readonly-mode::before {
+  content: '👁 Mode lecture seule';
+  display: block;
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  background: var(--surface);
+  border: 0.5px solid var(--border-mid);
+  border-radius: var(--radius-sm);
+  padding: 5px 12px;
+  font-size: 10px;
+  color: var(--text-3);
+  z-index: 999;
+  pointer-events: none;
+}
