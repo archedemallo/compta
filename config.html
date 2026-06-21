@@ -95,7 +95,10 @@
 
       <!-- TYPES DE MOUVEMENT -->
       <div class="config-card">
-        <div class="config-head"><div class="config-title"><i class="ti ti-tags"></i> Types de mouvement</div></div>
+        <div class="config-head">
+          <div class="config-title"><i class="ti ti-tags"></i> Types de mouvement</div>
+          <button class="btn btn-secondary btn-sm" onclick="sortList('type')" title="Trier A→Z"><i class="ti ti-sort-ascending-letters"></i> Trier A→Z</button>
+        </div>
         <div class="config-body">
           <div class="item-list" id="types-list"></div>
           <div class="add-row">
@@ -107,7 +110,10 @@
 
       <!-- DESCRIPTIONS -->
       <div class="config-card">
-        <div class="config-head"><div class="config-title"><i class="ti ti-align-left"></i> Descriptions</div></div>
+        <div class="config-head">
+          <div class="config-title"><i class="ti ti-align-left"></i> Descriptions</div>
+          <button class="btn btn-secondary btn-sm" onclick="sortList('desc')" title="Trier A→Z"><i class="ti ti-sort-ascending-letters"></i> Trier A→Z</button>
+        </div>
         <div class="config-body">
           <div class="item-list" id="descs-list"></div>
           <div class="add-row">
@@ -119,12 +125,30 @@
 
       <!-- MODES RÈGLEMENT -->
       <div class="config-card">
-        <div class="config-head"><div class="config-title"><i class="ti ti-credit-card"></i> Modes de règlement</div></div>
+        <div class="config-head">
+          <div class="config-title"><i class="ti ti-credit-card"></i> Modes de règlement</div>
+          <button class="btn btn-secondary btn-sm" onclick="sortList('reglement')" title="Trier A→Z"><i class="ti ti-sort-ascending-letters"></i> Trier A→Z</button>
+        </div>
         <div class="config-body">
           <div class="item-list" id="reglements-list"></div>
           <div class="add-row">
             <input type="text" id="new-reglement" placeholder="Ex: Lydia">
             <button class="btn btn-primary btn-sm" onclick="addItem('reglement')"><i class="ti ti-plus"></i> Ajouter</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOURNISSEURS -->
+      <div class="config-card">
+        <div class="config-head">
+          <div class="config-title"><i class="ti ti-building-store"></i> Fournisseurs</div>
+          <button class="btn btn-secondary btn-sm" onclick="sortList('fourn')" title="Trier A→Z"><i class="ti ti-sort-ascending-letters"></i> Trier A→Z</button>
+        </div>
+        <div class="config-body">
+          <div class="item-list" id="fourns-list"></div>
+          <div class="add-row">
+            <input type="text" id="new-fourn" placeholder="Ex: Vétérinaire Dupont">
+            <button class="btn btn-primary btn-sm" onclick="addItem('fourn')"><i class="ti ti-plus"></i> Ajouter</button>
           </div>
         </div>
       </div>
@@ -267,6 +291,7 @@ function renderAll() {
   renderList(Sheets.getTypesMouvement(), 'types-list',      'type');
   renderList(Sheets.getDescriptions(),   'descs-list',      'desc');
   renderList(Sheets.getModesReglement(), 'reglements-list', 'reglement');
+  renderList(Sheets.getFournisseurs(),    'fourns-list',      'fourn');
 }
 
 function renderPeriodes() {
@@ -319,7 +344,7 @@ function renderList(items, containerId, editKey) {
 // AJOUT / SUPPRESSION — toutes async → sauvegarde dans sheet
 // ============================================================
 async function addItem(key) {
-  const inputId = { type:'new-type', desc:'new-desc', reglement:'new-reglement' }[key];
+  const inputId = { type:'new-type', desc:'new-desc', reglement:'new-reglement', fourn:'new-fourn' }[key];
   const val = document.getElementById(inputId)?.value.trim();
   if (!val) return;
   const { items, save, render } = getKeyHandlers(key);
@@ -345,7 +370,16 @@ function getKeyHandlers(key) {
     'type':      { items: Sheets.getTypesMouvement(), save: Sheets.saveTypesMouvement, render: i => renderList(i,'types-list','type') },
     'desc':      { items: Sheets.getDescriptions(),   save: Sheets.saveDescriptions,   render: i => renderList(i,'descs-list','desc') },
     'reglement': { items: Sheets.getModesReglement(), save: Sheets.saveModesReglement, render: i => renderList(i,'reglements-list','reglement') },
+    'fourn':      { items: Sheets.getFournisseurs(),    save: Sheets.saveFournisseurs,    render: i => renderList(i,'fourns-list','fourn') },
   }[key];
+}
+
+async function sortList(key) {
+  const { items, save, render } = getKeyHandlers(key);
+  const sorted = [...items].sort((a,b) => a.localeCompare(b,'fr',{sensitivity:'base'}));
+  await save(sorted);
+  render(sorted);
+  showToast('Liste triée A→Z');
 }
 
 async function addPeriode() {
