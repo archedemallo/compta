@@ -10,6 +10,7 @@ const SHEETS_CONFIG = {
   facturesDriveId: 'VOTRE_DOSSIER_DRIVE_ID',
   sheets: {
     caisse:       'Caisse',
+    caisse_2:     'Caisse2',
     banque:       'Banque',
     caisse1:      'Caisse1_physique',
     caisse2:      'Caisse2_physique',
@@ -237,6 +238,13 @@ async function readSheet(sheetName, spreadsheetId) {
   return readRange(spreadsheetId || SHEETS_CONFIG.spreadsheetId, `${sheetName}!A:CZ`);
 }
 
+async function getCaisse2Operations(periode) {
+  const rows = await readSheet(SHEETS_CONFIG.sheets.caisse_2);
+  const data = rows.length > 1 ? rows.slice(1) : [];
+  data.forEach((r, i) => { r._sheetIndex = i; });
+  return periode ? data.filter(r => r[COLS_CAISSE.periode] === periode) : data;
+}
+
 async function getCaisseOperations(periode) {
   const rows = await readSheet(SHEETS_CONFIG.sheets.caisse);
   const data = rows.length > 1 ? rows.slice(1) : [];
@@ -347,6 +355,34 @@ async function toggleVerified(sheetKey, rowIndex, value) {
 }
 
 // ---- CAISSE ----
+async function saveCaisse2Operation(op) {
+  const id  = op.id || genId('C2');
+  const row = new Array(20).fill('');
+  const cc  = COLS_CAISSE;
+  row[cc.id]           = id;
+  row[cc.date]         = op.date          || todayFR();
+  row[cc.libelle]      = op.libelle       || '';
+  row[cc.debit]        = op.debit         || '';
+  row[cc.credit]       = op.credit        || '';
+  row[cc.type_mvt]     = op.type_mvt      || '';
+  row[cc.type_comp]    = op.type_comp     || '';
+  row[cc.description]  = op.description   || '';
+  row[cc.nom_chat]     = op.nom_chat      || '';
+  row[cc.num_recu]     = op.num_recu      || '';
+  row[cc.num_bordereau]= op.num_bordereau || '';
+  row[cc.periode]      = op.periode       || '';
+  row[cc.flag_check]   = 'FALSE';
+  row[cc.flag_comment] = op.flag_comment  || '';
+  row[cc.libelle_comp] = op.libelle_comp  || '';
+  row[cc.num_facture]  = op.num_facture   || '';
+  row[cc.num_don_fiscal]= op.num_don_fiscal|| '';
+  row[cc.solde]        = '';
+  row[cc.suivi_ref]    = op.suivi_ref     || '';
+  row[cc.fournisseur]  = op.fournisseur   || '';
+  await appendRows(SHEETS_CONFIG.sheets.caisse_2, [row]);
+  await logAction('AJOUT', 'Caisse2', op.libelle, `${op.credit||op.debit||0} €`);
+}
+
 async function saveCaisseOperation(op) {
   const row = new Array(19).fill('');
   row[COLS_CAISSE.source]       = op.source       || 'C1';
@@ -371,6 +407,33 @@ async function saveCaisseOperation(op) {
   await appendRows(SHEETS_CONFIG.sheets.caisse, [row]);
   await logAction('AJOUT', 'Caisse', op.libelle, `${op.date} — ${op.type_mvt} — ${op.credit || op.debit}€`);
   if (!Auth.isAdmin()) await sendAlert(Auth.getUser(), 'Caisse', op);
+}
+
+async function updateCaisse2Operation(rowIndex, op) {
+  const rows = await readSheet(SHEETS_CONFIG.sheets.caisse_2);
+  const orig = rows[rowIndex + 1] || [];
+  const row  = [...orig];
+  const cc   = COLS_CAISSE;
+  row[cc.date]         = op.date          || orig[cc.date]         || '';
+  row[cc.libelle]      = op.libelle       || orig[cc.libelle]      || '';
+  row[cc.debit]        = op.debit         || '';
+  row[cc.credit]       = op.credit        || '';
+  row[cc.type_mvt]     = op.type_mvt      || '';
+  row[cc.type_comp]    = op.type_comp     || '';
+  row[cc.description]  = op.description   || '';
+  row[cc.nom_chat]     = op.nom_chat      || '';
+  row[cc.num_recu]     = op.num_recu      || '';
+  row[cc.num_bordereau]= op.num_bordereau || '';
+  row[cc.periode]      = op.periode       || orig[cc.periode]      || '';
+  row[cc.flag_comment] = op.flag_comment  || orig[cc.flag_comment] || '';
+  row[cc.libelle_comp] = op.libelle_comp  || '';
+  row[cc.num_facture]  = op.num_facture   || '';
+  row[cc.num_don_fiscal]= op.num_don_fiscal|| '';
+  row[cc.suivi_ref]    = op.suivi_ref     || '';
+  row[cc.fournisseur]  = op.fournisseur   || '';
+  const sheetRow = rowIndex + 2;
+  await updateRange(SHEETS_CONFIG.sheets.caisse_2, sheetRow, 0, [row]);
+  await logAction('MODIF', 'Caisse2', op.libelle, `Modifié le ${todayFR()}`);
 }
 
 async function updateCaisseOperation(rowIndex, op) {
@@ -962,7 +1025,9 @@ window.Sheets = {
   loadConfigFromSheet, saveConfigKey,
   // Lecture
   readSheet,
-  getCaisseOperations, getBanqueOperations, getCaissePhysique,
+  getCaisseOperations, getCaisse2Operations,
+  saveCaisse2Operation, updateCaisse2Operation,
+  getBanqueOperations, getCaissePhysique,
   getCheques, getRemises, getFactures, getJournal, getFormulairesData,
   getImportRapprochement,
   // Écriture
