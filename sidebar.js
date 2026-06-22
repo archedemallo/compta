@@ -8,8 +8,6 @@ function buildSidebar(activePage) {
   const stored   = localStorage.getItem('arche_periode') || current;
 
   const nav = [
-    { section: 'Tableau de bord' },
-    { id: 'dashboard', label: 'Vue générale',       icon: 'ti-chart-bar',      href: 'index.html' },
 
     { section: 'Comptabilité' },
     { id: 'caisse',    label: 'Caisse1 — saisie',    icon: 'ti-cash',           href: 'caisse.html' },
@@ -27,6 +25,7 @@ function buildSidebar(activePage) {
     { section: 'Import' },
     { id: 'import-suivi-refresh',  label: 'Rafraîchir Suivi',           icon: 'ti-database-import',      href: 'import-suivi-refresh.html' },
     { id: 'import-suivi',          label: 'Import Suivi - Formulaires', icon: 'ti-download',             href: 'import-suivi.html' },
+    { id: 'import-suivi-archive',  label: 'Archive Suivi',              icon: 'ti-archive',              href: 'import-suivi-archive.html' },
     { id: 'import-rapprochement',  label: 'Import Rapprochement',       icon: 'ti-arrows-transfer-down', href: 'import-rapprochement.html' },
 
     { section: 'Analyses' },
