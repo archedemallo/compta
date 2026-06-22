@@ -645,7 +645,7 @@ function _renderDonSection(keyword,icon,label,chartId,cfg){
     <div class="card-body"><canvas id="${chartId}" style="max-height:260px;"></canvas></div>
   </div>
   <div class="card" style="margin-top:14px;">
-    <div class="card-head"><div class="card-title"><i class="ti ti-users"></i> Liste — ${activePer} <span style="font-weight:400;color:var(--text-3);margin-left:8px;">${personnes.length} personnes</span></div></div>
+    <div class="card-head"><div class="card-title"><i class="ti ti-users"></i> Liste — ${activePer} <span style="font-weight:400;color:var(--text-3);margin-left:8px;">${cfg.listeLabel?cfg.listeLabel(personnes):personnes.length+' personne'+(personnes.length>1?'s':'')}</span></div></div>
     <div class="card-body">${listeHtml}</div>
   </div>`;
 }
@@ -682,7 +682,8 @@ const CFG_SUBV={
   getNomCaisse: r=>String(r[cc().libelle]||'').trim()||'Anonyme',
   getNomBanque: r=>String(r[cb().description]||r[cb().libelle]||'').trim()||'Anonyme',
   multiColonne: false,
-  kpiSub: p=>{const nb=p.reduce((s,[,d])=>s+d.nb,0);return `${nb} subvention${nb>1?'s':''} perçue${nb>1?'s':''}`;},
+  kpiSub:     p=>{const nb=p.reduce((s,[,d])=>s+d.nb,0);return `${nb} subvention${nb>1?'s':''} perçue${nb>1?'s':''}`;},
+  listeLabel: p=>{const nb=p.reduce((s,[,d])=>s+d.nb,0);return `${nb} subvention${nb>1?'s':''}`;},
 };
 function renderSubventions(){return _renderDonSection('subvention','ti ti-award','Total subventions','chart-subventions',CFG_SUBV);}
 function initSubventionsChart(){charts.subventions=_initGroupChart('subvention','chart-subventions',{bg:'rgba(37,99,235,0.75)',border:'rgb(37,99,235)'},{bg:'rgba(37,99,235,0.2)',border:'rgba(37,99,235,0.5)'})||charts.subventions;}
