@@ -123,6 +123,7 @@
       <button class="synth-btn" onclick="showSection('adoptions')"><i class="ti ti-home"></i> Adoptions</button>
       <button class="synth-btn" onclick="showSection('dons')"><i class="ti ti-coin"></i> Dons</button>
       <button class="synth-btn" onclick="showSection('subventions')"><i class="ti ti-award"></i> Subventions</button>
+      <button class="synth-btn" onclick="showSection('adhesions')"><i class="ti ti-id-badge"></i> Adhésions</button>
       <button class="synth-btn" onclick="showSection('cheques-att')"><i class="ti ti-writing"></i> Chèques en attente</button>
       <button class="synth-btn" onclick="showSection('remises-att')"><i class="ti ti-stack"></i> Remises en attente</button>
       <button class="synth-btn" onclick="showSection('rapprochement')"><i class="ti ti-scale"></i> Rapprochement caisse</button>
@@ -297,6 +298,7 @@ function renderSection(id){
     case 'adoptions':        el.innerHTML=renderAdoptions();     setTimeout(initAdoptionsChart,50); break;
     case 'dons':             el.innerHTML=renderDons();          setTimeout(initDonsChart,50); break;
     case 'subventions':      el.innerHTML=renderSubventions();   setTimeout(initSubventionsChart,50); break;
+    case 'adhesions':        el.innerHTML=renderAdhesions();     setTimeout(initAdhesionsChart,50);   break;
     case 'cheques-att':      el.innerHTML=renderChequesAtt();    break;
     case 'remises-att':      el.innerHTML=renderRemisesAtt();    break;
     case 'rapprochement':    el.innerHTML=renderRapprochement(); break;
@@ -687,6 +689,20 @@ const CFG_SUBV={
 };
 function renderSubventions(){return _renderDonSection('subvention','ti ti-award','Total subventions','chart-subventions',CFG_SUBV);}
 function initSubventionsChart(){charts.subventions=_initGroupChart('subvention','chart-subventions',{bg:'rgba(37,99,235,0.75)',border:'rgb(37,99,235)'},{bg:'rgba(37,99,235,0.2)',border:'rgba(37,99,235,0.5)'})||charts.subventions;}
+
+// ============================================================
+// CFG_ADHESIONS
+// ============================================================
+const CFG_ADHESIONS={
+  getNomCaisse: r=>String(r[cc().libelle]||r[cc().description]||'').trim()||'Anonyme',
+  getNomBanque: r=>String(r[cb().libelle]||r[cb().description]||'').trim()||'Anonyme',
+  multiColonne: false,
+  kpiSub: p=>{const nb=p.reduce((s,[,d])=>s+d.nb,0);return `${nb} adhésion${nb>1?'s':''} enregistrée${nb>1?'s':''}`;},
+  listeLabel: p=>{const nb=p.reduce((s,[,d])=>s+d.nb,0);return `${nb} adhésion${nb>1?'s':''}`;},
+};
+function renderAdhesions(){return _renderDonSection('adh','ti ti-id-badge','Total adhésions','chart-adhesions',CFG_ADHESIONS);}
+function initAdhesionsChart(){charts.adhesions=_initGroupChart('adh','chart-adhesions',{bg:'rgba(16,163,127,0.75)',border:'rgb(16,163,127)'},{bg:'rgba(16,163,127,0.2)',border:'rgba(16,163,127,0.5)'})||charts.adhesions;}
+
 
 // ============================================================
 // 9. CHÈQUES EN ATTENTE
