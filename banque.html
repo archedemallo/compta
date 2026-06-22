@@ -1069,11 +1069,19 @@ function lierRemise(){
   if(isNaN(idx)||idx<0)return;
   const cr=Sheets.cols.remise, r=allRemises[idx];
   linkedRemise={idx: r._sheetIndex, data:r};
+  const brdLabel=`Remise chèques ${r[cr.num_bordereau]||'?'} — ${r[cr.nb_cheques]||0} chèque(s)`;
   document.getElementById('rap-remise-linked').innerHTML=`
     <div class="rap-linked">
       <span class="rap-linked-label"><strong>BRD ${r[cr.num_bordereau]||'?'}</strong> — ${r[cr.nb_cheques]||0} chèque(s) — ${fmt(r[cr.montant_total])}</span>
       <button class="rap-remove" onclick="linkedRemise=null;document.getElementById('rap-remise-linked').innerHTML='';"><i class="ti ti-x"></i></button>
     </div>`;
+  // Pré-remplir automatiquement les champs de la ligne banque
+  const typeEl    = document.getElementById('ei-type');
+  const descEl    = document.getElementById('ei-description');
+  const typeCompEl= document.getElementById('ei-type-comp');
+  if(typeEl)     typeEl.value     = 'Remise Cheque';
+  if(descEl)     descEl.value     = 'Remise Cheque';
+  if(typeCompEl) typeCompEl.value = brdLabel;
 }
 
 function lierCaisse(){
@@ -1117,9 +1125,11 @@ async function savePanel(){
     if(linkedRemise){
       const cr = Sheets.cols.remise;
       const rem = linkedRemise.data;
+      const brdDetail=`Remise chèques ${rem[cr.num_bordereau]||''} — ${rem[cr.nb_cheques]||0} chèque(s)`;
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.ref_remise,  rem[cr.num_bordereau]||'');
-      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,    'Don');
-      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, `Remise chèques ${rem[cr.num_bordereau]||''} — ${rem[cr.nb_cheques]||0} chèque(s)`);
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,    'Remise Cheque');
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, 'Remise Cheque');
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp,   brdDetail);
       await Sheets.encaisserRemise(linkedRemise.idx, r[cb.date]||Sheets.todayFR(), r[cb.libelle]||'Encaissement');
     }
 
@@ -1146,9 +1156,17 @@ async function savePanel(){
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.num_facture, numFactures.join(', '));
       if(!linkedCheque){
         const fac0=linkedFactures[0].data;
-        await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp,   fac0[cf.fournisseur]||'');
-        await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, fac0[cf.description]||'');
-        await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,    fac0[cf.categorie]  ||'');
+        const tousAmazon=linkedFactures.length>1 &&
+          linkedFactures.every(lf=>(lf.data[cf.fournisseur]||'').toLowerCase().includes('amazon'));
+        if(tousAmazon){
+          await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,    'Plusieurs Factures Amazon');
+          await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, 'Plusieurs Factures Amazon');
+          await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp,   'Amazon');
+        } else {
+          await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp,   fac0[cf.fournisseur]||'');
+          await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, fac0[cf.description]||'');
+          await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,    fac0[cf.categorie]  ||'');
+        }
       } else {
         const fournisseurs=linkedFactures.map(lf=>lf.data[cf.fournisseur]||'').filter(Boolean).join(', ');
         await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp, fournisseurs);
