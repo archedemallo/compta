@@ -1139,10 +1139,11 @@ async function savePanel(){
     if(linkedFactures.length>0){
       const cf=Sheets.cols.facture;
       const numFactures=[];
+      const dateRap = Sheets.normalizeDate(r[cb.date]) || Sheets.todayFR();
       for(const lf of linkedFactures){
         const fi=lf.idx, fac=lf.data;
         await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.statut,         'payee');
-        await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.date_reglement,  r[cb.date]||Sheets.todayFR());
+        await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.date_reglement,  dateRap);
         if(linkedCheque){
           const cc=Sheets.cols.cheque;
           await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.mode_reglement,'Chèque');
@@ -1209,6 +1210,8 @@ async function savePanel(){
     }
 
     await Sheets.logAction('MODIF','Banque',r[cb.libelle]||'?','Rapprochement enregistré');
+    // Marquer la ligne banque comme rapprochée
+    await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.statut, 'rapproche');
     closePanel();
     clearSelection();
     showToast('Rapprochement enregistré !');
