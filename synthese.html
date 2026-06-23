@@ -684,8 +684,8 @@ const CFG_SUBV={
   getNomCaisse: r=>String(r[cc().libelle]||'').trim()||'Anonyme',
   getNomBanque: r=>String(r[cb().description]||r[cb().libelle]||'').trim()||'Anonyme',
   multiColonne: false,
-  kpiSub:     p=>{const nb=p.reduce((s,[,d])=>s+d.nb,0);return `${nb} subvention${nb>1?'s':''} perçue${nb>1?'s':''}`;},
-  listeLabel: p=>{const nb=p.reduce((s,[,d])=>s+d.nb,0);return `${nb} subvention${nb>1?'s':''}`;},
+  kpiSub:     p=>{const nb=p.length;return `${nb} organisme${nb>1?'s':''} subventionneur${nb>1?'s':''}`;},
+  listeLabel: p=>{const nb=p.length;return `${nb} organisme${nb>1?'s':''}`;},
 };
 function renderSubventions(){return _renderDonSection('subvention','ti ti-award','Total subventions','chart-subventions',CFG_SUBV);}
 function initSubventionsChart(){charts.subventions=_initGroupChart('subvention','chart-subventions',{bg:'rgba(37,99,235,0.75)',border:'rgb(37,99,235)'},{bg:'rgba(37,99,235,0.2)',border:'rgba(37,99,235,0.5)'})||charts.subventions;}
