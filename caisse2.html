@@ -369,8 +369,8 @@ function renderTable() {
     rows = [...rows].sort((a, b) => {
       let va = String(a[sortCol]||''), vb = String(b[sortCol]||'');
       // Convertir les dates DD/MM/YYYY en ISO pour tri correct
-      if (/^\d{2}\/\d{2}\/\d{4}$/.test(va)) va = dateToISO(va);
-      if (/^\d{2}\/\d{2}\/\d{4}$/.test(vb)) vb = dateToISO(vb);
+      if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(va)) va = dateToISO(va);
+      if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(vb)) vb = dateToISO(vb);
       const na = parseFloat(va), nb = parseFloat(vb);
       const cmp = !isNaN(na)&&!isNaN(nb) ? na-nb : va.localeCompare(vb,'fr');
       return sortAsc ? cmp : -cmp;
@@ -656,7 +656,7 @@ async function saveFlag() {
 // ============================================================
 function chipType(t) { if(!t)return'depense';const l=t.toLowerCase();if(l.includes('adopt'))return'adoption';if(l.includes('don'))return'don';if(l.includes('adh'))return'adhesion';return'depense'; }
 function fmt(v) { if(!v&&v!==0)return'';const n=parseFloat(String(v).replace(/\s/g,'').replace(',','.'));if(isNaN(n))return'';return n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
-function dateToISO(d) { if(!d)return'';const p=String(d).split('/');if(p.length===3&&p[0].length===2)return`${p[2]}-${p[1]}-${p[0]}`;return d; }
+function dateToISO(d) { if(!d)return'';const p=String(d).split('/');if(p.length===3)return`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;return d; }
 function showErr(m) { const e=document.getElementById('form-err');e.textContent=m;e.classList.remove('hidden'); }
 function showToast(m) { const t=document.createElement('div');t.className='success-toast';t.innerHTML=`<i class="ti ti-check"></i> ${m}`;document.body.appendChild(t);setTimeout(()=>t.remove(),3000); }
 function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;'); }
