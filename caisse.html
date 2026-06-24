@@ -358,7 +358,7 @@ function renderTable() {
   if (sensF === 'debit')  rows = rows.filter(r => parseFloat(r[cc.debit])  > 0);
   if (dateFrom)           rows = rows.filter(r => dateToISO(r[cc.date]) >= dateFrom);
   if (dateTo)             rows = rows.filter(r => dateToISO(r[cc.date]) <= dateTo);
-  if (flagF === 'flagged') rows = rows.filter(r => r[cc.flag_check] === 'TRUE' || r[cc.flag_check] === true || r[cc.flag_check] === 1);
+  if (flagF === 'flagged') rows = rows.filter(r => r[cc.flag_check] === 'TRUE');
   if (flagF === 'verifie') rows = rows.filter(r => r[cc.flag_check] === 'VERIFIE');
   if (search) rows = rows.filter(r =>
     [r[cc.libelle],r[cc.type_mvt],r[cc.type_comp],r[cc.description],r[cc.num_bordereau]]
@@ -368,11 +368,10 @@ function renderTable() {
   if (sortCol >= 0) {
     rows = [...rows].sort((a, b) => {
       let va = String(a[sortCol]||''), vb = String(b[sortCol]||'');
-      // Convertir les dates DD/MM/YYYY en ISO pour tri correct
-      if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(va)) va = dateToISO(va);
-      if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(vb)) vb = dateToISO(vb);
+      va = dateToISO(va) || va;
+      vb = dateToISO(vb) || vb;
       const na = parseFloat(va), nb = parseFloat(vb);
-      const cmp = !isNaN(na)&&!isNaN(nb) ? na-nb : va.localeCompare(vb,'fr');
+      const cmp = !isNaN(na)&&!isNaN(nb) ? na-nb : (va < vb ? -1 : va > vb ? 1 : 0);
       return sortAsc ? cmp : -cmp;
     });
   } else {
@@ -405,7 +404,7 @@ function renderTable() {
 
   const trs = rows.map(r => {
     const ri         = allRows.indexOf(r);
-    const flagged    = r[cc.flag_check] === 'TRUE' || r[cc.flag_check] === true || r[cc.flag_check] === 1;
+    const flagged    = r[cc.flag_check] === 'TRUE';
     const isVerified = r[cc.flag_check] === 'VERIFIE';
     const comment    = r[cc.flag_comment] || '';
     const bordereau  = r[cc.num_bordereau] || '';
@@ -659,12 +658,9 @@ function fmt(v) { if(!v&&v!==0)return'';const n=parseFloat(String(v).replace(/\s
 function dateToISO(d) {
   if(!d) return '';
   const s = String(d).trim();
-  // Format dd/mm/yyyy ou d/m/yyyy
   const p = s.split('/');
   if(p.length===3) return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
-  // Déjà en ISO yyyy-mm-dd
   if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
-  // Nombre sériel Excel (jours depuis 30/12/1899)
   const n = parseFloat(s);
   if(!isNaN(n) && n > 40000 && n < 60000) {
     const dt = new Date(Math.round((n - 25569) * 86400 * 1000));
