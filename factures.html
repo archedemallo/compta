@@ -348,6 +348,7 @@ function renderTable(){
           : '<span style="color:var(--text-3);font-size:11px;">—</span>'}
       </td>
       <td class="r" style="white-space:nowrap;">
+        <button class="edit-btn" onclick="togglePayee(${ri})" title="${payee?'Marquer non payée':'Marquer payée'}" style="color:${payee?'var(--green)':'var(--text-3)'}"><i class="ti ti-${payee?'circle-check':'circle'}"></i></button>
         <button class="edit-btn" onclick="openEdit(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>
         <button class="del-btn"  onclick="openDel(${ri})"  title="Supprimer"><i class="ti ti-trash"></i></button>
       </td>
@@ -405,21 +406,22 @@ async function submit(){
     montant_ttc:    montant,
     categorie:      document.getElementById('f-cat').value,
     description:    document.getElementById('f-desc').value,
-    date_reglement: document.getElementById('f-date-reg').value,
+    date_reglement: Sheets.normalizeDate(document.getElementById('f-date-reg').value),
     mode_reglement: document.getElementById('f-mode-reg').value,
     lien_pdf:       document.getElementById('f-lien-pdf').value.trim(),
     commentaire:    document.getElementById('f-comment').value.trim(),
     nom_chat:       document.getElementById('f-nom-chat').value.trim(),
     periode:        document.getElementById('f-per').value,
   };
+  // Statut : payee si date de règlement renseignée, sinon préserver l'existant (ou vide)
+  const existingStatut = editIdx!==null ? (allRows[editIdx][Sheets.cols.facture.statut]||'') : '';
+  fac.statut = fac.date_reglement ? 'payee' : existingStatut;
 
   const btn=document.getElementById('btn-submit');
   btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2 spinner"></i>';
   try{
     if(editIdx!==null){
       fac.id=allRows[editIdx][Sheets.cols.facture.id];
-      // Préserver le statut existant
-      fac.statut=allRows[editIdx][Sheets.cols.facture.statut]||'';
       await Sheets.updateFacture(editIdx,fac);
       showToast('Facture modifiée !');
     } else {
@@ -458,6 +460,26 @@ function openEdit(ri){
   document.getElementById('form-card').classList.add('editing');
   renderTable();
   // Le panneau est sticky, pas besoin de scroll — il est toujours visible
+}
+
+async function togglePayee(ri){
+  const cf=Sheets.cols.facture, r=allRows[ri];
+  const estPayee = r[cf.statut]==='payee';
+  if(estPayee){
+    // Dépayée : effacer statut et date de règlement
+    await Sheets.updateCell(Sheets.config.sheets.factures, ri+2, cf.statut, '');
+    await Sheets.updateCell(Sheets.config.sheets.factures, ri+2, cf.date_reglement, '');
+    r[cf.statut]=''; r[cf.date_reglement]='';
+    showToast('Facture marquée non payée');
+  } else {
+    // Marquer payée avec la date du jour
+    const dateAuj = Sheets.todayFR();
+    await Sheets.updateCell(Sheets.config.sheets.factures, ri+2, cf.statut, 'payee');
+    await Sheets.updateCell(Sheets.config.sheets.factures, ri+2, cf.date_reglement, dateAuj);
+    r[cf.statut]='payee'; r[cf.date_reglement]=dateAuj;
+    showToast('Facture marquée payée ✓');
+  }
+  renderTable();
 }
 
 function openDel(ri){
