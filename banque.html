@@ -1131,7 +1131,7 @@ async function savePanel(){
     if(linkedFactures.length>0){
       const cf=Sheets.cols.facture;
       const numFactures=[];
-      const dateRap = Sheets.normalizeDate(r[cb.date]) || Sheets.todayFR();
+      const dateRap = r[cb.date] || Sheets.todayFR();
       for(const lf of linkedFactures){
         const fi=lf.idx, fac=lf.data;
         await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.statut,         'payee');
