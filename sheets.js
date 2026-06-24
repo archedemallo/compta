@@ -647,13 +647,13 @@ async function updateRemise(rowIndex, remise) {
 // ---- FACTURES ----
 async function saveFacture(facture) {
   const id  = facture.id || genId('FAC');
-  const dateReg = normalizeDate(facture.date_reglement);
+  const dateReg = facture.date_reglement || '';
   const statut  = dateReg ? (facture.statut || 'payee') : (facture.statut || '');
   const row = new Array(14).fill('');
   row[COLS_FACTURE.id]            = id;
   row[COLS_FACTURE.num_facture]   = facture.num_facture   || '';
   row[COLS_FACTURE.fournisseur]   = facture.fournisseur   || '';
-  row[COLS_FACTURE.date_facture]  = normalizeDate(facture.date_facture) || facture.date_facture || '';
+  row[COLS_FACTURE.date_facture]  = facture.date_facture  || '';
   row[COLS_FACTURE.montant_ttc]   = facture.montant_ttc   || '';
   row[COLS_FACTURE.categorie]     = facture.categorie     || '';
   row[COLS_FACTURE.description]   = facture.description   || '';
@@ -671,13 +671,13 @@ async function saveFacture(facture) {
 
 async function updateFacture(rowIndex, facture) {
   const sheetRow = rowIndex + 2;
-  const dateReg = normalizeDate(facture.date_reglement);
+  const dateReg = facture.date_reglement || '';
   const statut  = dateReg ? (facture.statut || 'payee') : (facture.statut || '');
   const row = new Array(14).fill('');
   row[COLS_FACTURE.id]            = facture.id            || '';
   row[COLS_FACTURE.num_facture]   = facture.num_facture   || '';
   row[COLS_FACTURE.fournisseur]   = facture.fournisseur   || '';
-  row[COLS_FACTURE.date_facture]  = normalizeDate(facture.date_facture) || facture.date_facture || '';
+  row[COLS_FACTURE.date_facture]  = facture.date_facture  || '';
   row[COLS_FACTURE.montant_ttc]   = facture.montant_ttc   || '';
   row[COLS_FACTURE.categorie]     = facture.categorie     || '';
   row[COLS_FACTURE.description]   = facture.description   || '';
@@ -689,9 +689,6 @@ async function updateFacture(rowIndex, facture) {
   row[COLS_FACTURE.statut]        = statut;
   row[COLS_FACTURE.nom_chat]      = facture.nom_chat      || '';
   await updateRange(SHEETS_CONFIG.sheets.factures, sheetRow, 0, [row]);
-  // Garantie : écriture individuelle des deux champs critiques
-  await updateCell(SHEETS_CONFIG.sheets.factures, sheetRow, COLS_FACTURE.date_reglement, dateReg);
-  await updateCell(SHEETS_CONFIG.sheets.factures, sheetRow, COLS_FACTURE.statut, statut);
   await logAction('MODIF', 'Factures', facture.fournisseur, `Modifié le ${todayFR()}`);
 }
 
