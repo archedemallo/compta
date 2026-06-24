@@ -406,16 +406,17 @@ async function submit(){
     montant_ttc:    montant,
     categorie:      document.getElementById('f-cat').value,
     description:    document.getElementById('f-desc').value,
-    date_reglement: Sheets.normalizeDate(document.getElementById('f-date-reg').value),
+    date_reglement: document.getElementById('f-date-reg').value,
     mode_reglement: document.getElementById('f-mode-reg').value,
     lien_pdf:       document.getElementById('f-lien-pdf').value.trim(),
     commentaire:    document.getElementById('f-comment').value.trim(),
     nom_chat:       document.getElementById('f-nom-chat').value.trim(),
     periode:        document.getElementById('f-per').value,
   };
-  // Statut : payee si date de règlement renseignée, sinon préserver l'existant (ou vide)
-  const existingStatut = editIdx!==null ? (allRows[editIdx][Sheets.cols.facture.statut]||'') : '';
-  fac.statut = fac.date_reglement ? 'payee' : existingStatut;
+  // sheets.js gère le statut et la normalisation des dates
+  fac.statut = fac.date_reglement
+    ? 'payee'
+    : (editIdx!==null ? (allRows[editIdx][Sheets.cols.facture.statut]||'') : '');
 
   const btn=document.getElementById('btn-submit');
   btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2 spinner"></i>';
