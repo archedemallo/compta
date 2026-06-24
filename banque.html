@@ -185,23 +185,20 @@
 <div class="list-head">
   <div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap;overflow-x:auto;">
     <input class="f-input f-input-lg" type="text" id="fl-search" placeholder="🔍 Rechercher…" oninput="renderTable()" style="width:150px;">
-    <select class="f-select" id="fl-type" onchange="renderTable()" style="width:120px;"><option value="">Tous types</option></select>
-    <select class="f-select" id="fl-desc" onchange="renderTable()" style="width:120px;"><option value="">Toutes desc.</option></select>
-   <select class="f-select" id="fl-attrib" onchange="renderTable()" style="width:100px;">
-  <option value="">Tous</option>
-  <option value="attrib">Attribués</option>
-  <option value="vide">Non attrib.</option>
-</select>
-    </select>
+    <select class="f-select" id="fl-type" onchange="renderTable()" style="width:130px;"><option value="">Type mouvement</option></select>
+    <select class="f-select" id="fl-desc" onchange="renderTable()" style="width:120px;"><option value="">Description</option></select>
     <select class="f-select" id="fl-sens" onchange="renderTable()" style="width:70px;">
       <option value="">D+C</option>
-      <option value="credit">Créd.</option>
-      <option value="debit">Déb.</option>
+      <option value="credit">Crédit</option>
+      <option value="debit">Débit</option>
     </select>
-    <select class="f-select" id="fl-flag" onchange="renderTable()" style="width:80px;">
-      <option value="">Toutes</option>
-      <option value="flagged">⚑ Vérif.</option>
-      <option value="rapproche">Rappr.</option>
+    <select class="f-select" id="fl-rapproche" onchange="renderTable()" style="width:100px;">
+      <option value="">Rappr.</option>
+      <option value="rapproche">Rapprochées</option>
+      <option value="non-rapproche">Non rappr.</option>
+    </select>
+    <select class="f-select" id="fl-verifie" onchange="renderTable()" style="width:110px;">
+      <option value="">Vérification</option>
       <option value="verifie">✓ Vérifiées</option>
       <option value="non-verifie">○ Non vérif.</option>
     </select>
@@ -535,29 +532,29 @@ function getFilteredRows(){
   const search   = (document.getElementById('fl-search')?.value||'').toLowerCase();
   const typeF    = document.getElementById('fl-type')?.value||'';
   const descF    = document.getElementById('fl-desc')?.value||'';
-  const attribF  = document.getElementById('fl-attrib')?.value||'';
   const sensF    = document.getElementById('fl-sens')?.value||'';
+  const rapproF  = document.getElementById('fl-rapproche')?.value||'';
+  const verifieF = document.getElementById('fl-verifie')?.value||'';
   const dateFrom = document.getElementById('fl-date-from')?.value||'';
   const dateTo   = document.getElementById('fl-date-to')?.value||'';
   const montMin  = parseMontant(document.getElementById('fl-montant-min')?.value||'');
   const montMax  = parseMontant(document.getElementById('fl-montant-max')?.value||'');
-  const flagF    = document.getElementById('fl-flag')?.value||'';
+
 
   let rows = allRows.filter(r => r[cb.periode] === per);
   if (typeF)              rows = rows.filter(r => r[cb.type_mvt] === typeF);
   if (descF)              rows = rows.filter(r => r[cb.description] === descF);
-  if (attribF==='vide')   rows = rows.filter(r => !r[cb.type_mvt] || r[cb.type_mvt].toString().trim() === '');
   if (sensF==='credit')   rows = rows.filter(r => parseMontant(r[cb.credit]) > 0);
   if (sensF==='debit')    rows = rows.filter(r => parseMontant(r[cb.debit])  > 0);
+  if (rapproF==='rapproche')     rows = rows.filter(r => r[cb.ref_cheque]||r[cb.ref_remise]||r[cb.suivi_ref]);
+  if (rapproF==='non-rapproche') rows = rows.filter(r => !r[cb.ref_cheque]&&!r[cb.ref_remise]&&!r[cb.suivi_ref]);
+  if (verifieF==='verifie')      rows = rows.filter(r => String(r[cb.flag_check]).toUpperCase()==='VERIFIE');
+  if (verifieF==='non-verifie')  rows = rows.filter(r => String(r[cb.flag_check]).toUpperCase()!=='VERIFIE');
   if (dateFrom)           rows = rows.filter(r => dateToISO(r[cb.date]) >= dateFrom);
   if (dateTo)             rows = rows.filter(r => dateToISO(r[cb.date]) <= dateTo);
   if (!isNaN(montMin))    rows = rows.filter(r => Math.abs(parseMontant(r[cb.credit]||r[cb.debit])||0) >= montMin);
   if (!isNaN(montMax) && montMax>0) rows = rows.filter(r => Math.abs(parseMontant(r[cb.credit]||r[cb.debit])||0) <= montMax);
-  if (flagF==='flagged')   rows = rows.filter(r => r[cb.flag_check] === 'TRUE');
-  if (flagF==='rapproche') rows = rows.filter(r => r[cb.ref_cheque]||r[cb.ref_remise]);
-  if (flagF==='verifie')   rows = rows.filter(r => r[cb.statut] === 'verifie');
-  if (flagF==='non-verifie') rows = rows.filter(r => r[cb.statut] !== 'verifie');
-  if (search)             rows = rows.filter(r => [r[cb.libelle],r[cb.type_mvt],r[cb.description],r[cb.nom],r[cb.num_facture],r[cb.ref_cheque],r[cb.ref_remise],r[cb.num_don_fiscal],r[cb.num_rem_espece],r[cb.libelle_comp]].join(' ').toLowerCase().includes(search));
+  if (search)             rows = rows.filter(r => [r[cb.libelle],r[cb.type_mvt],r[cb.description],r[cb.nom],String(r[cb.num_facture]||''),String(r[cb.ref_cheque]||''),String(r[cb.ref_remise]||''),String(r[cb.num_don_fiscal]||''),String(r[cb.num_rem_espece]||''),r[cb.libelle_comp],String(r[cb.fournisseur]||'')].join(' ').toLowerCase().includes(search));
   return rows;
 }
 
@@ -645,7 +642,7 @@ function renderTable(){
       // ---- LIGNE D'ÉDITION INLINE ----
       return `
         <tr class="edit-inline-row" id="edit-row-${ri}">
-          <td style="white-space:nowrap;">
+          <td style="text-align:center;white-space:nowrap;">
             <button class="save-inline-btn edit-action" onclick="saveInlineEdit(${ri})"><i class="ti ti-check"></i> OK</button>
             <button class="cancel-inline-btn" onclick="cancelEdit()">✕</button>
           </td>
@@ -658,27 +655,24 @@ function renderTable(){
           <td><select id="ei-type" style="width:110px;">${typeOpts}</select></td>
           <td><select id="ei-description" style="width:110px;">${descOpts}</select></td>
           <td><input type="text" id="ei-type-comp" value="${escH(typeComp)}" style="width:90px;" placeholder="Libellé comp."></td>
-          <td><input type="text" id="ei-num-facture" value="${escH(numFacture)}" style="width:80px;" placeholder="N° facture"></td>
           <td><input type="text" id="ei-nom-chat" value="${escH(nomChat)}" style="width:80px;" placeholder="Nom chat"></td>
-          <td><input type="text" id="ei-don-fiscal" value="${escH(numDonFiscal)}" style="width:70px;" placeholder="N° don"></td>
+          <td><input type="text" id="ei-don-fiscal" value="${escH(numDonFiscal)}" style="width:70px;" placeholder="N° reçu"></td>
+          <td><input type="text" id="ei-num-facture" value="${escH(numFacture)}" style="width:80px;" placeholder="N° facture"></td>
           <td><input type="text" id="ei-ref-remise" value="${escH(r[cb.ref_remise]||'')}" style="width:70px;" placeholder="Réf. remise"></td>
           <td><input type="text" id="ei-rem-espece" value="${escH(numRemEspece)}" style="width:70px;" placeholder="Rem. espèce"></td>
           <td><input type="text" id="ei-ref-cheque" value="${escH(numBordChq)}" style="width:70px;" placeholder="N° chèque"></td>
           <td style="white-space:nowrap;">${hasChq}${hasBrd}${ventBadge}</td>
           <td>${hasPdf}</td>
           <td><button class="flag-btn ${flagged?'on':''}" onclick="event.stopPropagation();openFlag(${ri},'${escH(r[cb.libelle]||'')}','${escH(comment)}',${flagged})" title="Annoter"><i class="ti ti-flag${flagged?'-filled':''}"></i></button></td>
-          <td style="text-align:center;"><input type="checkbox" class="verifie-check" ${verifie?'checked':''} onclick="event.stopPropagation();toggleVerifie(${ri},this.checked)" title="Marquer comme vérifiée"></td>
           <td class="flag-comment-cell">${comment}</td>
         </tr>`;
     }
 
     // ---- LIGNE NORMALE ----
     return `<tr onclick="${verifie?'':'selectRow('+ri+')'}" class="${isSel?'selected':''} ${verifie?'row-verifie':''}">
-      <td style="white-space:nowrap;">
-        ${verifie
-          ? `<span class="lock-icon" title="Ligne vérifiée — décochez pour modifier"><i class="ti ti-lock"></i></span>`
-          : `<button class="edit-btn edit-action" onclick="event.stopPropagation();openEdit(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>`
-        }
+      <td style="text-align:center;">
+        <input type="checkbox" class="verifie-check" ${verifie?'checked':''} onclick="event.stopPropagation();toggleVerifie(${ri},this.checked)" title="Marquer comme vérifiée">
+        ${verifie ? `<span class="lock-icon" title="Ligne vérifiée"><i class="ti ti-lock" style="font-size:10px;color:var(--text-3);"></i></span>` : `<button class="edit-btn edit-action" onclick="event.stopPropagation();openEdit(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>`}
       </td>
       <td style="color:var(--text-3);white-space:nowrap;font-size:10px;">${r[cb.date]||''}</td>
       <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;" title="${escH(r[cb.libelle]||'')}">${r[cb.libelle]||''}</td>
@@ -703,7 +697,6 @@ function renderTable(){
       <td style="white-space:nowrap;">${ventBadge}</td>
       <td class="r">${hasPdf}</td>
       <td class="r"><button class="flag-btn ${flagged?'on':''}" onclick="event.stopPropagation();openFlag(${ri},'${escH(r[cb.libelle]||'')}','${escH(comment)}',${flagged})" title="Annoter"><i class="ti ti-flag${flagged?'-filled':''}"></i></button></td>
-      <td style="text-align:center;"><input type="checkbox" class="verifie-check" ${verifie?'checked':''} onclick="event.stopPropagation();toggleVerifie(${ri},this.checked)" title="Marquer comme vérifiée"></td>
       <td class="flag-comment-cell" onclick="event.stopPropagation();openFlag(${ri},'${escH(r[cb.libelle]||'')}','${escH(comment)}',${flagged})">${comment}</td>
     </tr>`;
   }).join('');
@@ -711,26 +704,25 @@ function renderTable(){
   document.getElementById('table-wrap').innerHTML = `
     <table id="banque-table">
       <thead><tr>
-        <th style="width:36px;"></th>
+        <th style="text-align:center;width:36px;" title="Ligne vérifiée — verrouille la modification">✓ Vérif.</th>
         ${mkTh('Date',cb.date)}
         ${mkTh('Libellé',cb.libelle)}
         <th class="r">Débit${si(-1)}</th>
         <th class="r">Crédit${si(-1)}</th>
-        <th class="r">Solde calc.${si(-1)}</th>
+        <th class="r">Solde${si(-1)}</th>
         ${mkTh('Fournisseur',cb.fournisseur)}
         ${mkTh('Type mvt',cb.type_mvt)}
         <th>Description${si(-1)}</th>
         <th>Libellé comp.${si(-1)}</th>
-        <th>N° facture${si(-1)}</th>
         <th>Nom chat${si(-1)}</th>
-        <th>N° don fiscal${si(-1)}</th>
+        <th>N° reçu${si(-1)}</th>
+        <th>N° facture${si(-1)}</th>
         <th>Bord. remise${si(-1)}</th>
         <th>Rem. espèce${si(-1)}</th>
         <th>N° CHQ${si(-1)}</th>
         <th>Ventil.</th>
         <th class="r">PDF</th>
         <th class="r">🔍</th>
-        <th style="text-align:center;" title="Ligne vérifiée — verrouille la modification">✓ Vérif.</th>
         <th>Annotation</th>
       </tr></thead>
       <tbody>${trs}</tbody>
@@ -754,7 +746,7 @@ function setSort(col){ if(sortCol===col)sortAsc=!sortAsc;else{sortCol=col;sortAs
 
 function clearFilters(){
   ['fl-search','fl-date-from','fl-date-to','fl-montant-min','fl-montant-max'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
-  ['fl-type','fl-desc','fl-sens','fl-flag','fl-attrib'].forEach(id=>{const e=document.getElementById(id);if(e)e.selectedIndex=0;});
+  ['fl-type','fl-desc','fl-sens','fl-rapproche','fl-verifie'].forEach(id=>{const e=document.getElementById(id);if(e)e.selectedIndex=0;});
   sortCol=-1; sortAsc=true; renderTable();
 }
 
