@@ -365,13 +365,13 @@ function renderTable() {
     .join(' ').toLowerCase().includes(search)
   );
 
-  if (sortCol >= 0) {
+    if (sortCol >= 0) {
     rows = [...rows].sort((a, b) => {
       let va = String(a[sortCol]||''), vb = String(b[sortCol]||'');
       va = dateToISO(va) || va;
       vb = dateToISO(vb) || vb;
       const na = parseFloat(va), nb = parseFloat(vb);
-      const cmp = !isNaN(na)&&!isNaN(nb) ? na-nb : (va < vb ? -1 : va > vb ? 1 : 0);
+      const cmp = !isNaN(na)&&!isNaN(nb) ? na-nb : (va<vb?-1:va>vb?1:0);
       return sortAsc ? cmp : -cmp;
     });
   } else {
@@ -667,7 +667,7 @@ function dateToISO(d) {
     return dt.toISOString().slice(0,10);
   }
   return s;
-}
+}-${p[1]}-${p[0]}`;return d; }
 function showErr(m) { const e=document.getElementById('form-err');e.textContent=m;e.classList.remove('hidden'); }
 function showToast(m) { const t=document.createElement('div');t.className='success-toast';t.innerHTML=`<i class="ti ti-check"></i> ${m}`;document.body.appendChild(t);setTimeout(()=>t.remove(),3000); }
 function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;'); }
