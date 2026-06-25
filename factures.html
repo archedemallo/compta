@@ -527,11 +527,19 @@ function toISO(d){
   return s;
 }
 function formatDate(d){
-  if(!d)return'—';
+  if(!d && d!==0)return'—';
   const s=String(d).trim();
   if(/^\d{2}\/\d{2}\/\d{4}$/.test(s))return s;
   if(/^\d{4}-\d{2}-\d{2}$/.test(s)){const p=s.split('-');return`${p[2]}/${p[1]}/${p[0]}`;}
-  return s;
+  // Nombre serial Sheets (ex: 46047) → convertir en DD/MM/YYYY
+  const num=parseFloat(s);
+  if(!isNaN(num)&&num>40000&&num<60000){
+    const dt=new Date(Math.round((num-25569)*86400*1000));
+    const dd=String(dt.getUTCDate()).padStart(2,'0');
+    const mm=String(dt.getUTCMonth()+1).padStart(2,'0');
+    return`${dd}/${mm}/${dt.getUTCFullYear()}`;
+  }
+  return s||'—';
 }
 function chipCat(t){if(!t)return'depense';const l=t.toLowerCase();if(l.includes('adopt'))return'adoption';if(l.includes('don'))return'don';if(l.includes('adh'))return'adhesion';return'depense';}
 function fmt(v){if(!v&&v!==0)return'—';return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
