@@ -198,22 +198,23 @@ const ONGLETS = {
     label: 'Adhésions', icon: 'ti-id-badge',
     compta: 'Suivi_Adhesion',
     cols: {
-      // Colonnes source A-S, décalées de +1 en Suivi_Adhesion (col A = _id)
-      // A(0)=Date B(1)=Heure C(2)=dateAdhesion D(3)=saisiPar E(4)=nom F(5)=prenom
-      // G(6)=adresse H(7)=codePostal I(8)=ville J(9)=portable K(10)=email
-      // L(11)=dateNaissanceMembre M(12)=donBienfaiteur N(13)=donSympatisant
-      // O(14)=numeroPaiement P(15)=dateFait Q(16)=Mode de reglement
-      // R(17)=montantAdhesion S(18)=montantTotalAdhesion
+      // Col _id en Suivi_Adhesion (col A) décale tout de +1 par rapport au formulaire source
+      // Formulaire : A=Date B=Heure C=dateAdhesion D=saisiPar E=nom F=prenom
+      //              G=adresse H=codePostal I=ville J=portable K=email L=dateNaissance
+      //              M=donBienfaiteur N=donSympatisant O=numeroPaiement P=dateFait
+      //              Q=ModeReglement R=montantAdhesion S=montantTotalAdhesion
+      // Suivi (+1) : idx14=donBienfaiteur idx15=donSympatisant idx16=numeroPaiement
+      //              idx18=ModeReglement idx19=montantAdhesion
       date: 3,            // col C dateAdhesion
       nom: 5,             // col E nom
       prenom: 6,          // col F prenom
       nom_chat: null,
-      mode_reglement: 17, // col Q Mode de reglement
-      num_cheque: 15,     // col O numeroPaiement
+      mode_reglement: 18, // col R Mode de reglement
+      num_cheque: 16,     // col P numeroPaiement
       montants: [
-        { col: 13, label: 'Don bienfaiteur' },    // col M
-        { col: 14, label: 'Don sympathisant' },   // col N
-        { col: 18, label: 'Montant adhésion' },   // col R montantAdhesion
+        { col: 14, label: 'Don bienfaiteur' },    // col N donBienfaiteur
+        { col: 15, label: 'Don sympathisant' },   // col O donSympatisant
+        { col: 19, label: 'Montant adhésion' },   // col S montantAdhesion
       ],
     },
     type_mvt: 'Adhesion', description: 'Adhesion',
