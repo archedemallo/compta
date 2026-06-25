@@ -198,23 +198,21 @@ const ONGLETS = {
     label: 'Adhésions', icon: 'ti-id-badge',
     compta: 'Suivi_Adhesion',
     cols: {
-      // Col _id en Suivi_Adhesion (col A) décale tout de +1 par rapport au formulaire source
-      // Formulaire : A=Date B=Heure C=dateAdhesion D=saisiPar E=nom F=prenom
-      //              G=adresse H=codePostal I=ville J=portable K=email L=dateNaissance
-      //              M=donBienfaiteur N=donSympatisant O=numeroPaiement P=dateFait
-      //              Q=ModeReglement R=montantAdhesion S=montantTotalAdhesion
-      // Suivi (+1) : idx14=donBienfaiteur idx15=donSympatisant idx16=numeroPaiement
-      //              idx18=ModeReglement idx19=montantAdhesion
-      date: 3,            // col C dateAdhesion
-      nom: 5,             // col E nom
-      prenom: 6,          // col F prenom
+      // Source: Suivi_Adhesion dans Compta (col A = _id, indices 0-based)
+      // A=_id B=Date C=Heure D=dateAdhesion E=saisiPar F=nom G=prenom
+      // H=adresse I=codePostal J=ville K=portable L=email M=dateNaissance
+      // N=donBienfaiteur O=donSympatisant P=numeroPaiement Q=dateFait
+      // R=ModeReglement S=montantAdhesion T=montantTotalAdhesion
+      date: 3,            // D = dateAdhesion
+      nom: 5,             // F = nom
+      prenom: 6,          // G = prenom
       nom_chat: null,
-      mode_reglement: 18, // col R Mode de reglement
-      num_cheque: 16,     // col P numeroPaiement
+      mode_reglement: 17, // R = Mode de reglement
+      num_cheque: 15,     // P = numeroPaiement
       montants: [
-        { col: 14, label: 'Don bienfaiteur' },    // col N donBienfaiteur
-        { col: 15, label: 'Don sympathisant' },   // col O donSympatisant
-        { col: 19, label: 'Montant adhésion' },   // col S montantAdhesion
+        { col: 13, label: 'Don bienfaiteur' },  // N = donBienfaiteur
+        { col: 14, label: 'Don sympathisant' }, // O = donSympatisant
+        { col: 18, label: 'Montant adhésion' }, // S = montantAdhesion
       ],
     },
     type_mvt: 'Adhesion', description: 'Adhesion',
