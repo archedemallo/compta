@@ -573,7 +573,13 @@ function renderTable(){
       return sortAsc?cmp:-cmp;
     });
   } else {
-    rows = [...rows].reverse();
+    // Tri par défaut : date décroissante
+    rows = [...rows].sort((a,b)=>{
+      const va=dateToISO(String(a[cb.date]||'')), vb=dateToISO(String(b[cb.date]||''));
+      const na=parseFloat(va),nb=parseFloat(vb);
+      const cmp=!isNaN(na)&&!isNaN(nb)?na-nb:(va<vb?-1:va>vb?1:0);
+      return -cmp;
+    });
   }
 
   document.getElementById('result-count').textContent = `${rows.length} ligne(s)`;
@@ -1285,7 +1291,7 @@ function showFacturesPopup(event, numFacturesStr) {
 
 function fmt(v){if(!v&&v!==0)return'—';const n=parseMontant(String(v));if(isNaN(n))return'—';return n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
 function chipType(t){if(!t)return'depense';const l=t.toLowerCase();if(l.includes('adopt'))return'adoption';if(l.includes('don'))return'don';if(l.includes('adh'))return'adhesion';return'depense';}
-function dateToISO(d){if(!d)return'';const p=String(d).split('/');if(p.length===3&&p[0].length===2)return`${p[2]}-${p[1]}-${p[0]}`;return d;}
+function dateToISO(d){if(!d)return'';const s=String(d).trim();const p=s.split('/');if(p.length===3){let y=p[2];if(y.length===2)y=(parseInt(y,10)<50?'20':'19')+y;return y+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);const n=parseFloat(s);if(!isNaN(n)&&n>40000&&n<60000){const dt=new Date(Math.round((n-25569)*86400*1000));return dt.toISOString().slice(0,10);}return s;}
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
 function showTableSpinner(){document.getElementById('table-wrap').innerHTML='<div style="padding:32px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>';}
 function showTableError(msg){document.getElementById('table-wrap').innerHTML=`<div style="padding:32px;text-align:center;color:var(--red);font-size:12px;"><i class="ti ti-alert-circle" style="font-size:20px;display:block;margin-bottom:8px;"></i>${msg}</div>`;}
