@@ -228,7 +228,6 @@ Auth.requireAuth(async()=>{
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
   Sidebar.build('import');
   await Auth.applyUserRights('import');
-  await Auth.applyUserRights('import');
   const per=Sheets.getPeriodes(), ap=Sidebar.getActivePeriode();
   const sel=document.getElementById('import-periode');
   per.forEach(p=>{ const o=document.createElement('option'); o.value=p; o.textContent=p; if(p===ap)o.selected=true; sel.appendChild(o); });
