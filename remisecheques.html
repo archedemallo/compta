@@ -473,6 +473,7 @@ function renderKPIs(){
 // ============================================================
 // TABLE
 // ============================================================
+function dateToISO(d){if(!d)return'';const s=String(d).trim();const p=s.split('/');if(p.length===3){let y=p[2];if(y.length===2)y=(parseInt(y,10)<50?'20':'19')+y;return y+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);const n=parseFloat(s);if(!isNaN(n)&&n>40000&&n<60000){const dt=new Date(Math.round((n-25569)*86400*1000));return dt.toISOString().slice(0,10);}return s;}
 function renderTable(){
   const cr=Sheets.cols.remise;
   const per=document.getElementById('fl-per')?.value||'';
@@ -480,7 +481,12 @@ function renderTable(){
   const ss=document.getElementById('fl-search')?.value.toLowerCase()||'';
   let rows=allRemises.filter(r=>(!per||r[cr.periode]===per)&&(!sf||r[cr.statut]===sf));
   if(ss) rows=rows.filter(r=>[r[cr.num_bordereau],r[cr.montant_total]].join(' ').toLowerCase().includes(ss));
-  rows=[...rows].reverse();
+  rows=[...rows].sort((a,b)=>{
+    const va=dateToISO(String(a[cr.date_remise]||'')),vb=dateToISO(String(b[cr.date_remise]||''));
+    const na=parseFloat(va),nb=parseFloat(vb);
+    const cmp=!isNaN(na)&&!isNaN(nb)?na-nb:(va<vb?-1:va>vb?1:0);
+    return -cmp;
+  });
   if(!rows.length){
     document.getElementById('table-wrap').innerHTML='<div style="padding:24px;text-align:center;color:var(--text-3);font-size:12px;">Aucune remise</div>';
     return;
