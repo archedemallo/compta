@@ -548,13 +548,13 @@ function getFilteredRows(){
   if (sensF==='debit')    rows = rows.filter(r => parseMontant(r[cb.debit])  > 0);
   if (rapproF==='rapproche')     rows = rows.filter(r => r[cb.ref_cheque]||r[cb.ref_remise]||r[cb.suivi_ref]);
   if (rapproF==='non-rapproche') rows = rows.filter(r => !r[cb.ref_cheque]&&!r[cb.ref_remise]&&!r[cb.suivi_ref]);
-  if (verifieF==='verifie')      rows = rows.filter(r => String(r[cb.flag_check]).toUpperCase()==='VERIFIE');
-  if (verifieF==='non-verifie')  rows = rows.filter(r => String(r[cb.flag_check]).toUpperCase()!=='VERIFIE');
+  if (verifieF==='verifie')      rows = rows.filter(r => r[cb.statut] === 'verifie');
+  if (verifieF==='non-verifie')  rows = rows.filter(r => r[cb.statut] !== 'verifie');
   if (dateFrom)           rows = rows.filter(r => dateToISO(r[cb.date]) >= dateFrom);
   if (dateTo)             rows = rows.filter(r => dateToISO(r[cb.date]) <= dateTo);
   if (!isNaN(montMin))    rows = rows.filter(r => Math.abs(parseMontant(r[cb.credit]||r[cb.debit])||0) >= montMin);
   if (!isNaN(montMax) && montMax>0) rows = rows.filter(r => Math.abs(parseMontant(r[cb.credit]||r[cb.debit])||0) <= montMax);
-  if (search)             rows = rows.filter(r => [r[cb.libelle],r[cb.type_mvt],r[cb.description],r[cb.nom],String(r[cb.num_facture]||''),String(r[cb.ref_cheque]||''),String(r[cb.ref_remise]||''),String(r[cb.num_don_fiscal]||''),String(r[cb.num_rem_espece]||''),r[cb.libelle_comp],String(r[cb.fournisseur]||'')].join(' ').toLowerCase().includes(search));
+  if (search)             rows = rows.filter(r => [r[cb.libelle],r[cb.type_mvt],r[cb.description],r[cb.nom],String(r[cb.num_facture]||''),String(r[cb.ref_cheque]||''),String(r[cb.ref_remise]||''),String(r[cb.num_don_fiscal]||''),String(r[cb.num_rem_espece]||''),String(r[cb.type_comp]||''),String(r[cb.fournisseur]||'')].join(' ').toLowerCase().includes(search));
   return rows;
 }
 
@@ -1109,7 +1109,7 @@ async function savePanel(){
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,    chq[cc.type_mvt]    ||'');
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, chq[cc.description] ||'');
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp,   chq[cc.type_comp]   ||'');
-      if(chq[12]) await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.nom_chat, chq[12]);
+      if(chq[cc.nom_chat]) await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.nom_chat, chq[cc.nom_chat]);
       await Sheets.encaisserCheque(linkedCheque.idx, r[cb.date]||Sheets.todayFR(), r[cb.libelle]||'Encaissement');
     }
 
@@ -1131,7 +1131,7 @@ async function savePanel(){
     if(linkedFactures.length>0){
       const cf=Sheets.cols.facture;
       const numFactures=[];
-      const dateRap = r[cb.date] || Sheets.todayFR();
+      const dateRap = Sheets.normalizeDate(r[cb.date]) || Sheets.todayFR();
       for(const lf of linkedFactures){
         const fi=lf.idx, fac=lf.data;
         await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.statut,         'payee');
