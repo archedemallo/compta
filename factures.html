@@ -302,6 +302,7 @@ function renderKPIs(){
     <div class="kpi"><div class="kpi-label">En attente</div><div class="kpi-value" style="color:var(--amber)">${fmt(total-totPayee)}</div><div style="font-size:9px;color:var(--text-3)">${attente.length} facture(s)</div></div>`;
 }
 
+function dateToISO(d){if(!d)return'';const s=String(d).trim();const p=s.split('/');if(p.length===3){let y=p[2];if(y.length===2)y=(parseInt(y,10)<50?'20':'19')+y;return y+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);const n=parseFloat(s);if(!isNaN(n)&&n>40000&&n<60000){const dt=new Date(Math.round((n-25569)*86400*1000));return dt.toISOString().slice(0,10);}return s;}
 function renderTable(){
   renderKPIs();
   const cf=Sheets.cols.facture;
@@ -318,7 +319,12 @@ function renderTable(){
   if(statf==='payee')   rows=rows.filter(r=>r[cf.statut]==='payee');
   if(statf==='attente') rows=rows.filter(r=>r[cf.statut]!=='payee');
   if(search) rows=rows.filter(r=>[r[cf.fournisseur],r[cf.num_facture],r[cf.commentaire],r[cf.description]].join(' ').toLowerCase().includes(search));
-  rows=[...rows].reverse();
+  rows=[...rows].sort((a,b)=>{
+    const va=dateToISO(String(a[cf.date_facture]||'')),vb=dateToISO(String(b[cf.date_facture]||''));
+    const na=parseFloat(va),nb=parseFloat(vb);
+    const cmp=!isNaN(na)&&!isNaN(nb)?na-nb:(va<vb?-1:va>vb?1:0);
+    return -cmp;
+  });
 
   document.getElementById('result-count').textContent=`${rows.length} ligne(s)`;
 
