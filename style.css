@@ -72,7 +72,7 @@ body {
 .sidebar {
   width: var(--sidebar-w);
   background: var(--side-bg);
-  min-height: 100vh;
+  height: 100vh;          /* fixe — permet à overflow-y:auto de fonctionner */
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -223,7 +223,12 @@ body {
 .topbar-title { font-size: 15px; font-weight: 600; color: var(--text); }
 .topbar-right { display: flex; align-items: center; gap: 8px; }
 
-.page-content { padding: 20px; flex: 1; }
+.page-content {
+  padding: 20px;
+  flex: 1;
+  overflow-y: auto;
+  height: calc(100vh - 48px); /* 48px = topbar — thead sticky fonctionne automatiquement */
+}
 
 /* ============================================================
    METRIC CARDS
