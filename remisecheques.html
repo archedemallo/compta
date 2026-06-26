@@ -250,7 +250,7 @@
     </div>
     <div class="panel-footer">
       <button class="btn btn-secondary" onclick="closeRapPanel()">Annuler</button>
-      <button class="btn btn-primary" id="btn-save-rap" class="edit-action" onclick="saveRapprochement()" disabled>
+      <button class="btn btn-primary edit-action" id="btn-save-rap" onclick="saveRapprochement()" disabled>
         <i class="ti ti-device-floppy"></i> Enregistrer le rapprochement
       </button>
     </div>
@@ -580,7 +580,7 @@ async function toggleVerifiedRemise(ri,checked){
   try{
     await Sheets.updateCell(Sheets.config.sheets.remises,ri+2,cr.verified,checked?'TRUE':'FALSE');
     showToast(checked?'Remise verrouillée ✓':'Remise déverrouillée');
-    loadData(); // reload silencieux
+    // Pas de loadData() : évite la race condition qui décochait la case
   }catch(e){
     r[cr.verified]=checked?'FALSE':'TRUE';
     renderTable();
