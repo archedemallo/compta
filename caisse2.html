@@ -306,6 +306,8 @@ async function loadData() {
   document.getElementById('table-wrap').innerHTML =
     '<div style="padding:32px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>';
   const all = await Sheets.getCaisse2Operations();
+  // _sheetIndex = index réel dans le sheet Google (avant filtre SHEET_FILTER)
+  all.forEach((r, i) => { r._sheetIndex = i; });
   allRows   = all.filter(SHEET_FILTER);
   Sidebar.setLastUpdate();
   updateDynamicFilters();
@@ -403,7 +405,7 @@ function renderTable() {
     `<th class="${sortCol===col?'sorted':''} ${cls}" onclick="setSort(${col})">${label}${si(col)}</th>`;
 
   const trs = rows.map(r => {
-    const ri         = allRows.indexOf(r);
+    const ri         = r._sheetIndex !== undefined ? r._sheetIndex : allRows.indexOf(r);
     const flagged    = r[cc.flag_check] === 'TRUE';
     const isVerified = r[cc.flag_check] === 'VERIFIE';
     const comment    = r[cc.flag_comment] || '';
@@ -485,14 +487,15 @@ function clearFilters() {
 // ============================================================
 async function toggleVerified(ri, checked) {
   const cc = Sheets.cols.caisse;
-  const r  = allRows[ri];
+  const r  = allRows.find(x => (x._sheetIndex !== undefined ? x._sheetIndex : allRows.indexOf(x)) === ri);
   if (!r) return;
   // Mise à jour immédiate en mémoire → case reste cochée sans attendre le sheet
   r[cc.flag_check] = checked ? 'VERIFIE' : 'FALSE';
   if (checked && editIdx === ri) cancelEdit();
   renderTable();
   try {
-    await Sheets.updateCell(Sheets.config.sheets.caisse_2, ri+2, cc.flag_check, checked ? 'VERIFIE' : 'FALSE');
+    const sheetRow = (r._sheetIndex !== undefined ? r._sheetIndex : ri) + 2;
+    await Sheets.updateCell(Sheets.config.sheets.caisse_2, sheetRow, cc.flag_check, checked ? 'VERIFIE' : 'FALSE');
     showToast(checked ? 'Ligne verrouillée ✓' : 'Ligne déverrouillée');
   } catch(e) {
     r[cc.flag_check] = checked ? 'FALSE' : 'VERIFIE';
