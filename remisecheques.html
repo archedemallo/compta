@@ -324,7 +324,7 @@ function renderDetailCheques() {
     const numBord = r[cr.num_bordereau] || '';
     const statut = r[cr.statut] || '';
     for (let i = 0; i < nb; i++) {
-      const base = cr.detail_start + i * 8;
+      const base = cr.detail_start + i * 9;
       allCheques.push({
         date:       dateRemise,
         bordereau:  numBord,
@@ -502,7 +502,7 @@ function renderTable(){
     const nb=parseInt(r[cr.nb_cheques])||0;
     let detailRows='';
     for(let i=0;i<nb;i++){
-  const base=cr.detail_start+i*8;   // ← 8 au lieu de 7
+  const base=cr.detail_start+i*9;   // ← 8 au lieu de 7
   const donateur   =r[base]  ||'—';
   const montant    =r[base+1]||'';
   const num_cheque =r[base+2]||'—';   // ← nouveau
@@ -767,7 +767,7 @@ async function openRapPanel(remiseIdx, chequeIdx) {
   // Info du chèque
   const cr = Sheets.cols.remise;
   const r = allRemises[remiseIdx];
-  const base = cr.detail_start + chequeIdx * 8;
+  const base = cr.detail_start + chequeIdx * 9;
   const donateur = r[base] || '—';
   const montant = r[base+1] || '';
   const numChq = r[base+2] || '';
@@ -896,7 +896,7 @@ async function saveRapprochement() {
   const nb = parseInt(r[cr.nb_cheques]) || 0;
   const cheques = [];
   for (let i = 0; i < nb; i++) {
-    const base = cr.detail_start + i * 8;
+    const base = cr.detail_start + i * 9;
     cheques.push({
       donateur:    r[base]   || '',
       montant:     r[base+1] || '',
@@ -944,13 +944,13 @@ async function deRapprocher() {
   const { remiseIdx, chequeIdx } = rapTarget;
   const cr = Sheets.cols.remise;
   const r = allRemises[remiseIdx];
-  const base = cr.detail_start + chequeIdx * 8;
+  const base = cr.detail_start + chequeIdx * 9;
   const oldRef = r[base+8] || '';
 
   const nb = parseInt(r[cr.nb_cheques]) || 0;
   const cheques = [];
   for (let i = 0; i < nb; i++) {
-    const b = cr.detail_start + i * 8;
+    const b = cr.detail_start + i * 9;
     cheques.push({
       donateur:    r[b]   || '',
       montant:     r[b+1] || '',
@@ -1012,7 +1012,7 @@ function openEdit(ri){
   const nb=parseInt(r[cr.nb_cheques])||0;
   for(let i=0;i<nb;i++){
     addChequeRemise();
-    const base=cr.detail_start+i*8;
+    const base=cr.detail_start+i*9;
     const item=document.getElementById('cheques-remise-list').lastElementChild;
     item.querySelector('.rem-donateur').value   =r[base]  ||'';
     item.querySelector('.rem-montant').value    =r[base+1]||'';
