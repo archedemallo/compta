@@ -564,10 +564,14 @@ function renderTable(){
 
   if (sortCol >= 0) {
     rows = [...rows].sort((a,b) => {
+      const isDate = (sortCol === cb.date);
       let va=String(a[sortCol]||''), vb=String(b[sortCol]||'');
-      // Convertir les dates DD/MM/YYYY en ISO pour tri correct
-      if(/^\d{2}\/\d{2}\/\d{4}$/.test(va)) va=dateToISO(va);
-      if(/^\d{2}\/\d{2}\/\d{4}$/.test(vb)) vb=dateToISO(vb);
+      if (isDate) { va=dateToISO(va)||''; vb=dateToISO(vb)||''; }
+      if (isDate) {
+        if(!va&&!vb)return 0; if(!va)return 1; if(!vb)return -1;
+        const cmp=va<vb?-1:va>vb?1:0;
+        return sortAsc?cmp:-cmp;
+      }
       const na=parseFloat(va), nb=parseFloat(vb);
       const cmp=!isNaN(na)&&!isNaN(nb)?na-nb:va.localeCompare(vb,'fr');
       return sortAsc?cmp:-cmp;
@@ -576,9 +580,8 @@ function renderTable(){
     // Tri par défaut : date décroissante
     rows = [...rows].sort((a,b)=>{
       const va=dateToISO(String(a[cb.date]||'')), vb=dateToISO(String(b[cb.date]||''));
-      const na=parseFloat(va),nb=parseFloat(vb);
-      const cmp=!isNaN(na)&&!isNaN(nb)?na-nb:(va<vb?-1:va>vb?1:0);
-      return -cmp;
+      if(!va&&!vb)return 0; if(!va)return 1; if(!vb)return -1;
+      return va<vb?1:va>vb?-1:0;
     });
   }
 
@@ -1117,6 +1120,12 @@ async function savePanel(){
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp,   chq[cc.type_comp]   ||'');
       if(chq[cc.nom_chat]) await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.nom_chat, chq[cc.nom_chat]);
       await Sheets.encaisserCheque(linkedCheque.idx, r[cb.date]||Sheets.todayFR(), r[cb.libelle]||'Encaissement');
+      // Synchronisation Suivi : archiver la ligne Import_Rapprochement correspondante si elle existe
+      if(!linkedSuivi){
+        const ci=Sheets.cols.importRap, numChq=chq[cc.num_cheque];
+        const suiviMatch=(allImportRap||[]).find(s=>s[ci.num_cheque]&&String(s[ci.num_cheque])===String(numChq));
+        if(suiviMatch) await Sheets.archiverImportRapprochement(suiviMatch._sheetIndex, r[cb.date]||Sheets.todayFR());
+      }
     }
 
     // Lier remise → colonne O (ref_remise) + reporter les infos
@@ -1200,6 +1209,12 @@ async function savePanel(){
       if(sr[ci.num_cheque])  await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.ref_cheque,     sr[ci.num_cheque]);
       // Archiver la ligne dans Import_historique
       await Sheets.archiverImportRapprochement(linkedSuivi.idx, r[cb.date] || Sheets.todayFR());
+      // Synchronisation Chèques : encaisser le chèque correspondant si num_cheque présent et non déjà lié
+      if(!linkedCheque && sr[ci.num_cheque]){
+        const cc2=Sheets.cols.cheque;
+        const chqMatch=(allCheques||[]).find(ch=>String(ch[cc2.num_cheque])===String(sr[ci.num_cheque]));
+        if(chqMatch) await Sheets.encaisserCheque(chqMatch._sheetIndex, r[cb.date]||Sheets.todayFR(), r[cb.libelle]||'Encaissement');
+      }
     }
 
     // Ventilation → stocker en description si multiple
