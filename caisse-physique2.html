@@ -328,7 +328,7 @@ function renderKPIs() {
   const rows = allRows.filter(r => r[cp.periode] !== undefined ? r[cp.periode] === per : true);
   const last = rows.length > 0 ? rows[rows.length - 1] : null;
   const soldActuel = last ? parseFloat(last[cp.total]) || 0 : 0;
-  const dateActuel = last ? (last[cp.mois] || '—') : '—';
+  const dateActuel = last ? formatDate(last[cp.mois]) : '—';
   const prev = rows.length > 1 ? rows[rows.length - 2] : null;
   const soldPrev = prev ? parseFloat(prev[cp.total]) || 0 : null;
   const diff = soldPrev !== null ? Math.round((soldActuel - soldPrev) * 100) / 100 : null;
@@ -395,12 +395,12 @@ function renderTable() {
     return `
       <tr>
         <td><button class="expand-btn ${isOpen?'open':''}" onclick="toggleRow('${id}')">${isOpen?'−':'+'}</button></td>
-        <td style="color:var(--text-3);white-space:nowrap;">${r[cp.mois]||'—'}</td>
+        <td style="color:var(--text-3);white-space:nowrap;">${formatDate(r[cp.mois])}</td>
         <td class="r" style="color:var(--green);font-weight:500;">${fmt(totalBillets)}</td>
         <td class="r" style="color:var(--blue);font-weight:500;">${fmt(totalPieces)}</td>
         <td class="r" style="font-weight:600;font-size:12px;">${fmt(parseFloat(r[cp.total])||0)}</td>
         <td class="r">
-          <button class="del-btn edit-action" onclick="openDel(${ri},'${escH(r[cp.mois]||'')} — ${escH(fmt(parseFloat(r[cp.total])||0))}')" title="Supprimer"><i class="ti ti-trash"></i></button>
+          <button class="del-btn edit-action" onclick="openDel(${ri},'${escH(formatDate(r[cp.mois]))} — ${escH(fmt(parseFloat(r[cp.total])||0))}')" title="Supprimer"><i class="ti ti-trash"></i></button>
         </td>
       </tr>
       <tr class="detail-row" id="detail-${id}" style="${isOpen?'':'display:none;'}">
@@ -505,6 +505,29 @@ function fmt(v) {
 function showErr(m) { const e = document.getElementById('form-err'); e.textContent = m; e.classList.remove('hidden'); }
 function showToast(m) { const t = document.createElement('div'); t.className='success-toast'; t.innerHTML=`<i class="ti ti-check"></i> ${m}`; document.body.appendChild(t); setTimeout(()=>t.remove(),3000); }
 function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;'); }
+
+// Convertit une date : format Excel (nombre), ISO YYYY-MM-DD, ou DD/MM/YYYY → DD/MM/YYYY
+function formatDate(d) {
+  if (!d && d !== 0) return '—';
+  const n = parseFloat(d);
+  // Nombre Excel (ex: 45678)
+  if (!isNaN(n) && n > 40000 && n < 60000) {
+    const dt = new Date(Math.round((n - 25569) * 86400 * 1000));
+    const day   = String(dt.getUTCDate()).padStart(2, '0');
+    const month = String(dt.getUTCMonth() + 1).padStart(2, '0');
+    const year  = dt.getUTCFullYear();
+    return `${day}/${month}/${year}`;
+  }
+  const s = String(d).trim();
+  // YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    const [y, m, dd] = s.slice(0, 10).split('-');
+    return `${dd}/${m}/${y}`;
+  }
+  // DD/MM/YYYY déjà bon
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+  return s;
+}
 </script>
 </body>
 </html>
