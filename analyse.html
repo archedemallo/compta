@@ -99,6 +99,24 @@
   .btn-ag-save{font-size:11px;padding:5px 14px;border-radius:var(--radius-sm);border:none;background:var(--blue);color:white;cursor:pointer;font-family:'DM Sans',sans-serif;}
   .btn-ag-save:hover{opacity:0.85;}
 
+  /* ---- DÉTAIL AG ---- */
+  .ag-cat-row{cursor:pointer;}
+  .ag-cat-row:hover td{background:var(--cream)!important;}
+  .ag-detail-row td{padding:0!important;border-bottom:0.5px solid var(--border);}
+  .ag-detail-inner{background:var(--surface-2);padding:10px 14px;}
+  .ag-detail-inner table{font-size:10px;margin:0;}
+  .ag-detail-inner thead th{background:var(--warm)!important;font-size:9px;padding:4px 8px;}
+  .ag-detail-inner tbody td{padding:4px 8px;border-bottom:0.5px solid var(--border);}
+  .ag-detail-inner tbody tr:last-child td{border-bottom:none;}
+  .ag-chevron{display:inline-block;transition:transform 0.15s;font-size:11px;color:var(--text-3);margin-right:5px;}
+  .ag-chevron.open{transform:rotate(90deg);}
+  .ag-src-badge{font-size:9px;padding:1px 5px;border-radius:4px;margin-right:3px;}
+  .ag-src-caisse{background:var(--warm);color:var(--brown-mid);}
+  .ag-src-banque{background:#e6f1fb;color:#185fa5;}
+  .ag-src-cheque{background:#f3f0ff;color:#6c5ce7;}
+  .ag-src-facture{background:#faeeda;color:#854f0b;}
+  .ag-src-remise{background:var(--green-bg);color:var(--green);}
+
   /* ---- DÉTAIL OPERATIONS ---- */
   .ops-detail{font-size:10px;color:var(--text-3);margin-top:3px;}
   .section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:var(--text-3);margin:16px 0 8px;}
@@ -337,6 +355,7 @@ const TYPES_CHATS = [
 // ============================================================
 let allCaisse=[], allBanque=[], allFactures=[], allCheques=[], allCaisse2Data=[], allRemises=[];
 let activePer='';
+let agOpenCats = new Set(); // catégories dont le détail est ouvert
 let agConfig = [];
 let agConfigVisible = false;
 let chatPeriodes = []; // cases cochées
@@ -675,8 +694,57 @@ function renderAG() {
     }
 
     const total = totalCaisse + totalCaisse2 + totalBanque + totalCheques + totalRemises + totalFactures;
-    // Regroupement pour affichage : caisse+caisse2 d'un côté, banque+chèques+remises+factures de l'autre
-    return { ...cat, totalCaisse: totalCaisse + totalCaisse2, totalBanque: totalBanque + totalCheques + totalRemises + totalFactures, total };
+
+    // Collecter les lignes détail pour l'accordion
+    const ops = [];
+    if (srcs.includes('caisse')) {
+      caisse.forEach(r => {
+        if (matchRow(r[COLS_CAISSE.type_mvt], r[COLS_CAISSE.description], r[COLS_CAISSE.fournisseur])) {
+          const val = fmtN(r[COLS_CAISSE.credit]) - fmtN(r[COLS_CAISSE.debit]);
+          if (val !== 0) ops.push({ src:'Caisse', date:r[COLS_CAISSE.date]||'', libelle:r[COLS_CAISSE.libelle]||'', type:r[COLS_CAISSE.type_mvt]||'', montant:val });
+        }
+      });
+    }
+    if (srcs.includes('caisse2')) {
+      allCaisse2.forEach(r => {
+        if (matchRow(r[COLS_CAISSE.type_mvt], r[COLS_CAISSE.description], r[COLS_CAISSE.fournisseur])) {
+          const val = fmtN(r[COLS_CAISSE.credit]) - fmtN(r[COLS_CAISSE.debit]);
+          if (val !== 0) ops.push({ src:'Caisse 2', date:r[COLS_CAISSE.date]||'', libelle:r[COLS_CAISSE.libelle]||'', type:r[COLS_CAISSE.type_mvt]||'', montant:val });
+        }
+      });
+    }
+    if (srcs.includes('banque')) {
+      banque.forEach(r => {
+        if (matchRow(r[COLS_BANQUE.type_mvt], r[COLS_BANQUE.description], r[COLS_BANQUE.fournisseur])) {
+          const val = fmtN(r[COLS_BANQUE.credit]) - fmtN(r[COLS_BANQUE.debit]);
+          if (val !== 0) ops.push({ src:'Banque', date:r[COLS_BANQUE.date]||'', libelle:r[COLS_BANQUE.libelle]||'', type:r[COLS_BANQUE.type_mvt]||'', montant:val });
+        }
+      });
+    }
+    if (srcs.includes('cheques')) {
+      allCheques.slice(1).filter(r => r && r[COLS_CHEQUE.periode] === activePer).forEach(r => {
+        if (matchRow(r[COLS_CHEQUE.type_mvt], r[COLS_CHEQUE.description], r[COLS_CHEQUE.fournisseur])) {
+          const val = -fmtN(r[COLS_CHEQUE.montant]);
+          if (val !== 0) ops.push({ src:'Chèque', date:r[COLS_CHEQUE.date_emission]||'', libelle:r[COLS_CHEQUE.beneficiaire]||'', type:r[COLS_CHEQUE.type_mvt]||'', montant:val });
+        }
+      });
+    }
+    if (srcs.includes('remises')) {
+      allRemises.slice(1).filter(r => r && r[COLS_REMISE.periode] === activePer).forEach(r => {
+        const val = fmtN(r[COLS_REMISE.montant_total]);
+        if (val !== 0) ops.push({ src:'Remise', date:r[COLS_REMISE.date_remise]||'', libelle:'N° '+( r[COLS_REMISE.num_bordereau]||''), type:'Remise chèque', montant:val });
+      });
+    }
+    if (srcs.includes('factures')) {
+      allFactures.slice(1).filter(r => r && r[COLS_FACTURE.periode] === activePer).forEach(r => {
+        if (matchRow(r[COLS_FACTURE.categorie], r[COLS_FACTURE.description], r[COLS_FACTURE.fournisseur])) {
+          const val = -fmtN(r[COLS_FACTURE.montant_ttc]);
+          if (val !== 0) ops.push({ src:'Facture', date:r[COLS_FACTURE.date_facture]||'', libelle:r[COLS_FACTURE.fournisseur]||'', type:r[COLS_FACTURE.categorie]||'', montant:val });
+        }
+      });
+    }
+
+    return { ...cat, totalCaisse: totalCaisse + totalCaisse2, totalBanque: totalBanque + totalCheques + totalRemises + totalFactures, total, ops };
   }).filter(c => Math.abs(c.total) > 0.001 || agConfig.indexOf(agConfig.find(x=>x.cat===c.cat)) >= 0);
 
   // KPIs
@@ -714,13 +782,18 @@ function renderAG() {
   html += `<tr><td colspan="5" style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:var(--text-3);padding:10px 10px 4px;background:var(--surface-2);">Recettes</td></tr>`;
   let totRecC=0, totRecB=0, totRec=0;
   recCats.forEach(r => {
-    html += `<tr>
-      <td>${r.cat}</td>
+    const isOpen = agOpenCats.has(r.cat);
+    const catKey = escH(r.cat);
+    html += `<tr class="ag-cat-row" onclick="toggleAgCat('${catKey}')">
+      <td><i class="ti ti-chevron-right ag-chevron ${isOpen?'open':''}"></i>${r.cat}
+        ${r.ops&&r.ops.length?`<span style="font-size:9px;color:var(--text-3);margin-left:6px;">(${r.ops.length} op.)</span>`:''}
+      </td>
       <td class="r ${r.totalCaisse>0?'amount-c':r.totalCaisse<0?'amount-d':''}">${r.totalCaisse!==0?fmt(r.totalCaisse):'—'}</td>
       <td class="r ${r.totalBanque>0?'amount-c':r.totalBanque<0?'amount-d':''}">${r.totalBanque!==0?fmt(r.totalBanque):'—'}</td>
       <td class="r ${r.total>0?'amount-c':r.total<0?'amount-d':''}">${r.total!==0?fmt(r.total):'—'}</td>
       <td><span class="badge badge-green">recette</span></td>
-    </tr>`;
+    </tr>
+    ${isOpen ? buildAgDetail(r) : ''}`;
     totRecC+=r.totalCaisse; totRecB+=r.totalBanque; totRec+=r.total;
   });
   html += `<tr class="total-row"><td>TOTAL RECETTES</td><td class="r amount-c">${fmt(totRecC)}</td><td class="r amount-c">${fmt(totRecB)}</td><td class="r amount-c">${fmt(totRec)}</td><td></td></tr>`;
@@ -729,13 +802,18 @@ function renderAG() {
   let totDepC=0, totDepB=0, totDep=0;
   depCats.forEach(r => {
     const absC = Math.abs(r.totalCaisse), absB = Math.abs(r.totalBanque), absT = Math.abs(r.total);
-    html += `<tr>
-      <td>${r.cat}</td>
+    const isOpen = agOpenCats.has(r.cat);
+    const catKey = escH(r.cat);
+    html += `<tr class="ag-cat-row" onclick="toggleAgCat('${catKey}')">
+      <td><i class="ti ti-chevron-right ag-chevron ${isOpen?'open':''}"></i>${r.cat}
+        ${r.ops&&r.ops.length?`<span style="font-size:9px;color:var(--text-3);margin-left:6px;">(${r.ops.length} op.)</span>`:''}
+      </td>
       <td class="r ${absC>0?'amount-d':''}">${absC>0?fmt(absC):'—'}</td>
       <td class="r ${absB>0?'amount-d':''}">${absB>0?fmt(absB):'—'}</td>
       <td class="r ${absT>0?'amount-d':''}">${absT>0?fmt(absT):'—'}</td>
       <td><span class="badge badge-red">dépense</span></td>
-    </tr>`;
+    </tr>
+    ${isOpen ? buildAgDetail(r) : ''}`;
     totDepC+=absC; totDepB+=absB; totDep+=absT;
   });
   html += `<tr class="total-row"><td>TOTAL DÉPENSES</td><td class="r amount-d">${fmt(totDepC)}</td><td class="r amount-d">${fmt(totDepB)}</td><td class="r amount-d">${fmt(totDep)}</td><td></td></tr>`;
@@ -962,6 +1040,45 @@ function renderChatDetail() {
   }
 
   wrap.innerHTML = html;
+}
+
+// ============================================================
+// AG DÉTAIL ACCORDION
+// ============================================================
+function toggleAgCat(cat) {
+  if (agOpenCats.has(cat)) agOpenCats.delete(cat);
+  else agOpenCats.add(cat);
+  renderAG();
+}
+
+function buildAgDetail(r) {
+  if (!r.ops || !r.ops.length) return `<tr class="ag-detail-row"><td colspan="5"><div class="ag-detail-inner" style="color:var(--text-3);font-size:11px;">Aucune opération trouvée</div></td></tr>`;
+
+  const srcClass = { 'Caisse':'ag-src-caisse', 'Caisse 2':'ag-src-caisse', 'Banque':'ag-src-banque', 'Chèque':'ag-src-cheque', 'Facture':'ag-src-facture', 'Remise':'ag-src-remise' };
+  const isRec = r.sens === 'recette';
+
+  const rows = r.ops.map(op => {
+    const color = op.montant >= 0 ? 'var(--green)' : 'var(--red)';
+    const srcCls = srcClass[op.src] || '';
+    return `<tr>
+      <td style="color:var(--text-3);white-space:nowrap;">${op.date||'—'}</td>
+      <td><span class="ag-src-badge ${srcCls}">${op.src}</span></td>
+      <td>${escH(op.libelle)||'—'}</td>
+      <td style="color:var(--text-3);font-size:10px;">${escH(op.type)||'—'}</td>
+      <td class="r" style="font-weight:500;color:${color};">${fmt(Math.abs(op.montant))}</td>
+    </tr>`;
+  }).join('');
+
+  return `<tr class="ag-detail-row">
+    <td colspan="5">
+      <div class="ag-detail-inner">
+        <table>
+          <thead><tr><th>Date</th><th>Source</th><th>Libellé</th><th>Type</th><th class="r">${isRec?'Recette':'Dépense'}</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </td>
+  </tr>`;
 }
 
 // ============================================================
