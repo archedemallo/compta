@@ -84,18 +84,6 @@
   /* Sections dans le body */
   .ag-section{margin-bottom:10px;}
   .ag-section-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-3);margin-bottom:6px;}
-  /* Option A : bande latérale colorée par catégorie */
-  .ag-section{border-left:3px solid transparent;padding-left:10px;margin-bottom:10px;}
-  .ag-section.sec-sources   {border-left-color:#c96b2a;}
-  .ag-section.sec-modes     {border-left-color:#185FA5;}
-  .ag-section.sec-types     {border-left-color:#3B6D11;}
-  .ag-section.sec-descs     {border-left-color:#6b5040;}
-  .ag-section.sec-fours     {border-left-color:#9a8070;}
-  .ag-section.sec-sources .ag-section-label {color:#c96b2a;}
-  .ag-section.sec-modes   .ag-section-label {color:#185FA5;}
-  .ag-section.sec-types   .ag-section-label {color:#3B6D11;}
-  .ag-section.sec-descs   .ag-section-label {color:#6b5040;}
-  .ag-section.sec-fours   .ag-section-label {color:#9a8070;}
   .ag-cb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:3px 8px;}
   .ag-cb-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2);padding:2px 0;cursor:pointer;}
   .ag-cb-item input{width:13px;height:13px;cursor:pointer;accent-color:var(--blue);flex-shrink:0;}
@@ -214,23 +202,54 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- ONGLET 3 : FOURNISSEURS (en construction)                    -->
+    <!-- ONGLET 3 : FOURNISSEURS                                      -->
     <!-- ============================================================ -->
     <div id="tab-fournisseurs" class="tab-pane" style="display:none;">
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:64px 32px;text-align:center;gap:16px;">
-        <div style="width:56px;height:56px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;">
-          <i class="ti ti-tools" style="font-size:26px;color:var(--orange);"></i>
-        </div>
-        <div style="font-size:16px;font-weight:600;color:var(--text);">En construction</div>
-        <div style="font-size:12px;color:var(--text-3);max-width:380px;line-height:1.7;">
-          Cet onglet affichera les dépenses regroupées par <strong>fournisseur</strong>.<br>
-          Il sera disponible dès que la colonne <code style="font-size:11px;background:var(--surface-2);padding:2px 6px;border-radius:4px;border:0.5px solid var(--border);">Fournisseur</code> sera ajoutée dans le Google Sheet.
-        </div>
-        <div style="margin-top:8px;font-size:11px;color:var(--text-3);background:var(--surface-2);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 18px;">
-          <i class="ti ti-info-circle" style="font-size:13px;vertical-align:-2px;margin-right:4px;"></i>
-          Prévu : totaux par fournisseur · filtre par période · comparatif années
+
+      <!-- Sous-onglets fournisseurs -->
+      <div class="tab-bar" style="margin-bottom:16px;">
+        <button class="tab-btn active" onclick="switchFourTab('classement')" id="four-btn-classement">
+          <i class="ti ti-list-numbers"></i> Classement
+        </button>
+        <button class="tab-btn" onclick="switchFourTab('categories')" id="four-btn-categories">
+          <i class="ti ti-layout-grid"></i> Par catégorie
+        </button>
+        <button class="tab-btn" onclick="switchFourTab('fiche')" id="four-btn-fiche">
+          <i class="ti ti-address-card"></i> Fiche détaillée
+        </button>
+      </div>
+
+      <!-- Sous-onglet 1 : Classement -->
+      <div id="four-tab-classement">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title"><i class="ti ti-list-numbers"></i> Classement par fournisseur</div>
+            <span id="four-classement-badge" class="badge badge-orange"></span>
+          </div>
+          <div id="four-classement-wrap"><div class="loading-wrap"><i class="ti ti-loader-2 spinner"></i></div></div>
         </div>
       </div>
+
+      <!-- Sous-onglet 2 : Par catégorie -->
+      <div id="four-tab-categories" style="display:none;">
+        <div id="four-categories-wrap"></div>
+      </div>
+
+      <!-- Sous-onglet 3 : Fiche détaillée -->
+      <div id="four-tab-fiche" style="display:none;">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title"><i class="ti ti-address-card"></i> Fiche fournisseur</div>
+            <select id="four-fiche-select" onchange="renderFourFiche()" style="font-size:11px;padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;max-width:260px;">
+              <option value="">— Sélectionner un fournisseur —</option>
+            </select>
+          </div>
+          <div class="card-body" id="four-fiche-wrap">
+            <div class="empty-state"><i class="ti ti-address-card"></i>Sélectionne un fournisseur</div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- ============================================================ -->
@@ -382,6 +401,7 @@ function switchTab(tab) {
     document.getElementById('tab-' + t).classList.toggle('active', t === tab);
     document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
   });
+  if (tab === 'fournisseurs') initFournisseurs();
 }
 
 // ============================================================
@@ -413,7 +433,6 @@ async function loadAgConfig() {
     cat: c.cat,
     sens: c.sens || 'recette',
     sources: c.sources || ['banque','caisse'],
-    modes_reglement: c.modes_reglement || [],
     types: c.types || [],
     descriptions: c.descriptions || [],
     fournisseurs: c.fournisseurs || [],
@@ -438,9 +457,6 @@ async function saveAgConfig() {
     // Fournisseurs
     cfg.fournisseurs = [];
     item.querySelectorAll('.ag-cb-four:checked').forEach(cb => cfg.fournisseurs.push(cb.value));
-    // Mode de règlement
-    cfg.modes_reglement = [];
-    item.querySelectorAll('.ag-cb-mode:checked').forEach(cb => cfg.modes_reglement.push(cb.value));
     // Sens
     const selSens = item.querySelector('.ag-sel-sens');
     if (selSens) cfg.sens = selSens.value;
@@ -495,12 +511,11 @@ function renderAgAccordeon() {
   const allDescs  = Sheets.getDescriptions  ? Sheets.getDescriptions()   : [];
   const allFours  = Sheets.getFournisseurs  ? Sheets.getFournisseurs()   : [];
   const SOURCES = [
-    { key:'banque',   label:'Banque'           },
-    { key:'caisse',   label:'Caisse 1'         },
-    { key:'caisse2',  label:'Caisse 2'         },
-    { key:'cheques',  label:'Chèques'          },
-    { key:'remises',  label:'Remise de chèque' },
-    { key:'factures', label:'Factures'         },
+    { key:'banque',   label:'Banque'    },
+    { key:'caisse',   label:'Caisse 1'  },
+    { key:'caisse2',  label:'Caisse 2'  },
+    { key:'cheques',  label:'Chèques'   },
+    { key:'factures', label:'Factures'  },
   ];
 
   const container = document.getElementById('ag-acc-list');
@@ -531,12 +546,6 @@ function renderAgAccordeon() {
       return `<label class="ag-cb-item"><input type="checkbox" class="ag-cb-four" value="${f}" ${checked}> ${escH(f)}</label>`;
     }).join('') : '<span style="font-size:11px;color:var(--text-3);">Aucun fournisseur disponible</span>';
 
-    const allModes = Sheets.getModesReglement ? Sheets.getModesReglement() : [];
-    const modeCbs = allModes.length ? allModes.map(m => {
-      const checked = (cat.modes_reglement||[]).some(x => x.toLowerCase()===m.toLowerCase()) ? 'checked' : '';
-      return `<label class="ag-cb-item"><input type="checkbox" class="ag-cb-mode" value="${m}" ${checked}> ${escH(m)}</label>`;
-    }).join('') : '<span style="font-size:11px;color:var(--text-3);">Aucun mode disponible</span>';
-
     return `
     <div class="ag-acc-item" data-idx="${idx}">
       <div class="ag-acc-head" onclick="toggleAgAcc(this.closest('.ag-acc-item'))">
@@ -549,23 +558,19 @@ function renderAgAccordeon() {
         </button>
       </div>
       <div class="ag-acc-body" style="display:none;">
-        <div class="ag-section sec-sources">
+        <div class="ag-section">
           <div class="ag-section-label">Sources</div>
           <div class="ag-cb-grid">${srcCbs}</div>
         </div>
-        <div class="ag-section sec-modes">
-          <div class="ag-section-label">Mode de règlement</div>
-          <div class="ag-cb-grid">${modeCbs}</div>
-        </div>
-        <div class="ag-section sec-types">
+        <div class="ag-section">
           <div class="ag-section-label">Types de mouvement</div>
           <div class="ag-cb-grid">${typeCbs}</div>
         </div>
-        <div class="ag-section sec-descs">
+        <div class="ag-section">
           <div class="ag-section-label">Descriptions</div>
           <div class="ag-cb-grid">${descCbs}</div>
         </div>
-        <div class="ag-section sec-fours">
+        <div class="ag-section">
           <div class="ag-section-label">Fournisseurs</div>
           <div class="ag-cb-grid">${fourCbs}</div>
         </div>
@@ -601,21 +606,18 @@ function renderAG() {
   // Calcul par catégorie (en tenant compte des sources et types/descriptions/fournisseurs sélectionnés)
   const results = agConfig.map(cat => {
     const srcs    = cat.sources || ['banque','caisse'];
-    const modes   = (cat.modes_reglement || []).map(m => m.toLowerCase().trim());
     const types   = (cat.types || []).map(t => t.toLowerCase().trim());
     const descs   = (cat.descriptions || []).map(d => d.toLowerCase().trim());
     const fours   = (cat.fournisseurs || []).map(f => f.toLowerCase().trim());
 
-    // Fonction de match : type_mvt OU description OU fournisseur OU mode_reglement (si listes cochées)
-    function matchRow(typeMvt, desc, four, modeReg) {
+    // Fonction de match : type_mvt OU description OU fournisseur (si des listes sont cochées)
+    function matchRow(typeMvt, desc, four) {
       const tN = (typeMvt||'').toLowerCase().trim();
       const dN = (desc||'').toLowerCase().trim();
       const fN = (four||'').toLowerCase().trim();
-      const mN = (modeReg||'').toLowerCase().trim();
       if (types.length && types.includes(tN)) return true;
       if (descs.length && descs.includes(dN)) return true;
       if (fours.length && fours.includes(fN)) return true;
-      if (modes.length && modes.includes(mN)) return true;
       return false;
     }
 
@@ -623,27 +625,27 @@ function renderAG() {
 
     if (srcs.includes('caisse')) {
       caisse.forEach(r => {
-        if (matchRow(r[7], r[8], r[9], '')) totalCaisse += fmtN(r[4]) - fmtN(r[3]);
+        if (matchRow(r[7], r[8], r[9])) totalCaisse += fmtN(r[4]) - fmtN(r[3]);
       });
     }
     if (srcs.includes('caisse2')) {
       allCaisse2.forEach(r => {
-        if (matchRow(r[7], r[8], r[9], '')) totalCaisse2 += fmtN(r[4]) - fmtN(r[3]);
+        if (matchRow(r[7], r[8], r[9])) totalCaisse2 += fmtN(r[4]) - fmtN(r[3]);
       });
     }
     if (srcs.includes('banque')) {
       banque.forEach(r => {
-        if (matchRow(r[6], r[7], r[8], r[22]||'')) totalBanque += fmtN(r[3]) - fmtN(r[2]);
+        if (matchRow(r[6], r[7], r[8])) totalBanque += fmtN(r[3]) - fmtN(r[2]);
       });
     }
     if (srcs.includes('cheques')) {
       allCheques.slice(1).filter(r => r && r[5] === activePer).forEach(r => {
-        if (matchRow(r[6], r[7], r[8], '')) totalCheques += fmtN(r[3]);
+        if (matchRow(r[6], r[7], r[8])) totalCheques += fmtN(r[3]);
       });
     }
     if (srcs.includes('factures')) {
       allFactures.slice(1).filter(r => r && r[5] === activePer).forEach(r => {
-        if (matchRow(r[6], r[7], r[8], '')) totalFactures += fmtN(r[3]);
+        if (matchRow(r[6], r[7], r[8])) totalFactures += fmtN(r[3]);
       });
     }
 
@@ -946,6 +948,296 @@ function showToast(msg, warn=false) {
   t.innerHTML = `<i class="ti ti-check"></i>${msg}`;
   document.body.appendChild(t);
   setTimeout(()=>t.remove(), 3000);
+}
+
+// ============================================================
+// ONGLET FOURNISSEURS
+// ============================================================
+let fourActiveSub = 'classement';
+
+function switchFourTab(sub) {
+  ['classement','categories','fiche'].forEach(s => {
+    document.getElementById('four-btn-' + s).classList.toggle('active', s === sub);
+    document.getElementById('four-tab-' + s).style.display = s === sub ? 'block' : 'none';
+  });
+  fourActiveSub = sub;
+}
+
+// Collecte toutes les opérations avec fournisseur renseigné pour la période active
+function getFourData() {
+  const rows = [];
+
+  allCaisse.slice(1).filter(r => r && r[COLS_CAISSE.periode] === activePer).forEach(r => {
+    const four = (r[COLS_CAISSE.fournisseur] || '').trim();
+    if (!four) return;
+    const debit  = fmtN(r[COLS_CAISSE.debit]);
+    const credit = fmtN(r[COLS_CAISSE.credit]);
+    const montant = debit > 0 ? -debit : credit;
+    rows.push({
+      fournisseur: four,
+      source: 'Caisse',
+      date: r[COLS_CAISSE.date] || '',
+      libelle: r[COLS_CAISSE.libelle] || '',
+      type_mvt: r[COLS_CAISSE.type_mvt] || '',
+      montant,
+      debit, credit,
+    });
+  });
+
+  allBanque.slice(1).filter(r => r && r[COLS_BANQUE.periode] === activePer).forEach(r => {
+    const four = (r[COLS_BANQUE.fournisseur] || '').trim();
+    if (!four) return;
+    const debit  = fmtN(r[COLS_BANQUE.debit]);
+    const credit = fmtN(r[COLS_BANQUE.credit]);
+    const montant = debit > 0 ? -debit : credit;
+    rows.push({
+      fournisseur: four,
+      source: 'Banque',
+      date: r[COLS_BANQUE.date] || '',
+      libelle: r[COLS_BANQUE.libelle] || '',
+      type_mvt: r[COLS_BANQUE.type_mvt] || '',
+      montant,
+      debit, credit,
+    });
+  });
+
+  allCheques.slice(1).filter(r => r && r[COLS_CHEQUE.periode] === activePer).forEach(r => {
+    const four = (r[COLS_CHEQUE.fournisseur] || '').trim();
+    if (!four) return;
+    const montant = -fmtN(r[COLS_CHEQUE.montant]);
+    rows.push({
+      fournisseur: four,
+      source: 'Chèque',
+      date: r[COLS_CHEQUE.date] || '',
+      libelle: r[COLS_CHEQUE.beneficiaire] || four,
+      type_mvt: r[COLS_CHEQUE.type_mvt] || '',
+      montant,
+      debit: fmtN(r[COLS_CHEQUE.montant]), credit: 0,
+    });
+  });
+
+  allFactures.slice(1).filter(r => r && r[COLS_FACTURE.periode] === activePer).forEach(r => {
+    const four = (r[COLS_FACTURE.fournisseur] || '').trim();
+    if (!four) return;
+    const montant = -fmtN(r[COLS_FACTURE.montant]);
+    rows.push({
+      fournisseur: four,
+      source: 'Facture',
+      date: r[COLS_FACTURE.date] || '',
+      libelle: r[COLS_FACTURE.libelle] || '',
+      type_mvt: r[COLS_FACTURE.categorie] || '',
+      montant,
+      debit: fmtN(r[COLS_FACTURE.montant]), credit: 0,
+    });
+  });
+
+  return rows;
+}
+
+// Agrège par fournisseur → { nom, total, debit, credit, nb, sources, types, ops[] }
+function aggregateFournisseurs(rows) {
+  const map = {};
+  rows.forEach(r => {
+    if (!map[r.fournisseur]) map[r.fournisseur] = { nom: r.fournisseur, total: 0, debit: 0, credit: 0, nb: 0, sources: new Set(), types: new Set(), ops: [] };
+    const e = map[r.fournisseur];
+    e.total  += r.montant;
+    e.debit  += r.debit;
+    e.credit += r.credit;
+    e.nb++;
+    e.sources.add(r.source);
+    if (r.type_mvt) e.types.add(r.type_mvt);
+    e.ops.push(r);
+  });
+  return Object.values(map).map(e => ({ ...e, sources: [...e.sources], types: [...e.types] }))
+    .sort((a, b) => Math.abs(b.total) - Math.abs(a.total));
+}
+
+function fourSourceChip(src) {
+  const map = { Caisse:'badge-orange', Banque:'badge-grey', 'Chèque':'badge-grey', Facture:'badge-grey' };
+  return `<span class="badge ${map[src]||'badge-grey'}" style="margin-right:2px;">${src}</span>`;
+}
+
+function fourMiniBar(val, max, isCredit) {
+  const pct = max > 0 ? Math.round(Math.abs(val) / max * 100) : 0;
+  const color = isCredit ? 'var(--green)' : 'var(--red)';
+  return `<div style="height:5px;border-radius:3px;background:var(--surface-2);"><div style="height:5px;border-radius:3px;background:${color};width:${pct}%;"></div></div>`;
+}
+
+// ── Vue 1 : Classement ──────────────────────────────────────
+function renderFourClassement() {
+  const rows = getFourData();
+  const fours = aggregateFournisseurs(rows);
+  const badge = document.getElementById('four-classement-badge');
+  if (badge) badge.textContent = activePer;
+
+  const wrap = document.getElementById('four-classement-wrap');
+  if (!fours.length) {
+    wrap.innerHTML = '<div class="empty-state"><i class="ti ti-address-card"></i>Aucun fournisseur renseigné pour cette période</div>';
+    return;
+  }
+
+  const maxAbs = Math.max(...fours.map(f => Math.max(f.debit, f.credit)));
+
+  let html = `<table style="width:100%;border-collapse:collapse;font-size:11px;">
+    <thead><tr>
+      <th style="text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 12px;border-bottom:0.5px solid var(--border);background:var(--surface-2);">Fournisseur</th>
+      <th style="text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 12px;border-bottom:0.5px solid var(--border);background:var(--surface-2);">Répartition</th>
+      <th style="text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 12px;border-bottom:0.5px solid var(--border);background:var(--surface-2);">Sources</th>
+      <th style="text-align:right;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 12px;border-bottom:0.5px solid var(--border);background:var(--surface-2);">Dépenses</th>
+      <th style="text-align:right;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 12px;border-bottom:0.5px solid var(--border);background:var(--surface-2);">Recettes</th>
+      <th style="text-align:right;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 12px;border-bottom:0.5px solid var(--border);background:var(--surface-2);">Opér.</th>
+      <th style="text-align:right;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 12px;border-bottom:0.5px solid var(--border);background:var(--surface-2);"></th>
+    </tr></thead><tbody>`;
+
+  fours.forEach(f => {
+    const chips = f.sources.map(s => fourSourceChip(s)).join('');
+    html += `<tr style="cursor:pointer;" onclick="openFourFiche('${escH(f.nom)}')" onmouseenter="this.style.background='var(--cream)'" onmouseleave="this.style.background=''">
+      <td style="padding:8px 12px;border-bottom:0.5px solid var(--border);">
+        <div style="font-size:11px;font-weight:600;color:var(--text);">${escH(f.nom)}</div>
+        <div style="font-size:10px;color:var(--text-3);">${[...f.types].slice(0,2).map(t=>escH(t)).join(' · ')}</div>
+      </td>
+      <td style="padding:8px 12px;border-bottom:0.5px solid var(--border);min-width:100px;">
+        ${f.debit > 0 ? fourMiniBar(f.debit, maxAbs, false) : ''}
+        ${f.credit > 0 ? fourMiniBar(f.credit, maxAbs, true) : ''}
+      </td>
+      <td style="padding:8px 12px;border-bottom:0.5px solid var(--border);">${chips}</td>
+      <td style="padding:8px 12px;border-bottom:0.5px solid var(--border);text-align:right;color:var(--red);font-weight:500;font-variant-numeric:tabular-nums;">${f.debit > 0 ? fmt(f.debit) : '—'}</td>
+      <td style="padding:8px 12px;border-bottom:0.5px solid var(--border);text-align:right;color:var(--green);font-weight:500;font-variant-numeric:tabular-nums;">${f.credit > 0 ? fmt(f.credit) : '—'}</td>
+      <td style="padding:8px 12px;border-bottom:0.5px solid var(--border);text-align:right;color:var(--text-3);">${f.nb}</td>
+      <td style="padding:8px 12px;border-bottom:0.5px solid var(--border);text-align:right;"><span style="font-size:10px;color:var(--blue);">Fiche →</span></td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+// ── Vue 2 : Par catégorie ───────────────────────────────────
+function renderFourCategories() {
+  const rows = getFourData();
+  const fours = aggregateFournisseurs(rows);
+  const wrap = document.getElementById('four-categories-wrap');
+  if (!fours.length) {
+    wrap.innerHTML = '<div class="empty-state"><i class="ti ti-layout-grid"></i>Aucun fournisseur renseigné pour cette période</div>';
+    return;
+  }
+
+  // Regrouper par type_mvt principal (premier type de chaque fournisseur)
+  const byType = {};
+  fours.forEach(f => {
+    const key = f.types[0] || 'Sans catégorie';
+    if (!byType[key]) byType[key] = [];
+    byType[key].push(f);
+  });
+
+  const colors = ['#e24b4a','#639922','#ef9f27','#378add','#9a4b9a','#c96b2a'];
+  let colorIdx = 0;
+
+  let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">';
+  Object.entries(byType).forEach(([type, items]) => {
+    const color = colors[colorIdx++ % colors.length];
+    const totalDep = items.reduce((s, f) => s + f.debit, 0);
+    const totalRec = items.reduce((s, f) => s + f.credit, 0);
+    const maxV = Math.max(...items.map(f => Math.max(f.debit, f.credit)));
+
+    html += `<div class="card" style="margin-bottom:0;">
+      <div class="card-head" style="border-left:3px solid ${color};">
+        <div class="card-title" style="color:${color};">${escH(type)}</div>
+        <div style="display:flex;gap:6px;">
+          ${totalDep > 0 ? `<span class="badge badge-red">${fmt(totalDep)}</span>` : ''}
+          ${totalRec > 0 ? `<span class="badge badge-green">${fmt(totalRec)}</span>` : ''}
+        </div>
+      </div>
+      <div style="padding:10px 14px;">`;
+
+    items.forEach(f => {
+      html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;cursor:pointer;" onclick="openFourFiche('${escH(f.nom)}')">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:11px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escH(f.nom)}</div>
+          ${f.debit > 0 ? `<div style="height:4px;border-radius:2px;background:var(--surface-2);margin-top:3px;"><div style="height:4px;border-radius:2px;background:${color};width:${Math.round(f.debit/maxV*100)}%;"></div></div>` : ''}
+        </div>
+        <div style="margin-left:10px;text-align:right;flex-shrink:0;">
+          ${f.debit > 0 ? `<div style="font-size:11px;font-weight:500;color:var(--red);">${fmt(f.debit)}</div>` : ''}
+          ${f.credit > 0 ? `<div style="font-size:11px;font-weight:500;color:var(--green);">${fmt(f.credit)}</div>` : ''}
+        </div>
+      </div>`;
+    });
+
+    html += `</div></div>`;
+  });
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+
+// ── Vue 3 : Fiche détaillée ─────────────────────────────────
+function buildFourSelect() {
+  const rows = getFourData();
+  const fours = aggregateFournisseurs(rows);
+  const sel = document.getElementById('four-fiche-select');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— Sélectionner un fournisseur —</option>' +
+    fours.map(f => `<option value="${escH(f.nom)}" ${f.nom === current ? 'selected' : ''}>${escH(f.nom)} (${f.nb} op.)</option>`).join('');
+}
+
+function openFourFiche(nom) {
+  switchFourTab('fiche');
+  const sel = document.getElementById('four-fiche-select');
+  if (sel) { sel.value = nom; renderFourFiche(); }
+}
+
+function renderFourFiche() {
+  const nom = (document.getElementById('four-fiche-select') || {}).value;
+  const wrap = document.getElementById('four-fiche-wrap');
+  if (!nom) { wrap.innerHTML = '<div class="empty-state"><i class="ti ti-address-card"></i>Sélectionne un fournisseur</div>'; return; }
+
+  const rows = getFourData().filter(r => r.fournisseur === nom);
+  if (!rows.length) { wrap.innerHTML = '<div class="empty-state"><i class="ti ti-search"></i>Aucune opération trouvée</div>'; return; }
+
+  const totalDep = rows.reduce((s, r) => s + r.debit, 0);
+  const totalRec = rows.reduce((s, r) => s + r.credit, 0);
+  const moyDep = rows.filter(r => r.debit > 0).length ? totalDep / rows.filter(r => r.debit > 0).length : 0;
+  const sources = [...new Set(rows.map(r => r.source))];
+  const types   = [...new Set(rows.map(r => r.type_mvt).filter(Boolean))];
+
+  const sorted = [...rows].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  let html = `
+    <div class="kpi-row" style="margin-bottom:14px;">
+      <div class="kpi"><div class="kpi-label">Total dépenses</div><div class="kpi-value v-red">${fmt(totalDep)}</div><div class="kpi-sub">${rows.filter(r=>r.debit>0).length} opér.</div></div>
+      <div class="kpi"><div class="kpi-label">Total recettes</div><div class="kpi-value v-green">${fmt(totalRec)}</div><div class="kpi-sub">${rows.filter(r=>r.credit>0).length} opér.</div></div>
+      <div class="kpi"><div class="kpi-label">Moy. / dépense</div><div class="kpi-value v-orange">${fmt(moyDep)}</div><div class="kpi-sub">par opération</div></div>
+      <div class="kpi"><div class="kpi-label">Sources</div><div class="kpi-value v-blue" style="font-size:14px;">${sources.join(', ')}</div><div class="kpi-sub">${types.slice(0,2).join(' · ')}</div></div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:11px;">
+      <thead><tr>
+        <th style="text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);">Date</th>
+        <th style="text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);">Libellé</th>
+        <th style="text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);">Type</th>
+        <th style="text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);">Source</th>
+        <th style="text-align:right;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);">Dépense</th>
+        <th style="text-align:right;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);">Recette</th>
+      </tr></thead><tbody>`;
+
+  sorted.forEach(r => {
+    html += `<tr>
+      <td style="padding:6px 10px;border-bottom:0.5px solid var(--border);white-space:nowrap;color:var(--text-3);">${r.date || '—'}</td>
+      <td style="padding:6px 10px;border-bottom:0.5px solid var(--border);">${escH(r.libelle) || '—'}</td>
+      <td style="padding:6px 10px;border-bottom:0.5px solid var(--border);color:var(--text-3);font-size:10px;">${escH(r.type_mvt) || '—'}</td>
+      <td style="padding:6px 10px;border-bottom:0.5px solid var(--border);">${fourSourceChip(r.source)}</td>
+      <td style="padding:6px 10px;border-bottom:0.5px solid var(--border);text-align:right;color:var(--red);font-weight:500;">${r.debit > 0 ? fmt(r.debit) : '—'}</td>
+      <td style="padding:6px 10px;border-bottom:0.5px solid var(--border);text-align:right;color:var(--green);font-weight:500;">${r.credit > 0 ? fmt(r.credit) : '—'}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+// Appelé au chargement de l'onglet fournisseurs
+function initFournisseurs() {
+  renderFourClassement();
+  renderFourCategories();
+  buildFourSelect();
 }
 </script>
 </body>
