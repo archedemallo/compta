@@ -483,9 +483,8 @@ function renderTable(){
   if(ss) rows=rows.filter(r=>[r[cr.num_bordereau],r[cr.montant_total]].join(' ').toLowerCase().includes(ss));
   rows=[...rows].sort((a,b)=>{
     const va=dateToISO(String(a[cr.date_remise]||'')),vb=dateToISO(String(b[cr.date_remise]||''));
-    const na=parseFloat(va),nb=parseFloat(vb);
-    const cmp=!isNaN(na)&&!isNaN(nb)?na-nb:(va<vb?-1:va>vb?1:0);
-    return -cmp;
+    if(!va&&!vb)return 0; if(!va)return 1; if(!vb)return -1;
+    return va<vb?1:va>vb?-1:0;
   });
   if(!rows.length){
     document.getElementById('table-wrap').innerHTML='<div style="padding:24px;text-align:center;color:var(--text-3);font-size:12px;">Aucune remise</div>';
