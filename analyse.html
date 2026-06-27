@@ -1044,15 +1044,15 @@ function getFourData() {
   allFactures.slice(1).filter(r => r && r[COLS_FACTURE.periode] === activePer).forEach(r => {
     const four = (r[COLS_FACTURE.fournisseur] || '').trim();
     if (!four) return;
-    const montant = -fmtN(r[COLS_FACTURE.montant]);
+    const montantVal = fmtN(r[COLS_FACTURE.montant_ttc]);
     rows.push({
       fournisseur: four,
       source: 'Facture',
-      date: r[COLS_FACTURE.date] || '',
-      libelle: r[COLS_FACTURE.libelle] || '',
+      date: r[COLS_FACTURE.date_facture] || '',
+      libelle: r[COLS_FACTURE.commentaire] || r[COLS_FACTURE.description] || '',
       type_mvt: r[COLS_FACTURE.categorie] || '',
-      montant,
-      debit: fmtN(r[COLS_FACTURE.montant]), credit: 0,
+      montant: -montantVal,
+      debit: montantVal, credit: 0,
     });
   });
 
