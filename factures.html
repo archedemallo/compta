@@ -321,9 +321,8 @@ function renderTable(){
   if(search) rows=rows.filter(r=>[r[cf.fournisseur],r[cf.num_facture],r[cf.commentaire],r[cf.description]].join(' ').toLowerCase().includes(search));
   rows=[...rows].sort((a,b)=>{
     const va=dateToISO(String(a[cf.date_facture]||'')),vb=dateToISO(String(b[cf.date_facture]||''));
-    const na=parseFloat(va),nb=parseFloat(vb);
-    const cmp=!isNaN(na)&&!isNaN(nb)?na-nb:(va<vb?-1:va>vb?1:0);
-    return -cmp;
+    if(!va&&!vb)return 0; if(!va)return 1; if(!vb)return -1;
+    return va<vb?1:va>vb?-1:0;
   });
 
   document.getElementById('result-count').textContent=`${rows.length} ligne(s)`;
