@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
   .split-layout{display:grid;grid-template-columns:1fr 400px;gap:14px;align-items:start;}
-  .form-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:18px 20px;position:sticky;top:60px;}
+  .form-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:18px 20px;position:sticky;top:60px;max-height:calc(100vh - 80px);overflow-y:auto;}
   .form-card-title{font-size:13px;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px;}
   .form-card-title i{color:var(--orange);}
   .form-group{margin-bottom:10px;}
@@ -240,7 +240,6 @@ function renderKPIs(){
     <div class="kpi"><div class="kpi-label">Total TTC période</div><div class="kpi-value">${fmt(totTotal)}</div><div style="font-size:10px;color:var(--text-3);">${enc.length} encaissé(s)</div></div>`;
 }
 
-function dateToISO(d){if(!d)return'';const s=String(d).trim();const p=s.split('/');if(p.length===3){let y=p[2];if(y.length===2)y=(parseInt(y,10)<50?'20':'19')+y;return y+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);const n=parseFloat(s);if(!isNaN(n)&&n>40000&&n<60000){const dt=new Date(Math.round((n-25569)*86400*1000));return dt.toISOString().slice(0,10);}return s;}
 function renderTable(){
   const cc=Sheets.cols.cheque;
   const sf=document.getElementById('fl-chq-statut')?.value||'';
@@ -249,11 +248,7 @@ function renderTable(){
   const ss=document.getElementById('fl-chq-search')?.value.toLowerCase()||'';
   let rows=allCheques.filter(r=>(!sf||r[cc.statut]===sf)&&(!sp||r[cc.periode]===sp)&&(!st||r[cc.type_mvt]===st));
   if(ss) rows=rows.filter(r=>[r[cc.num_cheque],r[cc.beneficiaire],r[cc.description],r[cc.type_mvt]].join(' ').toLowerCase().includes(ss));
-  rows=[...rows].sort((a,b)=>{
-    const va=dateToISO(String(a[cc.date_emission]||'')),vb=dateToISO(String(b[cc.date_emission]||''));
-    if(!va&&!vb)return 0; if(!va)return 1; if(!vb)return -1;
-    return va<vb?1:va>vb?-1:0;
-  });
+  rows=[...rows].reverse();
   if(!rows.length){document.getElementById('cheques-table-wrap').innerHTML='<div style="padding:24px;text-align:center;color:var(--text-3);font-size:12px;">Aucun chèque</div>';return;}
   const trs=rows.map(r=>{
     const ri=allCheques.indexOf(r);
@@ -375,7 +370,7 @@ async function toggleVerifiedChq(ri,checked){
   try{
     await Sheets.updateCell(Sheets.config.sheets.cheques,ri+2,cc.verified,checked?'TRUE':'FALSE');
     showToast(checked?'Chèque verrouillé ✓':'Chèque déverrouillé');
-    // Pas de loadData() : évite la race condition qui décochait la case
+    loadData(); // reload silencieux
   }catch(e){
     r[cc.verified]=checked?'FALSE':'TRUE';
     renderTable();
