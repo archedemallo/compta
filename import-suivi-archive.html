@@ -162,6 +162,33 @@
   </div>
 </div>
 
+<!-- MODAL ANNULER RAPPROCHEMENT -->
+<div class="modal-overlay hidden" id="modal-annuler">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title"><i class="ti ti-arrow-back-up" style="color:var(--amber)"></i> Annuler le rapprochement</span>
+      <button class="modal-close" onclick="closeAnnuler()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;margin-bottom:10px;">
+        Cette opération va <strong>remettre la ligne en attente</strong> dans la file d'attente de rapprochement.
+      </div>
+      <div class="confirm-detail" style="background:var(--amber-bg);color:var(--amber);" id="annuler-detail"></div>
+      <div style="margin-top:12px;font-size:11px;color:var(--text-3);">
+        <i class="ti ti-info-circle"></i>
+        Le lien <code>suivi_ref</code> sera effacé dans Caisse ou Banque si la ligne est retrouvée.<br>
+        Si la ligne n'est pas retrouvée, un message vous le signalera.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeAnnuler()">Annuler</button>
+      <button class="btn btn-sm" style="background:var(--amber);color:white;border:none;" onclick="confirmAnnuler()">
+        <i class="ti ti-arrow-back-up"></i> Remettre en attente
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL SUPPRIMER -->
 <div class="modal-overlay hidden" id="modal-del">
   <div class="modal">
@@ -181,7 +208,7 @@
 <script src="sheets.js"></script>
 <script src="sidebar.js"></script>
 <script>
-let allRows = [], editIdx = null, editSource = null, activeSens = 'credit', delIdx = null, delSource = null;
+let allRows = [], editIdx = null, editSource = null, activeSens = 'credit', delIdx = null, delSource = null, annulerIdx = null, annulerSource = null;
 let sortCol = -1, sortAsc = true;
 
 const ONGLET_LABELS = {
@@ -326,7 +353,8 @@ function renderTable() {
       <td style="font-size:10px;color:var(--text-3);">${row[cols.nom_chat] || ''}</td>
       <td class="r" style="white-space:nowrap;">
         <button class="edit-btn" onclick="openEdit(${idx},'${source}')" title="Modifier"><i class="ti ti-pencil"></i></button>
-        <button class="del-btn" onclick="openDel(${idx},'${source}')" title="Supprimer"><i class="ti ti-trash"></i></button>
+        <button class="btn-icon" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;color:var(--amber);" onclick="openAnnuler(${idx},'${source}')" title="Annuler le rapprochement"><i class="ti ti-arrow-back-up"></i></button>
+        <button class="del-btn" onclick="openDel(${idx},'${source}')" title="Supprimer définitivement"><i class="ti ti-trash"></i></button>
       </td>
     </tr>`;
   }).join('');
@@ -481,6 +509,90 @@ async function confirmDel() {
 }
 
 // ============================================================
+// ============================================================
+// ANNULER RAPPROCHEMENT
+// ============================================================
+function openAnnuler(idx, source) {
+  annulerIdx = idx; annulerSource = source;
+  const entry = allRows.find(r => r.idx === idx && r.source === source);
+  if (!entry) return;
+  const { row, cols } = entry;
+  document.getElementById('annuler-detail').innerHTML =
+    '<strong>' + (row[cols.date]||'—') + '</strong> — ' + (row[cols.libelle]||'—') + '<br>' +
+    (row[cols.type_mvt]||'') + ' — ' + fmt(row[cols.credit]||0) + '<br>' +
+    '<span style="font-size:10px;">ID : ' + (row[cols.suivi_ref]||'') + '</span>';
+  document.getElementById('modal-annuler').classList.remove('hidden');
+}
+function closeAnnuler() {
+  document.getElementById('modal-annuler').classList.add('hidden');
+  annulerIdx = null; annulerSource = null;
+}
+async function confirmAnnuler() {
+  if (annulerIdx === null) return;
+  const entry = allRows.find(r => r.idx === annulerIdx && r.source === annulerSource);
+  if (!entry) return;
+  const { row, cols } = entry;
+  const suiviRef = row[cols.suivi_ref] || '';
+  try {
+    // 1. Retrouver dans Import_historique et remettre en attente
+    const histRows = await Sheets.getImportRapprochement('rapprochee');
+    const ci = Sheets.cols.importRap;
+    const histRow = histRows.find(r => (r[ci.id]||'') === suiviRef);
+    if (histRow) {
+      await Sheets.saveImportRapprochement({
+        id: histRow[ci.id]||'', onglet: histRow[ci.onglet]||'', statut: 'en_attente',
+        destination: histRow[ci.destination]||'', date: histRow[ci.date]||'',
+        periode: histRow[ci.periode]||'', libelle: histRow[ci.libelle]||'',
+        montant: histRow[ci.montant]||'', type_mvt: histRow[ci.type_mvt]||'',
+        mode_reglement: histRow[ci.mode_reglement]||'', nom_chat: histRow[ci.nom_chat]||'',
+        num_cheque: histRow[ci.num_cheque]||'', num_recu: histRow[ci.num_recu]||'',
+        description: histRow[ci.description]||'', date_import: histRow[ci.date_import]||'',
+        date_rapprochement: '',
+      });
+      await Sheets.deleteRow('Import_historique', histRow._sheetIndex);
+    }
+    // 2. Effacer suivi_ref dans Caisse
+    let found = false;
+    const caisseRows = await Sheets.getCaisseOperations();
+    const cc = Sheets.cols.caisse;
+    const ligneC = caisseRows.find(r => (r[cc.suivi_ref]||'') === suiviRef);
+    if (ligneC) {
+      await Sheets.updateCell(Sheets.config.sheets.caisse, caisseRows.indexOf(ligneC)+2, cc.suivi_ref, '');
+      found = true;
+    }
+    // 3. Effacer suivi_ref dans Banque
+    if (!found) {
+      const banqueRows = await Sheets.getBanqueOperations();
+      const cb = Sheets.cols.banque;
+      const ligneB = banqueRows.find(r => (r[cb.suivi_ref]||'') === suiviRef);
+      if (ligneB) {
+        await Sheets.updateCell(Sheets.config.sheets.banque, banqueRows.indexOf(ligneB)+2, cb.suivi_ref, '');
+        found = true;
+      }
+    }
+    // 4. Effacer suivi_ref dans Remises (colonne base+8 de chaque chèque)
+    if (!found) {
+      const remises = await Sheets.getRemises();
+      const cr = Sheets.cols.remise;
+      for (let ri = 0; ri < remises.length; ri++) {
+        const rem = remises[ri];
+        const nb = parseInt(rem[cr.nb_cheques])||0;
+        for (let i = 0; i < nb; i++) {
+          if ((rem[cr.detail_start + i*8 + 8]||'') === suiviRef) {
+            await Sheets.updateCell(Sheets.config.sheets.remises, ri+2, cr.detail_start + i*8 + 8, '');
+            found = true;
+          }
+        }
+      }
+    }
+    closeAnnuler();
+    showToast(found
+      ? 'Rapprochement annulé — ligne remise en attente'
+      : 'Remis en attente (lien non trouvé automatiquement — vérifiez Caisse/Banque/Remises)');
+    await loadData();
+  } catch(e) { alert('Erreur : '+(e.message||e)); }
+}
+
 // HELPERS
 // ============================================================
 function clearFilters() {
