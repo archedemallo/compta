@@ -613,6 +613,8 @@ function renderTable(){
   const descOpts = `<option value=""></option>` + descs.map(d=>`<option value="${escH(d)}">${d}</option>`).join('');
   const fourns = Sheets.getFournisseurs();
   const fournOpts = `<option value=""></option>` + fourns.map(f=>`<option value="${escH(f)}">${f}</option>`).join('');
+  const modeRegs = Sheets.getModesReglement();
+  const modeReglOpts = `<option value=""></option>` + modeRegs.map(m=>`<option value="${escH(m)}">${escH(m)}</option>`).join('');
 
   const trs = rows.map(r => {
     const ri      = allRows.indexOf(r);
@@ -670,6 +672,7 @@ function renderTable(){
           <td><input type="text" id="ei-ref-remise" value="${escH(r[cb.ref_remise]||'')}" style="width:70px;" placeholder="Réf. remise"></td>
           <td><input type="text" id="ei-rem-espece" value="${escH(numRemEspece)}" style="width:70px;" placeholder="Rem. espèce"></td>
           <td><input type="text" id="ei-ref-cheque" value="${escH(numBordChq)}" style="width:70px;" placeholder="N° chèque"></td>
+          <td><select id="ei-mode-regl" style="width:90px;">${(() => { const cur = r[cb.mode_reglement]||''; return '<option value="">' + modeRegs.map(m => '<option value="'+escH(m)+'"'+(cur===m?' selected':'')+'>'+escH(m)+'</option>').join(''); })()}</select></td>
           <td style="white-space:nowrap;">${hasChq}${hasBrd}${ventBadge}</td>
           <td>${hasPdf}</td>
           <td><button class="flag-btn ${flagged?'on':''}" onclick="event.stopPropagation();openFlag(${ri},'${escH(r[cb.libelle]||'')}','${escH(comment)}',${flagged})" title="Annoter"><i class="ti ti-flag${flagged?'-filled':''}"></i></button></td>
@@ -703,6 +706,7 @@ function renderTable(){
       <td style="font-size:10px;">${r[cb.ref_remise]?`<span class="chip-brd">${escH(r[cb.ref_remise])}</span>`:''}</td>
       <td style="font-size:10px;color:var(--text-3);">${escH(numRemEspece)}</td>
       <td style="font-size:10px;">${numBordChq?`<span class="chip-chq">${escH(numBordChq)}</span>`:''}</td>
+      <td style="font-size:10px;color:var(--text-3);">${escH(r[cb.mode_reglement]||'')}</td>
       <td style="white-space:nowrap;">${ventBadge}</td>
       <td class="r">${hasPdf}</td>
       <td class="r"><button class="flag-btn ${flagged?'on':''}" onclick="event.stopPropagation();openFlag(${ri},'${escH(r[cb.libelle]||'')}','${escH(comment)}',${flagged})" title="Annoter"><i class="ti ti-flag${flagged?'-filled':''}"></i></button></td>
@@ -729,6 +733,7 @@ function renderTable(){
         <th>Bord. remise${si(-1)}</th>
         <th>Rem. espèce${si(-1)}</th>
         <th>N° CHQ${si(-1)}</th>
+        <th>Mode régl.${si(-1)}</th>
         <th>Ventil.</th>
         <th class="r">PDF</th>
         <th class="r">🔍</th>
@@ -821,6 +826,7 @@ async function saveInlineEdit(ri){
     ref_remise:     document.getElementById('ei-ref-remise')?.value.trim()  || r[cb.ref_remise]     || '',
     num_rem_espece: document.getElementById('ei-rem-espece')?.value.trim()  || r[cb.num_rem_espece] || '',
     ref_cheque:     document.getElementById('ei-ref-cheque')?.value.trim()  || r[cb.ref_cheque]     || '',
+    mode_reglement: document.getElementById('ei-mode-regl')?.value             || r[cb.mode_reglement] || '',
     lien_facture:   r[cb.lien_facture]   || '',
     statut:         r[cb.statut]         || '', // preserve verifie status
     flag_comment:   r[cb.flag_comment]   || '',
