@@ -93,6 +93,7 @@ const COLS_BANQUE = {
   flag_comment:   19,
   suivi_ref:      20,
   fournisseur:    21,  // V — Fournisseur
+  mode_reglement: 22,  // W — Mode de règlement
 };
 
 const COLS_CHEQUE = {
@@ -466,7 +467,7 @@ async function updateCaisseOperation(rowIndex, op) {
 
 // ---- BANQUE ----
 async function saveBanqueOperation(op) {
-  const row = new Array(21).fill('');
+  const row = new Array(23).fill('');
   row[COLS_BANQUE.date]           = op.date           || '';
   row[COLS_BANQUE.libelle]        = op.libelle        || '';
   row[COLS_BANQUE.debit]          = op.debit          || '';
@@ -489,6 +490,7 @@ async function saveBanqueOperation(op) {
   row[COLS_BANQUE.flag_comment]   = '';
   row[COLS_BANQUE.suivi_ref]      = op.suivi_ref      || '';
   row[COLS_BANQUE.fournisseur]    = op.fournisseur    || '';
+  row[COLS_BANQUE.mode_reglement] = op.mode_reglement || '';
   await appendRows(SHEETS_CONFIG.sheets.banque, [row]);
   await logAction('AJOUT', 'Banque', op.libelle, `${op.date} — ${op.type_mvt} — ${op.credit || op.debit}€`);
   if (!Auth.isAdmin()) await sendAlert(Auth.getUser(), 'Banque', op);
@@ -496,7 +498,7 @@ async function saveBanqueOperation(op) {
 
 async function updateBanqueOperation(rowIndex, op) {
   const sheetRow = rowIndex + 2;
-  const row = new Array(21).fill('');
+  const row = new Array(23).fill('');
   row[COLS_BANQUE.date]           = op.date           || '';
   row[COLS_BANQUE.libelle]        = op.libelle        || '';
   row[COLS_BANQUE.debit]          = op.debit          || '';
@@ -519,6 +521,7 @@ async function updateBanqueOperation(rowIndex, op) {
   row[COLS_BANQUE.flag_comment]   = op.flag_comment   || '';
   row[COLS_BANQUE.suivi_ref]      = op.suivi_ref      || '';
   row[COLS_BANQUE.fournisseur]    = op.fournisseur    || '';
+  row[COLS_BANQUE.mode_reglement] = op.mode_reglement || '';
   await updateRange(SHEETS_CONFIG.sheets.banque, sheetRow, 0, [row]);
   await logAction('MODIF', 'Banque', op.libelle, `Modifié le ${todayFR()}`);
 }
