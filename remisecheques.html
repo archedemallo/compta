@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
   .split-layout{display:grid;grid-template-columns:1fr 420px;gap:14px;align-items:start;}
-  .form-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:18px 20px;position:sticky;top:60px;}
+  .form-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:18px 20px;position:sticky;top:60px;max-height:calc(100vh - 80px);overflow-y:auto;}
   .form-card-title{font-size:13px;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px;}
   .form-card-title i{color:var(--orange);}
   .form-group{margin-bottom:10px;}
@@ -61,7 +61,7 @@
   .table-scroll-outer{position:relative;}
   .table-scroll-top{overflow-x:auto;overflow-y:hidden;height:10px;background:var(--surface-2);border-bottom:0.5px solid var(--border);}
   .table-scroll-top-inner{height:1px;}
-  .table-scroll-body{overflow-x:auto;overflow-y:auto;max-height:520px;}
+  .table-scroll-body{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 300px);}
   table{table-layout:auto;min-width:100%;border-collapse:collapse;font-size:11px;}
   thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 8px;border-bottom:0.5px solid var(--border);background:var(--surface-2)!important;white-space:nowrap;position:sticky;top:0;z-index:4;position:relative;}
   .col-resizer{position:absolute;right:0;top:0;bottom:0;width:5px;cursor:col-resize;z-index:3;}
@@ -152,7 +152,7 @@
         </div>
         <div class="table-scroll-outer">
           <div class="table-scroll-top"><div class="table-scroll-top-inner"></div></div>
-          <div class="table-scroll-body" id="detail-cheques-wrap" style="max-height:600px;"></div>
+          <div class="table-scroll-body" id="detail-cheques-wrap" style="max-height:calc(100vh - 260px);"></div>
         </div>
       </div>
     </div>
@@ -250,7 +250,7 @@
     </div>
     <div class="panel-footer">
       <button class="btn btn-secondary" onclick="closeRapPanel()">Annuler</button>
-      <button class="btn btn-primary edit-action" id="btn-save-rap" onclick="saveRapprochement()" disabled>
+      <button class="btn btn-primary" id="btn-save-rap" class="edit-action" onclick="saveRapprochement()" disabled>
         <i class="ti ti-device-floppy"></i> Enregistrer le rapprochement
       </button>
     </div>
@@ -324,7 +324,7 @@ function renderDetailCheques() {
     const numBord = r[cr.num_bordereau] || '';
     const statut = r[cr.statut] || '';
     for (let i = 0; i < nb; i++) {
-      const base = cr.detail_start + i * 9;
+      const base = cr.detail_start + i * 8;
       allCheques.push({
         date:       dateRemise,
         bordereau:  numBord,
@@ -473,7 +473,6 @@ function renderKPIs(){
 // ============================================================
 // TABLE
 // ============================================================
-function dateToISO(d){if(!d)return'';const s=String(d).trim();const p=s.split('/');if(p.length===3){let y=p[2];if(y.length===2)y=(parseInt(y,10)<50?'20':'19')+y;return y+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);const n=parseFloat(s);if(!isNaN(n)&&n>40000&&n<60000){const dt=new Date(Math.round((n-25569)*86400*1000));return dt.toISOString().slice(0,10);}return s;}
 function renderTable(){
   const cr=Sheets.cols.remise;
   const per=document.getElementById('fl-per')?.value||'';
@@ -481,11 +480,7 @@ function renderTable(){
   const ss=document.getElementById('fl-search')?.value.toLowerCase()||'';
   let rows=allRemises.filter(r=>(!per||r[cr.periode]===per)&&(!sf||r[cr.statut]===sf));
   if(ss) rows=rows.filter(r=>[r[cr.num_bordereau],r[cr.montant_total]].join(' ').toLowerCase().includes(ss));
-  rows=[...rows].sort((a,b)=>{
-    const va=dateToISO(String(a[cr.date_remise]||'')),vb=dateToISO(String(b[cr.date_remise]||''));
-    if(!va&&!vb)return 0; if(!va)return 1; if(!vb)return -1;
-    return va<vb?1:va>vb?-1:0;
-  });
+  rows=[...rows].reverse();
   if(!rows.length){
     document.getElementById('table-wrap').innerHTML='<div style="padding:24px;text-align:center;color:var(--text-3);font-size:12px;">Aucune remise</div>';
     return;
@@ -502,7 +497,7 @@ function renderTable(){
     const nb=parseInt(r[cr.nb_cheques])||0;
     let detailRows='';
     for(let i=0;i<nb;i++){
-  const base=cr.detail_start+i*9;   // ← 8 au lieu de 7
+  const base=cr.detail_start+i*8;   // ← 8 au lieu de 7
   const donateur   =r[base]  ||'—';
   const montant    =r[base+1]||'';
   const num_cheque =r[base+2]||'—';   // ← nouveau
@@ -585,7 +580,7 @@ async function toggleVerifiedRemise(ri,checked){
   try{
     await Sheets.updateCell(Sheets.config.sheets.remises,ri+2,cr.verified,checked?'TRUE':'FALSE');
     showToast(checked?'Remise verrouillée ✓':'Remise déverrouillée');
-    // Pas de loadData() : évite la race condition qui décochait la case
+    loadData(); // reload silencieux
   }catch(e){
     r[cr.verified]=checked?'FALSE':'TRUE';
     renderTable();
@@ -767,7 +762,7 @@ async function openRapPanel(remiseIdx, chequeIdx) {
   // Info du chèque
   const cr = Sheets.cols.remise;
   const r = allRemises[remiseIdx];
-  const base = cr.detail_start + chequeIdx * 9;
+  const base = cr.detail_start + chequeIdx * 8;
   const donateur = r[base] || '—';
   const montant = r[base+1] || '';
   const numChq = r[base+2] || '';
@@ -896,7 +891,7 @@ async function saveRapprochement() {
   const nb = parseInt(r[cr.nb_cheques]) || 0;
   const cheques = [];
   for (let i = 0; i < nb; i++) {
-    const base = cr.detail_start + i * 9;
+    const base = cr.detail_start + i * 8;
     cheques.push({
       donateur:    r[base]   || '',
       montant:     r[base+1] || '',
@@ -944,13 +939,13 @@ async function deRapprocher() {
   const { remiseIdx, chequeIdx } = rapTarget;
   const cr = Sheets.cols.remise;
   const r = allRemises[remiseIdx];
-  const base = cr.detail_start + chequeIdx * 9;
+  const base = cr.detail_start + chequeIdx * 8;
   const oldRef = r[base+8] || '';
 
   const nb = parseInt(r[cr.nb_cheques]) || 0;
   const cheques = [];
   for (let i = 0; i < nb; i++) {
-    const b = cr.detail_start + i * 9;
+    const b = cr.detail_start + i * 8;
     cheques.push({
       donateur:    r[b]   || '',
       montant:     r[b+1] || '',
@@ -1012,7 +1007,7 @@ function openEdit(ri){
   const nb=parseInt(r[cr.nb_cheques])||0;
   for(let i=0;i<nb;i++){
     addChequeRemise();
-    const base=cr.detail_start+i*9;
+    const base=cr.detail_start+i*8;
     const item=document.getElementById('cheques-remise-list').lastElementChild;
     item.querySelector('.rem-donateur').value   =r[base]  ||'';
     item.querySelector('.rem-montant').value    =r[base+1]||'';
