@@ -62,13 +62,41 @@
   .badge-orange{background:#fff0e6;color:var(--orange);}
 
   /* ---- AG CONFIG PANEL ---- */
-  .ag-config-panel{background:var(--blue-bg);border:0.5px solid rgba(24,95,165,0.2);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;font-size:11px;color:var(--blue);}
-  .ag-config-panel strong{display:block;margin-bottom:6px;font-size:12px;}
-  .ag-mapping-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:11px;}
-  .ag-mapping-table th{text-align:left;font-size:9px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:0.5px;padding:4px 8px;border-bottom:1px solid rgba(24,95,165,0.2);}
-  .ag-mapping-table td{padding:5px 8px;border-bottom:0.5px solid rgba(24,95,165,0.1);vertical-align:top;}
-  .ag-mapping-table input[type=text]{width:100%;font-size:11px;padding:3px 6px;border-radius:4px;border:0.5px solid rgba(24,95,165,0.3);background:white;font-family:'DM Sans',sans-serif;}
-  .btn-ag-save{font-size:11px;padding:5px 14px;border-radius:var(--radius-sm);border:none;background:var(--blue);color:white;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:10px;}
+  .ag-config-panel{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;font-size:11px;}
+  .ag-config-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .ag-config-header strong{font-size:12px;color:var(--text);}
+  .ag-config-hint{font-size:10px;color:var(--text-3);margin-bottom:12px;}
+  /* Accordéon catégories */
+  .ag-acc-item{border:0.5px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;overflow:hidden;}
+  .ag-acc-head{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;background:var(--surface-2);user-select:none;}
+  .ag-acc-head:hover{background:var(--surface-3);}
+  .ag-acc-chevron{font-size:13px;color:var(--text-3);transition:transform 0.15s;flex-shrink:0;}
+  .ag-acc-chevron.open{transform:rotate(90deg);}
+  .ag-acc-name{font-size:12px;font-weight:600;color:var(--text);flex:1;min-width:0;}
+  .ag-acc-chips{display:flex;gap:4px;flex-wrap:wrap;margin-right:8px;}
+  .ag-acc-chip{font-size:10px;padding:1px 6px;border-radius:4px;background:var(--blue-bg);color:var(--blue);border:0.5px solid rgba(24,95,165,0.3);}
+  .ag-acc-sens{font-size:10px;padding:2px 8px;border-radius:12px;flex-shrink:0;}
+  .ag-acc-sens.rec{background:var(--green-bg);color:var(--green);}
+  .ag-acc-sens.dep{background:var(--red-bg);color:var(--red);}
+  .ag-acc-del{font-size:13px;color:var(--text-3);background:none;border:none;cursor:pointer;padding:2px 4px;margin-left:4px;border-radius:4px;flex-shrink:0;}
+  .ag-acc-del:hover{background:var(--red-bg);color:var(--red);}
+  .ag-acc-body{padding:12px 14px;border-top:0.5px solid var(--border);background:var(--surface);}
+  /* Sections dans le body */
+  .ag-section{margin-bottom:10px;}
+  .ag-section-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-3);margin-bottom:6px;}
+  .ag-cb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:3px 8px;}
+  .ag-cb-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2);padding:2px 0;cursor:pointer;}
+  .ag-cb-item input{width:13px;height:13px;cursor:pointer;accent-color:var(--blue);flex-shrink:0;}
+  .ag-sens-row{display:flex;align-items:center;gap:12px;margin-top:4px;}
+  .ag-sens-row span{font-size:10px;color:var(--text-3);}
+  .ag-sens-row label{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2);cursor:pointer;}
+  .ag-sens-row input[type=radio]{cursor:pointer;accent-color:var(--blue);}
+  /* Nouvelle catégorie */
+  .ag-new-row{display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);}
+  .ag-new-row input{flex:1;font-size:11px;padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);background:var(--surface-2);color:var(--text);font-family:'DM Sans',sans-serif;}
+  .ag-new-row input:focus{outline:none;border-color:var(--blue);}
+  .ag-new-row button{font-size:11px;padding:5px 12px;border-radius:var(--radius-sm);border:none;background:var(--blue);color:white;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+  .btn-ag-save{font-size:11px;padding:5px 14px;border-radius:var(--radius-sm);border:none;background:var(--blue);color:white;cursor:pointer;font-family:'DM Sans',sans-serif;}
   .btn-ag-save:hover{opacity:0.85;}
 
   /* ---- DÉTAIL OPERATIONS ---- */
@@ -125,13 +153,20 @@
 
       <!-- Config mapping AG -->
       <div class="ag-config-panel" id="ag-config-panel" style="display:none;">
-        <strong><i class="ti ti-settings" style="font-size:13px;margin-right:5px;"></i>Configuration des catégories AG</strong>
-        <span>Chaque catégorie peut regrouper plusieurs <em>type_mvt</em> (séparés par des virgules). Ces paramètres sont sauvegardés dans le Google Sheet (onglet Config).</span>
-        <table class="ag-mapping-table" id="ag-mapping-table">
-          <thead><tr><th>Catégorie AG</th><th>Type(s) mouvement associés</th><th>Sens</th></tr></thead>
-          <tbody id="ag-mapping-body"></tbody>
-        </table>
-        <button class="btn-ag-save" onclick="saveAgConfig()"><i class="ti ti-device-floppy"></i> Sauvegarder</button>
+        <div class="ag-config-header">
+          <strong><i class="ti ti-settings" style="font-size:13px;margin-right:5px;"></i>Configuration des catégories AG</strong>
+          <button class="btn-ag-save" onclick="saveAgConfig()"><i class="ti ti-device-floppy"></i> Sauvegarder</button>
+        </div>
+        <div class="ag-config-hint">Paramètres sauvegardés dans le Google Sheet (onglet Config). Cliquez sur une catégorie pour la configurer.</div>
+        <div id="ag-acc-list"></div>
+        <div class="ag-new-row">
+          <input type="text" id="ag-new-name" placeholder="Nom de la nouvelle catégorie…" onkeydown="if(event.key==='Enter')addAgCategorie()">
+          <select id="ag-new-sens" style="font-size:11px;padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);background:var(--surface-2);color:var(--text);font-family:'DM Sans',sans-serif;">
+            <option value="recette">recette</option>
+            <option value="depense">dépense</option>
+          </select>
+          <button onclick="addAgCategorie()">+ Ajouter</button>
+        </div>
       </div>
       <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center;">
         <button class="btn btn-secondary btn-sm" class="edit-action" onclick="toggleAgConfig()"><i class="ti ti-settings"></i> Config catégories</button>
@@ -269,7 +304,7 @@ const TYPES_CHATS = [
 // ============================================================
 // ÉTAT GLOBAL
 // ============================================================
-let allCaisse=[], allBanque=[], allFactures=[], allCheques=[];
+let allCaisse=[], allBanque=[], allFactures=[], allCheques=[], allCaisse2Data=[];
 let activePer='';
 let agConfig = [];
 let agConfigVisible = false;
@@ -294,12 +329,15 @@ async function loadData() {
   document.getElementById('tab-ag').style.display = 'none';
   document.getElementById('tab-chat').style.display = 'none';
   try {
-    [allCaisse, allBanque, allFactures, allCheques] = await Promise.all([
+    let caisse2Tmp;
+    [allCaisse, allBanque, allFactures, allCheques, caisse2Tmp] = await Promise.all([
       getCaisseOperations(),
       getBanqueOperations(),
       getFactures(),
       getCheques(),
+      getCaisse2Operations ? getCaisse2Operations() : Promise.resolve([]),
     ]);
+    allCaisse2Data = caisse2Tmp || [];
     Sidebar.setLastUpdate();
   } catch(e) { console.error('loadData error', e); }
 
@@ -358,24 +396,47 @@ async function loadAgConfig() {
     }
   } catch(e) {}
   if (!agConfig || agConfig.length === 0) agConfig = JSON.parse(JSON.stringify(AG_CONFIG_DEFAULT));
+  // Migrer ancien format (sans sources/descriptions/fournisseurs)
+  agConfig = agConfig.map(c => ({
+    cat: c.cat,
+    sens: c.sens || 'recette',
+    sources: c.sources || ['banque','caisse'],
+    types: c.types || [],
+    descriptions: c.descriptions || [],
+    fournisseurs: c.fournisseurs || [],
+  }));
 }
 
 async function saveAgConfig() {
-  // Lire les valeurs depuis le formulaire
-  const rows = document.querySelectorAll('#ag-mapping-body tr');
-  rows.forEach((tr, i) => {
-    if (!agConfig[i]) return;
-    const typesVal = tr.querySelector('input[data-field="types"]').value;
-    agConfig[i].types = typesVal.split(',').map(s => s.trim()).filter(Boolean);
+  // Lire l'état actuel depuis le DOM (accordéon)
+  document.querySelectorAll('.ag-acc-item').forEach((item, i) => {
+    const idx = parseInt(item.dataset.idx);
+    if (isNaN(idx) || !agConfig[idx]) return;
+    const cfg = agConfig[idx];
+    // Sources
+    cfg.sources = [];
+    item.querySelectorAll('.ag-cb-source:checked').forEach(cb => cfg.sources.push(cb.value));
+    // Types
+    cfg.types = [];
+    item.querySelectorAll('.ag-cb-type:checked').forEach(cb => cfg.types.push(cb.value));
+    // Descriptions
+    cfg.descriptions = [];
+    item.querySelectorAll('.ag-cb-desc:checked').forEach(cb => cfg.descriptions.push(cb.value));
+    // Fournisseurs
+    cfg.fournisseurs = [];
+    item.querySelectorAll('.ag-cb-four:checked').forEach(cb => cfg.fournisseurs.push(cb.value));
+    // Sens
+    const selSens = item.querySelector('.ag-sel-sens');
+    if (selSens) cfg.sens = selSens.value;
   });
-  const json = JSON.stringify(agConfig);
-  localStorage.setItem('arche_ag_categories', json);
+  localStorage.setItem('arche_ag_categories', JSON.stringify(agConfig));
   try {
     await saveConfigKey('ag_categories', agConfig);
     showToast('Configuration AG sauvegardée !');
   } catch(e) {
     showToast('Sauvegardé localement (erreur sheet)', true);
   }
+  renderAgAccordeon();
   renderAG();
 }
 
@@ -383,18 +444,118 @@ function toggleAgConfig() {
   agConfigVisible = !agConfigVisible;
   const panel = document.getElementById('ag-config-panel');
   panel.style.display = agConfigVisible ? 'block' : 'none';
-  if (agConfigVisible) renderAgConfigTable();
+  if (agConfigVisible) renderAgAccordeon();
 }
 
-function renderAgConfigTable() {
-  const tbody = document.getElementById('ag-mapping-body');
-  tbody.innerHTML = agConfig.map((item, i) => `
-    <tr>
-      <td style="font-weight:600;white-space:nowrap;">${item.cat}</td>
-      <td><input type="text" data-field="types" value="${item.types.join(', ')}"></td>
-      <td><span class="badge ${item.sens==='recette'?'badge-green':'badge-red'}">${item.sens}</span></td>
-    </tr>
-  `).join('');
+function addAgCategorie() {
+  const nameEl = document.getElementById('ag-new-name');
+  const sensEl = document.getElementById('ag-new-sens');
+  const name = (nameEl.value || '').trim();
+  if (!name) { nameEl.focus(); return; }
+  agConfig.push({ cat: name, sens: sensEl.value, sources: ['banque','caisse'], types: [], descriptions: [], fournisseurs: [] });
+  nameEl.value = '';
+  renderAgAccordeon();
+  // Ouvrir la nouvelle catégorie
+  const items = document.querySelectorAll('.ag-acc-item');
+  if (items.length) toggleAgAcc(items[items.length - 1]);
+}
+
+function deleteAgCategorie(idx) {
+  if (!confirm('Supprimer la catégorie "' + agConfig[idx].cat + '" ?')) return;
+  agConfig.splice(idx, 1);
+  renderAgAccordeon();
+}
+
+function toggleAgAcc(item) {
+  const body = item.querySelector('.ag-acc-body');
+  const chev = item.querySelector('.ag-acc-chevron');
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  chev.classList.toggle('open', !isOpen);
+}
+
+function renderAgAccordeon() {
+  const allTypes  = Sheets.getTypesMouvement ? Sheets.getTypesMouvement() : [];
+  const allDescs  = Sheets.getDescriptions  ? Sheets.getDescriptions()   : [];
+  const allFours  = Sheets.getFournisseurs  ? Sheets.getFournisseurs()   : [];
+  const SOURCES = [
+    { key:'banque',   label:'Banque'    },
+    { key:'caisse',   label:'Caisse 1'  },
+    { key:'caisse2',  label:'Caisse 2'  },
+    { key:'cheques',  label:'Chèques'   },
+    { key:'factures', label:'Factures'  },
+  ];
+
+  const container = document.getElementById('ag-acc-list');
+  container.innerHTML = agConfig.map((cat, idx) => {
+    const srcLabels = SOURCES.filter(s => (cat.sources||[]).includes(s.key)).map(s=>s.label);
+    const sensClass = cat.sens === 'recette' ? 'rec' : 'dep';
+    const sensLabel = cat.sens === 'recette' ? 'recette' : 'dépense';
+
+    const srcChips = srcLabels.map(l => `<span class="ag-acc-chip">${l}</span>`).join('');
+
+    const srcCbs = SOURCES.map(s => {
+      const checked = (cat.sources||[]).includes(s.key) ? 'checked' : '';
+      return `<label class="ag-cb-item"><input type="checkbox" class="ag-cb-source" value="${s.key}" ${checked}> ${s.label}</label>`;
+    }).join('');
+
+    const typeCbs = allTypes.length ? allTypes.map(t => {
+      const checked = (cat.types||[]).some(x => x.toLowerCase()===t.toLowerCase()) ? 'checked' : '';
+      return `<label class="ag-cb-item"><input type="checkbox" class="ag-cb-type" value="${t}" ${checked}> ${escH(t)}</label>`;
+    }).join('') : '<span style="font-size:11px;color:var(--text-3);">Aucun type disponible</span>';
+
+    const descCbs = allDescs.length ? allDescs.map(d => {
+      const checked = (cat.descriptions||[]).some(x => x.toLowerCase()===d.toLowerCase()) ? 'checked' : '';
+      return `<label class="ag-cb-item"><input type="checkbox" class="ag-cb-desc" value="${d}" ${checked}> ${escH(d)}</label>`;
+    }).join('') : '<span style="font-size:11px;color:var(--text-3);">Aucune description disponible</span>';
+
+    const fourCbs = allFours.length ? allFours.map(f => {
+      const checked = (cat.fournisseurs||[]).some(x => x.toLowerCase()===f.toLowerCase()) ? 'checked' : '';
+      return `<label class="ag-cb-item"><input type="checkbox" class="ag-cb-four" value="${f}" ${checked}> ${escH(f)}</label>`;
+    }).join('') : '<span style="font-size:11px;color:var(--text-3);">Aucun fournisseur disponible</span>';
+
+    return `
+    <div class="ag-acc-item" data-idx="${idx}">
+      <div class="ag-acc-head" onclick="toggleAgAcc(this.closest('.ag-acc-item'))">
+        <i class="ti ti-chevron-right ag-acc-chevron"></i>
+        <span class="ag-acc-name">${escH(cat.cat)}</span>
+        <div class="ag-acc-chips">${srcChips}</div>
+        <span class="ag-acc-sens ${sensClass}">${sensLabel}</span>
+        <button class="ag-acc-del edit-action" title="Supprimer" onclick="event.stopPropagation();deleteAgCategorie(${idx})">
+          <i class="ti ti-trash"></i>
+        </button>
+      </div>
+      <div class="ag-acc-body" style="display:none;">
+        <div class="ag-section">
+          <div class="ag-section-label">Sources</div>
+          <div class="ag-cb-grid">${srcCbs}</div>
+        </div>
+        <div class="ag-section">
+          <div class="ag-section-label">Types de mouvement</div>
+          <div class="ag-cb-grid">${typeCbs}</div>
+        </div>
+        <div class="ag-section">
+          <div class="ag-section-label">Descriptions</div>
+          <div class="ag-cb-grid">${descCbs}</div>
+        </div>
+        <div class="ag-section">
+          <div class="ag-section-label">Fournisseurs</div>
+          <div class="ag-cb-grid">${fourCbs}</div>
+        </div>
+        <div class="ag-sens-row">
+          <span>Sens :</span>
+          <select class="ag-sel-sens" style="font-size:11px;padding:4px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);background:var(--surface-2);color:var(--text);font-family:'DM Sans',sans-serif;">
+            <option value="recette" ${cat.sens==='recette'?'selected':''}>recette</option>
+            <option value="depense" ${cat.sens==='depense'?'selected':''}>dépense</option>
+          </select>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escH(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ============================================================
@@ -407,23 +568,58 @@ function renderAG() {
   document.getElementById('ag-periode-label').textContent = 'Période : ' + activePer;
   document.getElementById('ag-periode-badge').textContent = activePer;
 
-  // Calcul par catégorie
+  // Données disponibles par source
+  const allCaisse2 = allCaisse2Data ? allCaisse2Data.slice(1).filter(r => r && r[6] === activePer) : [];
+
+  // Calcul par catégorie (en tenant compte des sources et types/descriptions/fournisseurs sélectionnés)
   const results = agConfig.map(cat => {
-    let totalCaisse = 0, totalBanque = 0;
-    cat.types.forEach(type => {
-      const typeN = type.toLowerCase().trim();
+    const srcs    = cat.sources || ['banque','caisse'];
+    const types   = (cat.types || []).map(t => t.toLowerCase().trim());
+    const descs   = (cat.descriptions || []).map(d => d.toLowerCase().trim());
+    const fours   = (cat.fournisseurs || []).map(f => f.toLowerCase().trim());
+
+    // Fonction de match : type_mvt OU description OU fournisseur (si des listes sont cochées)
+    function matchRow(typeMvt, desc, four) {
+      const tN = (typeMvt||'').toLowerCase().trim();
+      const dN = (desc||'').toLowerCase().trim();
+      const fN = (four||'').toLowerCase().trim();
+      if (types.length && types.includes(tN)) return true;
+      if (descs.length && descs.includes(dN)) return true;
+      if (fours.length && fours.includes(fN)) return true;
+      return false;
+    }
+
+    let totalCaisse = 0, totalCaisse2 = 0, totalBanque = 0, totalCheques = 0, totalFactures = 0;
+
+    if (srcs.includes('caisse')) {
       caisse.forEach(r => {
-        if ((r[7]||'').toLowerCase().trim() === typeN) {
-          totalCaisse += fmtN(r[4]) - fmtN(r[3]); // credit - debit
-        }
+        if (matchRow(r[7], r[8], r[9])) totalCaisse += fmtN(r[4]) - fmtN(r[3]);
       });
+    }
+    if (srcs.includes('caisse2')) {
+      allCaisse2.forEach(r => {
+        if (matchRow(r[7], r[8], r[9])) totalCaisse2 += fmtN(r[4]) - fmtN(r[3]);
+      });
+    }
+    if (srcs.includes('banque')) {
       banque.forEach(r => {
-        if ((r[6]||'').toLowerCase().trim() === typeN) {
-          totalBanque += fmtN(r[3]) - fmtN(r[2]);
-        }
+        if (matchRow(r[6], r[7], r[8])) totalBanque += fmtN(r[3]) - fmtN(r[2]);
       });
-    });
-    return { ...cat, totalCaisse, totalBanque, total: totalCaisse + totalBanque };
+    }
+    if (srcs.includes('cheques')) {
+      allCheques.slice(1).filter(r => r && r[5] === activePer).forEach(r => {
+        if (matchRow(r[6], r[7], r[8])) totalCheques += fmtN(r[3]);
+      });
+    }
+    if (srcs.includes('factures')) {
+      allFactures.slice(1).filter(r => r && r[5] === activePer).forEach(r => {
+        if (matchRow(r[6], r[7], r[8])) totalFactures += fmtN(r[3]);
+      });
+    }
+
+    const total = totalCaisse + totalCaisse2 + totalBanque + totalCheques + totalFactures;
+    // Pour compatibilité affichage tableau: on regroupe caisse+caisse2, banque+cheques+factures
+    return { ...cat, totalCaisse: totalCaisse + totalCaisse2, totalBanque: totalBanque + totalCheques + totalFactures, total };
   }).filter(c => Math.abs(c.total) > 0.001 || agConfig.indexOf(agConfig.find(x=>x.cat===c.cat)) >= 0);
 
   // KPIs
