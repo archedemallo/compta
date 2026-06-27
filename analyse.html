@@ -84,6 +84,18 @@
   /* Sections dans le body */
   .ag-section{margin-bottom:10px;}
   .ag-section-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-3);margin-bottom:6px;}
+  /* Option A : bande latérale colorée par catégorie */
+  .ag-section{border-left:3px solid transparent;padding-left:10px;margin-bottom:10px;}
+  .ag-section.sec-sources   {border-left-color:#c96b2a;}
+  .ag-section.sec-modes     {border-left-color:#185FA5;}
+  .ag-section.sec-types     {border-left-color:#3B6D11;}
+  .ag-section.sec-descs     {border-left-color:#6b5040;}
+  .ag-section.sec-fours     {border-left-color:#9a8070;}
+  .ag-section.sec-sources .ag-section-label {color:#c96b2a;}
+  .ag-section.sec-modes   .ag-section-label {color:#185FA5;}
+  .ag-section.sec-types   .ag-section-label {color:#3B6D11;}
+  .ag-section.sec-descs   .ag-section-label {color:#6b5040;}
+  .ag-section.sec-fours   .ag-section-label {color:#9a8070;}
   .ag-cb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:3px 8px;}
   .ag-cb-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2);padding:2px 0;cursor:pointer;}
   .ag-cb-item input{width:13px;height:13px;cursor:pointer;accent-color:var(--blue);flex-shrink:0;}
@@ -401,6 +413,7 @@ async function loadAgConfig() {
     cat: c.cat,
     sens: c.sens || 'recette',
     sources: c.sources || ['banque','caisse'],
+    modes_reglement: c.modes_reglement || [],
     types: c.types || [],
     descriptions: c.descriptions || [],
     fournisseurs: c.fournisseurs || [],
@@ -425,6 +438,9 @@ async function saveAgConfig() {
     // Fournisseurs
     cfg.fournisseurs = [];
     item.querySelectorAll('.ag-cb-four:checked').forEach(cb => cfg.fournisseurs.push(cb.value));
+    // Mode de règlement
+    cfg.modes_reglement = [];
+    item.querySelectorAll('.ag-cb-mode:checked').forEach(cb => cfg.modes_reglement.push(cb.value));
     // Sens
     const selSens = item.querySelector('.ag-sel-sens');
     if (selSens) cfg.sens = selSens.value;
@@ -479,11 +495,12 @@ function renderAgAccordeon() {
   const allDescs  = Sheets.getDescriptions  ? Sheets.getDescriptions()   : [];
   const allFours  = Sheets.getFournisseurs  ? Sheets.getFournisseurs()   : [];
   const SOURCES = [
-    { key:'banque',   label:'Banque'    },
-    { key:'caisse',   label:'Caisse 1'  },
-    { key:'caisse2',  label:'Caisse 2'  },
-    { key:'cheques',  label:'Chèques'   },
-    { key:'factures', label:'Factures'  },
+    { key:'banque',   label:'Banque'           },
+    { key:'caisse',   label:'Caisse 1'         },
+    { key:'caisse2',  label:'Caisse 2'         },
+    { key:'cheques',  label:'Chèques'          },
+    { key:'remises',  label:'Remise de chèque' },
+    { key:'factures', label:'Factures'         },
   ];
 
   const container = document.getElementById('ag-acc-list');
@@ -514,6 +531,12 @@ function renderAgAccordeon() {
       return `<label class="ag-cb-item"><input type="checkbox" class="ag-cb-four" value="${f}" ${checked}> ${escH(f)}</label>`;
     }).join('') : '<span style="font-size:11px;color:var(--text-3);">Aucun fournisseur disponible</span>';
 
+    const allModes = Sheets.getModesReglement ? Sheets.getModesReglement() : [];
+    const modeCbs = allModes.length ? allModes.map(m => {
+      const checked = (cat.modes_reglement||[]).some(x => x.toLowerCase()===m.toLowerCase()) ? 'checked' : '';
+      return `<label class="ag-cb-item"><input type="checkbox" class="ag-cb-mode" value="${m}" ${checked}> ${escH(m)}</label>`;
+    }).join('') : '<span style="font-size:11px;color:var(--text-3);">Aucun mode disponible</span>';
+
     return `
     <div class="ag-acc-item" data-idx="${idx}">
       <div class="ag-acc-head" onclick="toggleAgAcc(this.closest('.ag-acc-item'))">
@@ -526,19 +549,23 @@ function renderAgAccordeon() {
         </button>
       </div>
       <div class="ag-acc-body" style="display:none;">
-        <div class="ag-section">
+        <div class="ag-section sec-sources">
           <div class="ag-section-label">Sources</div>
           <div class="ag-cb-grid">${srcCbs}</div>
         </div>
-        <div class="ag-section">
+        <div class="ag-section sec-modes">
+          <div class="ag-section-label">Mode de règlement</div>
+          <div class="ag-cb-grid">${modeCbs}</div>
+        </div>
+        <div class="ag-section sec-types">
           <div class="ag-section-label">Types de mouvement</div>
           <div class="ag-cb-grid">${typeCbs}</div>
         </div>
-        <div class="ag-section">
+        <div class="ag-section sec-descs">
           <div class="ag-section-label">Descriptions</div>
           <div class="ag-cb-grid">${descCbs}</div>
         </div>
-        <div class="ag-section">
+        <div class="ag-section sec-fours">
           <div class="ag-section-label">Fournisseurs</div>
           <div class="ag-cb-grid">${fourCbs}</div>
         </div>
@@ -574,18 +601,21 @@ function renderAG() {
   // Calcul par catégorie (en tenant compte des sources et types/descriptions/fournisseurs sélectionnés)
   const results = agConfig.map(cat => {
     const srcs    = cat.sources || ['banque','caisse'];
+    const modes   = (cat.modes_reglement || []).map(m => m.toLowerCase().trim());
     const types   = (cat.types || []).map(t => t.toLowerCase().trim());
     const descs   = (cat.descriptions || []).map(d => d.toLowerCase().trim());
     const fours   = (cat.fournisseurs || []).map(f => f.toLowerCase().trim());
 
-    // Fonction de match : type_mvt OU description OU fournisseur (si des listes sont cochées)
-    function matchRow(typeMvt, desc, four) {
+    // Fonction de match : type_mvt OU description OU fournisseur OU mode_reglement (si listes cochées)
+    function matchRow(typeMvt, desc, four, modeReg) {
       const tN = (typeMvt||'').toLowerCase().trim();
       const dN = (desc||'').toLowerCase().trim();
       const fN = (four||'').toLowerCase().trim();
+      const mN = (modeReg||'').toLowerCase().trim();
       if (types.length && types.includes(tN)) return true;
       if (descs.length && descs.includes(dN)) return true;
       if (fours.length && fours.includes(fN)) return true;
+      if (modes.length && modes.includes(mN)) return true;
       return false;
     }
 
@@ -593,27 +623,27 @@ function renderAG() {
 
     if (srcs.includes('caisse')) {
       caisse.forEach(r => {
-        if (matchRow(r[7], r[8], r[9])) totalCaisse += fmtN(r[4]) - fmtN(r[3]);
+        if (matchRow(r[7], r[8], r[9], '')) totalCaisse += fmtN(r[4]) - fmtN(r[3]);
       });
     }
     if (srcs.includes('caisse2')) {
       allCaisse2.forEach(r => {
-        if (matchRow(r[7], r[8], r[9])) totalCaisse2 += fmtN(r[4]) - fmtN(r[3]);
+        if (matchRow(r[7], r[8], r[9], '')) totalCaisse2 += fmtN(r[4]) - fmtN(r[3]);
       });
     }
     if (srcs.includes('banque')) {
       banque.forEach(r => {
-        if (matchRow(r[6], r[7], r[8])) totalBanque += fmtN(r[3]) - fmtN(r[2]);
+        if (matchRow(r[6], r[7], r[8], r[22]||'')) totalBanque += fmtN(r[3]) - fmtN(r[2]);
       });
     }
     if (srcs.includes('cheques')) {
       allCheques.slice(1).filter(r => r && r[5] === activePer).forEach(r => {
-        if (matchRow(r[6], r[7], r[8])) totalCheques += fmtN(r[3]);
+        if (matchRow(r[6], r[7], r[8], '')) totalCheques += fmtN(r[3]);
       });
     }
     if (srcs.includes('factures')) {
       allFactures.slice(1).filter(r => r && r[5] === activePer).forEach(r => {
-        if (matchRow(r[6], r[7], r[8])) totalFactures += fmtN(r[3]);
+        if (matchRow(r[6], r[7], r[8], '')) totalFactures += fmtN(r[3]);
       });
     }
 
