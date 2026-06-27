@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Caisse physique 1 — Arche de Mallo</title>
+<title>Caisse physique 2 — Arche de Mallo</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
   .split-layout{display:grid;grid-template-columns:1fr 320px;gap:14px;align-items:start;}
-  .form-card{background:var(--surface);border:0.5px solid var(--orange);border-radius:var(--radius);padding:18px 20px;position:sticky;top:60px;max-height:calc(100vh - 80px);overflow-y:auto;}
+  .form-card{background:var(--surface);border:0.5px solid var(--orange);border-radius:var(--radius);padding:18px 20px;position:sticky;top:60px;}
   .form-title{font-size:13px;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px;}
   .form-title i{color:var(--orange);}
   .form-group{margin-bottom:10px;}
@@ -114,7 +114,7 @@
 <aside class="sidebar" id="sidebar"></aside>
 <div class="main">
   <div class="topbar">
-    <div class="topbar-title"><i class="ti ti-safe" style="color:var(--orange)"></i> Caisse physique 1 — Comptage</div>
+    <div class="topbar-title"><i class="ti ti-safe" style="color:var(--orange)"></i> Caisse physique 2 — Comptage</div>
     <div class="topbar-right"><span style="font-size:11px;color:var(--text-3);" id="topbar-per"></span></div>
   </div>
   <div class="page-content">
@@ -127,7 +127,7 @@
       <div>
         <div class="list-card">
           <div class="list-head">
-            <div class="list-title">Historique des comptages — Caisse 1</div>
+            <div class="list-title">Historique des comptages — Caisse 2</div>
             <div class="filters-bar">
               <select class="f-select" id="fl-per" onchange="renderKPIs();renderTable()"></select>
               <button class="btn btn-secondary btn-sm" onclick="clearFilters()"><i class="ti ti-x"></i> Effacer</button>
@@ -204,7 +204,7 @@
 <script src="sheets.js"></script>
 <script src="sidebar.js"></script>
 <script>
-const CAISSE_NUM = 1;
+const CAISSE_NUM = 2;
 
 // Définition des coupures avec couleurs modèle 5
 const BILLETS = [
@@ -235,8 +235,8 @@ const openRows = new Set();
 // ============================================================
 Auth.requireAuth(async () => {
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
-  Sidebar.build('caisse1physique');
-  await Auth.applyUserRights('caisse1physique');
+  Sidebar.build('caisse2physique');
+  await Auth.applyUserRights('caisse2physique');
   const pers = Sheets.getPeriodes(), ap = Sidebar.getActivePeriode();
   document.getElementById('topbar-per').textContent = ap;
 
@@ -325,10 +325,10 @@ async function loadData() {
 function renderKPIs() {
   const cp = Sheets.cols.caissePhysique;
   const per = document.getElementById('fl-per')?.value || Sidebar.getActivePeriode();
-  const rows = allRows;
+  const rows = allRows.filter(r => r[cp.periode] !== undefined ? r[cp.periode] === per : true);
   const last = rows.length > 0 ? rows[rows.length - 1] : null;
   const soldActuel = last ? parseFloat(last[cp.total]) || 0 : 0;
-  const dateActuel = last ? (last[cp.mois] || '—') : '—';
+  const dateActuel = last ? formatDate(last[cp.mois]) : '—';
   const prev = rows.length > 1 ? rows[rows.length - 2] : null;
   const soldPrev = prev ? parseFloat(prev[cp.total]) || 0 : null;
   const diff = soldPrev !== null ? Math.round((soldActuel - soldPrev) * 100) / 100 : null;
@@ -347,7 +347,7 @@ function renderKPIs() {
 function renderTable() {
   const cp = Sheets.cols.caissePhysique;
   const per = document.getElementById('fl-per')?.value || Sidebar.getActivePeriode();
-  const rows = [...allRows.filter(r => r[cp.periode] !== undefined ? r[cp.periode] === per : true)].reverse();
+  const rows = [...allRows].reverse();
 
   if (!rows.length) {
     document.getElementById('table-wrap').innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-3);font-size:12px;">Aucun comptage pour cette période</div>';
@@ -395,12 +395,12 @@ function renderTable() {
     return `
       <tr>
         <td><button class="expand-btn ${isOpen?'open':''}" onclick="toggleRow('${id}')">${isOpen?'−':'+'}</button></td>
-        <td style="color:var(--text-3);white-space:nowrap;">${r[cp.mois]||'—'}</td>
+        <td style="color:var(--text-3);white-space:nowrap;">${formatDate(r[cp.mois])}</td>
         <td class="r" style="color:var(--green);font-weight:500;">${fmt(totalBillets)}</td>
         <td class="r" style="color:var(--blue);font-weight:500;">${fmt(totalPieces)}</td>
         <td class="r" style="font-weight:600;font-size:12px;">${fmt(parseFloat(r[cp.total])||0)}</td>
         <td class="r">
-          <button class="del-btn edit-action" onclick="openDel(${ri},'${escH(r[cp.mois]||'')} — ${escH(fmt(parseFloat(r[cp.total])||0))}')" title="Supprimer"><i class="ti ti-trash"></i></button>
+          <button class="del-btn edit-action" onclick="openDel(${ri},'${escH(formatDate(r[cp.mois]))} — ${escH(fmt(parseFloat(r[cp.total])||0))}')" title="Supprimer"><i class="ti ti-trash"></i></button>
         </td>
       </tr>
       <tr class="detail-row" id="detail-${id}" style="${isOpen?'':'display:none;'}">
@@ -505,6 +505,29 @@ function fmt(v) {
 function showErr(m) { const e = document.getElementById('form-err'); e.textContent = m; e.classList.remove('hidden'); }
 function showToast(m) { const t = document.createElement('div'); t.className='success-toast'; t.innerHTML=`<i class="ti ti-check"></i> ${m}`; document.body.appendChild(t); setTimeout(()=>t.remove(),3000); }
 function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;'); }
+
+// Convertit une date : format Excel (nombre), ISO YYYY-MM-DD, ou DD/MM/YYYY → DD/MM/YYYY
+function formatDate(d) {
+  if (!d && d !== 0) return '—';
+  const n = parseFloat(d);
+  // Nombre Excel (ex: 45678)
+  if (!isNaN(n) && n > 40000 && n < 60000) {
+    const dt = new Date(Math.round((n - 25569) * 86400 * 1000));
+    const day   = String(dt.getUTCDate()).padStart(2, '0');
+    const month = String(dt.getUTCMonth() + 1).padStart(2, '0');
+    const year  = dt.getUTCFullYear();
+    return `${day}/${month}/${year}`;
+  }
+  const s = String(d).trim();
+  // YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    const [y, m, dd] = s.slice(0, 10).split('-');
+    return `${dd}/${m}/${y}`;
+  }
+  // DD/MM/YYYY déjà bon
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+  return s;
+}
 </script>
 </body>
 </html>
