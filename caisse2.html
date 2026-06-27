@@ -367,15 +367,25 @@ function renderTable() {
 
     if (sortCol >= 0) {
     rows = [...rows].sort((a, b) => {
+      const isDate = (sortCol === cc.date);
       let va = String(a[sortCol]||''), vb = String(b[sortCol]||'');
-      va = dateToISO(va) || va;
-      vb = dateToISO(vb) || vb;
+      if (isDate) { va = dateToISO(va)||''; vb = dateToISO(vb)||''; }
+      if (isDate) {
+        if (!va && !vb) return 0; if (!va) return 1; if (!vb) return -1;
+        const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+        return sortAsc ? cmp : -cmp;
+      }
       const na = parseFloat(va), nb = parseFloat(vb);
       const cmp = !isNaN(na)&&!isNaN(nb) ? na-nb : (va<vb?-1:va>vb?1:0);
       return sortAsc ? cmp : -cmp;
     });
   } else {
-    rows = [...rows].reverse();
+    // Tri par défaut : date décroissante
+    rows = [...rows].sort((a,b)=>{
+      const va=dateToISO(String(a[cc.date]||'')), vb=dateToISO(String(b[cc.date]||''));
+      if(!va&&!vb)return 0; if(!va)return 1; if(!vb)return -1;
+      return va<vb?1:va>vb?-1:0;
+    });
   }
 
   if (!rows.length) {
