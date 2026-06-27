@@ -335,7 +335,7 @@ const TYPES_CHATS = [
 // ============================================================
 // ÉTAT GLOBAL
 // ============================================================
-let allCaisse=[], allBanque=[], allFactures=[], allCheques=[], allCaisse2Data=[];
+let allCaisse=[], allBanque=[], allFactures=[], allCheques=[], allCaisse2Data=[], allRemises=[];
 let activePer='';
 let agConfig = [];
 let agConfigVisible = false;
@@ -360,15 +360,17 @@ async function loadData() {
   document.getElementById('tab-ag').style.display = 'none';
   document.getElementById('tab-chat').style.display = 'none';
   try {
-    let caisse2Tmp;
-    [allCaisse, allBanque, allFactures, allCheques, caisse2Tmp] = await Promise.all([
+    let caisse2Tmp, remisesTmp;
+    [allCaisse, allBanque, allFactures, allCheques, caisse2Tmp, remisesTmp] = await Promise.all([
       getCaisseOperations(),
       getBanqueOperations(),
       getFactures(),
       getCheques(),
       getCaisse2Operations ? getCaisse2Operations() : Promise.resolve([]),
+      typeof getRemises === 'function' ? getRemises() : Promise.resolve([]),
     ]);
     allCaisse2Data = caisse2Tmp || [];
+    allRemises = remisesTmp || [];
     Sidebar.setLastUpdate();
   } catch(e) { console.error('loadData error', e); }
 
@@ -610,8 +612,11 @@ function renderAG() {
     const descs   = (cat.descriptions || []).map(d => d.toLowerCase().trim());
     const fours   = (cat.fournisseurs || []).map(f => f.toLowerCase().trim());
 
-    // Fonction de match : type_mvt OU description OU fournisseur (si des listes sont cochées)
+    // Fonction de match : type_mvt OU description OU fournisseur
+    // Si aucune liste n'est cochée, toutes les lignes de la source sont incluses
     function matchRow(typeMvt, desc, four) {
+      const hasFilter = types.length || descs.length || fours.length;
+      if (!hasFilter) return true;
       const tN = (typeMvt||'').toLowerCase().trim();
       const dN = (desc||'').toLowerCase().trim();
       const fN = (four||'').toLowerCase().trim();
@@ -621,37 +626,57 @@ function renderAG() {
       return false;
     }
 
-    let totalCaisse = 0, totalCaisse2 = 0, totalBanque = 0, totalCheques = 0, totalFactures = 0;
+    let totalCaisse = 0, totalCaisse2 = 0, totalBanque = 0;
+    let totalCheques = 0;   // chèques émis  → dépense (soustraction)
+    let totalRemises = 0;   // remises chèque → recette (addition)
+    let totalFactures = 0;  // factures       → dépense (soustraction)
 
     if (srcs.includes('caisse')) {
+      // Caisse : crédit - débit
       caisse.forEach(r => {
-        if (matchRow(r[7], r[8], r[9])) totalCaisse += fmtN(r[4]) - fmtN(r[3]);
+        if (matchRow(r[COLS_CAISSE.type_mvt], r[COLS_CAISSE.description], r[COLS_CAISSE.fournisseur]))
+          totalCaisse += fmtN(r[COLS_CAISSE.credit]) - fmtN(r[COLS_CAISSE.debit]);
       });
     }
     if (srcs.includes('caisse2')) {
+      // Caisse 2 : crédit - débit
       allCaisse2.forEach(r => {
-        if (matchRow(r[7], r[8], r[9])) totalCaisse2 += fmtN(r[4]) - fmtN(r[3]);
+        if (matchRow(r[COLS_CAISSE.type_mvt], r[COLS_CAISSE.description], r[COLS_CAISSE.fournisseur]))
+          totalCaisse2 += fmtN(r[COLS_CAISSE.credit]) - fmtN(r[COLS_CAISSE.debit]);
       });
     }
     if (srcs.includes('banque')) {
+      // Banque : crédit - débit
       banque.forEach(r => {
-        if (matchRow(r[6], r[7], r[8])) totalBanque += fmtN(r[3]) - fmtN(r[2]);
+        if (matchRow(r[COLS_BANQUE.type_mvt], r[COLS_BANQUE.description], r[COLS_BANQUE.fournisseur]))
+          totalBanque += fmtN(r[COLS_BANQUE.credit]) - fmtN(r[COLS_BANQUE.debit]);
       });
     }
     if (srcs.includes('cheques')) {
-      allCheques.slice(1).filter(r => r && r[5] === activePer).forEach(r => {
-        if (matchRow(r[6], r[7], r[8])) totalCheques += fmtN(r[3]);
+      // Chèques émis → toujours une dépense (montant soustrait)
+      allCheques.slice(1).filter(r => r && r[COLS_CHEQUE.periode] === activePer).forEach(r => {
+        if (matchRow(r[COLS_CHEQUE.type_mvt], r[COLS_CHEQUE.description], r[COLS_CHEQUE.fournisseur]))
+          totalCheques -= fmtN(r[COLS_CHEQUE.montant]);
+      });
+    }
+    if (srcs.includes('remises')) {
+      // Remises de chèques → toujours une recette (montant total additionné)
+      // Les remises n'ont pas de type_mvt individuel — on les inclut toutes si la source est cochée
+      allRemises.slice(1).filter(r => r && r[COLS_REMISE.periode] === activePer).forEach(r => {
+        totalRemises += fmtN(r[COLS_REMISE.montant_total]);
       });
     }
     if (srcs.includes('factures')) {
-      allFactures.slice(1).filter(r => r && r[5] === activePer).forEach(r => {
-        if (matchRow(r[6], r[7], r[8])) totalFactures += fmtN(r[3]);
+      // Factures → toujours une dépense (montant soustrait)
+      allFactures.slice(1).filter(r => r && r[COLS_FACTURE.periode] === activePer).forEach(r => {
+        if (matchRow(r[COLS_FACTURE.categorie], r[COLS_FACTURE.description], r[COLS_FACTURE.fournisseur]))
+          totalFactures -= fmtN(r[COLS_FACTURE.montant_ttc]);
       });
     }
 
-    const total = totalCaisse + totalCaisse2 + totalBanque + totalCheques + totalFactures;
-    // Pour compatibilité affichage tableau: on regroupe caisse+caisse2, banque+cheques+factures
-    return { ...cat, totalCaisse: totalCaisse + totalCaisse2, totalBanque: totalBanque + totalCheques + totalFactures, total };
+    const total = totalCaisse + totalCaisse2 + totalBanque + totalCheques + totalRemises + totalFactures;
+    // Regroupement pour affichage : caisse+caisse2 d'un côté, banque+chèques+remises+factures de l'autre
+    return { ...cat, totalCaisse: totalCaisse + totalCaisse2, totalBanque: totalBanque + totalCheques + totalRemises + totalFactures, total };
   }).filter(c => Math.abs(c.total) > 0.001 || agConfig.indexOf(agConfig.find(x=>x.cat===c.cat)) >= 0);
 
   // KPIs
