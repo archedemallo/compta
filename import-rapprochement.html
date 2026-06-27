@@ -314,9 +314,8 @@ function getFiltered() {
   // Tri par date décroissante
   rows.sort((a,b)=>{
     const va=dateToISO(String(a[ci.date]||'')),vb=dateToISO(String(b[ci.date]||''));
-    const na=parseFloat(va),nb=parseFloat(vb);
-    const cmp=!isNaN(na)&&!isNaN(nb)?na-nb:(va<vb?-1:va>vb?1:0);
-    return -cmp;
+    if(!va&&!vb)return 0; if(!va)return 1; if(!vb)return -1;
+    return va<vb?1:va>vb?-1:0;
   });
   return rows;
 }
