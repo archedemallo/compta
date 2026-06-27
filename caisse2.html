@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
   .split-layout{display:grid;grid-template-columns:1fr 380px;gap:14px;align-items:start;}
-  .form-card{background:var(--surface);border:0.5px solid var(--orange);border-radius:var(--radius);padding:18px 20px;position:sticky;top:60px;}
+  .form-card{background:var(--surface);border:0.5px solid var(--orange);border-radius:var(--radius);padding:18px 20px;position:sticky;top:60px;max-height:calc(100vh - 80px);overflow-y:auto;}
   .form-title{font-size:13px;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;}
   .form-title i{color:var(--orange);}
   .form-group{margin-bottom:10px;}
@@ -37,7 +37,7 @@
   .tbl-scroll-top::-webkit-scrollbar{height:10px;}
   .tbl-scroll-top::-webkit-scrollbar-thumb{background:rgba(61,43,31,0.25);border-radius:5px;}
   .tbl-scroll-top-inner{height:1px;}
-  .tbl-scroll-body{overflow-x:auto;overflow-y:auto;max-height:560px;}
+  .tbl-scroll-body{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 260px);}
   .tbl-scroll-body::-webkit-scrollbar{width:6px;height:6px;}
   .tbl-scroll-body::-webkit-scrollbar-thumb{background:rgba(61,43,31,0.2);border-radius:3px;}
   table{border-collapse:collapse;font-size:11px;min-width:100%;}
@@ -192,7 +192,7 @@
           </div>
           <div id="form-err" class="hidden" style="color:var(--red);font-size:11px;padding:6px 0;margin-top:4px;"></div>
           <div class="form-actions">
-            <button class="btn btn-primary edit-action" style="flex:1;" id="btn-submit" onclick="submitForm()"><i class="ti ti-device-floppy"></i> Enregistrer</button>
+            <button class="btn btn-primary" style="flex:1;" id="btn-submit" class="edit-action" onclick="submitForm()"><i class="ti ti-device-floppy"></i> Enregistrer</button>
             <button class="btn btn-secondary" onclick="resetForm()"><i class="ti ti-refresh"></i> Vider</button>
           </div>
         </div>
@@ -367,25 +367,15 @@ function renderTable() {
 
     if (sortCol >= 0) {
     rows = [...rows].sort((a, b) => {
-      const isDate = (sortCol === cc.date);
       let va = String(a[sortCol]||''), vb = String(b[sortCol]||'');
-      if (isDate) { va = dateToISO(va)||''; vb = dateToISO(vb)||''; }
-      if (isDate) {
-        if (!va && !vb) return 0; if (!va) return 1; if (!vb) return -1;
-        const cmp = va < vb ? -1 : va > vb ? 1 : 0;
-        return sortAsc ? cmp : -cmp;
-      }
+      va = dateToISO(va) || va;
+      vb = dateToISO(vb) || vb;
       const na = parseFloat(va), nb = parseFloat(vb);
       const cmp = !isNaN(na)&&!isNaN(nb) ? na-nb : (va<vb?-1:va>vb?1:0);
       return sortAsc ? cmp : -cmp;
     });
   } else {
-    // Tri par défaut : date décroissante
-    rows = [...rows].sort((a,b)=>{
-      const va=dateToISO(String(a[cc.date]||'')), vb=dateToISO(String(b[cc.date]||''));
-      if(!va&&!vb)return 0; if(!va)return 1; if(!vb)return -1;
-      return va<vb?1:va>vb?-1:0;
-    });
+    rows = [...rows].reverse();
   }
 
   if (!rows.length) {
@@ -665,7 +655,7 @@ async function saveFlag() {
 // ============================================================
 function chipType(t) { if(!t)return'depense';const l=t.toLowerCase();if(l.includes('adopt'))return'adoption';if(l.includes('don'))return'don';if(l.includes('adh'))return'adhesion';return'depense'; }
 function fmt(v) { if(!v&&v!==0)return'';const n=parseFloat(String(v).replace(/\s/g,'').replace(',','.'));if(isNaN(n))return'';return n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
-function dateToISO(d){if(!d)return'';const s=String(d).trim();const p=s.split('/');if(p.length===3){let y=p[2];if(y.length===2)y=(parseInt(y,10)<50?'20':'19')+y;return y+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);const n=parseFloat(s);if(!isNaN(n)&&n>40000&&n<60000){const dt=new Date(Math.round((n-25569)*86400*1000));return dt.toISOString().slice(0,10);}return s;}
+function dateToISO(d){if(!d)return'';const s=String(d).trim();const p=s.split('/');if(p.length===3)return p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);const n=parseFloat(s);if(!isNaN(n)&&n>40000&&n<60000){const dt=new Date(Math.round((n-25569)*86400*1000));return dt.toISOString().slice(0,10);}return s;}
 function showErr(m) { const e=document.getElementById('form-err');e.textContent=m;e.classList.remove('hidden'); }
 function showToast(m) { const t=document.createElement('div');t.className='success-toast';t.innerHTML=`<i class="ti ti-check"></i> ${m}`;document.body.appendChild(t);setTimeout(()=>t.remove(),3000); }
 function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;'); }
