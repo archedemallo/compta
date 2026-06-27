@@ -306,7 +306,7 @@ async function loadData() {
   document.getElementById('table-wrap').innerHTML =
     '<div style="padding:32px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>';
   const all = await Sheets.getCaisseOperations();
-  // _sheetIndex = index réel dans le sheet Google (avant filtre SHEET_FILTER)
+  // _sheetIndex = position réelle dans le sheet Google (avant tout filtre)
   all.forEach((r, i) => { r._sheetIndex = i; });
   allRows   = all.filter(SHEET_FILTER);
   Sidebar.setLastUpdate();
@@ -487,7 +487,7 @@ function clearFilters() {
 // ============================================================
 async function toggleVerified(ri, checked) {
   const cc = Sheets.cols.caisse;
-  const r  = allRows.find(x => (x._sheetIndex !== undefined ? x._sheetIndex : allRows.indexOf(x)) === ri);
+  const r  = allRows.find(x => x._sheetIndex === ri) || allRows[ri];
   if (!r) return;
   // Mise à jour immédiate en mémoire → case reste cochée sans attendre le sheet
   r[cc.flag_check] = checked ? 'VERIFIE' : 'FALSE';
