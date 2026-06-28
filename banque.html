@@ -695,14 +695,14 @@ function renderTable(){
       <td><span class="chip chip-${chipType(r[cb.type_mvt])}">${r[cb.type_mvt]||''}</span></td>
       <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--text-3);" title="${escH(descVal)}">${escH(descVal)}</td>
       <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--text-3);">${escH(typeComp)}</td>
+      <td style="font-size:10px;color:var(--text-3);">${escH(nomChat)}</td>
+      <td style="font-size:10px;color:var(--text-3);">${escH(numDonFiscal)}</td>
       <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--text-3);">
         ${numFacture && numFacture.includes(',')
           ? `<button onclick="event.stopPropagation();showFacturesPopup(event,'${escH(numFacture)}')" style="background:none;border:none;cursor:pointer;font-size:10px;color:var(--blue);padding:0;" title="Voir les factures liées"><i class="ti ti-files"></i> ${numFacture.split(',').length} factures</button>`
           : escH(numFacture)
         }
       </td>
-      <td style="font-size:10px;color:var(--text-3);">${escH(nomChat)}</td>
-      <td style="font-size:10px;color:var(--text-3);">${escH(numDonFiscal)}</td>
       <td style="font-size:10px;">${r[cb.ref_remise]?`<span class="chip-brd">${escH(r[cb.ref_remise])}</span>`:''}</td>
       <td style="font-size:10px;color:var(--text-3);">${escH(numRemEspece)}</td>
       <td style="font-size:10px;">${numBordChq?`<span class="chip-chq">${escH(numBordChq)}</span>`:''}</td>
