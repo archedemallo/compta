@@ -532,11 +532,12 @@ function renderAgAccordeon() {
   const allDescs  = Sheets.getDescriptions  ? Sheets.getDescriptions()   : [];
   const allFours  = Sheets.getFournisseurs  ? Sheets.getFournisseurs()   : [];
   const SOURCES = [
-    { key:'banque',   label:'Banque'    },
-    { key:'caisse',   label:'Caisse 1'  },
-    { key:'caisse2',  label:'Caisse 2'  },
-    { key:'cheques',  label:'Chèques'   },
-    { key:'factures', label:'Factures'  },
+    { key:'banque',   label:'Banque'           },
+    { key:'caisse',   label:'Caisse 1'         },
+    { key:'caisse2',  label:'Caisse 2'         },
+    { key:'cheques',  label:'Chèques'          },
+    { key:'remises',  label:'Remise de chèque' },
+    { key:'factures', label:'Factures'         },
   ];
 
   const container = document.getElementById('ag-acc-list');
@@ -717,7 +718,11 @@ function renderAG() {
       banque.forEach(r => {
         if (matchRow(r[COLS_BANQUE.type_mvt], r[COLS_BANQUE.description], r[COLS_BANQUE.fournisseur])) {
           const val = fmtN(r[COLS_BANQUE.credit]) - fmtN(r[COLS_BANQUE.debit]);
-          if (val !== 0) ops.push({ src:'Banque', date:r[COLS_BANQUE.date]||'', libelle:r[COLS_BANQUE.libelle]||'', type:r[COLS_BANQUE.type_mvt]||'', montant:val });
+          const bType = (r[COLS_BANQUE.type_mvt]||'').toLowerCase();
+          const bLib = bType === 'dons' ? (r[COLS_BANQUE.libelle_comp]||r[COLS_BANQUE.libelle]||'') :
+                       bType === 'évènement' || bType === 'evenement' ? (r[COLS_BANQUE.description]||r[COLS_BANQUE.libelle]||'') :
+                       (r[COLS_BANQUE.libelle]||'');
+          if (val !== 0) ops.push({ src:'Banque', date:r[COLS_BANQUE.date]||'', libelle:bLib, type:r[COLS_BANQUE.type_mvt]||'', montant:val });
         }
       });
     }
@@ -901,13 +906,58 @@ function getChatRows(source) {
   if (source === 'cheques') {
     return allCheques.slice(1).filter(r => r && chatPeriodes.includes(r[getChequeCol('periode')]));
   }
+  if (source === 'remises') {
+    // Exploser les chèques détails de chaque remise
+    const result = [];
+    allRemises.slice(1).filter(r => r && chatPeriodes.includes(r[COLS_REMISE.periode])).forEach(rem => {
+      const nb = parseInt(rem[COLS_REMISE.nb_cheques]) || 0;
+      for (let i = 0; i < nb; i++) {
+        const base = COLS_REMISE.detail_start + i * 8;
+        result.push({
+          _remise: rem,
+          nom_chat:   rem[base + 6] || '',
+          montant:    rem[base + 1] || 0,
+          donateur:   rem[base + 0] || '',
+          type_mvt:   rem[base + 3] || '',
+          description:rem[base + 4] || '',
+          periode:    rem[COLS_REMISE.periode] || '',
+        });
+      }
+    });
+    return result;
+  }
   return [];
+}
+
+// Calcule la part d'un chat sur une ligne: si la col nom_chat contient plusieurs noms
+// séparés par '/' ou ',' ou '|', on divise le montant par le nombre de vrais chats
+// (hors 'medicament' qui représente un traitement partagé, pas un chat individuel)
+function chatShare(nomChatCol, montant) {
+  const raw = (nomChatCol || '').trim();
+  if (!raw) return 0;
+  const noms = raw.split(/[\/,|]/).map(n => n.trim()).filter(Boolean);
+  const vraiChats = noms.filter(n => n.toLowerCase() !== 'medicament');
+  const diviseur = Math.max(1, vraiChats.length);
+  return montant / diviseur;
+}
+
+function chatShareForName(nomChatCol, montant, chatName) {
+  // Retourne la part du chat 'chatName' dans une ligne multi-chats
+  const raw = (nomChatCol || '').trim();
+  if (!raw) return 0;
+  const noms = raw.split(/[\/,|]/).map(n => n.trim()).filter(Boolean);
+  if (!noms.some(n => n.toLowerCase() === chatName.toLowerCase())) return 0;
+  const vraiChats = noms.filter(n => n.toLowerCase() !== 'medicament');
+  const diviseur = Math.max(1, vraiChats.length);
+  return montant / diviseur;
 }
 
 function buildChatSelect() {
   const names = new Set();
-  getChatRows('caisse').forEach(r => { const n=r[getCaisseCol('nom_chat')]; if(n&&n.trim()) names.add(n.trim()); });
-  getChatRows('banque').forEach(r => { const n=r[getBanqueCol('nom_chat')]; if(n&&n.trim()) names.add(n.trim()); });
+  getChatRows('caisse').forEach(r => { const n=r[getCaisseCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>names.add(x)); });
+  getChatRows('banque').forEach(r => { const n=r[getBanqueCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>names.add(x)); });
+  getChatRows('cheques').forEach(r => { const n=r[getChequeCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>names.add(x)); });
+  getChatRows('remises').forEach(r => { const n=r.nom_chat; if(n&&n.trim()) n.trim().split(/[\/,|]/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>names.add(x)); });
 
   const sel = document.getElementById('chat-select');
   const current = sel.value;
@@ -955,8 +1005,10 @@ function renderChatGlobal() {
 
   // Chats avec nom
   const nChats = new Set();
-  caisse.forEach(r => { const n=r[getCaisseCol('nom_chat')]; if(n&&n.trim()) nChats.add(n.trim()); });
-  banque.forEach(r => { const n=r[getBanqueCol('nom_chat')]; if(n&&n.trim()) nChats.add(n.trim()); });
+  caisse.forEach(r => { const n=r[getCaisseCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>nChats.add(x)); });
+  banque.forEach(r => { const n=r[getBanqueCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>nChats.add(x)); });
+  getChatRows('cheques').forEach(r => { const n=r[getChequeCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>nChats.add(x)); });
+  getChatRows('remises').forEach(r => { const n=r.nom_chat; if(n&&n.trim()) n.trim().split(/[\/,|]/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>nChats.add(x)); });
 
   const perStr = chatPeriodes.length===0 ? 'Aucune période' : chatPeriodes.join(', ');
   document.getElementById('chat-global-badge').textContent = perStr;
@@ -982,17 +1034,22 @@ function renderChatDetail() {
     return;
   }
 
-  const caisse  = getChatRows('caisse').filter(r => (r[getCaisseCol('nom_chat')]||'').trim() === chatName);
-  const banque   = getChatRows('banque').filter(r => (r[getBanqueCol('nom_chat')]||'').trim() === chatName);
+  // Lignes directes (nom_chat = exactement chatName) ou multi-chats incluant chatName
+  const caisse  = getChatRows('caisse').filter(r => { const n=r[getCaisseCol('nom_chat')]||''; return n.split(/[\/,|]/).map(x=>x.trim()).some(x=>x.toLowerCase()===chatName.toLowerCase()); });
+  const banque   = getChatRows('banque').filter(r => { const n=r[getBanqueCol('nom_chat')]||''; return n.split(/[\/,|]/).map(x=>x.trim()).some(x=>x.toLowerCase()===chatName.toLowerCase()); });
+  const cheques  = getChatRows('cheques').filter(r => { const n=r[getChequeCol('nom_chat')]||''; return n.split(/[\/,|]/).map(x=>x.trim()).some(x=>x.toLowerCase()===chatName.toLowerCase()); });
+  const remises  = getChatRows('remises').filter(r => { const n=r.nom_chat||''; return n.split(/[\/,|]/).map(x=>x.trim()).some(x=>x.toLowerCase()===chatName.toLowerCase()); });
 
   let totalDep=0, totalRec=0;
 
-  // Dépenses
-  caisse.forEach(r => { totalDep += fmtN(r[getCaisseCol('debit')]); });
-  banque.forEach(r => { totalDep += fmtN(r[getBanqueCol('debit')]); });
+  // Dépenses (crédit = recette pour le chat, débit = dépense)
+  caisse.forEach(r => { totalDep += chatShareForName(r[getCaisseCol('nom_chat')], fmtN(r[getCaisseCol('debit')]), chatName); });
+  banque.forEach(r => { totalDep += chatShareForName(r[getBanqueCol('nom_chat')], fmtN(r[getBanqueCol('debit')]), chatName); });
+  cheques.forEach(r => { totalDep += chatShareForName(r[getChequeCol('nom_chat')], fmtN(r[getChequeCol('montant')]), chatName); });
+  remises.forEach(r => { totalDep += chatShareForName(r.nom_chat, fmtN(r.montant), chatName); });
   // Recettes (dons, adoptions…)
-  caisse.forEach(r => { totalRec += fmtN(r[getCaisseCol('credit')]); });
-  banque.forEach(r => { totalRec += fmtN(r[getBanqueCol('credit')]); });
+  caisse.forEach(r => { totalRec += chatShareForName(r[getCaisseCol('nom_chat')], fmtN(r[getCaisseCol('credit')]), chatName); });
+  banque.forEach(r => { totalRec += chatShareForName(r[getBanqueCol('nom_chat')], fmtN(r[getBanqueCol('credit')]), chatName); });
 
   const net = totalRec - totalDep;
 
@@ -1009,12 +1066,30 @@ function renderChatDetail() {
     ...caisse.map(r => ({
       source:'Caisse', date:r[getCaisseCol('date')], libelle:r[getCaisseCol('libelle')],
       type:r[getCaisseCol('type_mvt')], desc:r[getCaisseCol('description')],
-      debit:fmtN(r[getCaisseCol('debit')]), credit:fmtN(r[getCaisseCol('credit')]),
+      debit:chatShareForName(r[getCaisseCol('nom_chat')], fmtN(r[getCaisseCol('debit')]), chatName),
+      credit:chatShareForName(r[getCaisseCol('nom_chat')], fmtN(r[getCaisseCol('credit')]), chatName),
+      multi: (r[getCaisseCol('nom_chat')]||'').includes('/') || (r[getCaisseCol('nom_chat')]||'').includes(','),
     })),
     ...banque.map(r => ({
       source:'Banque', date:r[getBanqueCol('date')], libelle:r[getBanqueCol('libelle')],
       type:r[getBanqueCol('type_mvt')], desc:r[getBanqueCol('description')],
-      debit:fmtN(r[getBanqueCol('debit')]), credit:fmtN(r[getBanqueCol('credit')]),
+      debit:chatShareForName(r[getBanqueCol('nom_chat')], fmtN(r[getBanqueCol('debit')]), chatName),
+      credit:chatShareForName(r[getBanqueCol('nom_chat')], fmtN(r[getBanqueCol('credit')]), chatName),
+      multi: (r[getBanqueCol('nom_chat')]||'').includes('/') || (r[getBanqueCol('nom_chat')]||'').includes(','),
+    })),
+    ...cheques.map(r => ({
+      source:'Chèque', date:r[getChequeCol('date_emission')], libelle:r[getChequeCol('beneficiaire')],
+      type:r[getChequeCol('type_mvt')], desc:r[getChequeCol('description')],
+      debit:chatShareForName(r[getChequeCol('nom_chat')], fmtN(r[getChequeCol('montant')]), chatName),
+      credit:0,
+      multi: (r[getChequeCol('nom_chat')]||'').includes('/') || (r[getChequeCol('nom_chat')]||'').includes(','),
+    })),
+    ...remises.map(r => ({
+      source:'Remise', date:'', libelle:r.donateur,
+      type:r.type_mvt, desc:r.description,
+      debit:chatShareForName(r.nom_chat, fmtN(r.montant), chatName),
+      credit:0,
+      multi: (r.nom_chat||'').includes('/') || (r.nom_chat||'').includes(','),
     })),
   ].sort((a,b) => (a.date||'').localeCompare(b.date||''));
 
@@ -1027,9 +1102,10 @@ function renderChatDetail() {
         <th class="r">Dépense</th><th class="r">Recette</th>
       </tr></thead><tbody>`;
     allOps.forEach(op => {
+      const badgeCls = op.source==='Caisse'?'badge-orange':op.source==='Chèque'?'badge-grey':op.source==='Remise'?'badge-grey':'badge-grey';
       html += `<tr>
         <td style="white-space:nowrap;">${op.date||'—'}</td>
-        <td><span class="badge ${op.source==='Caisse'?'badge-orange':'badge-grey'}">${op.source}</span></td>
+        <td><span class="badge ${badgeCls}">${op.source}</span>${op.multi?'<span title="Ligne multi-chats, montant divisé" style="font-size:9px;color:var(--text-3);margin-left:3px;">÷</span>':''}</td>
         <td>${op.libelle||'—'}${op.desc?`<div class="ops-detail">${op.desc}</div>`:''}</td>
         <td style="font-size:10px;color:var(--text-3);">${op.type||'—'}</td>
         <td class="r ${op.debit>0?'amount-d':''}">${op.debit>0?fmt(op.debit):'—'}</td>
@@ -1108,55 +1184,6 @@ function switchFourTab(sub) {
 // Collecte toutes les opérations avec fournisseur renseigné pour la période active
 function getFourData() {
   const rows = [];
-
-  allCaisse.slice(1).filter(r => r && r[COLS_CAISSE.periode] === activePer).forEach(r => {
-    const four = (r[COLS_CAISSE.fournisseur] || '').trim();
-    if (!four) return;
-    const debit  = fmtN(r[COLS_CAISSE.debit]);
-    const credit = fmtN(r[COLS_CAISSE.credit]);
-    const montant = debit > 0 ? -debit : credit;
-    rows.push({
-      fournisseur: four,
-      source: 'Caisse',
-      date: r[COLS_CAISSE.date] || '',
-      libelle: r[COLS_CAISSE.libelle] || '',
-      type_mvt: r[COLS_CAISSE.type_mvt] || '',
-      montant,
-      debit, credit,
-    });
-  });
-
-  allBanque.slice(1).filter(r => r && r[COLS_BANQUE.periode] === activePer).forEach(r => {
-    const four = (r[COLS_BANQUE.fournisseur] || '').trim();
-    if (!four) return;
-    const debit  = fmtN(r[COLS_BANQUE.debit]);
-    const credit = fmtN(r[COLS_BANQUE.credit]);
-    const montant = debit > 0 ? -debit : credit;
-    rows.push({
-      fournisseur: four,
-      source: 'Banque',
-      date: r[COLS_BANQUE.date] || '',
-      libelle: r[COLS_BANQUE.libelle] || '',
-      type_mvt: r[COLS_BANQUE.type_mvt] || '',
-      montant,
-      debit, credit,
-    });
-  });
-
-  allCheques.slice(1).filter(r => r && r[COLS_CHEQUE.periode] === activePer).forEach(r => {
-    const four = (r[COLS_CHEQUE.fournisseur] || '').trim();
-    if (!four) return;
-    const montant = -fmtN(r[COLS_CHEQUE.montant]);
-    rows.push({
-      fournisseur: four,
-      source: 'Chèque',
-      date: r[COLS_CHEQUE.date] || '',
-      libelle: r[COLS_CHEQUE.beneficiaire] || four,
-      type_mvt: r[COLS_CHEQUE.type_mvt] || '',
-      montant,
-      debit: fmtN(r[COLS_CHEQUE.montant]), credit: 0,
-    });
-  });
 
   allFactures.slice(1).filter(r => r && r[COLS_FACTURE.periode] === activePer).forEach(r => {
     const four = (r[COLS_FACTURE.fournisseur] || '').trim();
