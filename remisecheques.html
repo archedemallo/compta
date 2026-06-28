@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
   .split-layout{display:grid;grid-template-columns:1fr 420px;gap:14px;align-items:start;}
-  .form-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:18px 20px;position:sticky;top:60px;max-height:calc(100vh - 80px);overflow-y:auto;}
+  .form-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:18px 20px;position:sticky;top:60px;}
   .form-card-title{font-size:13px;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px;}
   .form-card-title i{color:var(--orange);}
   .form-group{margin-bottom:10px;}
@@ -61,7 +61,7 @@
   .table-scroll-outer{position:relative;}
   .table-scroll-top{overflow-x:auto;overflow-y:hidden;height:10px;background:var(--surface-2);border-bottom:0.5px solid var(--border);}
   .table-scroll-top-inner{height:1px;}
-  .table-scroll-body{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 300px);}
+  .table-scroll-body{overflow-x:auto;overflow-y:auto;max-height:520px;}
   table{table-layout:auto;min-width:100%;border-collapse:collapse;font-size:11px;}
   thead th{text-align:left;font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 8px;border-bottom:0.5px solid var(--border);background:var(--surface-2)!important;white-space:nowrap;position:sticky;top:0;z-index:4;position:relative;}
   .col-resizer{position:absolute;right:0;top:0;bottom:0;width:5px;cursor:col-resize;z-index:3;}
@@ -152,7 +152,7 @@
         </div>
         <div class="table-scroll-outer">
           <div class="table-scroll-top"><div class="table-scroll-top-inner"></div></div>
-          <div class="table-scroll-body" id="detail-cheques-wrap" style="max-height:calc(100vh - 260px);"></div>
+          <div class="table-scroll-body" id="detail-cheques-wrap" style="max-height:600px;"></div>
         </div>
       </div>
     </div>
@@ -201,7 +201,7 @@
           <div style="margin-top:12px;margin-bottom:8px;">
             <div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
               <span>Chèques inclus</span>
-              <button class="btn btn-secondary btn-sm edit-action" onclick="addChequeRemise()"><i class="ti ti-plus"></i> Ajouter un chèque</button>
+              <button class="btn btn-secondary btn-sm" onclick="addChequeRemise()"><i class="ti ti-plus"></i> Ajouter un chèque</button>
             </div>
             <div id="cheques-remise-list"></div>
             <div style="margin-top:8px;padding:8px 12px;background:var(--surface-2);border-radius:var(--radius-sm);font-size:12px;display:flex;justify-content:space-between;">
@@ -250,7 +250,7 @@
     </div>
     <div class="panel-footer">
       <button class="btn btn-secondary" onclick="closeRapPanel()">Annuler</button>
-      <button class="btn btn-primary" id="btn-save-rap" class="edit-action" onclick="saveRapprochement()" disabled>
+      <button class="btn btn-primary" id="btn-save-rap" onclick="saveRapprochement()" disabled>
         <i class="ti ti-device-floppy"></i> Enregistrer le rapprochement
       </button>
     </div>
@@ -262,7 +262,7 @@
   <div class="modal">
     <div class="modal-header"><span class="modal-title"><i class="ti ti-trash" style="color:var(--red)"></i> Supprimer la remise</span><button class="modal-close" onclick="closeDel()">×</button></div>
     <div class="modal-body"><div style="font-size:12px;">Êtes-vous sûr de vouloir supprimer cette remise ?</div><div class="confirm-detail" id="del-detail"></div></div>
-    <div class="modal-footer"><button class="btn btn-secondary btn-sm" onclick="closeDel()">Annuler</button><button class="btn btn-danger btn-sm edit-action" onclick="confirmDel()"><i class="ti ti-trash"></i> Supprimer</button></div>
+    <div class="modal-footer"><button class="btn btn-secondary btn-sm" onclick="closeDel()">Annuler</button><button class="btn btn-danger btn-sm" onclick="confirmDel()"><i class="ti ti-trash"></i> Supprimer</button></div>
   </div>
 </div>
 
@@ -329,25 +329,25 @@ function renderDetailCheques() {
         date:       dateRemise,
         bordereau:  numBord,
         statut,
-        donateur:   String(r[base]   || ''),
+        donateur:   r[base]   || '',
         montant:    parseFloat(r[base+1]) || 0,
-        num_cheque: String(r[base+2] || ''),
-        type_mvt:   String(r[base+3] || ''),
-        description:String(r[base+4] || ''),
-        nom_chat:   String(r[base+6] || ''),
+        num_cheque: r[base+2] || '',
+        type_mvt:   r[base+3] || '',
+        description:r[base+4] || '',
+        nom_chat:   r[base+6] || '',
       });
     }
   });
 
   // Appliquer les filtres
   let filtered = allCheques.filter(c => {
-    if (nomF && !String(c.donateur||'').toLowerCase().includes(nomF)) return false;
-    if (chqF && !String(c.num_cheque||'').toLowerCase().includes(chqF)) return false;
+    if (nomF && !c.donateur.toLowerCase().includes(nomF)) return false;
+    if (chqF && !c.num_cheque.toLowerCase().includes(chqF)) return false;
     if (c.montant < minF || c.montant > maxF) return false;
     if (dateFrom || dateTo) {
       // Convertir date DD/MM/YYYY en YYYY-MM-DD pour comparaison
-      const dParts = String(c.date||'').split('/');
-      const dISO = dParts.length === 3 ? `${dParts[2]}-${dParts[1]}-${dParts[0]}` : String(c.date||'');
+      const dParts = c.date.split('/');
+      const dISO = dParts.length === 3 ? `${dParts[2]}-${dParts[1]}-${dParts[0]}` : c.date;
       if (dateFrom && dISO < dateFrom) return false;
       if (dateTo   && dISO > dateTo)   return false;
     }
@@ -408,7 +408,6 @@ Auth.requireAuth(async()=>{
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
     await Sheets.loadConfigFromSheet();
   Sidebar.build('remisecheques');
-  await Auth.applyUserRights('remisecheques');
   const pers=Sheets.getPeriodes(), ap=Sidebar.getActivePeriode();
   document.getElementById('topbar-per').textContent=ap;
   ['rem-per','fl-per'].forEach(id=>{
@@ -551,7 +550,7 @@ function renderTable(){
           ${isVerified
             ? `<span class="lock-icon" title="Remise vérifiée — décochez pour modifier"><i class="ti ti-lock"></i></span>`
             : `<button class="edit-btn" onclick="openEdit(${ri})" title="Modifier" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;color:var(--blue);"><i class="ti ti-pencil"></i></button>`}
-          <button class="del-btn edit-action" onclick="openDel(${ri},'BRD: ${escH(r[cr.num_bordereau]||'')} — ${escH(fmt(r[cr.montant_total]))}')"><i class="ti ti-trash"></i></button>
+          <button class="del-btn" onclick="openDel(${ri},'BRD: ${escH(r[cr.num_bordereau]||'')} — ${escH(fmt(r[cr.montant_total]))}')"><i class="ti ti-trash"></i></button>
         </td>
       </tr>
       <tr class="detail-row" id="detail-${id}" style="${isOpen?'':'display:none;'}">
@@ -621,7 +620,7 @@ function addChequeRemise(){
   div.innerHTML=`
   <div class="cheque-item-title">
     <span>Chèque ${nb}</span>
-    <button class="remove-cheque-btn edit-action" onclick="removeChequeRemise('${id}')" title="Supprimer"><i class="ti ti-trash"></i></button>
+    <button class="remove-cheque-btn" onclick="removeChequeRemise('${id}')" title="Supprimer"><i class="ti ti-trash"></i></button>
   </div>
   <div class="form-row-2">
     <div class="form-group"><label class="form-label req">Donateur / Nom</label><input type="text" class="rem-donateur" placeholder="Nom"></div>
@@ -736,12 +735,14 @@ async function confirmDel(){
 // ============================================================
 const SUIVI_SHEET_ID = '1y6yD4AohP7T10GE7mmguIqNWSnwla9t1mewBpCDej_Y';
 const SUIVI_COLS = {
-  Adoption:             { date:2, nom:17, prenom:18, nom_chat:4,  montants:[{col:29,label:'Total participation'},{col:28,label:'Reste à payer'}] },
+  // indices = colonnes du Google Sheet Suivi SOURCE (sans colonne _id)
+  Adoption:             { date:2, nom:17, prenom:18, nom_chat:4,
+                          montants:[{col:29,col2:28,label:'Acompte versé',computed:true}] },
   Reservation_Chat:     { date:2, nom:10, prenom:null, nom_chat:5, montants:[{fixed:50,label:'Réservation'}] },
   Reservation_Chaton:   { date:2, nom:11, prenom:null, nom_chat:6, montants:[{fixed:50,label:'Réservation'}] },
   Contrat_reservation_chat: { date:2, nom:10, prenom:null, nom_chat:5, montants:[{fixed:50,label:'Réservation'}] },
-  Dons:                 { date:2, nom:7,  prenom:8,    nom_chat:null, montants:[{col:4,label:'Montant don'}] },
-  Adhesion:             { date:2, nom:4,  prenom:5,    nom_chat:null, montants:[{col:12,label:'Don bienfaiteur'},{col:13,label:'Don sympathisant'},{col:14,label:'Paiement adhésion'}] },
+  Dons:                 { date:2, nom:8,  prenom:9,    nom_chat:null, montants:[{col:4,label:'Montant don'}] },
+  Adhesion:             { date:2, nom:4,  prenom:5,    nom_chat:null, montants:[{fixed:20,label:'Adhésion'}] },
 };
 const SUIVI_LABELS = { Adoption:'Adoptions', Reservation_Chat:'Rés. Chat', Reservation_Chaton:'Rés. Chaton', Contrat_reservation_chat:'Contrats Rés.', Dons:'Dons', Adhesion:'Adhésions' };
 
@@ -775,7 +776,7 @@ async function openRapPanel(remiseIdx, chequeIdx) {
       <div class="rap-linked">
         <i class="ti ti-link" style="color:var(--green);font-size:15px;"></i>
         <span class="rap-linked-label"><strong>Déjà rapproché</strong> : ${escH(suiviRef)}</span>
-        <button class="rap-remove edit-action" onclick="deRapprocher()" title="Supprimer le rapprochement"><i class="ti ti-unlink"></i></button>
+        <button class="rap-remove" onclick="deRapprocher()" title="Supprimer le rapprochement"><i class="ti ti-unlink"></i></button>
       </div>`;
   } else {
     document.getElementById('rap-linked-display').innerHTML = '';
@@ -839,7 +840,9 @@ function renderSuiviLines() {
     const nomChat = g(cols.nom_chat);
     const date = g(cols.date);
     cols.montants.forEach((m, mi) => {
-      const montant = m.fixed !== undefined ? m.fixed : parseFloat(g(m.col)) || 0;
+      const montant = m.fixed !== undefined ? m.fixed
+        : m.computed ? Math.max(0, (parseFloat(g(m.col)) || 0) - (parseFloat(g(m.col2)) || 0))
+        : parseFloat(g(m.col)) || 0;
       if (!montant) return;
       const key = `${onglet}:${ri}:${mi}`;
       const alreadyLinked = linked.includes(key);
