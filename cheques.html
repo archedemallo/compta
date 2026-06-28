@@ -370,7 +370,6 @@ async function toggleVerifiedChq(ri,checked){
   try{
     await Sheets.updateCell(Sheets.config.sheets.cheques,ri+2,cc.verified,checked?'TRUE':'FALSE');
     showToast(checked?'Chèque verrouillé ✓':'Chèque déverrouillé');
-    loadData(); // reload silencieux
   }catch(e){
     r[cc.verified]=checked?'FALSE':'TRUE';
     renderTable();
