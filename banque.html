@@ -1155,13 +1155,25 @@ async function savePanel(){
       const dateRap = Sheets.normalizeDate(r[cb.date]) || Sheets.todayFR();
       for(const lf of linkedFactures){
         const fi=lf.idx, fac=lf.data;
-        await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.statut,         'payee');
-        await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.date_reglement,  dateRap);
-        if(linkedCheque){
-          const cc=Sheets.cols.cheque;
-          await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.mode_reglement,'Chèque');
-          await Sheets.updateCell(Sheets.config.sheets.factures, fi+2, cf.commentaire,   `Chèque N°${linkedCheque.data[cc.num_cheque]||'?'}`);
-        }
+        // Construire l'objet facture complet pour updateFacture (évite les updateCell partiels
+        // qui peuvent rater date_reglement selon le format de la colonne dans Sheets)
+        const facUpdated = {
+          id:             fac[cf.id]            || '',
+          num_facture:    fac[cf.num_facture]   || '',
+          fournisseur:    fac[cf.fournisseur]   || '',
+          date_facture:   fac[cf.date_facture]  || '',
+          montant_ttc:    fac[cf.montant_ttc]   || '',
+          categorie:      fac[cf.categorie]     || '',
+          description:    fac[cf.description]   || '',
+          date_reglement: dateRap,
+          mode_reglement: linkedCheque ? 'Chèque' : (fac[cf.mode_reglement] || ''),
+          lien_pdf:       fac[cf.lien_pdf]      || '',
+          commentaire:    linkedCheque ? `Chèque N°${linkedCheque.data[Sheets.cols.cheque.num_cheque]||'?'}` : (fac[cf.commentaire] || ''),
+          periode:        fac[cf.periode]       || '',
+          statut:         'payee',
+          nom_chat:       fac[cf.nom_chat]      || '',
+        };
+        await Sheets.updateFacture(fi, facUpdated);
         numFactures.push(fac[cf.num_facture]||'');
         if(fac[cf.lien_pdf])
           await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.lien_facture, fac[cf.lien_pdf]);
