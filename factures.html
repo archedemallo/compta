@@ -107,8 +107,8 @@
               <select class="f-select" id="fl-cat" onchange="renderTable()">
                 <option value="">Toutes catégories</option>
               </select>
-              <select class="f-select" id="fl-desc" onchange="renderTable()">
-                <option value="">Toutes descriptions</option>
+              <select class="f-select" id="fl-fourn" onchange="renderTable()">
+                <option value="">Tous fournisseurs</option>
               </select>
               <select class="f-select" id="fl-statut" onchange="renderTable()">
                 <option value="">Tous statuts</option>
@@ -246,7 +246,6 @@ Auth.requireAuth(async()=>{
   sd.innerHTML='<option value="">—</option>';
   descs.forEach(d=>{
     sd.innerHTML+=`<option>${escH(d)}</option>`;
-    document.getElementById('fl-desc').innerHTML+=`<option value="${escH(d)}">${d}</option>`;
   });
 
   // Modes règlement
@@ -277,9 +276,9 @@ function updateDynamicFilters(){
   if(flCat){flCat.innerHTML='<option value="">Toutes catégories</option>';cats.forEach(c=>flCat.innerHTML+=`<option ${c===curCat?'selected':''}>${escH(c)}</option>`);}
   // Fournisseurs présents
   const fours=[...new Set(rows.map(r=>r[cf.fournisseur]).filter(Boolean))].sort();
-  const curDesc=document.getElementById('fl-desc')?.value||'';
-  const flDesc=document.getElementById('fl-desc');
-  if(flDesc){flDesc.innerHTML='<option value="">Tous fournisseurs</option>';fours.forEach(f=>flDesc.innerHTML+=`<option ${f===curDesc?'selected':''}>${escH(f)}</option>`);}
+  const curFour=document.getElementById('fl-fourn')?.value||'';
+  const flFour=document.getElementById('fl-fourn');
+  if(flFour){flFour.innerHTML='<option value="">Tous fournisseurs</option>';fours.forEach(f=>flFour.innerHTML+=`<option ${f===curFour?'selected':''}>${escH(f)}</option>`);}
 }
 
 function onPeriodeChange(p){
@@ -309,13 +308,13 @@ function renderTable(){
   const perf   = document.getElementById('fl-per')?.value||'';
   const search = (document.getElementById('fl-search')?.value||'').toLowerCase();
   const catf   = document.getElementById('fl-cat')?.value||'';
-  const descf  = document.getElementById('fl-desc')?.value||'';
+  const fourf  = document.getElementById('fl-fourn')?.value||'';
   const statf  = document.getElementById('fl-statut')?.value||'';
 
   let rows=allRows;
   if(perf)   rows=rows.filter(r=>r[cf.periode]===perf);
   if(catf)   rows=rows.filter(r=>r[cf.categorie]===catf);
-  if(descf)  rows=rows.filter(r=>r[cf.description]===descf);
+  if(fourf)  rows=rows.filter(r=>r[cf.fournisseur]===fourf);
   if(statf==='payee')   rows=rows.filter(r=>r[cf.statut]==='payee');
   if(statf==='attente') rows=rows.filter(r=>r[cf.statut]!=='payee');
   if(search) rows=rows.filter(r=>[r[cf.fournisseur],r[cf.num_facture],r[cf.commentaire],r[cf.description]].join(' ').toLowerCase().includes(search));
@@ -373,7 +372,7 @@ function renderTable(){
 
 function clearFilters(){
   document.getElementById('fl-search').value='';
-  ['fl-cat','fl-desc','fl-statut'].forEach(id=>{const e=document.getElementById(id);if(e)e.selectedIndex=0;});
+  ['fl-cat','fl-fourn','fl-statut'].forEach(id=>{const e=document.getElementById(id);if(e)e.selectedIndex=0;});
   renderTable();
 }
 
