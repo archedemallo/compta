@@ -579,7 +579,6 @@ async function toggleVerifiedRemise(ri,checked){
   try{
     await Sheets.updateCell(Sheets.config.sheets.remises,ri+2,cr.verified,checked?'TRUE':'FALSE');
     showToast(checked?'Remise verrouillée ✓':'Remise déverrouillée');
-    loadData(); // reload silencieux
   }catch(e){
     r[cr.verified]=checked?'FALSE':'TRUE';
     renderTable();
