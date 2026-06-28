@@ -939,7 +939,7 @@ function getChatRows(source) {
 function chatShare(nomChatCol, montant) {
   const raw = (nomChatCol || '').trim();
   if (!raw) return 0;
-  const noms = raw.split(/[\/,|]/).map(n => n.trim()).filter(Boolean);
+  const noms = raw.split(/[\/,|]|\s+-\s+/).map(n => n.trim()).filter(Boolean);
   const vraiChats = noms.filter(n => n.toLowerCase() !== 'medicament');
   const diviseur = Math.max(1, vraiChats.length);
   return montant / diviseur;
@@ -949,7 +949,7 @@ function chatShareForName(nomChatCol, montant, chatName) {
   // Retourne la part du chat 'chatName' dans une ligne multi-chats
   const raw = (nomChatCol || '').trim();
   if (!raw) return 0;
-  const noms = raw.split(/[\/,|]/).map(n => n.trim()).filter(Boolean);
+  const noms = raw.split(/[\/,|]|\s+-\s+/).map(n => n.trim()).filter(Boolean);
   if (!noms.some(n => n.toLowerCase() === chatName.toLowerCase())) return 0;
   const vraiChats = noms.filter(n => n.toLowerCase() !== 'medicament');
   const diviseur = Math.max(1, vraiChats.length);
@@ -958,10 +958,10 @@ function chatShareForName(nomChatCol, montant, chatName) {
 
 function buildChatSelect() {
   const names = new Set();
-  getChatRows('caisse').forEach(r => { const n=r[getCaisseCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>names.add(x)); });
-  getChatRows('banque').forEach(r => { const n=r[getBanqueCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>names.add(x)); });
-  getChatRows('cheques').forEach(r => { const n=r[getChequeCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>names.add(x)); });
-  getChatRows('remises').forEach(r => { const n=r.nom_chat; if(n&&n.trim()) n.trim().split(/[\/,|]/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>names.add(x)); });
+  getChatRows('caisse').forEach(r => { const n=r[getCaisseCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>names.add(x)); });
+  getChatRows('banque').forEach(r => { const n=r[getBanqueCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>names.add(x)); });
+  getChatRows('cheques').forEach(r => { const n=r[getChequeCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>names.add(x)); });
+  getChatRows('remises').forEach(r => { const n=r.nom_chat; if(n&&n.trim()) n.trim().split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>names.add(x)); });
 
   const sel = document.getElementById('chat-select');
   const current = sel.value;
@@ -1009,10 +1009,10 @@ function renderChatGlobal() {
 
   // Chats avec nom
   const nChats = new Set();
-  caisse.forEach(r => { const n=r[getCaisseCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>nChats.add(x)); });
-  banque.forEach(r => { const n=r[getBanqueCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>nChats.add(x)); });
-  getChatRows('cheques').forEach(r => { const n=r[getChequeCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>nChats.add(x)); });
-  getChatRows('remises').forEach(r => { const n=r.nom_chat; if(n&&n.trim()) n.trim().split(/[\/,|]/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>nChats.add(x)); });
+  caisse.forEach(r => { const n=r[getCaisseCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>nChats.add(x)); });
+  banque.forEach(r => { const n=r[getBanqueCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>nChats.add(x)); });
+  getChatRows('cheques').forEach(r => { const n=r[getChequeCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>nChats.add(x)); });
+  getChatRows('remises').forEach(r => { const n=r.nom_chat; if(n&&n.trim()) n.trim().split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>nChats.add(x)); });
 
   const perStr = chatPeriodes.length===0 ? 'Aucune période' : chatPeriodes.join(', ');
   document.getElementById('chat-global-badge').textContent = perStr;
@@ -1032,7 +1032,7 @@ function renderChatGlobal() {
   // ── Tableau récap par chat ──────────────────────────────────────────
   // Collecter tous les noms de chats individuels (split multi-chats)
   const allChatNames = new Set();
-  const addNames = col => { if(col&&col.trim()) col.trim().split(/[\/,|]/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>allChatNames.add(x)); };
+  const addNames = col => { if(col&&col.trim()) col.trim().split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>allChatNames.add(x)); };
   caisse.forEach(r => addNames(r[getCaisseCol('nom_chat')]));
   banque.forEach(r => addNames(r[getBanqueCol('nom_chat')]));
   getChatRows('cheques').forEach(r => addNames(r[getChequeCol('nom_chat')]));
@@ -1102,10 +1102,10 @@ function renderChatDetail() {
   }
 
   // Lignes directes (nom_chat = exactement chatName) ou multi-chats incluant chatName
-  const caisse  = getChatRows('caisse').filter(r => { const n=r[getCaisseCol('nom_chat')]||''; return n.split(/[\/,|]/).map(x=>x.trim()).some(x=>x.toLowerCase()===chatName.toLowerCase()); });
-  const banque   = getChatRows('banque').filter(r => { const n=r[getBanqueCol('nom_chat')]||''; return n.split(/[\/,|]/).map(x=>x.trim()).some(x=>x.toLowerCase()===chatName.toLowerCase()); });
-  const cheques  = getChatRows('cheques').filter(r => { const n=r[getChequeCol('nom_chat')]||''; return n.split(/[\/,|]/).map(x=>x.trim()).some(x=>x.toLowerCase()===chatName.toLowerCase()); });
-  const remises  = getChatRows('remises').filter(r => { const n=r.nom_chat||''; return n.split(/[\/,|]/).map(x=>x.trim()).some(x=>x.toLowerCase()===chatName.toLowerCase()); });
+  const caisse  = getChatRows('caisse').filter(r => { const n=r[getCaisseCol('nom_chat')]||''; return n.split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).some(x=>x.toLowerCase()===chatName.toLowerCase()); });
+  const banque   = getChatRows('banque').filter(r => { const n=r[getBanqueCol('nom_chat')]||''; return n.split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).some(x=>x.toLowerCase()===chatName.toLowerCase()); });
+  const cheques  = getChatRows('cheques').filter(r => { const n=r[getChequeCol('nom_chat')]||''; return n.split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).some(x=>x.toLowerCase()===chatName.toLowerCase()); });
+  const remises  = getChatRows('remises').filter(r => { const n=r.nom_chat||''; return n.split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).some(x=>x.toLowerCase()===chatName.toLowerCase()); });
 
   let totalDep=0, totalRec=0;
 
