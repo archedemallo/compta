@@ -296,6 +296,10 @@
         <div class="card-body">
           <div class="kpi-row" id="chat-global-kpis"></div>
           <div id="chat-global-bars"></div>
+          <div style="margin-top:16px;">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-3);margin-bottom:6px;">Récapitulatif par chat</div>
+            <div id="chat-recap-wrap"></div>
+          </div>
         </div>
       </div>
 
@@ -1024,6 +1028,69 @@ function renderChatGlobal() {
     Object.entries(byType).map(([label, val]) => ({label, val})),
     'bar-red', total
   );
+
+  // ── Tableau récap par chat ──────────────────────────────────────────
+  // Collecter tous les noms de chats individuels (split multi-chats)
+  const allChatNames = new Set();
+  const addNames = col => { if(col&&col.trim()) col.trim().split(/[\/,|]/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>allChatNames.add(x)); };
+  caisse.forEach(r => addNames(r[getCaisseCol('nom_chat')]));
+  banque.forEach(r => addNames(r[getBanqueCol('nom_chat')]));
+  getChatRows('cheques').forEach(r => addNames(r[getChequeCol('nom_chat')]));
+  getChatRows('remises').forEach(r => addNames(r.nom_chat));
+
+  // Pour chaque chat, calculer dépenses et recettes via chatShareForName
+  const chatRecap = [...allChatNames].sort((a,b)=>a.localeCompare(b,'fr')).map(name => {
+    let dep = 0, rec = 0;
+    caisse.forEach(r => {
+      dep += chatShareForName(r[getCaisseCol('nom_chat')], fmtN(r[getCaisseCol('debit')]),  name);
+      rec += chatShareForName(r[getCaisseCol('nom_chat')], fmtN(r[getCaisseCol('credit')]), name);
+    });
+    banque.forEach(r => {
+      dep += chatShareForName(r[getBanqueCol('nom_chat')], fmtN(r[getBanqueCol('debit')]),  name);
+      rec += chatShareForName(r[getBanqueCol('nom_chat')], fmtN(r[getBanqueCol('credit')]), name);
+    });
+    getChatRows('cheques').forEach(r => {
+      dep += chatShareForName(r[getChequeCol('nom_chat')], fmtN(r[getChequeCol('montant')]), name);
+    });
+    getChatRows('remises').forEach(r => {
+      dep += chatShareForName(r.nom_chat, fmtN(r.montant), name);
+    });
+    return { name, dep, rec, net: rec - dep };
+  }).filter(r => r.dep !== 0 || r.rec !== 0);
+
+  const totDep = chatRecap.reduce((s,r)=>s+r.dep,0);
+  const totRec = chatRecap.reduce((s,r)=>s+r.rec,0);
+  const totNet = totRec - totDep;
+
+  const recapWrap = document.getElementById('chat-recap-wrap');
+  if (recapWrap) {
+    if (!chatRecap.length) {
+      recapWrap.innerHTML = '<div class="empty-state" style="padding:12px;"><i class="ti ti-paw"></i> Aucun chat avec nom renseigné</div>';
+    } else {
+      recapWrap.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:11px;">
+        <thead><tr>
+          <th style="text-align:left;padding:6px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-3);">Chat</th>
+          <th style="text-align:right;padding:6px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-3);">Dépenses</th>
+          <th style="text-align:right;padding:6px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-3);">Recettes</th>
+          <th style="text-align:right;padding:6px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-3);">Net</th>
+        </tr></thead>
+        <tbody>
+          ${chatRecap.map(r => '<tr style="border-bottom:0.5px solid var(--border);cursor:pointer;" onclick="document.getElementById(\'chat-select\').value=\'' + escH(r.name) + '\';renderChatDetail();" title="Voir le détail de ' + escH(r.name) + '">'+
+            '<td style="padding:5px 10px;font-weight:500;">' + escH(r.name) + '</td>'+
+            '<td style="text-align:right;padding:5px 10px;color:var(--red);">' + (r.dep>0?fmt(r.dep):'—') + '</td>'+
+            '<td style="text-align:right;padding:5px 10px;color:var(--green);">' + (r.rec>0?fmt(r.rec):'—') + '</td>'+
+            '<td style="text-align:right;padding:5px 10px;font-weight:600;color:' + (r.net>=0?'var(--green)':'var(--red)') + ';">' + fmt(r.net) + '</td>'+
+          '</tr>').join('')}
+          <tr style="border-top:1.5px solid var(--border);background:var(--surface-2);font-weight:700;">
+            <td style="padding:6px 10px;">TOTAL</td>
+            <td style="text-align:right;padding:6px 10px;color:var(--red);">${fmt(totDep)}</td>
+            <td style="text-align:right;padding:6px 10px;color:var(--green);">${fmt(totRec)}</td>
+            <td style="text-align:right;padding:6px 10px;color:${totNet>=0?'var(--green)':'var(--red)'}">${fmt(totNet)}</td>
+          </tr>
+        </tbody>
+      </table>`;
+    }
+  }
 }
 
 function renderChatDetail() {
