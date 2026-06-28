@@ -251,7 +251,7 @@ function renderTable(){
   rows=[...rows].reverse();
   if(!rows.length){document.getElementById('cheques-table-wrap').innerHTML='<div style="padding:24px;text-align:center;color:var(--text-3);font-size:12px;">Aucun chèque</div>';return;}
   const trs=rows.map(r=>{
-    const ri=allCheques.indexOf(r);
+    const ri=r._sheetIndex!==undefined?r._sheetIndex:allCheques.indexOf(r);
     const s=r[cc.statut]||'';
     const isVerified=r[cc.verified]==='TRUE';
     const badge=s==='en_attente'
@@ -329,18 +329,48 @@ async function submitCheque(){
   };
   const btn=document.getElementById('chq-submit');btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2 spinner"></i>';
   try{
-    await Sheets.saveCheque(chq);
-    showToast('Chèque enregistré !');resetCheque();await loadData();
+    if(editChqIdx!==null){
+      // Modification : conserver les champs existants non éditables
+      const cc=Sheets.cols.cheque, existing=allCheques[editChqIdx];
+      chq.id          = existing[cc.id]          || '';
+      chq.statut      = existing[cc.statut]      || 'en_attente';
+      chq.date_encaiss= existing[cc.date_encaiss]|| '';
+      chq.ref_banque  = existing[cc.ref_banque]  || '';
+      chq.verified    = existing[cc.verified]    || 'FALSE';
+      await Sheets.updateCheque(editChqIdx, chq);
+      showToast('Chèque modifié !');
+    } else {
+      await Sheets.saveCheque(chq);
+      showToast('Chèque enregistré !');
+    }
+    resetCheque();await loadData();
   }catch(e){showErrChq('Erreur : '+(e.message||'?'));}
   finally{btn.disabled=false;btn.innerHTML='<i class="ti ti-device-floppy"></i> Enregistrer';}
 }
 
 function openEditChq(ri){
-  const cc=Sheets.cols.cheque,r=allCheques[ri];
+  const cc=Sheets.cols.cheque,r=allCheques.find(x=>x._sheetIndex===ri)||allCheques[ri];
   if(r[cc.verified]==='TRUE'){showToast('⚠️ Chèque vérifié — décochez pour modifier');return;}
   editChqIdx=ri;
   document.getElementById('chq-num').value=r[cc.num_cheque]||'';
-  document.getElementById('chq-date').value=r[cc.date_emission]||'';
+  // Convertir la date en YYYY-MM-DD pour l'input type="date"
+  const rawDate = r[cc.date_emission] || '';
+  let isoDate = '';
+  if(rawDate) {
+    const n = parseFloat(rawDate);
+    if(!isNaN(n) && n > 40000 && n < 60000) {
+      // Format Excel
+      const dt = new Date(Math.round((n - 25569) * 86400 * 1000));
+      isoDate = dt.toISOString().slice(0,10);
+    } else if(/^\d{2}\/\d{2}\/\d{4}$/.test(rawDate)) {
+      // DD/MM/YYYY → YYYY-MM-DD
+      const p = rawDate.split('/');
+      isoDate = p[2]+'-'+p[1]+'-'+p[0];
+    } else {
+      isoDate = rawDate.slice(0,10);
+    }
+  }
+  document.getElementById('chq-date').value = isoDate;
   document.getElementById('chq-benef').value=r[cc.beneficiaire]||'';
   document.getElementById('chq-montant').value=r[cc.montant]||'';
   document.getElementById('chq-type').value=r[cc.type_mvt]||'';
@@ -368,7 +398,8 @@ async function toggleVerifiedChq(ri,checked){
   r[cc.verified]=checked?'TRUE':'FALSE';
   renderTable();
   try{
-    await Sheets.updateCell(Sheets.config.sheets.cheques,ri+2,cc.verified,checked?'TRUE':'FALSE');
+    const sheetRow = (r && r._sheetIndex !== undefined ? r._sheetIndex : ri) + 2;
+    await Sheets.updateCell(Sheets.config.sheets.cheques,sheetRow,cc.verified,checked?'TRUE':'FALSE');
     showToast(checked?'Chèque verrouillé ✓':'Chèque déverrouillé');
   }catch(e){
     r[cc.verified]=checked?'FALSE':'TRUE';
