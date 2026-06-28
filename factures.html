@@ -352,7 +352,6 @@ function renderTable(){
           : '<span style="color:var(--text-3);font-size:11px;">—</span>'}
       </td>
       <td class="r" style="white-space:nowrap;">
-        <button class="edit-btn" onclick="togglePayee(${ri})" title="${payee?'Marquer non payée':'Marquer payée'}" style="color:${payee?'var(--green)':'var(--text-3)'}"><i class="ti ti-${payee?'circle-check':'circle'}"></i></button>
         <button class="edit-btn" onclick="openEdit(${ri})" title="Modifier"><i class="ti ti-pencil"></i></button>
         <button class="del-btn"  onclick="openDel(${ri})"  title="Supprimer"><i class="ti ti-trash"></i></button>
       </td>
