@@ -695,14 +695,14 @@ function renderTable(){
       <td><span class="chip chip-${chipType(r[cb.type_mvt])}">${r[cb.type_mvt]||''}</span></td>
       <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--text-3);" title="${escH(descVal)}">${escH(descVal)}</td>
       <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--text-3);">${escH(typeComp)}</td>
-      <td style="font-size:10px;color:var(--text-3);">${escH(nomChat)}</td>
-      <td style="font-size:10px;color:var(--text-3);">${escH(numDonFiscal)}</td>
       <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--text-3);">
         ${numFacture && numFacture.includes(',')
           ? `<button onclick="event.stopPropagation();showFacturesPopup(event,'${escH(numFacture)}')" style="background:none;border:none;cursor:pointer;font-size:10px;color:var(--blue);padding:0;" title="Voir les factures liées"><i class="ti ti-files"></i> ${numFacture.split(',').length} factures</button>`
           : escH(numFacture)
         }
       </td>
+      <td style="font-size:10px;color:var(--text-3);">${escH(nomChat)}</td>
+      <td style="font-size:10px;color:var(--text-3);">${escH(numDonFiscal)}</td>
       <td style="font-size:10px;">${r[cb.ref_remise]?`<span class="chip-brd">${escH(r[cb.ref_remise])}</span>`:''}</td>
       <td style="font-size:10px;color:var(--text-3);">${escH(numRemEspece)}</td>
       <td style="font-size:10px;">${numBordChq?`<span class="chip-chq">${escH(numBordChq)}</span>`:''}</td>
@@ -908,8 +908,12 @@ async function loadSuiviBankData(){
 function buildSuiviBankTabs(){
   const bar = document.getElementById('suivi-tabs-bank');
   if(!bar) return;
+  const ci = Sheets.cols.importRap;
   bar.innerHTML = Object.entries(SUIVI_BANK_ONGLETS).map(([key,cfg])=>{
-    const n = (suiviBankData[key]||[]).length;
+    // Compter depuis allImportRap filtré par onglet (comme remisecheques)
+    const n = (allImportRap||[]).filter(r =>
+      r[ci.destination]==='banque' && r[ci.statut]==='en_attente' && r[ci.onglet]===key
+    ).length;
     return `<button class="suivi-tab-bank ${key===activeSuiviBankTab?'active':''}" onclick="switchSuiviBankTab('${key}')">${cfg.label}<span class="suivi-tab-bank-badge">${n}</span></button>`;
   }).join('');
 }
@@ -925,8 +929,8 @@ function renderSuiviBankLines(){
   const ci = Sheets.cols.importRap;
   // Filtrer les lignes Import_Rapprochement en_attente destinées à la banque
   const lines = (allImportRap||[]).filter(r =>
-    r[ci.destination]==='banque' && r[ci.statut]==='en_attente'
-  ).filter(r => !search || [r[ci.libelle],r[ci.nom_chat],r[ci.type_mvt],r[ci.onglet]].join(' ').toLowerCase().includes(search));
+    r[ci.destination]==='banque' && r[ci.statut]==='en_attente' && r[ci.onglet]===activeSuiviBankTab
+  ).filter(r => !search || [r[ci.libelle],r[ci.nom_chat],r[ci.type_mvt]].join(' ').toLowerCase().includes(search));
 
   const wrap = document.getElementById('suivi-bank-lines');
   if(!wrap) return;
