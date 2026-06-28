@@ -274,7 +274,7 @@
 // ============================================================
 // VARIABLES GLOBALES
 // ============================================================
-let allRemises=[], delIdx=null, chqCounter=0, editRemIdx=null;
+let allRemises=[], allImportRap=[], delIdx=null, chqCounter=0, editRemIdx=null;
 const openRows=new Set();
 
 // ============================================================
@@ -423,7 +423,13 @@ Auth.requireAuth(async()=>{
 // CHARGEMENT
 // ============================================================
 async function loadData(){
-  allRemises=await Sheets.getRemises();
+  const [remises, rapRows] = await Promise.all([
+    Sheets.getRemises(),
+    Sheets.getImportRapprochement('en_attente'),
+  ]);
+  allRemises = remises;
+  rapRows.forEach((r,i) => { r._sheetIndex = i; });
+  allImportRap = rapRows;
   Sidebar.setLastUpdate();
   updateDynamicFilters();
   renderKPIs();
@@ -804,11 +810,14 @@ async function loadSuiviData() {
 }
 
 function buildSuiviTabs() {
-  document.getElementById('suivi-tabs').innerHTML = Object.keys(SUIVI_COLS).map(onglet =>
-    `<button class="suivi-tab ${onglet === activeSuiviTab ? 'active' : ''}" onclick="switchSuiviTab('${onglet}')">
-      ${SUIVI_LABELS[onglet]}<span class="suivi-tab-badge">${(suiviData[onglet]||[]).length}</span>
-    </button>`
-  ).join('');
+  const ci = Sheets.cols.importRap;
+  document.getElementById('suivi-tabs').innerHTML = Object.keys(SUIVI_COLS).map(onglet => {
+    // Compter les lignes en attente dans la file d'import pour cet onglet
+    const n = (allImportRap||[]).filter(r => r[ci.onglet]===onglet && r[ci.statut]==='en_attente').length;
+    return `<button class="suivi-tab ${onglet === activeSuiviTab ? 'active' : ''}" onclick="switchSuiviTab('${onglet}')">
+      ${SUIVI_LABELS[onglet]}<span class="suivi-tab-badge">${n}</span>
+    </button>`;
+  }).join('');
 }
 
 function switchSuiviTab(onglet) {
