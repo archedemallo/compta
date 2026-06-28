@@ -238,7 +238,14 @@ async function readRange(spreadsheetId, range) {
 }
 
 async function readSheet(sheetName, spreadsheetId) {
-  return readRange(spreadsheetId || SHEETS_CONFIG.spreadsheetId, `${sheetName}!A:CZ`);
+  const rows = await readRange(spreadsheetId || SHEETS_CONFIG.spreadsheetId, `${sheetName}!A:CZ`);
+  // Normaliser les booléens JS (retournés par UNFORMATTED_VALUE) en strings
+  // pour que les comparaisons === 'TRUE' / === 'FALSE' fonctionnent correctement
+  return rows.map(row => row.map(cell => {
+    if (cell === true)  return 'TRUE';
+    if (cell === false) return 'FALSE';
+    return cell;
+  }));
 }
 
 async function getCaisse2Operations(periode) {
@@ -251,12 +258,14 @@ async function getCaisse2Operations(periode) {
 async function getCaisseOperations(periode) {
   const rows = await readSheet(SHEETS_CONFIG.sheets.caisse);
   const data = rows.length > 1 ? rows.slice(1) : [];
+  data.forEach((r, i) => { r._sheetIndex = i; });
   return periode ? data.filter(r => r[COLS_CAISSE.periode] === periode) : data;
 }
 
 async function getBanqueOperations(periode) {
   const rows = await readSheet(SHEETS_CONFIG.sheets.banque);
   const data = rows.length > 1 ? rows.slice(1) : [];
+  data.forEach((r, i) => { r._sheetIndex = i; });
   return periode ? data.filter(r => r[COLS_BANQUE.periode] === periode) : data;
 }
 
