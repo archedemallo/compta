@@ -429,9 +429,8 @@ function renderTable() {
       <td class="td-trunc-sm" title="${escH(r[cc.type_comp]||'')}">${r[cc.type_comp]||''}</td>
       <td style="font-size:10px;color:var(--text-3);">${r[cc.nom_chat]||''}</td>
       <td style="font-size:10px;color:var(--text-3);">${r[cc.num_recu]||''}</td>
-      <td style="font-size:10px;">${bordereau?`<span class="chip-brd">${escH(bordereau)}</span>`:''}</td>
-      <td style="text-align:center;font-size:12px;">${r[cc.suivi_ref]
-        ?`<span style="color:var(--green);" title="${escH(r[cc.suivi_ref])}"><i class="ti ti-check"></i></span>`:'—'}</td>
+      <td style="font-size:10px;">${bordereau?`<span class="chip-brd" style="display:inline-flex;align-items:center;gap:2px;">${escH(bordereau)}<button onclick="event.stopPropagation();delierCaisseBordereau(${ri})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:10px;padding:0 0 0 2px;line-height:1;" title="Supprimer rapprochement">x</button></span>`:''}</td>
+      <td style="font-size:10px;">${r[cc.suivi_ref]?`<span class="chip-suivi" style="display:inline-flex;align-items:center;gap:2px;" title="${escH(r[cc.suivi_ref])}">Suivi<button onclick="event.stopPropagation();delierCaisseSuivi(${ri})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:10px;padding:0 0 0 2px;line-height:1;" title="Supprimer">x</button></span>`:'—'}</td>
       <td class="r" style="white-space:nowrap;">
         ${isVerified
           ? `<span class="lock-icon" title="Ligne vérifiée — décochez pour modifier"><i class="ti ti-lock"></i></span>`
@@ -660,6 +659,57 @@ function chipType(t) { if(!t)return'depense';const l=t.toLowerCase();if(l.includ
 function fmt(v) { if(!v&&v!==0)return'';const n=parseFloat(String(v).replace(/\s/g,'').replace(',','.'));if(isNaN(n))return'';return n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
 function dateToISO(d){if(!d)return'';const s=String(d).trim();const p=s.split('/');if(p.length===3)return p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);const n=parseFloat(s);if(!isNaN(n)&&n>40000&&n<60000){const dt=new Date(Math.round((n-25569)*86400*1000));return dt.toISOString().slice(0,10);}return s;}
 function showErr(m) { const e=document.getElementById('form-err');e.textContent=m;e.classList.remove('hidden'); }
+
+async function reactiverRapprochement(suiviRef) {
+  if (!suiviRef) return;
+  const ci = Sheets.cols.importRap;
+  const histRows = await Sheets.readSheet(Sheets.config.sheets.import_hist);
+  const row = (histRows.slice(1)||[]).find(r => r && String(r[ci.id]).trim()===String(suiviRef).trim());
+  if (row) {
+    const newRow = [...row];
+    newRow[ci.statut] = 'en_attente';
+    newRow[15] = '';
+    await Sheets.appendRows(Sheets.config.sheets.import_rap, [newRow]);
+    return;
+  }
+  const rapRows = await Sheets.readSheet(Sheets.config.sheets.import_rap);
+  const rapRow  = (rapRows.slice(1)||[]).find(r => r && String(r[ci.id]).trim()===String(suiviRef).trim());
+  if (rapRow) {
+    const rapIdx = rapRows.slice(1).indexOf(rapRow);
+    await Sheets.updateCell(Sheets.config.sheets.import_rap, rapIdx+2, ci.statut, 'en_attente');
+    await Sheets.updateCell(Sheets.config.sheets.import_rap, rapIdx+2, 15, '');
+  }
+}
+
+
+async function delierCaisseSuivi(ri) {
+  if (!confirm("Supprimer le rapprochement Suivi et remettre en file d'attente ?")) return;
+  const cc = Sheets.cols.caisse;
+  const r = allRows.find(x => x._sheetIndex === ri) || allRows[ri];
+  if (!r) return;
+  const sheetRow = (r._sheetIndex !== undefined ? r._sheetIndex : ri) + 2;
+  const suiviRef = r[cc.suivi_ref] || '';
+  try {
+    await Sheets.updateCell(Sheets.config.sheets.caisse, sheetRow, cc.suivi_ref, '');
+    r[cc.suivi_ref] = '';
+    if (suiviRef) await reactiverRapprochement(suiviRef);
+    showToast("Rapprochement Suivi supprime"); renderTable();
+  } catch(e) { alert('Erreur : '+(e.message||e)); }
+}
+
+async function delierCaisseBordereau(ri) {
+  if (!confirm("Supprimer le rapprochement avec le bordereau de remise ?")) return;
+  const cc = Sheets.cols.caisse;
+  const r = allRows.find(x => x._sheetIndex === ri) || allRows[ri];
+  if (!r) return;
+  const sheetRow = (r._sheetIndex !== undefined ? r._sheetIndex : ri) + 2;
+  try {
+    await Sheets.updateCell(Sheets.config.sheets.caisse, sheetRow, cc.num_bordereau, '');
+    r[cc.num_bordereau] = '';
+    showToast("Rapprochement bordereau supprime"); renderTable();
+  } catch(e) { alert('Erreur : '+(e.message||e)); }
+}
+
 function showToast(m) { const t=document.createElement('div');t.className='success-toast';t.innerHTML=`<i class="ti ti-check"></i> ${m}`;document.body.appendChild(t);setTimeout(()=>t.remove(),3000); }
 function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;'); }
 </script>
