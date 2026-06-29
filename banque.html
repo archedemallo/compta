@@ -625,8 +625,8 @@ function renderTable(){
     const isSel     = selectedIdx === ri;
 
     // Badges liens
-    const hasChq  = r[cb.ref_cheque] ? `<span class="chip-chq" title="Chèque lié">CHQ</span>` : '';
-    const hasBrd  = r[cb.ref_remise] ? `<span class="chip-brd" title="Remise liée">BRD</span>` : '';
+    const hasChq  = r[cb.ref_cheque] ? `<span class="chip-chq" style="display:inline-flex;align-items:center;gap:2px;" title="${escH(r[cb.ref_cheque])}">CHQ<button onclick="event.stopPropagation();delierBanqueCheque(${ri})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:10px;padding:0 0 0 2px;line-height:1;" title="Supprimer rapprochement">x</button></span>` : '';
+    const hasBrd  = r[cb.ref_remise] ? `<span class="chip-brd" style="display:inline-flex;align-items:center;gap:2px;" title="${escH(r[cb.ref_remise])}">BRD<button onclick="event.stopPropagation();delierBanqueRemise(${ri})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:10px;padding:0 0 0 2px;line-height:1;" title="Supprimer rapprochement">x</button></span>` : '';
 
     // Ventilation badge (description contient JSON ventilation si ventilé)
     let ventBadge = '';
@@ -703,9 +703,9 @@ function renderTable(){
       </td>
       <td style="font-size:10px;color:var(--text-3);">${escH(nomChat)}</td>
       <td style="font-size:10px;color:var(--text-3);">${escH(numDonFiscal)}</td>
-      <td style="font-size:10px;">${r[cb.ref_remise]?`<span class="chip-brd">${escH(r[cb.ref_remise])}</span>`:''}</td>
+      <td style="font-size:10px;">${r[cb.ref_remise]?`<span class="chip-brd" style="display:inline-flex;align-items:center;gap:2px;">${escH(r[cb.ref_remise])}<button onclick="event.stopPropagation();delierBanqueRemise(${ri})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:10px;padding:0 0 0 2px;line-height:1;" title="Supprimer">x</button></span>`:''}</td>
       <td style="font-size:10px;color:var(--text-3);">${escH(numRemEspece)}</td>
-      <td style="font-size:10px;">${numBordChq?`<span class="chip-chq">${escH(numBordChq)}</span>`:''}</td>
+      <td style="font-size:10px;">${numBordChq?`<span class="chip-chq" style="display:inline-flex;align-items:center;gap:2px;">${escH(numBordChq)}<button onclick="event.stopPropagation();delierBanqueCheque(${ri})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:10px;padding:0 0 0 2px;line-height:1;" title="Supprimer">x</button></span>`:''}</td>
       <td style="font-size:10px;color:var(--text-3);">${escH(r[cb.mode_reglement]||'')}</td>
       <td style="white-space:nowrap;">${ventBadge}</td>
       <td class="r">${hasPdf}</td>
@@ -1332,6 +1332,82 @@ function dateToISO(d){if(!d)return'';const s=String(d).trim();const p=s.split('/
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
 function showTableSpinner(){document.getElementById('table-wrap').innerHTML='<div style="padding:32px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>';}
 function showTableError(msg){document.getElementById('table-wrap').innerHTML=`<div style="padding:32px;text-align:center;color:var(--red);font-size:12px;"><i class="ti ti-alert-circle" style="font-size:20px;display:block;margin-bottom:8px;"></i>${msg}</div>`;}
+
+async function reactiverRapprochement(suiviRef) {
+  if (!suiviRef) return;
+  const ci = Sheets.cols.importRap;
+  const histRows = await Sheets.readSheet(Sheets.config.sheets.import_hist);
+  const row = (histRows.slice(1)||[]).find(r => r && String(r[ci.id]).trim()===String(suiviRef).trim());
+  if (row) {
+    const newRow = [...row];
+    newRow[ci.statut] = 'en_attente';
+    newRow[15] = '';
+    await Sheets.appendRows(Sheets.config.sheets.import_rap, [newRow]);
+    return;
+  }
+  const rapRows = await Sheets.readSheet(Sheets.config.sheets.import_rap);
+  const rapRow  = (rapRows.slice(1)||[]).find(r => r && String(r[ci.id]).trim()===String(suiviRef).trim());
+  if (rapRow) {
+    const rapIdx = rapRows.slice(1).indexOf(rapRow);
+    await Sheets.updateCell(Sheets.config.sheets.import_rap, rapIdx+2, ci.statut, 'en_attente');
+    await Sheets.updateCell(Sheets.config.sheets.import_rap, rapIdx+2, 15, '');
+  }
+}
+
+
+async function delierBanqueCheque(ri) {
+  if (!confirm("Supprimer le rapprochement avec le cheque ?")) return;
+  const cb = Sheets.cols.banque, cc = Sheets.cols.cheque;
+  const r = allRows.find(x => x._sheetIndex === ri) || allRows[ri];
+  if (!r) return;
+  const sheetRow = (r._sheetIndex !== undefined ? r._sheetIndex : ri) + 2;
+  const refCheque = r[cb.ref_cheque] || '';
+  try {
+    await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.ref_cheque, '');
+    r[cb.ref_cheque] = '';
+    if (refCheque) {
+      const allChq = await Sheets.getCheques();
+      const chqRow = allChq.find(c => String(c[cc.num_cheque]).trim() === refCheque.trim());
+      if (chqRow) await Sheets.updateCell(Sheets.config.sheets.cheques, allChq.indexOf(chqRow)+2, cc.ref_banque, '');
+    }
+    showToast("Rapprochement cheque supprime"); renderTable();
+  } catch(e) { alert('Erreur : '+(e.message||e)); }
+}
+
+async function delierBanqueRemise(ri) {
+  if (!confirm("Supprimer le rapprochement avec la remise ?")) return;
+  const cb = Sheets.cols.banque, cr = Sheets.cols.remise;
+  const r = allRows.find(x => x._sheetIndex === ri) || allRows[ri];
+  if (!r) return;
+  const sheetRow = (r._sheetIndex !== undefined ? r._sheetIndex : ri) + 2;
+  const refRemise = r[cb.ref_remise] || '';
+  try {
+    await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.ref_remise, '');
+    r[cb.ref_remise] = '';
+    if (refRemise) {
+      const allRem = await Sheets.getRemises();
+      const remRow = allRem.find(rm => String(rm[cr.num_bordereau]).trim() === refRemise.trim());
+      if (remRow) await Sheets.updateCell(Sheets.config.sheets.remises, allRem.indexOf(remRow)+2, cr.ref_banque, '');
+    }
+    showToast("Rapprochement remise supprime"); renderTable();
+  } catch(e) { alert('Erreur : '+(e.message||e)); }
+}
+
+async function delierBanqueSuivi(ri) {
+  if (!confirm("Supprimer le rapprochement Suivi et remettre en file d'attente ?")) return;
+  const cb = Sheets.cols.banque;
+  const r = allRows.find(x => x._sheetIndex === ri) || allRows[ri];
+  if (!r) return;
+  const sheetRow = (r._sheetIndex !== undefined ? r._sheetIndex : ri) + 2;
+  const suiviRef = r[cb.suivi_ref] || '';
+  try {
+    await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.suivi_ref, '');
+    r[cb.suivi_ref] = '';
+    if (suiviRef) await reactiverRapprochement(suiviRef);
+    showToast("Rapprochement Suivi supprime"); renderTable();
+  } catch(e) { alert('Erreur : '+(e.message||e)); }
+}
+
 function showToast(m){const t=document.createElement('div');t.className='success-toast';t.innerHTML=`<i class="ti ti-check"></i> ${m}`;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
 </script>
 </body>
