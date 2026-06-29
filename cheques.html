@@ -425,6 +425,46 @@ function chipType(t){if(!t)return'depense';const l=t.toLowerCase();if(l.includes
 function formatDate(d){if(!d)return'—';const s=String(d).trim();if(/^\d{2}\/\d{2}\/\d{4}$/.test(s))return s;if(/^\d{4}-\d{2}-\d{2}$/.test(s)){const p=s.split('-');return`${p[2]}/${p[1]}/${p[0]}`;}return s;}
 function fmt(v){if(!v&&v!==0)return'—';return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
 function showErrChq(m){const e=document.getElementById('chq-err');e.textContent=m;e.classList.remove('hidden');}
+
+async function reactiverRapprochement(suiviRef) {
+  if (!suiviRef) return;
+  const ci = Sheets.cols.importRap;
+  const histRows = await Sheets.readSheet(Sheets.config.sheets.import_hist);
+  const row = (histRows.slice(1)||[]).find(r => r && String(r[ci.id]).trim()===String(suiviRef).trim());
+  if (row) {
+    const newRow = [...row]; newRow[ci.statut]='en_attente'; newRow[15]='';
+    await Sheets.appendRows(Sheets.config.sheets.import_rap, [newRow]);
+    return;
+  }
+  const rapRows = await Sheets.readSheet(Sheets.config.sheets.import_rap);
+  const rapRow  = (rapRows.slice(1)||[]).find(r => r && String(r[ci.id]).trim()===String(suiviRef).trim());
+  if (rapRow) {
+    const rapIdx = rapRows.slice(1).indexOf(rapRow);
+    await Sheets.updateCell(Sheets.config.sheets.import_rap, rapIdx+2, ci.statut, 'en_attente');
+    await Sheets.updateCell(Sheets.config.sheets.import_rap, rapIdx+2, 15, '');
+  }
+}
+
+
+async function delierChequesBanque(ri) {
+  if (!confirm("Supprimer le rapprochement avec la banque ?")) return;
+  const cc = Sheets.cols.cheque, cb = Sheets.cols.banque;
+  const r = allCheques.find(x => x._sheetIndex === ri) || allCheques[ri];
+  if (!r) return;
+  const refBanque = r[cc.ref_banque] || '';
+  try {
+    await Sheets.updateCell(Sheets.config.sheets.cheques, (r._sheetIndex||ri)+2, cc.ref_banque, '');
+    r[cc.ref_banque] = '';
+    // Vider aussi dans banque si possible
+    if (refBanque) {
+      const allBq = await Sheets.getBanqueOperations();
+      const bqRow = allBq.find(b => String(b[cb.ref_cheque]||'').trim()===String(r[cc.num_cheque]||'').trim());
+      if (bqRow) await Sheets.updateCell(Sheets.config.sheets.banque, allBq.indexOf(bqRow)+2, cb.ref_cheque, '');
+    }
+    showToast("Rapprochement banque supprime"); renderTable();
+  } catch(e) { alert('Erreur : '+(e.message||e)); }
+}
+
 function showToast(m){const t=document.createElement('div');t.className='success-toast';t.innerHTML=`<i class="ti ti-check"></i> ${m}`;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
 </script>
