@@ -701,6 +701,35 @@ function renderAG() {
     const total = totalCaisse + totalCaisse2 + totalBanque + totalCheques + totalRemises + totalFactures;
 
     // Collecter les lignes détail pour l'accordion
+    // Libellé affiché selon catégorie + source (cf. tableau de règles)
+    const catLower = (cat.cat||'').toLowerCase();
+    const isDons       = catLower.includes('don');
+    const isEvenement  = catLower.includes('vénement') || catLower.includes('venement') || catLower.includes('évèn') || catLower.includes('even');
+    const isSubvention = catLower.includes('subv');
+    const isCommission = catLower.includes('commiss');
+    const isVente      = catLower.includes('vente');
+
+    // Fonction : choisir le bon libellé selon source + catégorie
+    function libelleFor(src, r) {
+      if (src === 'caisse' || src === 'caisse2') {
+        // Toutes catégories : libellé de la caisse
+        return r[COLS_CAISSE.libelle] || '';
+      }
+      if (src === 'banque') {
+        if (isDons) return r[COLS_BANQUE.libelle_comp] || r[COLS_BANQUE.nom] || r[COLS_BANQUE.libelle] || '';
+        // Evenement, Subvention, Vente, Commission → description
+        return r[COLS_BANQUE.description] || r[COLS_BANQUE.libelle] || '';
+      }
+      if (src === 'remise') {
+        if (isDons) return ''; // sera rempli par donateur (base+0) dans la boucle remise
+        return ''; // description sera rempli dans la boucle
+      }
+      if (src === 'facture') {
+        return r[COLS_FACTURE.description] || r[COLS_FACTURE.fournisseur] || '';
+      }
+      return '';
+    }
+
     const ops = [];
     if (srcs.includes('caisse')) {
       caisse.forEach(r => {
@@ -722,10 +751,11 @@ function renderAG() {
       banque.forEach(r => {
         if (matchRow(r[COLS_BANQUE.type_mvt], r[COLS_BANQUE.description], r[COLS_BANQUE.fournisseur])) {
           const val = fmtN(r[COLS_BANQUE.credit]) - fmtN(r[COLS_BANQUE.debit]);
-          const bType = (r[COLS_BANQUE.type_mvt]||'').toLowerCase();
-          const bLib = bType === 'dons' ? (r[COLS_BANQUE.libelle_comp]||r[COLS_BANQUE.libelle]||'') :
-                       bType === 'évènement' || bType === 'evenement' ? (r[COLS_BANQUE.description]||r[COLS_BANQUE.libelle]||'') :
-                       (r[COLS_BANQUE.libelle]||'');
+          // Evenement Banque : exclure les lignes rapprochées avec une facture (lien_facture rempli)
+          if (isEvenement && r[COLS_BANQUE.lien_facture]) return;
+          const bLib = isDons
+            ? (r[COLS_BANQUE.libelle_comp] || r[COLS_BANQUE.nom] || r[COLS_BANQUE.libelle] || '')
+            : (r[COLS_BANQUE.description] || r[COLS_BANQUE.libelle] || '');
           if (val !== 0) ops.push({ src:'Banque', date:r[COLS_BANQUE.date]||'', libelle:bLib, type:r[COLS_BANQUE.type_mvt]||'', montant:val });
         }
       });
@@ -739,16 +769,30 @@ function renderAG() {
       });
     }
     if (srcs.includes('remises')) {
-      allRemises.slice(1).filter(r => r && r[COLS_REMISE.periode] === activePer).forEach(r => {
-        const val = fmtN(r[COLS_REMISE.montant_total]);
-        if (val !== 0) ops.push({ src:'Remise', date:r[COLS_REMISE.date_remise]||'', libelle:'N° '+( r[COLS_REMISE.num_bordereau]||''), type:'Remise chèque', montant:val });
+      // Remises : détailler chaque chèque individuel avec son libellé selon catégorie
+      allRemises.slice(1).filter(r => r && r[COLS_REMISE.periode] === activePer).forEach(rem => {
+        const nb = parseInt(rem[COLS_REMISE.nb_cheques]) || 0;
+        for (let i = 0; i < nb; i++) {
+          const base = COLS_REMISE.detail_start + i * 8;
+          const typeMvt = rem[base+3] || '';
+          const desc    = rem[base+4] || '';
+          const donateur= rem[base+0] || '';
+          const montant = fmtN(rem[base+1]);
+          if (!montant) continue;
+          // Vérifier que cette ligne correspond au filtre de la catégorie
+          if (!matchRow(typeMvt, desc, '')) continue;
+          // Libellé : Dons → donateur, autres → description
+          const lib = isDons ? donateur : (desc || donateur);
+          ops.push({ src:'Remise', date:rem[COLS_REMISE.date_remise]||'', libelle:lib, type:typeMvt, montant });
+        }
       });
     }
     if (srcs.includes('factures')) {
       allFactures.slice(1).filter(r => r && r[COLS_FACTURE.periode] === activePer).forEach(r => {
         if (matchRow(r[COLS_FACTURE.categorie], r[COLS_FACTURE.description], r[COLS_FACTURE.fournisseur])) {
           const val = -fmtN(r[COLS_FACTURE.montant_ttc]);
-          if (val !== 0) ops.push({ src:'Facture', date:r[COLS_FACTURE.date_facture]||'', libelle:r[COLS_FACTURE.fournisseur]||'', type:r[COLS_FACTURE.categorie]||'', montant:val });
+          // Libellé facture : description
+          if (val !== 0) ops.push({ src:'Facture', date:r[COLS_FACTURE.date_facture]||'', libelle:r[COLS_FACTURE.description]||r[COLS_FACTURE.fournisseur]||'', type:r[COLS_FACTURE.categorie]||'', montant:val });
         }
       });
     }
