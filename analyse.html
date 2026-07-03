@@ -684,10 +684,19 @@ function renderAG() {
       });
     }
     if (srcs.includes('remises')) {
-      // Remises de chèques → toujours une recette (montant total additionné)
-      // Les remises n'ont pas de type_mvt individuel — on les inclut toutes si la source est cochée
-      allRemises.slice(1).filter(r => r && r[COLS_REMISE.periode] === activePer).forEach(r => {
-        totalRemises += fmtN(r[COLS_REMISE.montant_total]);
+      // Remises : filtrer chèque par chèque avec matchRow (même logique que ops)
+      allRemises.slice(1).filter(r => r && r[COLS_REMISE.periode] === activePer).forEach(rem => {
+        const nb = parseInt(rem[COLS_REMISE.nb_cheques]) || 0;
+        for (let i = 0; i < nb; i++) {
+          const base = COLS_REMISE.detail_start + i * 8;
+          const typeMvt = rem[base+3] || '';
+          const desc    = rem[base+4] || '';
+          const montant = fmtN(rem[base+1]);
+          if (!montant) continue;
+          if (matchRow(typeMvt, desc, '')) {
+            totalRemises += montant;
+          }
+        }
       });
     }
     if (srcs.includes('factures')) {
@@ -845,8 +854,8 @@ function renderAG() {
       <td class="r ${r.totalBanque>0?'amount-c':r.totalBanque<0?'amount-d':''}">${r.totalBanque!==0?fmt(r.totalBanque):'—'}</td>
       <td class="r ${r.total>0?'amount-c':r.total<0?'amount-d':''}">${r.total!==0?fmt(r.total):'—'}</td>
       <td><span class="badge badge-green">recette</span></td>
-    </tr>`;
-    if (isOpen) html += buildAgDetail(r);
+    </tr>
+    ${isOpen ? buildAgDetail(r) : ''}`;
     totRecC+=r.totalCaisse; totRecB+=r.totalBanque; totRec+=r.total;
   });
   html += `<tr class="total-row"><td>TOTAL RECETTES</td><td class="r amount-c">${fmt(totRecC)}</td><td class="r amount-c">${fmt(totRecB)}</td><td class="r amount-c">${fmt(totRec)}</td><td></td></tr>`;
@@ -865,8 +874,8 @@ function renderAG() {
       <td class="r ${absB>0?'amount-d':''}">${absB>0?fmt(absB):'—'}</td>
       <td class="r ${absT>0?'amount-d':''}">${absT>0?fmt(absT):'—'}</td>
       <td><span class="badge badge-red">dépense</span></td>
-    </tr>`;
-    if (isOpen) html += buildAgDetail(r);
+    </tr>
+    ${isOpen ? buildAgDetail(r) : ''}`;
     totDepC+=absC; totDepB+=absB; totDep+=absT;
   });
   html += `<tr class="total-row"><td>TOTAL DÉPENSES</td><td class="r amount-d">${fmt(totDepC)}</td><td class="r amount-d">${fmt(totDepB)}</td><td class="r amount-d">${fmt(totDep)}</td><td></td></tr>`;
