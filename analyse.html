@@ -754,7 +754,7 @@ function renderAG() {
           // Evenement Banque : exclure les lignes rapprochées avec une facture (lien_facture rempli)
           if (isEvenement && r[COLS_BANQUE.lien_facture]) return;
           const bLib = isDons
-            ? (r[COLS_BANQUE.libelle_comp] || r[COLS_BANQUE.nom] || r[COLS_BANQUE.libelle] || '')
+            ? (r[COLS_BANQUE.type_comp] || r[COLS_BANQUE.nom] || r[COLS_BANQUE.libelle] || '')
             : (r[COLS_BANQUE.description] || r[COLS_BANQUE.libelle] || '');
           if (val !== 0) ops.push({ src:'Banque', date:r[COLS_BANQUE.date]||'', libelle:bLib, type:r[COLS_BANQUE.type_mvt]||'', montant:val });
         }
