@@ -716,7 +716,7 @@ function renderAG() {
         return r[COLS_CAISSE.libelle] || '';
       }
       if (src === 'banque') {
-        if (isDons) return r[COLS_BANQUE.libelle_comp] || r[COLS_BANQUE.nom] || r[COLS_BANQUE.libelle] || '';
+        if (isDons) return r[COLS_BANQUE.type_comp] || r[COLS_BANQUE.nom] || r[COLS_BANQUE.libelle] || '';
         // Evenement, Subvention, Vente, Commission → description
         return r[COLS_BANQUE.description] || r[COLS_BANQUE.libelle] || '';
       }
