@@ -716,7 +716,7 @@ function renderAG() {
         return r[COLS_CAISSE.libelle] || '';
       }
       if (src === 'banque') {
-        if (isDons) return r[COLS_BANQUE.type_comp] || r[COLS_BANQUE.nom] || r[COLS_BANQUE.libelle] || '';
+        if (isDons) return r[COLS_BANQUE.libelle_comp] || r[COLS_BANQUE.nom] || r[COLS_BANQUE.libelle] || '';
         // Evenement, Subvention, Vente, Commission → description
         return r[COLS_BANQUE.description] || r[COLS_BANQUE.libelle] || '';
       }
@@ -845,8 +845,8 @@ function renderAG() {
       <td class="r ${r.totalBanque>0?'amount-c':r.totalBanque<0?'amount-d':''}">${r.totalBanque!==0?fmt(r.totalBanque):'—'}</td>
       <td class="r ${r.total>0?'amount-c':r.total<0?'amount-d':''}">${r.total!==0?fmt(r.total):'—'}</td>
       <td><span class="badge badge-green">recette</span></td>
-    </tr>
-    ${isOpen ? buildAgDetail(r) : ''}`;
+    </tr>`;
+    if (isOpen) html += buildAgDetail(r);
     totRecC+=r.totalCaisse; totRecB+=r.totalBanque; totRec+=r.total;
   });
   html += `<tr class="total-row"><td>TOTAL RECETTES</td><td class="r amount-c">${fmt(totRecC)}</td><td class="r amount-c">${fmt(totRecB)}</td><td class="r amount-c">${fmt(totRec)}</td><td></td></tr>`;
@@ -865,8 +865,8 @@ function renderAG() {
       <td class="r ${absB>0?'amount-d':''}">${absB>0?fmt(absB):'—'}</td>
       <td class="r ${absT>0?'amount-d':''}">${absT>0?fmt(absT):'—'}</td>
       <td><span class="badge badge-red">dépense</span></td>
-    </tr>
-    ${isOpen ? buildAgDetail(r) : ''}`;
+    </tr>`;
+    if (isOpen) html += buildAgDetail(r);
     totDepC+=absC; totDepB+=absB; totDep+=absT;
   });
   html += `<tr class="total-row"><td>TOTAL DÉPENSES</td><td class="r amount-d">${fmt(totDepC)}</td><td class="r amount-d">${fmt(totDepB)}</td><td class="r amount-d">${fmt(totDep)}</td><td></td></tr>`;
