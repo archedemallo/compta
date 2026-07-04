@@ -170,6 +170,18 @@
 <script src="sheets.js"></script>
 <script src="sidebar.js"></script>
 <script>
+// Surcharge COLS_CHEQUE pour correspondre au sheet réel
+// A=ID B=Num C=Date D=Beneficiaire E=Montant F=Type_mvt
+// G=Categorie H=Description I=Periode J=Statut
+// K=Commentaire L=Encaissé_le M=ref_banque N=Fournisseurs O=Nom_Chat
+if (window.COLS_CHEQUE) {
+  COLS_CHEQUE.flag_comment = 10; // K Commentaire
+  COLS_CHEQUE.date_encaiss = 11; // L Encaissé le
+  COLS_CHEQUE.ref_banque   = 12; // M ref_banque
+  COLS_CHEQUE.fournisseur  = 13; // N Fournisseurs
+  COLS_CHEQUE.nom_chat     = 14; // O Nom du Chat
+}
+
 let allCheques=[], delIdx=null, editChqIdx=null;
 
 Auth.requireAuth(async()=>{
