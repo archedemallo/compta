@@ -759,7 +759,8 @@ function renderCurrentImportTab() {
         </div>`;
       }
     }).join('');
-    const allImportedRow=cfg.cols.montants.every((m,mi)=>{
+    const hasMontant=cfg.cols.montants.some((m,mi)=>{ const montant=m.fixed!==undefined?m.fixed:parseFloat(row[m.col]||0)||0; return montant>0; });
+    const allImportedRow=hasMontant&&cfg.cols.montants.every((m,mi)=>{
       const montant=m.fixed!==undefined?m.fixed:parseFloat(row[m.col]||0)||0;
       return !montant||isImported(key,row,ri,mi);
     });
@@ -1028,7 +1029,6 @@ function renderRapTable(){
       <td style="white-space:nowrap;">
         <button class="btn-icon btn-edit" onclick="event.stopPropagation();openEdit(${idx})" title="Modifier"><i class="ti ti-pencil"></i></button>
         ${btnTransfer}
-        <button class="btn-icon" onclick="event.stopPropagation();deleteRapLine(${idx})" title="Supprimer cette ligne" style="color:var(--red);"><i class="ti ti-trash"></i></button>
       </td>
     </tr>`;
   }).join('');
@@ -1129,18 +1129,6 @@ async function confirmTransfer(){
     closeTransfer(); showToast('Transféré en Caisse et archivé !'); await loadRapData();
   }catch(e){alert('Erreur : '+(e.message||e));}
   finally{btn.disabled=false;btn.innerHTML='<i class="ti ti-arrow-right"></i> Transférer';}
-}
-
-async function deleteRapLine(idx){
-  if(!confirm('Supprimer définitivement cette ligne de la file d\'attente ?')) return;
-  const ci=Sheets.cols.importRap, r=allRapRows.find(x=>x._sheetIndex===idx);
-  if(!r) return;
-  try{
-    // Effacer la ligne dans le sheet (même mécanisme qu'archiver mais sans copie)
-    await Sheets.updateRange(Sheets.config.sheets.import_rap, idx+2, 0, [new Array(16).fill('')]);
-    showToast('Ligne supprimée de la file d\'attente');
-    await loadRapData();
-  }catch(e){ alert('Erreur : '+(e.message||e)); }
 }
 
 async function transfertSelectionCaisse(){
