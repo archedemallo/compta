@@ -329,61 +329,108 @@ const ONGLETS_MAP = [
   { suivi: 'Adoption',                 compta: 'Suivi_Adoption',                label: 'Adoptions' },
   { suivi: 'Dons',                     compta: 'Suivi_Dons',                    label: 'Dons' },
   { suivi: 'Adhesion',                 compta: 'Suivi_Adhesion',                label: 'Adhésions' },
-  { suivi: 'Reservation_Chat',         compta: 'Suivi_Reservation_Chat',        label: 'Rés. Chat' },
   { suivi: 'Reservation_Chaton',       compta: 'Suivi_Reservation_Chaton',      label: 'Rés. Chaton' },
   { suivi: 'Contrat_reservation_chat', compta: 'Suivi_Contrat_reservation_chat',label: 'Contrat rés.' },
+  { suivi: 'Contrat_reservation_autre_anima', compta: 'Suivi_Contrat_reservation_autre_anima', label: 'Rés. autre animal' },
   { suivi: 'Depot_Chat',               compta: 'Suivi_Depot_Chat',              label: 'Dépôt chat' },
   { suivi: 'Abandon',                  compta: 'Suivi_Abandon',                 label: 'Abandons' },
-  { suivi: 'Formulaire_depot_chat',    compta: 'Suivi_Formulaire_depot_chat',   label: 'Formulaire dépôt' },
+  { suivi: 'Retour_Materiel',          compta: 'Suivi_Retour_Materiel',         label: 'Retour matériel' },
+  { suivi: 'CBS_Absent',               compta: 'Suivi_CBS_Absent',              label: 'CBS Absent' },
+  { suivi: 'Decharge_Vaccin',          compta: 'Suivi_Decharge_Vaccin',         label: 'Décharge vaccin' },
   { suivi: 'Famille_Accueil_Provisoire',compta:'Suivi_Famille_Accueil_Provisoir',label:'FA Provisoire' },
   { suivi: 'Famille_Accueil_Chat_Libre',compta:'Suivi_Famille_Accueil_Chat_Libr',label:'FA Chat libre' },
   { suivi: 'Famille_Accueil_Adoption', compta: 'Suivi_Famille_Accueil_Adoption',label: 'FA Adoption' },
   { suivi: 'Certificat_Engagement',    compta: 'Suivi_Certificat_Engagement',   label: 'Cert. engagement' },
 ];
+// Suppression : 'Reservation_Chat' et 'Formulaire_depot_chat' n'existent plus dans le nouveau sheet Suivi.
+// Ajouts : Contrat_reservation_autre_anima (nouvel onglet indépendant), Retour_Materiel, CBS_Absent, Decharge_Vaccin.
 let refreshStatuts = {};
 ONGLETS_MAP.forEach(o => { refreshStatuts[o.compta] = 'idle'; });
 
 // ============================================================
 // CONFIG IMPORT
 // ============================================================
+// IMPORTANT : les champs ci-dessous sont référencés PAR NOM D'EN-TÊTE (et non plus par index de colonne figé).
+// La résolution en indices réels se fait dynamiquement dans resolveCols(), à partir de la ligne d'en-tête
+// effectivement lue dans l'onglet Compta correspondant. Ainsi, si l'ordre des colonnes change à nouveau côté
+// Suivi, il suffit de corriger le nom de champ ici — plus besoin de recompter les colonnes à la main.
 const ONGLETS = {
   Adoption: {
     label:'Adoptions', icon:'ti-heart', compta:'Suivi_Adoption',
-    cols:{ date:3, nom:18, prenom:19, nom_chat:5, mode_reglement:43, num_cheque:31,
-      montants:[{col:30,label:'Total participation'},{col:29,label:'Reste à payer'}] },
+    fieldNames:{ date:'dateAdoption', nom:'nom', prenom:'prenom', nom_chat:'nomAdoption',
+      mode_reglement:'check_paiement', num_cheque:'numeroPaiement',
+      montants:[{field:'totalParticipation',label:'Total participation'},{field:'resteAPayer',label:'Reste à payer'}] },
     type_mvt:'Adoption', description:'Adoption',
-  },
-  Reservation_Chat: {
-    label:'Rés. Chat', icon:'ti-cat', compta:'Suivi_Reservation_Chat',
-    cols:{ date:3, nom:11, prenom:null, nom_chat:6, mode_reglement:20, num_cheque:18,
-      montants:[{col:null,label:'Réservation',fixed:50}] },
-    type_mvt:'Adoption', description:'Reservation',
   },
   Reservation_Chaton: {
     label:'Rés. Chaton', icon:'ti-cat', compta:'Suivi_Reservation_Chaton',
-    cols:{ date:3, nom:12, prenom:null, nom_chat:7, mode_reglement:22, num_cheque:20,
-      montants:[{col:null,label:'Réservation',fixed:50}] },
+    fieldNames:{ date:'dateReservation', nom:'nom', prenom:null, nom_chat:'nomChat',
+      mode_reglement:'check_paiement', num_cheque:'numeroPaiement',
+      montants:[{field:null,label:'Réservation',fixed:50}] },
     type_mvt:'Adoption', description:'Reservation',
   },
   Contrat_reservation_chat: {
     label:'Contrat rés.', icon:'ti-file-text', compta:'Suivi_Contrat_reservation_chat',
-    cols:{ date:3, nom:11, prenom:null, nom_chat:6, mode_reglement:20, num_cheque:18,
-      montants:[{col:null,label:'Réservation',fixed:50}] },
+    fieldNames:{ date:'dateReservation', nom:'nom', prenom:null, nom_chat:'nomChat',
+      mode_reglement:'check_paiement', num_cheque:'numeroPaiement',
+      montants:[{field:null,label:'Réservation',fixed:50}] },
     type_mvt:'Adoption', description:'Reservation',
+  },
+  Contrat_reservation_autre_anima: {
+    label:'Rés. autre animal', icon:'ti-paw', compta:'Suivi_Contrat_reservation_autre_anima',
+    fieldNames:{ date:'dateAdoption', nom:null, prenom:null, nom_chat:'nomChat',
+      mode_reglement:'check_paiement', num_cheque:'numeroPaiement',
+      montants:[{field:null,label:'Réservation',fixed:50}] },
+    type_mvt:'Adoption', description:'Reservation autre animal',
+  },
+  Retour_Materiel: {
+    label:'Retour matériel', icon:'ti-box', compta:'Suivi_Retour_Materiel',
+    fieldNames:{ date:'dateRetourEffectif', nom:'nomEmprunteur', prenom:'prenomEmprunteur', nom_chat:null,
+      mode_reglement:'modeRestitution', num_cheque:'numeroChequeRestitution',
+      montants:[{field:'montantRestitue',label:'Montant restitué'},{field:'montantConserve',label:'Montant conservé'}] },
+    type_mvt:'Adoption', description:'Retour matériel',
   },
   Dons: {
     label:'Dons', icon:'ti-gift', compta:'Suivi_Dons',
-    cols:{ date:3, nom:8, prenom:9, raison_sociale:10, nom_chat:null, mode_reglement:18,
-      num_cheque:6, num_recu:7, montants:[{col:5,label:'Montant don'}] },
+    fieldNames:{ date:'dateEntete', nom:'nom', prenom:'prenom', raison_sociale:'raisonSociale', nom_chat:null,
+      mode_reglement:'check_paiement', num_cheque:'numeroCheque', num_recu:'numeroRecuFiscal',
+      montants:[{field:'montantDon',label:'Montant don'}] },
     type_mvt:'Dons', description:'Dons',
   },
   Adhesion: {
     label:'Adhésions', icon:'ti-id-badge', compta:'Suivi_Adhesion',
-    cols:{ date:3, nom:5, prenom:6, nom_chat:null, mode_reglement:17, num_cheque:15,
-      montants:[{col:13,label:'Don bienfaiteur'},{col:14,label:'Don sympathisant'},{col:18,label:'Montant adhésion'}] },
+    fieldNames:{ date:'dateAdhesion', nom:'nom', prenom:'prenom', nom_chat:null,
+      mode_reglement:'check_paiement', num_cheque:'numeroPaiement',
+      montants:[{field:'donBienfaiteur',label:'Don bienfaiteur'},{field:'donSympatisant',label:'Don sympathisant'},{field:'montantAdhesion',label:'Montant adhésion'}] },
     type_mvt:'Adhesion', description:'Adhesion',
   },
 };
+
+// Construit un index {nomEnTete -> colonne} à partir de la ligne d'en-tête réellement lue dans Compta
+// (qui contient '_id' en 1ère colonne, ajouté par le rafraîchissement, puis les en-têtes du Suivi).
+function buildHeaderIndex(headerRow) {
+  const idx = {};
+  (headerRow || []).forEach((h, i) => { if (h !== null && h !== undefined && h !== '') idx[String(h).trim()] = i; });
+  return idx;
+}
+
+// Résout cfg.fieldNames (noms) en cfg.cols (indices réels), à partir de l'en-tête effectif de l'onglet.
+// Un champ dont le nom n'est pas trouvé dans l'en-tête résout à null (comme un champ volontairement absent).
+function resolveCols(cfg, headerRow) {
+  const idx = buildHeaderIndex(headerRow);
+  const get = (name) => (name === null || name === undefined) ? null : (name in idx ? idx[name] : null);
+  const fn = cfg.fieldNames;
+  const resolved = {
+    date: get(fn.date), nom: get(fn.nom), prenom: get(fn.prenom), nom_chat: get(fn.nom_chat),
+    mode_reglement: get(fn.mode_reglement), num_cheque: get(fn.num_cheque),
+    montants: fn.montants.map(m => m.field == null
+      ? { col: null, label: m.label, fixed: m.fixed }
+      : { col: get(m.field), label: m.label }),
+  };
+  if (fn.raison_sociale !== undefined) resolved.raison_sociale = get(fn.raison_sociale);
+  if (fn.num_recu !== undefined) resolved.num_recu = get(fn.num_recu);
+  return resolved;
+}
 
 // ============================================================
 // ÉTAT GLOBAL
@@ -627,6 +674,7 @@ async function reloadImport() {
     ...Object.entries(ONGLETS).map(async ([key,cfg]) => {
       try {
         const rows = await Sheets.readSheet(cfg.compta);
+        if (rows && rows.length) cfg.cols = resolveCols(cfg, rows[0]);
         allImportData[key] = rows&&rows.length>1 ? rows.slice(1) : [];
       } catch(e) { allImportData[key]=[]; }
     })
