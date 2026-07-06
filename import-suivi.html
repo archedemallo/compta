@@ -371,14 +371,14 @@ const ONGLETS = {
   },
   Contrat_reservation_chat: {
     label:'Contrat rés.', icon:'ti-file-text', compta:'Suivi_Contrat_reservation_chat',
-    fieldNames:{ date:'dateReservation', nom:'nom', prenom:null, nom_chat:'nomChat',
+    fieldNames:{ date:'dateReservation', nom:'nom', prenom:'prenom', nom_chat:'nomChat',
       mode_reglement:'check_paiement', num_cheque:'numeroPaiement',
       montants:[{field:null,label:'Réservation',fixed:50}] },
     type_mvt:'Adoption', description:'Reservation',
   },
   Contrat_reservation_autre_anima: {
     label:'Rés. autre animal', icon:'ti-paw', compta:'Suivi_Contrat_reservation_autre_anima',
-    fieldNames:{ date:'dateAdoption', nom:null, prenom:null, nom_chat:'nomChat',
+    fieldNames:{ date:'dateAdoption', nom:'nom', prenom:'prenom', nom_chat:'nomChat',
       mode_reglement:'check_paiement', num_cheque:'numeroPaiement',
       montants:[{field:null,label:'Réservation',fixed:50}] },
     type_mvt:'Adoption', description:'Reservation autre animal',
