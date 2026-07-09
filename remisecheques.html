@@ -283,6 +283,7 @@ const openRows=new Set();
 function escH(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;'); }
 function fmt(v){ if(!v&&v!==0)return'—'; return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
 function formatDate(d){ if(!d)return'—'; const s=String(d).trim(); if(/^\d{2}\/\d{2}\/\d{4}$/.test(s))return s; if(/^\d{4}-\d{2}-\d{2}$/.test(s)){const p=s.split('-');return`${p[2]}/${p[1]}/${p[0]}`;} return s; }
+function dateToISO(d){if(!d)return'';const s=String(d).trim();const p=s.split('/');if(p.length===3){let y=p[2];if(y.length===2)y=(parseInt(y,10)<50?'20':'19')+y;return y+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);const n=parseFloat(s);if(!isNaN(n)&&n>40000&&n<60000){const dt=new Date(Math.round((n-25569)*86400*1000));return dt.toISOString().slice(0,10);}return s;}
 function chipType(t){ if(!t&&t!==0)return'depense'; const l=String(t).toLowerCase(); if(l.includes('adopt'))return'adoption'; if(l.includes('don'))return'don'; if(l.includes('adh'))return'adhesion'; return'depense'; }
 function showErr(m){ const e=document.getElementById('rem-err');e.textContent=m;e.classList.remove('hidden'); }
 
@@ -402,6 +403,12 @@ function renderDetailCheques() {
       if (dateTo   && dISO > dateTo)   return false;
     }
     return true;
+  });
+
+  filtered.sort((a, b) => {
+    const va = dateToISO(a.date || ''), vb = dateToISO(b.date || '');
+    if (!va && !vb) return 0; if (!va) return 1; if (!vb) return -1;
+    return va < vb ? 1 : va > vb ? -1 : 0;
   });
 
   const totalMontant = filtered.reduce((s, c) => s + c.montant, 0);
@@ -535,7 +542,11 @@ function renderTable(){
   const ss=document.getElementById('fl-search')?.value.toLowerCase()||'';
   let rows=allRemises.filter(r=>(!per||r[cr.periode]===per)&&(!sf||r[cr.statut]===sf));
   if(ss) rows=rows.filter(r=>[r[cr.num_bordereau],r[cr.montant_total]].join(' ').toLowerCase().includes(ss));
-  rows=[...rows].reverse();
+  rows=[...rows].sort((a,b)=>{
+    const va=dateToISO(String(a[cr.date_remise]||'')), vb=dateToISO(String(b[cr.date_remise]||''));
+    if(!va&&!vb) return 0; if(!va) return 1; if(!vb) return -1;
+    return va<vb?1:va>vb?-1:0;
+  });
   if(!rows.length){
     document.getElementById('table-wrap').innerHTML='<div style="padding:24px;text-align:center;color:var(--text-3);font-size:12px;">Aucune remise</div>';
     return;
