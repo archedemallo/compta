@@ -260,7 +260,11 @@ function renderTable(){
   const ss=document.getElementById('fl-chq-search')?.value.toLowerCase()||'';
   let rows=allCheques.filter(r=>(!sf||r[cc.statut]===sf)&&(!sp||r[cc.periode]===sp)&&(!st||r[cc.type_mvt]===st));
   if(ss) rows=rows.filter(r=>[r[cc.num_cheque],r[cc.beneficiaire],r[cc.description],r[cc.type_mvt]].join(' ').toLowerCase().includes(ss));
-  rows=[...rows].reverse();
+  rows=[...rows].sort((a,b)=>{
+    const va=dateToISO(String(a[cc.date_emission]||'')), vb=dateToISO(String(b[cc.date_emission]||''));
+    if(!va&&!vb) return 0; if(!va) return 1; if(!vb) return -1;
+    return va<vb?1:va>vb?-1:0;
+  });
   if(!rows.length){document.getElementById('cheques-table-wrap').innerHTML='<div style="padding:24px;text-align:center;color:var(--text-3);font-size:12px;">Aucun chèque</div>';return;}
   const trs=rows.map(r=>{
     const ri=r._sheetIndex!==undefined?r._sheetIndex:allCheques.indexOf(r);
@@ -435,6 +439,7 @@ function initColResize(tableId){
 }
 function chipType(t){if(!t)return'depense';const l=t.toLowerCase();if(l.includes('adopt'))return'adoption';if(l.includes('don'))return'don';if(l.includes('adh'))return'adhesion';return'depense';}
 function formatDate(d){if(!d)return'—';const s=String(d).trim();if(/^\d{2}\/\d{2}\/\d{4}$/.test(s))return s;if(/^\d{4}-\d{2}-\d{2}$/.test(s)){const p=s.split('-');return`${p[2]}/${p[1]}/${p[0]}`;}return s;}
+function dateToISO(d){if(!d)return'';const s=String(d).trim();const p=s.split('/');if(p.length===3){let y=p[2];if(y.length===2)y=(parseInt(y,10)<50?'20':'19')+y;return y+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);const n=parseFloat(s);if(!isNaN(n)&&n>40000&&n<60000){const dt=new Date(Math.round((n-25569)*86400*1000));return dt.toISOString().slice(0,10);}return s;}
 function fmt(v){if(!v&&v!==0)return'—';return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
 function showErrChq(m){const e=document.getElementById('chq-err');e.textContent=m;e.classList.remove('hidden');}
 
