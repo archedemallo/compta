@@ -39,6 +39,7 @@
   .solde-item{display:flex;flex-direction:column;gap:4px;}
   .solde-label{font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;}
   .solde-saved{font-size:10px;color:var(--green);margin-top:2px;}
+  .solde-report{font-size:10px;color:var(--blue);margin-top:2px;}
 
   /* ---- UTILISATEURS ---- */
   .user-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface-2);border:0.5px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;}
@@ -157,16 +158,19 @@
                 <label class="solde-label">Banque (€)</label>
                 <input type="number" id="solde-banque" step="0.01" placeholder="0,00">
                 <span class="solde-saved hidden" id="saved-banque"><i class="ti ti-check"></i> OK</span>
+                <span class="solde-report hidden" id="report-banque"><i class="ti ti-arrow-back-up"></i> Reporté de la période précédente</span>
               </div>
               <div class="solde-item">
                 <label class="solde-label">Caisse 1 (€)</label>
                 <input type="number" id="solde-caisse1" step="0.01" placeholder="0,00">
                 <span class="solde-saved hidden" id="saved-caisse1"><i class="ti ti-check"></i> OK</span>
+                <span class="solde-report hidden" id="report-caisse1"><i class="ti ti-arrow-back-up"></i> Reporté de la période précédente</span>
               </div>
               <div class="solde-item">
                 <label class="solde-label">Caisse 2 (€)</label>
                 <input type="number" id="solde-caisse2" step="0.01" placeholder="0,00">
                 <span class="solde-saved hidden" id="saved-caisse2"><i class="ti ti-check"></i> OK</span>
+                <span class="solde-report hidden" id="report-caisse2"><i class="ti ti-arrow-back-up"></i> Reporté de la période précédente</span>
               </div>
             </div>
             <div style="margin-top:10px;font-size:10px;color:var(--text-3);">
@@ -549,14 +553,47 @@ function initSoldesInitiaux() {
   renderSoldesSummary();
 }
 
-function loadSoldesForPeriode() {
+async function loadSoldesForPeriode() {
   const per = document.getElementById('solde-periode').value;
   const cfg = JSON.parse(localStorage.getItem('arche_soldes_initiaux') || '{}');
   const s   = cfg[per] || {};
-  document.getElementById('solde-banque').value   = s.banque  !== undefined ? s.banque  : '';
-  document.getElementById('solde-caisse1').value  = s.caisse1 !== undefined ? s.caisse1 : '';
-  document.getElementById('solde-caisse2').value  = s.caisse2 !== undefined ? s.caisse2 : '';
-  ['banque','caisse1','caisse2'].forEach(k => document.getElementById('saved-'+k).classList.add('hidden'));
+  const comptes = ['banque', 'caisse1', 'caisse2'];
+
+  comptes.forEach(k => {
+    document.getElementById('saved-'+k).classList.add('hidden');
+    document.getElementById('report-'+k).classList.add('hidden');
+  });
+
+  // 1) On affiche d'abord ce qui est déjà enregistré (ou vide sinon)
+  comptes.forEach(k => {
+    document.getElementById('solde-'+k).value = s[k] !== undefined ? s[k] : '';
+  });
+
+  // 2) Pour les comptes sans solde enregistré, on calcule le report automatique
+  //    à partir du solde de clôture de la période précédente.
+  const prevPer = Sheets.getPreviousPeriode(per);
+  if (!prevPer) return;
+
+  const aReporter = comptes.filter(k => s[k] === undefined);
+  if (!aReporter.length) return;
+
+  aReporter.forEach(k => {
+    document.getElementById('solde-'+k).placeholder = 'Calcul du report…';
+  });
+
+  for (const k of aReporter) {
+    try {
+      const soldeFinal = await Sheets.getSoldeFinal(prevPer, k);
+      // Si l'utilisateur a changé de période pendant le calcul, on n'écrase rien
+      if (document.getElementById('solde-periode').value !== per) continue;
+      document.getElementById('solde-'+k).value = soldeFinal.toFixed(2);
+      document.getElementById('report-'+k).classList.remove('hidden');
+    } catch(e) {
+      console.warn('Report auto solde', k, 'error:', e);
+    } finally {
+      document.getElementById('solde-'+k).placeholder = '0,00';
+    }
+  }
 }
 
 async function saveSoldesInitiaux() {
