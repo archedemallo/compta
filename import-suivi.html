@@ -331,7 +331,7 @@ const ONGLETS_MAP = [
   { suivi: 'Adhesion',                 compta: 'Suivi_Adhesion',                label: 'Adhésions' },
   { suivi: 'Reservation_Chaton',       compta: 'Suivi_Reservation_Chaton',      label: 'Rés. Chaton' },
   { suivi: 'Contrat_reservation_chat', compta: 'Suivi_Contrat_reservation_chat',label: 'Contrat rés.' },
-  { suivi: 'Contrat_reservation_autre_anima', compta: 'Suivi_Contrat_reservation_autre_anima', label: 'Rés. autre animal' },
+  { suivi: 'Contrat_reservation_autre_animal', compta: 'Suivi_Contrat_reservation_autre_animal', label: 'Rés. autre animal' },
   { suivi: 'Depot_Chat',               compta: 'Suivi_Depot_Chat',              label: 'Dépôt chat' },
   { suivi: 'Abandon',                  compta: 'Suivi_Abandon',                 label: 'Abandons' },
   { suivi: 'Retour_Materiel',          compta: 'Suivi_Retour_Materiel',         label: 'Retour matériel' },
@@ -343,7 +343,7 @@ const ONGLETS_MAP = [
   { suivi: 'Certificat_Engagement',    compta: 'Suivi_Certificat_Engagement',   label: 'Cert. engagement' },
 ];
 // Suppression : 'Reservation_Chat' et 'Formulaire_depot_chat' n'existent plus dans le nouveau sheet Suivi.
-// Ajouts : Contrat_reservation_autre_anima (nouvel onglet indépendant), Retour_Materiel, CBS_Absent, Decharge_Vaccin.
+// Ajouts : Contrat_reservation_autre_animal (nouvel onglet indépendant), Retour_Materiel, CBS_Absent, Decharge_Vaccin.
 let refreshStatuts = {};
 ONGLETS_MAP.forEach(o => { refreshStatuts[o.compta] = 'idle'; });
 
@@ -376,8 +376,8 @@ const ONGLETS = {
       montants:[{field:null,label:'Réservation',fixed:50}] },
     type_mvt:'Adoption', description:'Reservation',
   },
-  Contrat_reservation_autre_anima: {
-    label:'Rés. autre animal', icon:'ti-paw', compta:'Suivi_Contrat_reservation_autre_anima',
+  Contrat_reservation_autre_animal: {
+    label:'Rés. autre animal', icon:'ti-paw', compta:'Suivi_Contrat_reservation_autre_animal',
     fieldNames:{ date:'dateAdoption', nom:'nom', prenom:'prenom', nom_chat:'nomChat',
       mode_reglement:'check_paiement', num_cheque:'numeroPaiement',
       montants:[{field:null,label:'Réservation',fixed:50}] },
