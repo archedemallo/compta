@@ -115,24 +115,22 @@
 
     <!-- NAVIGATION SYNTHÈSES -->
     <div class="synth-nav">
-      <button class="synth-btn active" onclick="showSection('vue-generale')"><i class="ti ti-chart-bar"></i> Vue générale</button>
-      <button class="synth-btn" onclick="showSection('flux-mensuels')"><i class="ti ti-calendar-stats"></i> Flux mensuels</button>
-      <button class="synth-btn" onclick="showSection('evolution')"><i class="ti ti-trending-up"></i> Évolution 12 mois</button>
-      <button class="synth-btn" onclick="showSection('repartition')"><i class="ti ti-chart-pie"></i> Répartition</button>
-      <button class="synth-btn" onclick="showSection('top-fournisseurs')"><i class="ti ti-building-store"></i> Top fournisseurs</button>
-      <button class="synth-btn" onclick="showSection('adoptions')"><i class="ti ti-home"></i> Adoptions</button>
-      <button class="synth-btn" onclick="showSection('dons')"><i class="ti ti-coin"></i> Dons</button>
-      <button class="synth-btn" onclick="showSection('subventions')"><i class="ti ti-award"></i> Subventions</button>
-      <button class="synth-btn" onclick="showSection('adhesions')"><i class="ti ti-id-badge"></i> Adhésions</button>
-      <button class="synth-btn" onclick="showSection('cheques-att')"><i class="ti ti-writing"></i> Chèques en attente</button>
-      <button class="synth-btn" onclick="showSection('remises-att')"><i class="ti ti-stack"></i> Remises en attente</button>
-      <button class="synth-btn" onclick="showSection('rapprochement')"><i class="ti ti-scale"></i> Rapprochement caisse</button>
-      <button class="synth-btn" onclick="showSection('depenses-cat')"><i class="ti ti-chart-bar-off"></i> Dépenses / catégorie</button>
-      <button class="synth-btn" onclick="showSection('comparaison')"><i class="ti ti-arrows-exchange"></i> N vs N-1</button>
-      <button class="synth-btn" onclick="showSection('tresorerie')"><i class="ti ti-cash"></i> Trésorerie prévisionnelle</button>
-      <button class="synth-btn" onclick="showSection('evenements')"><i class="ti ti-confetti"></i> Événements</button>
-      <button class="synth-btn" onclick="showSection('totaux-periode')"><i class="ti ti-sum"></i> Totaux période</button>
-      <button class="synth-btn" onclick="showSection('rapport-annuel')"><i class="ti ti-file-analytics"></i> Rapport annuel</button>
+      <button class="synth-btn active" data-section="vue-generale" onclick="showSection('vue-generale')"><i class="ti ti-chart-bar"></i> Vue générale</button>
+      <button class="synth-btn" data-section="flux-mensuels" onclick="showSection('flux-mensuels')"><i class="ti ti-calendar-stats"></i> Flux mensuels</button>
+      <button class="synth-btn" data-section="evolution" onclick="showSection('evolution')"><i class="ti ti-trending-up"></i> Évolution 12 mois</button>
+      <button class="synth-btn" data-section="repartition" onclick="showSection('repartition')"><i class="ti ti-chart-pie"></i> Répartition</button>
+      <button class="synth-btn" data-section="adoptions" onclick="showSection('adoptions')"><i class="ti ti-home"></i> Adoptions</button>
+      <button class="synth-btn" data-section="dons" onclick="showSection('dons')"><i class="ti ti-coin"></i> Dons</button>
+      <button class="synth-btn" data-section="subventions" onclick="showSection('subventions')"><i class="ti ti-award"></i> Subventions</button>
+      <button class="synth-btn" data-section="adhesions" onclick="showSection('adhesions')"><i class="ti ti-id-badge"></i> Adhésions</button>
+      <button class="synth-btn" data-section="cheques-att" onclick="showSection('cheques-att')"><i class="ti ti-writing"></i> Chèques en attente</button>
+      <button class="synth-btn" data-section="remises-att" onclick="showSection('remises-att')"><i class="ti ti-stack"></i> Remises en attente</button>
+      <button class="synth-btn" data-section="rapprochement" onclick="showSection('rapprochement')"><i class="ti ti-scale"></i> Rapprochement caisse</button>
+      <button class="synth-btn" data-section="depenses-cat" onclick="showSection('depenses-cat')"><i class="ti ti-chart-bar-off"></i> Dépenses / catégorie</button>
+      <button class="synth-btn" data-section="comparaison" onclick="showSection('comparaison')"><i class="ti ti-arrows-exchange"></i> N vs N-1</button>
+      <button class="synth-btn" data-section="tresorerie" onclick="showSection('tresorerie')"><i class="ti ti-cash"></i> Trésorerie prévisionnelle</button>
+      <button class="synth-btn" data-section="evenements" onclick="showSection('evenements')"><i class="ti ti-confetti"></i> Événements</button>
+      <button class="synth-btn" data-section="totaux-periode" onclick="showSection('totaux-periode')"><i class="ti ti-sum"></i> Totaux période</button>
     </div>
 
     <!-- LOADING -->
@@ -204,9 +202,8 @@ function selectPer(p){activePer=p;Sidebar.setPeriode(p);buildPeriodPicker();dest
 
 function showSection(id){
   activeSection=id;
-  document.querySelectorAll('.synth-btn').forEach((b,i)=>{
-    const sections=['vue-generale','flux-mensuels','evolution','repartition','top-fournisseurs','adoptions','dons','subventions','cheques-att','remises-att','rapprochement','depenses-cat','comparaison','tresorerie','evenements','totaux-periode','rapport-annuel'];
-    b.classList.toggle('active',sections[i]===id);
+  document.querySelectorAll('.synth-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.section===id);
   });
   destroyCharts();
   renderSection(id);
@@ -293,7 +290,6 @@ function renderSection(id){
     case 'flux-mensuels':    el.innerHTML=renderFluxMensuels();  break;
     case 'evolution':        el.innerHTML=renderEvolution();     setTimeout(initEvolutionChart,50); break;
     case 'repartition':      el.innerHTML=renderRepartition();   setTimeout(initRepartitionCharts,50); break;
-    case 'top-fournisseurs': el.innerHTML=renderTopFournisseurs(); break;
     case 'top-donateurs':    el.innerHTML=renderTopDonateurs();  break;
     case 'adoptions':        el.innerHTML=renderAdoptions();     setTimeout(initAdoptionsChart,50); break;
     case 'dons':             el.innerHTML=renderDons();          setTimeout(initDonsChart,50); break;
@@ -307,7 +303,6 @@ function renderSection(id){
     case 'tresorerie':       el.innerHTML=renderTresorerie();    setTimeout(initTresoChart,50); break;
     case 'evenements':       el.innerHTML=renderEvenements();    break;
     case 'totaux-periode':   el.innerHTML=renderTotauxPeriode(); break;
-    case 'rapport-annuel':   el.innerHTML=renderRapportAnnuel(); break;
     case 'saisie-rapide':    el.innerHTML=renderSaisieRapide();  break;
   }
 }
