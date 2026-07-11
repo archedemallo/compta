@@ -712,12 +712,25 @@ function switchImportTab(key) {
   renderCurrentImportTab();
 }
 
+// Quand une ligne a un "Reste à payer" > 0, le "Total participation" ne doit pas être
+// affiché ni importable séparément (une partie a déjà été réglée par ailleurs) : seul le reste compte.
+function getVisibleMontants(cfg, row) {
+  const list = cfg.cols.montants.map((m,mi)=>({m,mi}));
+  const hasReste = list.some(({m})=>{
+    if(m.label!=='Reste à payer') return false;
+    const montant=m.fixed!==undefined?m.fixed:parseFloat(row[m.col]||0)||0;
+    return montant>0;
+  });
+  if(!hasReste) return list;
+  return list.filter(({m})=>m.label!=='Total participation');
+}
+
 function updateImportBadges() {
   let totalNonImp=0;
   Object.entries(ONGLETS).forEach(([key,cfg])=>{
     const rows=allImportData[key]||[];
     const n=rows.filter((row,ri)=>
-      cfg.cols.montants.some((m,mi)=>{
+      getVisibleMontants(cfg,row).some(({m,mi})=>{
         const montant=m.fixed!==undefined?m.fixed:parseFloat(row[m.col]||0)||0;
         return montant&&!isImported(key,row,ri,mi);
       })
@@ -735,7 +748,7 @@ function updateImportKPIs() {
   Object.entries(ONGLETS).forEach(([key,cfg])=>{
     const rows=allImportData[key]||[];
     rows.forEach((row,ri)=>{
-      cfg.cols.montants.forEach((m,mi)=>{
+      getVisibleMontants(cfg,row).forEach(({m,mi})=>{
         const montant=m.fixed!==undefined?m.fixed:parseFloat(row[m.col]||0)||0;
         if(!montant)return;
         totalLignes++;
@@ -769,7 +782,7 @@ function renderCurrentImportTab() {
     if(search&&![nom,chat,date].join(' ').toLowerCase().includes(search))return false;
     if(destF&&getDestination(getCellVal(row,cfg.cols.mode_reglement))!==destF)return false;
     if(hideImp){
-      const allDone=cfg.cols.montants.every((m,mi)=>{
+      const allDone=getVisibleMontants(cfg,row).every(({m,mi})=>{
         const montant=m.fixed!==undefined?m.fixed:parseFloat(row[m.col]||0)||0;
         return !montant||isImported(key,row,ri,mi);
       });
@@ -787,7 +800,8 @@ function renderCurrentImportTab() {
     const chat=hasChat?getCellVal(row,cfg.cols.nom_chat):'';
     const modeRaw=getCellVal(row,cfg.cols.mode_reglement);
     const dest=getDestination(modeRaw), numCheque=getCellVal(row,cfg.cols.num_cheque);
-    const montantsHtml=cfg.cols.montants.map((m,mi)=>{
+    const visibleMontants=getVisibleMontants(cfg,row);
+    const montantsHtml=visibleMontants.map(({m,mi})=>{
       const montant=m.fixed!==undefined?m.fixed:parseFloat(row[m.col]||0)||0;
       if(!montant)return'';
       const selKey=`${key}:${ri}:${mi}`, alreadyDone=isImported(key,row,ri,mi);
@@ -809,8 +823,8 @@ function renderCurrentImportTab() {
         </div>`;
       }
     }).join('');
-    const hasMontant=cfg.cols.montants.some((m,mi)=>{ const montant=m.fixed!==undefined?m.fixed:parseFloat(row[m.col]||0)||0; return montant>0; });
-    const allImportedRow=hasMontant&&cfg.cols.montants.every((m,mi)=>{
+    const hasMontant=visibleMontants.some(({m,mi})=>{ const montant=m.fixed!==undefined?m.fixed:parseFloat(row[m.col]||0)||0; return montant>0; });
+    const allImportedRow=hasMontant&&visibleMontants.every(({m,mi})=>{
       const montant=m.fixed!==undefined?m.fixed:parseFloat(row[m.col]||0)||0;
       return !montant||isImported(key,row,ri,mi);
     });
@@ -845,7 +859,7 @@ function toggleImportLine(selKey, onglet, ri, mi, montant, label) {
 function selectAllImport(){
   const key=activeImportTab, cfg=ONGLETS[key], rows=allImportData[key]||[];
   rows.forEach((row,ri)=>{
-    cfg.cols.montants.forEach((m,mi)=>{
+    getVisibleMontants(cfg,row).forEach(({m,mi})=>{
       const montant=m.fixed!==undefined?m.fixed:parseFloat(row[m.col]||0)||0;
       if(!montant||isImported(key,row,ri,mi))return;
       const selKey=`${key}:${ri}:${mi}`;
