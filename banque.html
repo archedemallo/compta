@@ -1126,10 +1126,12 @@ async function savePanel(){
     if(linkedCheque){
       const cc = Sheets.cols.cheque;
       const chq = linkedCheque.data;
-      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.ref_cheque,  chq[cc.num_cheque]  ||'');
-      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,    chq[cc.type_mvt]    ||'');
-      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, chq[cc.description] ||'');
-      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp,   chq[cc.type_comp]   ||'');
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.ref_cheque,     chq[cc.num_cheque]    ||'');
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,       chq[cc.type_mvt]      ||'');
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description,    chq[cc.description]   ||'');
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp,      chq[cc.beneficiaire]  ||'');
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.fournisseur,    chq[cc.fournisseur]   ||'');
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.mode_reglement, 'Chèque');
       if(chq[cc.nom_chat]) await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.nom_chat, chq[cc.nom_chat]);
       await Sheets.encaisserCheque(linkedCheque.idx, r[cb.date]||Sheets.todayFR(), r[cb.libelle]||'Encaissement');
       // Synchronisation Suivi : archiver la ligne Import_Rapprochement correspondante si elle existe
