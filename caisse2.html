@@ -385,6 +385,12 @@ function renderTable() {
     rows = [...rows].reverse();
   }
 
+  if (!rows.length) {
+    document.getElementById('table-wrap').innerHTML =
+      '<div style="padding:32px;text-align:center;color:var(--text-3);font-size:12px;">Aucune opération</div>';
+    return;
+}
+  
   const soldInit = Sheets.getSoldeInitial(
     document.getElementById('fl-per')?.value || Sidebar.getActivePeriode(),
     CAISSE_NUM
