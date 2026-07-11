@@ -864,7 +864,8 @@ async function loadSuiviData() {
   document.getElementById('suivi-lines-wrap').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-3);font-size:12px;"><i class="ti ti-loader-2 spinner"></i> Chargement Suivi…</div>';
   await Promise.all(Object.keys(SUIVI_COLS).map(async onglet => {
     try {
-      const resp = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId: SUIVI_SHEET_ID, range: `${onglet}!A2:AZ` });
+      // Pas de limite de colonne (même bug que import-suivi.html : un onglet peut dépasser AZ).
+      const resp = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId: SUIVI_SHEET_ID, range: `${onglet}!A2:ZZ` });
       suiviData[onglet] = (resp.result.values || []).filter(r => r && r.length > 1);
     } catch(e) { suiviData[onglet] = []; }
   }));
