@@ -550,7 +550,7 @@ async function submitForm() {
 
   const cc = Sheets.cols.caisse;
   if (editIdx !== null) {
-    const r = allRows[editIdx];
+    const r = allRows.find(x => x._sheetIndex === editIdx) || allRows[editIdx];
     if (r[cc.flag_check] === 'VERIFIE') { showErr('Ligne verrouillée — décochez "Vérifié" pour modifier.'); return; }
   }
 
@@ -570,13 +570,14 @@ async function submitForm() {
     num_recu:     document.getElementById('f-recu').value.trim(),
     num_bordereau:document.getElementById('f-bordereau').value.trim(),
     lien_facture: '',
+    flag_check:   'TRUE',
   };
 
   const btn = document.getElementById('btn-submit');
   btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader-2 spinner"></i>';
   try {
     if (editIdx !== null) {
-      const r = allRows[editIdx];
+      const r = allRows.find(x => x._sheetIndex === editIdx) || allRows[editIdx];
       op.flag_check   = r[cc.flag_check]   || 'FALSE';
       op.flag_comment = r[cc.flag_comment] || '';
       op.suivi_ref    = r[cc.suivi_ref]    || '';
@@ -592,7 +593,7 @@ async function submitForm() {
 }
 
 function openEdit(ri) {
-  const cc = Sheets.cols.caisse, r = allRows[ri];
+  const cc = Sheets.cols.caisse, r = allRows.find(x => x._sheetIndex === ri) || allRows[ri];
   if (r[cc.flag_check] === 'VERIFIE') { showToast('⚠️ Ligne vérifiée — décochez pour modifier'); return; }
   editIdx = ri;
   document.getElementById('f-date').value      = dateToISO(r[cc.date] || '');
@@ -619,7 +620,7 @@ function openEdit(ri) {
 // SUPPRIMER
 // ============================================================
 function openDel(ri) {
-  const cc = Sheets.cols.caisse, r = allRows[ri];
+  const cc = Sheets.cols.caisse, r = allRows.find(x => x._sheetIndex === ri) || allRows[ri];
   if (r[cc.flag_check] === 'VERIFIE') { showToast('⚠️ Ligne vérifiée — impossible de supprimer'); return; }
   delIdx = ri;
   document.getElementById('del-detail').innerHTML =
