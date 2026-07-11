@@ -897,7 +897,9 @@ async function loadSuiviBankData(){
   document.getElementById('suivi-bank-lines').innerHTML='<div style="padding:12px;text-align:center;color:var(--text-3);font-size:11px;"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>';
   await Promise.all(Object.keys(SUIVI_BANK_ONGLETS).map(async key => {
     try{
-      const resp = await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SUIVI_BANK_ID, range:`${key}!A2:AQ`});
+      // Pas de limite de colonne (voir bug import-suivi.html : un onglet comme Adoption
+      // dépasse AQ et perdait ses dernières colonnes).
+      const resp = await gapi.client.sheets.spreadsheets.values.get({spreadsheetId:SUIVI_BANK_ID, range:`${key}!A2:ZZ`});
       suiviBankData[key] = (resp.result.values||[]).filter(r=>r&&r.length>1);
     }catch(e){ suiviBankData[key]=[]; }
   }));
