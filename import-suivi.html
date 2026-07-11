@@ -548,7 +548,9 @@ function saveLastRefreshInfo(total, onglets) {
 
 async function readSuiviSheet(sheetName) {
   const resp = await gapi.client.sheets.spreadsheets.values.get({
-    spreadsheetId: SUIVI_ID, range: `${sheetName}!A1:AQ`,
+    // Pas de limite de colonne : on prend toute la largeur utilisée de l'onglet,
+    // pour ne jamais perdre de colonnes si le formulaire grandit (ex: Adoption va jusqu'à AY).
+    spreadsheetId: SUIVI_ID, range: `${sheetName}`,
   });
   return resp.result.values || [];
 }
@@ -557,7 +559,7 @@ async function readComptaSheet(sheetName) {
   try {
     const resp = await gapi.client.sheets.spreadsheets.values.get({
       spreadsheetId: Sheets.config.spreadsheetId,
-      range: `${sheetName}!A:AQ`,
+      range: `${sheetName}`,
       valueRenderOption: 'UNFORMATTED_VALUE',
       dateTimeRenderOption: 'FORMATTED_STRING',
     });
