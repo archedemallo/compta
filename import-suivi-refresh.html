@@ -199,7 +199,7 @@ async function readSuiviSheet(sheetName) {
   try {
     const resp = await gapi.client.sheets.spreadsheets.values.get({
       spreadsheetId: SUIVI_ID,
-      range: `${sheetName}!A1:AQ`,
+      range: `${sheetName}`,
     });
     return resp.result.values || [];
   } catch(e) {
@@ -217,7 +217,7 @@ async function readComptaSheet(sheetName) {
     const spreadsheetId = Sheets.config.spreadsheetId;
     const response = await gapi.client.sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: `${sheetName}!A:AQ`,
+      range: `${sheetName}`,
       valueRenderOption: 'UNFORMATTED_VALUE',
       dateTimeRenderOption: 'FORMATTED_STRING',
     });
