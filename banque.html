@@ -1151,6 +1151,7 @@ async function savePanel(){
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,    'Remise Cheque');
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, 'Remise Cheque');
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp,   brdDetail);
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.mode_reglement, 'Remise de chèques');
       await Sheets.encaisserRemise(linkedRemise.idx, r[cb.date]||Sheets.todayFR(), r[cb.libelle]||'Encaissement');
     }
 
