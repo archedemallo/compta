@@ -899,7 +899,11 @@ function selectSuiviLine(id, sheetIndex) {
   selectedSuiviLine = { id, sheetIndex };
 
   // Aperçu des infos copiées
+  const ci = Sheets.cols.importRap;
+  const row = (allImportRap||[]).find(rr => rr._sheetIndex === sheetIndex) || {};
   const copies = [`Référence Suivi : <strong>${escH(id)}</strong>`];
+  if (row[ci.nom_chat]) copies.push(`Nom du chat : <strong>${escH(row[ci.nom_chat])}</strong>`);
+  if (row[ci.num_recu]) copies.push(`N° reçu fiscal : <strong>${escH(row[ci.num_recu])}</strong>`);
   document.getElementById('rap-copy-detail').innerHTML = copies.map(c =>
     `<div style="padding:2px 0;border-bottom:0.5px solid var(--border);">${c}</div>`).join('');
   document.getElementById('rap-copy-preview').style.display = '';
@@ -912,7 +916,13 @@ async function saveRapprochement() {
   const { remiseIdx, chequeIdx } = rapTarget;
   const { id, sheetIndex } = selectedSuiviLine;
   const cr = Sheets.cols.remise;
+  const ci = Sheets.cols.importRap;
   const r = allRemises[remiseIdx];
+
+  // Récupérer nom du chat / n° reçu fiscal depuis la ligne Suivi choisie (Import_Rapprochement)
+  const suiviRow = (allImportRap||[]).find(rr => rr._sheetIndex === sheetIndex) || {};
+  const suiviNomChat = suiviRow[ci.nom_chat] || '';
+  const suiviNumRecu = suiviRow[ci.num_recu] || '';
 
   // Reconstruire l'objet remise complet avec le suivi_ref écrit dans le chèque concerné
   const nb = parseInt(r[cr.nb_cheques]) || 0;
@@ -926,8 +936,8 @@ async function saveRapprochement() {
       type_mvt:    r[base+3] || '',
       description: r[base+4] || '',
       type_comp:   r[base+5] || '',
-      nom_chat:    r[base+6] || '',
-      recu_fiscal: r[base+7] || '',
+      nom_chat:    i === chequeIdx ? (suiviNomChat || r[base+6] || '') : (r[base+6] || ''),
+      recu_fiscal: i === chequeIdx ? (suiviNumRecu || r[base+7] || '') : (r[base+7] || ''),
       suivi_ref:   i === chequeIdx ? id : (r[cr.suivi_ref_start+i] || ''),
     });
   }
