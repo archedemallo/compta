@@ -432,7 +432,7 @@ function updateDynamicFilters(){
   const per = Sidebar.getActivePeriode();
   const rows = allRows.filter(r => r[cb.periode] === per);
   const typeMap = new Map();
-  rows.forEach(r => { const t=(r[cb.type_mvt]||'').toString().trim(); if(t && !typeMap.has(t.toLowerCase())) typeMap.set(t.toLowerCase(), t); });
+  rows.forEach(r => { const t=(r[cb.type_mvt]||'').toString().trim(); if(t && !typeMap.has(cleanForCompare(t))) typeMap.set(cleanForCompare(t), t); });
   const types = [...typeMap.values()].sort();
   const cur = document.getElementById('fl-type')?.value || '';
   const fl  = document.getElementById('fl-type');
@@ -528,6 +528,13 @@ function renderKPIs(){
 // ============================================================
 // TABLEAU
 // ============================================================
+function cleanForCompare(s){
+  return (s||'').toString()
+    .replace(/[\u200B-\u200D\uFEFF\u2060\u00A0]/g,'') // espaces/caractères invisibles
+    .trim()
+    .toLowerCase();
+}
+
 function getFilteredRows(){
   const cb  = Sheets.cols.banque;
   const per = Sidebar.getActivePeriode();
@@ -544,7 +551,7 @@ function getFilteredRows(){
 
 
   let rows = allRows.filter(r => r[cb.periode] === per);
-  if (typeF)              rows = rows.filter(r => (r[cb.type_mvt]||'').toString().trim().toLowerCase() === typeF.toString().trim().toLowerCase());
+  if (typeF)              rows = rows.filter(r => cleanForCompare(r[cb.type_mvt]) === cleanForCompare(typeF));
   if (descF)              rows = rows.filter(r => r[cb.description] === descF);
   if (sensF==='credit')   rows = rows.filter(r => parseMontant(r[cb.credit]) > 0);
   if (sensF==='debit')    rows = rows.filter(r => parseMontant(r[cb.debit])  > 0);
@@ -747,14 +754,19 @@ function renderTable(){
   syncScrollTop('banque-table');
 
   // Restaurer la valeur du select type en mode édition
+  function setSelectRobuste(sel, rawValue){
+    if (!sel) return;
+    const target = cleanForCompare(rawValue);
+    const match = [...sel.options].find(o => cleanForCompare(o.value) === target);
+    sel.value = match ? match.value : (rawValue || '');
+  }
   if (editingIdx !== null) {
     const r = allRows[editingIdx];
-    const sel = document.getElementById('ei-type');
-    if (sel && r) sel.value = r[Sheets.cols.banque.type_mvt] || '';
-    const selDesc = document.getElementById('ei-description');
-    if (selDesc && r) selDesc.value = r[Sheets.cols.banque.description] || '';
-    const selFourn = document.getElementById('ei-fourn');
-    if (selFourn && r) selFourn.value = r[Sheets.cols.banque.fournisseur] || '';
+    if (r) {
+      setSelectRobuste(document.getElementById('ei-type'),        r[Sheets.cols.banque.type_mvt]);
+      setSelectRobuste(document.getElementById('ei-description'), r[Sheets.cols.banque.description]);
+      setSelectRobuste(document.getElementById('ei-fourn'),       r[Sheets.cols.banque.fournisseur]);
+    }
   }
 }
 
