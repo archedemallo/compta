@@ -1189,6 +1189,8 @@ async function savePanel(){
       }
       // Écrire les N° factures dans banque (séparés par virgule si plusieurs)
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.num_facture, numFactures.join(', '));
+      const chatsFactures = linkedFactures.map(lf=>lf.data[cf.nom_chat]||'').filter(Boolean).join(', ');
+      if(chatsFactures) await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.nom_chat, chatsFactures);
       if(!linkedCheque){
         const fac0=linkedFactures[0].data;
         const tousAmazon=linkedFactures.length>1 &&
