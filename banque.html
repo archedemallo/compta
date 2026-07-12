@@ -554,7 +554,7 @@ function getFilteredRows(){
   if (dateTo)             rows = rows.filter(r => dateToISO(r[cb.date]) <= dateTo);
   if (!isNaN(montMin))    rows = rows.filter(r => Math.abs(parseMontant(r[cb.credit]||r[cb.debit])||0) >= montMin);
   if (!isNaN(montMax) && montMax>0) rows = rows.filter(r => Math.abs(parseMontant(r[cb.credit]||r[cb.debit])||0) <= montMax);
-  if (search)             rows = rows.filter(r => [r[cb.libelle],r[cb.type_mvt],r[cb.description],r[cb.nom],String(r[cb.num_facture]||''),String(r[cb.ref_cheque]||''),String(r[cb.ref_remise]||''),String(r[cb.num_don_fiscal]||''),String(r[cb.num_rem_espece]||''),String(r[cb.type_comp]||''),String(r[cb.fournisseur]||'')].join(' ').toLowerCase().includes(search));
+  if (search)             rows = rows.filter(r => [r[cb.libelle],r[cb.type_mvt],r[cb.description],r[cb.nom],String(r[cb.num_facture]||''),String(r[cb.ref_cheque]||''),String(r[cb.ref_remise]||''),String(r[cb.num_don_fiscal]||''),String(r[cb.num_rem_espece]||''),String(r[cb.type_comp]||''),String(r[cb.fournisseur]||'')].join(' ').replace(/[\r\n\t]+/g,'').toLowerCase().includes(search));
   return rows;
 }
 
@@ -932,7 +932,7 @@ function renderSuiviBankLines(){
   // Filtrer les lignes Import_Rapprochement en_attente destinées à la banque
   const lines = (allImportRap||[]).filter(r =>
     r[ci.destination]==='banque' && r[ci.statut]==='en_attente' && r[ci.onglet]===activeSuiviBankTab
-  ).filter(r => !search || [r[ci.libelle],r[ci.nom_chat],r[ci.type_mvt]].join(' ').toLowerCase().includes(search));
+  ).filter(r => !search || [r[ci.libelle],r[ci.nom_chat],r[ci.type_mvt]].join(' ').replace(/[\r\n\t]+/g,'').toLowerCase().includes(search));
 
   const wrap = document.getElementById('suivi-bank-lines');
   if(!wrap) return;
@@ -944,7 +944,7 @@ function renderSuiviBankLines(){
        onclick="selectSuiviBankLine(${idx})">
       <div style="flex:1;">
         <div style="font-size:11px;font-weight:500;">${escH(r[ci.libelle]||'—')}${r[ci.nom_chat]?' — '+escH(r[ci.nom_chat]):''}</div>
-        <div style="font-size:10px;color:var(--text-3);">${escH(r[ci.date]||'')} · ${escH(r[ci.type_mvt]||'')} · ${escH(r[ci.onglet]||'')}${r[ci.num_recu]?' · <span style="color:var(--purple)">Reçu:'+escH(r[ci.num_recu])+'</span>':''}</div>
+        <div style="font-size:10px;color:var(--text-3);">${escH(fmtDateFR(r[ci.date]))} · ${escH(r[ci.type_mvt]||'')} · ${escH(r[ci.onglet]||'')}${r[ci.num_recu]?' · <span style="color:var(--purple)">Reçu:'+escH(r[ci.num_recu])+'</span>':''}</div>
       </div>
       <div style="font-size:12px;font-weight:600;color:var(--green);white-space:nowrap;">${fmt(r[ci.montant])}</div>
     </div>`;
@@ -1333,6 +1333,8 @@ function showFacturesPopup(event, numFacturesStr) {
 function fmt(v){if(!v&&v!==0)return'—';const n=parseMontant(String(v));if(isNaN(n))return'—';return n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
 function chipType(t){if(!t)return'depense';const l=t.toLowerCase();if(l.includes('adopt'))return'adoption';if(l.includes('don'))return'don';if(l.includes('adh'))return'adhesion';return'depense';}
 function dateToISO(d){if(!d)return'';const s=String(d).trim();const p=s.split('/');if(p.length===3){let y=p[2];if(y.length===2)y=(parseInt(y,10)<50?'20':'19')+y;return y+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);const n=parseFloat(s);if(!isNaN(n)&&n>40000&&n<60000){const dt=new Date(Math.round((n-25569)*86400*1000));return dt.toISOString().slice(0,10);}return s;}
+// Reformate une date (chaîne jj/mm/aaaa, ISO, ou numéro de série Google Sheets) en jj/mm/aaaa lisible.
+function fmtDateFR(d){const iso=dateToISO(d);if(!/^\d{4}-\d{2}-\d{2}/.test(iso))return String(d||'');const[y,m,day]=iso.slice(0,10).split('-');return`${day}/${m}/${y}`;}
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
 function showTableSpinner(){document.getElementById('table-wrap').innerHTML='<div style="padding:32px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>';}
 function showTableError(msg){document.getElementById('table-wrap').innerHTML=`<div style="padding:32px;text-align:center;color:var(--red);font-size:12px;"><i class="ti ti-alert-circle" style="font-size:20px;display:block;margin-bottom:8px;"></i>${msg}</div>`;}
