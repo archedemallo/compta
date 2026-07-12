@@ -126,6 +126,7 @@ const COLS_REMISE = {
   ref_banque:   8,
   verified:     9,   // J — Vérifié (TRUE/FALSE) — colonne ajoutée dans le sheet
   detail_start: 10,  // K — Donateur1, Montant1, Chèque1, Type1, Desc1, LibComp1, Chat1, Reçu1…
+  suivi_ref_start: 90, // CM — référence Suivi par chèque (1 colonne par chèque, jusqu'à 10), après les 10 blocs de détail (10..89)
 };
 
 const COLS_FACTURE = {
@@ -592,7 +593,7 @@ async function encaisserCheque(chequeRowIndex, dateBanque, refBanque) {
 // ---- REMISES ----
 async function saveRemise(remise) {
   const id  = remise.id || genId('BRD');
-  const mainRow = new Array(10 + remise.cheques.length * 8).fill('');
+  const mainRow = new Array(Math.max(10 + remise.cheques.length * 8, COLS_REMISE.suivi_ref_start + remise.cheques.length)).fill('');
   mainRow[COLS_REMISE.id]            = id;
   mainRow[COLS_REMISE.date_remise]   = remise.date_remise   || '';
   mainRow[COLS_REMISE.num_bordereau] = remise.num_bordereau || id;
@@ -613,6 +614,7 @@ async function saveRemise(remise) {
     mainRow[base + 5] = c.type_comp   || '';
     mainRow[base + 6] = c.nom_chat    || '';
     mainRow[base + 7] = c.recu_fiscal || '';
+    mainRow[COLS_REMISE.suivi_ref_start + i] = c.suivi_ref || '';
   });
   await appendRows(SHEETS_CONFIG.sheets.remises, [mainRow]);
   await logAction('AJOUT', 'Remises', id, `${remise.cheques.length} chèque(s) — ${mainRow[COLS_REMISE.montant_total]}€`);
@@ -630,7 +632,7 @@ async function encaisserRemise(remiseRowIndex, dateBanque, refBanque) {
 async function updateRemise(rowIndex, remise) {
   const id = remise.id || genId('BRD');
   const sheetRow = rowIndex + 2;
-  const mainRow = new Array(10 + remise.cheques.length * 8).fill('');
+  const mainRow = new Array(Math.max(10 + remise.cheques.length * 8, COLS_REMISE.suivi_ref_start + remise.cheques.length)).fill('');
   mainRow[COLS_REMISE.id]            = id;
   mainRow[COLS_REMISE.date_remise]   = remise.date_remise   || '';
   mainRow[COLS_REMISE.num_bordereau] = remise.num_bordereau || id;
@@ -651,6 +653,7 @@ async function updateRemise(rowIndex, remise) {
     mainRow[base + 5] = c.type_comp   || '';
     mainRow[base + 6] = c.nom_chat    || '';
     mainRow[base + 7] = c.recu_fiscal || '';
+    mainRow[COLS_REMISE.suivi_ref_start + i] = c.suivi_ref || '';
   });
   await updateRange(SHEETS_CONFIG.sheets.remises, sheetRow, 0, [mainRow]);
   await logAction('MODIF', 'Remises', id, `Modifié le ${todayFR()}`);
