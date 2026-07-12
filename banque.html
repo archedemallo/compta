@@ -49,10 +49,10 @@
   .selection-bar.visible{display:flex;}
 
   /* Resize + scroll fixe */
-  .table-scroll-outer{position:relative;flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+  .table-scroll-outer{position:relative;display:flex;flex-direction:column;}
   .table-scroll-top{overflow-x:auto;overflow-y:hidden;height:10px;background:var(--surface-2);border-bottom:0.5px solid var(--border);}
   .table-scroll-top-inner{height:1px;}
-  .tbl-scroll-body{overflow-x:auto;overflow-y:auto;flex:1;min-height:0;}
+  .tbl-scroll-body{overflow-x:auto;}
   #table-wrap{overflow:visible;}
   table{table-layout:auto;min-width:100%;}
   .col-resizer{position:absolute;right:0;top:0;bottom:0;width:5px;cursor:col-resize;z-index:3;}
@@ -157,7 +157,7 @@
     <div class="topbar-title"><i class="ti ti-building-bank" style="color:var(--orange)"></i> Banque</div>
     <div class="topbar-right"><span style="font-size:11px;color:var(--text-3);" id="topbar-per"></span></div>
   </div>
-  <div class="page-content" style="display:flex;flex-direction:column;height:calc(100vh - 48px);overflow:hidden;padding-bottom:0;">
+  <div class="page-content" style="display:flex;flex-direction:column;padding-bottom:0;">
 
     <!-- KPIs -->
     <div class="kpi-bar" id="kpi-bar">
@@ -179,7 +179,7 @@
     </div>
 
     <!-- LISTE -->
-    <div class="list-card" style="border-radius:0 0 var(--radius) var(--radius);border-top:none;flex:1;display:flex;flex-direction:column;overflow:visible;min-height:0;margin-bottom:0;">
+    <div class="list-card" style="border-radius:0 0 var(--radius) var(--radius);border-top:none;display:flex;flex-direction:column;overflow:visible;margin-bottom:0;">
       <!-- Filtres compacts 2 lignes -->
       <!-- REMPLACER les deux div.filters-row par : -->
 <div class="list-head">
