@@ -320,7 +320,7 @@ async function delierRemiseSuivi(remiseIdx, chequeIdx, suiviRef) {
       donateur:r[b]||'', montant:r[b+1]||'', num_cheque:r[b+2]||'',
       type_mvt:r[b+3]||'', description:r[b+4]||'', type_comp:r[b+5]||'',
       nom_chat:r[b+6]||'', recu_fiscal:r[b+7]||'',
-      suivi_ref: i===chequeIdx ? '' : (r[b+8]||''),
+      suivi_ref: i===chequeIdx ? '' : (r[cr.suivi_ref_start+i]||''),
     });
   }
   const remise = {
@@ -572,7 +572,7 @@ function renderTable(){
   const type_comp  =r[base+5]||'—';
   const nom_chat   =r[base+6]||'—';
   const recu_fiscal=r[base+7]||'—';
-  const suiviRef   =r[base+8]||'';   // suivi_ref stocké après les 8 champs
+  const suiviRef   =r[cr.suivi_ref_start+i]||'';   // suivi_ref stocké dans une colonne dédiée (après les 10 blocs de détail)
   const suiviBadge = suiviRef
     ? `<span class="chip-suivi" style="display:inline-flex;align-items:center;gap:2px;" title="${escH(suiviRef)}">⇄ Suivi ✓<button onclick="event.stopPropagation();delierRemiseSuivi(${ri},${i},'${escH(suiviRef)}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:10px;padding:0 0 0 2px;line-height:1;" title="Supprimer rapprochement">x</button></span>`
     : `<button class="rap-btn" onclick="openRapPanel(${ri},${i})" title="Rapprocher avec Suivi"><i class="ti ti-link"></i></button>`;
@@ -833,7 +833,7 @@ async function openRapPanel(remiseIdx, chequeIdx) {
   const donateur = r[base] || '—';
   const montant = r[base+1] || '';
   const numChq = r[base+2] || '';
-  const suiviRef = r[base+8] || '';
+  const suiviRef = r[cr.suivi_ref_start+chequeIdx] || '';
   document.getElementById('panel-chq-info').textContent = `${donateur}${numChq ? ' · N°'+numChq : ''} — ${montant ? fmt(montant) : ''}`;
 
   // Lien existant
@@ -974,7 +974,7 @@ async function saveRapprochement() {
       type_comp:   r[base+5] || '',
       nom_chat:    r[base+6] || '',
       recu_fiscal: r[base+7] || '',
-      suivi_ref:   i === chequeIdx ? key : (r[base+8] || ''),
+      suivi_ref:   i === chequeIdx ? key : (r[cr.suivi_ref_start+i] || ''),
     });
   }
   const remise = {
@@ -1012,8 +1012,7 @@ async function deRapprocher() {
   const { remiseIdx, chequeIdx } = rapTarget;
   const cr = Sheets.cols.remise;
   const r = allRemises[remiseIdx];
-  const base = cr.detail_start + chequeIdx * 8;
-  const oldRef = r[base+8] || '';
+  const oldRef = r[cr.suivi_ref_start+chequeIdx] || '';
 
   const nb = parseInt(r[cr.nb_cheques]) || 0;
   const cheques = [];
@@ -1028,7 +1027,7 @@ async function deRapprocher() {
       type_comp:   r[b+5] || '',
       nom_chat:    r[b+6] || '',
       recu_fiscal: r[b+7] || '',
-      suivi_ref:   i === chequeIdx ? '' : (r[b+8] || ''),
+      suivi_ref:   i === chequeIdx ? '' : (r[cr.suivi_ref_start+i] || ''),
     });
   }
   const remise = {
