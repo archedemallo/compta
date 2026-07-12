@@ -431,7 +431,9 @@ function updateDynamicFilters(){
   const cb  = Sheets.cols.banque;
   const per = Sidebar.getActivePeriode();
   const rows = allRows.filter(r => r[cb.periode] === per);
-  const types = [...new Set(rows.map(r => r[cb.type_mvt]).filter(Boolean))].sort();
+  const typeMap = new Map();
+  rows.forEach(r => { const t=(r[cb.type_mvt]||'').toString().trim(); if(t && !typeMap.has(t.toLowerCase())) typeMap.set(t.toLowerCase(), t); });
+  const types = [...typeMap.values()].sort();
   const cur = document.getElementById('fl-type')?.value || '';
   const fl  = document.getElementById('fl-type');
   if (!fl) return;
@@ -542,7 +544,7 @@ function getFilteredRows(){
 
 
   let rows = allRows.filter(r => r[cb.periode] === per);
-  if (typeF)              rows = rows.filter(r => r[cb.type_mvt] === typeF);
+  if (typeF)              rows = rows.filter(r => (r[cb.type_mvt]||'').toString().trim().toLowerCase() === typeF.toString().trim().toLowerCase());
   if (descF)              rows = rows.filter(r => r[cb.description] === descF);
   if (sensF==='credit')   rows = rows.filter(r => parseMontant(r[cb.credit]) > 0);
   if (sensF==='debit')    rows = rows.filter(r => parseMontant(r[cb.debit])  > 0);
