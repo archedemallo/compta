@@ -236,9 +236,6 @@
         <div class="suivi-tabs" id="suivi-tabs"></div>
         <div style="display:flex;gap:6px;margin-bottom:8px;">
           <input class="f-input-rap" type="text" id="rap-search" placeholder="Rechercher…" oninput="renderSuiviLines()">
-          <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-3);cursor:pointer;white-space:nowrap;">
-            <input type="checkbox" id="rap-hide-linked" onchange="renderSuiviLines()" style="accent-color:var(--orange);"> Masquer déjà liés
-          </label>
         </div>
         <div id="suivi-lines-wrap" style="max-height:300px;overflow-y:auto;"></div>
       </div>
@@ -284,6 +281,7 @@ function escH(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'
 function fmt(v){ if(!v&&v!==0)return'—'; return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
 function formatDate(d){ if(!d)return'—'; const s=String(d).trim(); if(/^\d{2}\/\d{2}\/\d{4}$/.test(s))return s; if(/^\d{4}-\d{2}-\d{2}$/.test(s)){const p=s.split('-');return`${p[2]}/${p[1]}/${p[0]}`;} return s; }
 function dateToISO(d){if(!d)return'';const s=String(d).trim();const p=s.split('/');if(p.length===3){let y=p[2];if(y.length===2)y=(parseInt(y,10)<50?'20':'19')+y;return y+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);const n=parseFloat(s);if(!isNaN(n)&&n>40000&&n<60000){const dt=new Date(Math.round((n-25569)*86400*1000));return dt.toISOString().slice(0,10);}return s;}
+function fmtDateFR(d){const iso=dateToISO(d);if(!/^\d{4}-\d{2}-\d{2}/.test(iso))return String(d||'');const[y,m,day]=iso.slice(0,10).split('-');return`${day}/${m}/${y}`;}
 function chipType(t){ if(!t&&t!==0)return'depense'; const l=String(t).toLowerCase(); if(l.includes('adopt'))return'adoption'; if(l.includes('don'))return'don'; if(l.includes('adh'))return'adhesion'; return'depense'; }
 function showErr(m){ const e=document.getElementById('rem-err');e.textContent=m;e.classList.remove('hidden'); }
 
@@ -485,8 +483,7 @@ async function loadData(){
     Sheets.getImportRapprochement('en_attente'),
   ]);
   allRemises = remises;
-  rapRows.forEach((r,i) => { r._sheetIndex = i; });
-  allImportRap = rapRows;
+  allImportRap = rapRows; // _sheetIndex déjà posé correctement par Sheets.getImportRapprochement (avant filtrage statut)
   Sidebar.setLastUpdate();
   updateDynamicFilters();
   renderKPIs();
@@ -799,20 +796,11 @@ async function confirmDel(){
 // ============================================================
 // RAPPROCHEMENT SUIVI
 // ============================================================
-const SUIVI_SHEET_ID = '1y6yD4AohP7T10GE7mmguIqNWSnwla9t1mewBpCDej_Y';
-const SUIVI_COLS = {
-  // indices = colonnes du Google Sheet Suivi SOURCE (sans colonne _id)
-  Adoption:             { date:2, nom:17, prenom:18, nom_chat:4,
-                          montants:[{col:29,col2:28,label:'Acompte versé',computed:true}] },
-  Reservation_Chat:     { date:2, nom:10, prenom:null, nom_chat:5, montants:[{fixed:50,label:'Réservation'}] },
-  Reservation_Chaton:   { date:2, nom:11, prenom:null, nom_chat:6, montants:[{fixed:50,label:'Réservation'}] },
-  Contrat_reservation_chat: { date:2, nom:10, prenom:null, nom_chat:5, montants:[{fixed:50,label:'Réservation'}] },
-  Dons:                 { date:2, nom:8,  prenom:9,    nom_chat:null, montants:[{col:4,label:'Montant don'}] },
-  Adhesion:             { date:2, nom:4,  prenom:5,    nom_chat:null, montants:[{fixed:20,label:'Adhésion'}] },
-};
+// Rapprochement Suivi : la liste vient d'Import_Rapprochement (source unique partagée avec
+// import-suivi.html / import-rapprochement.html / banque.html), pas des feuilles Suivi brutes.
+// Ainsi le rapprochement fait ici bascule bien la ligne dans Import_historique.
 const SUIVI_LABELS = { Adoption:'Adoptions', Reservation_Chat:'Rés. Chat', Reservation_Chaton:'Rés. Chaton', Contrat_reservation_chat:'Contrats Rés.', Dons:'Dons', Adhesion:'Adhésions' };
 
-let suiviData = {};          // données brutes par onglet
 let activeSuiviTab = 'Adoption';
 let rapTarget = null;        // { remiseIdx, chequeIdx }
 let selectedSuiviLine = null;
@@ -824,7 +812,6 @@ async function openRapPanel(remiseIdx, chequeIdx) {
   document.getElementById('btn-save-rap').disabled = true;
   document.getElementById('rap-copy-preview').style.display = 'none';
   document.getElementById('rap-search').value = '';
-  document.getElementById('rap-hide-linked').checked = false;
 
   // Info du chèque
   const cr = Sheets.cols.remise;
@@ -849,7 +836,6 @@ async function openRapPanel(remiseIdx, chequeIdx) {
   }
 
   document.getElementById('panel-rap').classList.remove('hidden');
-  if (!Object.keys(suiviData).length) await loadSuiviData();
   buildSuiviTabs();
   renderSuiviLines();
 }
@@ -860,20 +846,9 @@ function closeRapPanel() {
   selectedSuiviLine = null;
 }
 
-async function loadSuiviData() {
-  document.getElementById('suivi-lines-wrap').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-3);font-size:12px;"><i class="ti ti-loader-2 spinner"></i> Chargement Suivi…</div>';
-  await Promise.all(Object.keys(SUIVI_COLS).map(async onglet => {
-    try {
-      // Pas de limite de colonne (même bug que import-suivi.html : un onglet peut dépasser AZ).
-      const resp = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId: SUIVI_SHEET_ID, range: `${onglet}!A2:ZZ` });
-      suiviData[onglet] = (resp.result.values || []).filter(r => r && r.length > 1);
-    } catch(e) { suiviData[onglet] = []; }
-  }));
-}
-
 function buildSuiviTabs() {
   const ci = Sheets.cols.importRap;
-  document.getElementById('suivi-tabs').innerHTML = Object.keys(SUIVI_COLS).map(onglet => {
+  document.getElementById('suivi-tabs').innerHTML = Object.keys(SUIVI_LABELS).map(onglet => {
     // Compter les lignes en attente dans la file d'import pour cet onglet
     const n = (allImportRap||[]).filter(r => r[ci.onglet]===onglet && r[ci.statut]==='en_attente').length;
     return `<button class="suivi-tab ${onglet === activeSuiviTab ? 'active' : ''}" onclick="switchSuiviTab('${onglet}')">
@@ -888,39 +863,21 @@ function switchSuiviTab(onglet) {
   renderSuiviLines();
 }
 
-function getLinkedKeys() {
-  try {
-    const arr = JSON.parse(localStorage.getItem('arche_suivi_imported') || '[]');
-    return arr.map(i => `${i.onglet}:${i.rowIdx}:${i.montantIdx}`);
-  } catch(e) { return []; }
-}
-
 function renderSuiviLines() {
+  const ci = Sheets.cols.importRap;
   const onglet = activeSuiviTab;
-  const cols = SUIVI_COLS[onglet];
-  const rows = suiviData[onglet] || [];
   const search = (document.getElementById('rap-search')?.value || '').toLowerCase();
-  const hideLinked = document.getElementById('rap-hide-linked')?.checked || false;
-  const linked = getLinkedKeys();
 
-  const lines = [];
-  rows.forEach((row, ri) => {
-    const g = col => col != null ? (row[col] || '') : '';
-    const nom = [g(cols.prenom), g(cols.nom)].filter(Boolean).join(' ') || g(cols.nom) || '—';
-    const nomChat = g(cols.nom_chat);
-    const date = g(cols.date);
-    cols.montants.forEach((m, mi) => {
-      const montant = m.fixed !== undefined ? m.fixed
-        : m.computed ? Math.max(0, (parseFloat(g(m.col)) || 0) - (parseFloat(g(m.col2)) || 0))
-        : parseFloat(g(m.col)) || 0;
-      if (!montant) return;
-      const key = `${onglet}:${ri}:${mi}`;
-      const alreadyLinked = linked.includes(key);
-      if (hideLinked && alreadyLinked) return;
-      if (search && ![nom, nomChat, date, m.label].join(' ').toLowerCase().includes(search)) return;
-      lines.push({ onglet, ri, mi, nom, nomChat, date, montant, label: m.label, alreadyLinked, key, row, cols });
-    });
-  });
+  // Source unique : Import_Rapprochement, lignes en_attente de cet onglet (déjà filtré par loadData()).
+  const lines = (allImportRap||[])
+    .filter(r => r[ci.onglet]===onglet && r[ci.statut]==='en_attente')
+    .filter(r => !search || [r[ci.libelle], r[ci.nom_chat], fmtDateFR(r[ci.date])].join(' ').toLowerCase().includes(search))
+    .map(r => ({
+      id: r[ci.id], sheetIndex: r._sheetIndex,
+      nom: r[ci.libelle] || '—', nomChat: r[ci.nom_chat] || '',
+      date: fmtDateFR(r[ci.date]), montant: r[ci.montant] || 0,
+      label: r[ci.description] || onglet,
+    }));
 
   if (!lines.length) {
     document.getElementById('suivi-lines-wrap').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-3);font-size:12px;">Aucune ligne disponible</div>';
@@ -928,24 +885,21 @@ function renderSuiviLines() {
   }
 
   document.getElementById('suivi-lines-wrap').innerHTML = lines.map(l => `
-    <div class="suivi-line ${selectedSuiviLine?.key === l.key ? 'selected' : ''} ${l.alreadyLinked ? 'already-linked' : ''}"
-         onclick="${l.alreadyLinked ? '' : `selectSuiviLine('${l.key}',${l.ri},${l.mi},'${escH(l.onglet)}')`}">
+    <div class="suivi-line ${selectedSuiviLine?.id === l.id ? 'selected' : ''}"
+         onclick="selectSuiviLine('${escH(l.id)}',${l.sheetIndex})">
       <div class="suivi-line-info">
         <div class="suivi-line-nom">${escH(l.nom)}${l.nomChat ? ' — ' + escH(l.nomChat) : ''}</div>
-        <div class="suivi-line-detail">${escH(l.date)} · ${escH(l.label)} ${l.alreadyLinked ? '· <span style="color:var(--green);">✓ Déjà lié</span>' : ''}</div>
+        <div class="suivi-line-detail">${escH(l.date)} · ${escH(l.label)}</div>
       </div>
       <div class="suivi-line-montant">${fmt(l.montant)}</div>
     </div>`).join('');
 }
 
-function selectSuiviLine(key, ri, mi, onglet) {
-  const cols = SUIVI_COLS[onglet];
-  const row = (suiviData[onglet] || [])[ri];
-  if (!row) return;
-  selectedSuiviLine = { key, ri, mi, onglet, row, cols };
+function selectSuiviLine(id, sheetIndex) {
+  selectedSuiviLine = { id, sheetIndex };
 
   // Aperçu des infos copiées
-  const copies = [`Référence Suivi : <strong>${escH(key)}</strong>`];
+  const copies = [`Référence Suivi : <strong>${escH(id)}</strong>`];
   document.getElementById('rap-copy-detail').innerHTML = copies.map(c =>
     `<div style="padding:2px 0;border-bottom:0.5px solid var(--border);">${c}</div>`).join('');
   document.getElementById('rap-copy-preview').style.display = '';
@@ -956,7 +910,7 @@ function selectSuiviLine(key, ri, mi, onglet) {
 async function saveRapprochement() {
   if (!rapTarget || !selectedSuiviLine) return;
   const { remiseIdx, chequeIdx } = rapTarget;
-  const { key, onglet, ri, mi } = selectedSuiviLine;
+  const { id, sheetIndex } = selectedSuiviLine;
   const cr = Sheets.cols.remise;
   const r = allRemises[remiseIdx];
 
@@ -974,7 +928,7 @@ async function saveRapprochement() {
       type_comp:   r[base+5] || '',
       nom_chat:    r[base+6] || '',
       recu_fiscal: r[base+7] || '',
-      suivi_ref:   i === chequeIdx ? key : (r[cr.suivi_ref_start+i] || ''),
+      suivi_ref:   i === chequeIdx ? id : (r[cr.suivi_ref_start+i] || ''),
     });
   }
   const remise = {
@@ -993,8 +947,8 @@ async function saveRapprochement() {
   btn.innerHTML = '<i class="ti ti-loader-2 spinner"></i>';
   try {
     await Sheets.updateRemise(remiseIdx, remise);
-    // Marquer dans localStorage → la ligne Suivi bascule en Archive
-    markSuiviLinked(onglet, ri, mi, key);
+    // Bascule réellement la ligne dans Import_historique (visible dans import-suivi-archive.html)
+    await Sheets.archiverImportRapprochement(sheetIndex, r[cr.date_remise] || Sheets.todayFR());
     closeRapPanel();
     showToast('Rapprochement enregistré !');
     await loadData();
@@ -1042,27 +996,11 @@ async function deRapprocher() {
   };
   try {
     await Sheets.updateRemise(remiseIdx, remise);
-    // Retirer du localStorage
-    if (oldRef) {
-      const [onglet, rowIdx, montantIdx] = oldRef.split(':');
-      let arr = JSON.parse(localStorage.getItem('arche_suivi_imported') || '[]');
-      arr = arr.filter(i => !(i.onglet === onglet && i.rowIdx === parseInt(rowIdx) && i.montantIdx === parseInt(montantIdx)));
-      localStorage.setItem('arche_suivi_imported', JSON.stringify(arr));
-    }
+    if (oldRef) await reactiverRapprochement(oldRef);
     closeRapPanel();
     showToast('Lien Suivi supprimé');
     await loadData();
   } catch(e) { alert('Erreur : ' + e.message); }
-}
-
-function markSuiviLinked(onglet, rowIdx, montantIdx, key) {
-  try {
-    const arr = JSON.parse(localStorage.getItem('arche_suivi_imported') || '[]');
-    if (!arr.find(i => i.onglet === onglet && i.rowIdx === rowIdx && i.montantIdx === montantIdx)) {
-      arr.push({ onglet, rowIdx, montantIdx, opRef: key, date: new Date().toISOString() });
-      localStorage.setItem('arche_suivi_imported', JSON.stringify(arr));
-    }
-  } catch(e) {}
 }
 
 // ============================================================
