@@ -975,7 +975,7 @@ async function confirmImport(){
       let exists=false;
       try{exists=await Sheets.importRapExistsId(id);}catch(e){}
       if(exists){skipped++;continue;}
-      await Sheets.saveImportRapprochement({id,onglet:s.onglet,destination:dest,
+      await Sheets.saveImportRapprochement({id,onglet:s.onglet,statut:'en_attente',destination:dest,
         date:Sheets.normalizeDate(date),periode,libelle,montant,type_mvt,
         mode_reglement:mode,nom_chat:chat,num_cheque:bordereau,num_recu:recu,
         description:ONGLETS[s.onglet].description||'',
