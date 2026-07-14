@@ -978,7 +978,7 @@ async function confirmImport(){
       await Sheets.saveImportRapprochement({id,onglet:s.onglet,statut:'en_attente',destination:dest,
         date:Sheets.normalizeDate(date),periode,libelle,montant,type_mvt,
         mode_reglement:mode,nom_chat:chat,num_cheque:bordereau,num_recu:recu,
-        description:ONGLETS[s.onglet].description||'',
+        description:s.label||ONGLETS[s.onglet].description||'',
       });
       importedIds.add(id); ok++;
     }catch(e){errors.push(`${libelle} : ${e.message||JSON.stringify(e)}`);}
