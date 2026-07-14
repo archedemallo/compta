@@ -246,7 +246,7 @@ async function loadData() {
   // Source 2 : Import_historique (imports banque rapprochés)
   const [caisse, importHist] = await Promise.all([
     Sheets.getCaisseOperations(),
-    Sheets.getImportRapprochement('rapprochee').catch(() => []),
+    Sheets.getImportHistorique().catch(() => []),
   ]);
   const cc = Sheets.cols.caisse;
   const ci = Sheets.cols.importRap;
@@ -256,9 +256,12 @@ async function loadData() {
     .map((r, i) => ({ row: r, idx: i, source: 'caisse', cols: cc }))
     .filter(({ row }) => row[cc.suivi_ref] && !row[cc.suivi_ref].startsWith('true') && row[cc.suivi_ref].includes(':'));
 
-  // Lignes Import_historique (rapprochements banque + transferts caisse)
+  // Lignes Import_historique — uniquement destination "banque" : les destinations
+  // "caisse" ont déjà une ligne réelle dans Caisse (via caisseImp ci-dessus), les reprendre
+  // ici créerait un doublon. idx = index réel dans Import_historique (pour "Annuler").
   const histImp = importHist
-    .map((r, i) => ({
+    .filter(r => (r[ci.destination] || '') !== 'caisse')
+    .map(r => ({
       row: {
         // On adapte les colonnes pour l'affichage uniforme
         [cc.date]:       r[ci.date]           || '',
@@ -272,7 +275,7 @@ async function loadData() {
         _mode:           r[ci.mode_reglement] || '',
         _date_rap:       r[ci.date_rapprochement] || '',
       },
-      idx: i, source: r[ci.destination] === 'caisse' ? 'caisse' : 'banque', cols: cc,
+      idx: r._sheetIndex, source: 'banque', isHist: true, cols: cc,
     }));
 
   allRows = [...caisseImp, ...histImp];
@@ -339,10 +342,18 @@ function renderTable() {
   const mkTh = (label, col, cls='') =>
     `<th class="${sortCol===col?'sorted':''} ${cls}" onclick="setSort(${col})">${label}${sortIcon(col)}</th>`;
 
-  const trs = rows.map(({ row, idx, source, cols }) => {
+  const trs = rows.map(({ row, idx, source, cols, isHist }) => {
     const ongletRef = (row[cols.suivi_ref] || '').split(':')[0] || '';
     const ongletLabel = ONGLET_LABELS[ongletRef] || ongletRef;
     const isEdit = editIdx === idx && editSource === source;
+    // Les lignes issues de Import_historique (banque rapprochée) n'ont pas de ligne
+    // propre dans Caisse/Banque à cet idx : Modifier/Supprimer ne sont pas sûrs ici,
+    // seul "Annuler le rapprochement" (qui retrouve la vraie ligne via suivi_ref) l'est.
+    const actions = isHist
+      ? `<button class="btn-icon" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;color:var(--amber);" onclick="openAnnuler(${idx},'${source}')" title="Annuler le rapprochement"><i class="ti ti-arrow-back-up"></i></button>`
+      : `<button class="edit-btn" onclick="openEdit(${idx},'${source}')" title="Modifier"><i class="ti ti-pencil"></i></button>
+        <button class="btn-icon" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;color:var(--amber);" onclick="openAnnuler(${idx},'${source}')" title="Annuler le rapprochement"><i class="ti ti-arrow-back-up"></i></button>
+        <button class="del-btn" onclick="openDel(${idx},'${source}')" title="Supprimer définitivement"><i class="ti ti-trash"></i></button>`;
     return `<tr class="${isEdit ? 'editing' : ''}">
       <td style="color:var(--text-3);white-space:nowrap;">${row[cols.date] || ''}</td>
       <td style="font-weight:500;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row[cols.libelle] || ''}</td>
@@ -351,11 +362,7 @@ function renderTable() {
       <td style="font-size:10px;color:var(--text-3);">${ongletLabel}</td>
       <td class="r amount-c">${row[cols.credit] ? fmt(row[cols.credit]) : ''}</td>
       <td style="font-size:10px;color:var(--text-3);">${row[cols.nom_chat] || ''}</td>
-      <td class="r" style="white-space:nowrap;">
-        <button class="edit-btn" onclick="openEdit(${idx},'${source}')" title="Modifier"><i class="ti ti-pencil"></i></button>
-        <button class="btn-icon" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;color:var(--amber);" onclick="openAnnuler(${idx},'${source}')" title="Annuler le rapprochement"><i class="ti ti-arrow-back-up"></i></button>
-        <button class="del-btn" onclick="openDel(${idx},'${source}')" title="Supprimer définitivement"><i class="ti ti-trash"></i></button>
-      </td>
+      <td class="r" style="white-space:nowrap;">${actions}</td>
     </tr>`;
   }).join('');
 
@@ -535,7 +542,7 @@ async function confirmAnnuler() {
   const suiviRef = row[cols.suivi_ref] || '';
   try {
     // 1. Retrouver dans Import_historique et remettre en attente
-    const histRows = await Sheets.getImportRapprochement('rapprochee');
+    const histRows = await Sheets.getImportHistorique();
     const ci = Sheets.cols.importRap;
     const histRow = histRows.find(r => (r[ci.id]||'') === suiviRef);
     if (histRow) {
