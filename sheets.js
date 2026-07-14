@@ -319,6 +319,17 @@ async function getImportRapprochement(statut) {
   return statut ? nonEmpty.filter(r => r[COLS_IMPORT_RAP.statut] === statut) : nonEmpty;
 }
 
+// Lit les lignes RÉELLEMENT archivées (onglet Import_historique).
+// À ne pas confondre avec getImportRapprochement('rapprochee') : dès qu'une ligne est
+// archivée, archiverImportRapprochement() la vide dans Import_Rapprochement, donc
+// getImportRapprochement('rapprochee') retourne toujours un tableau vide.
+async function getImportHistorique() {
+  const rows = await readSheet(SHEETS_CONFIG.sheets.import_hist);
+  const data = rows.length > 1 ? rows.slice(1) : [];
+  data.forEach((r, i) => { r._sheetIndex = i; });
+  return data.filter(r => r[COLS_IMPORT_RAP.id] && String(r[COLS_IMPORT_RAP.id]).trim());
+}
+
 // ============================================================
 // FONCTIONS D'ÉCRITURE
 // ============================================================
@@ -1082,7 +1093,7 @@ window.Sheets = {
   saveCaisse2Operation, updateCaisse2Operation,
   getBanqueOperations, getCaissePhysique,
   getCheques, getRemises, getFactures, getJournal, getFormulairesData,
-  getImportRapprochement,
+  getImportRapprochement, getImportHistorique,
   // Écriture
   saveCaisseOperation,  updateCaisseOperation,
   saveBanqueOperation,  updateBanqueOperation,
