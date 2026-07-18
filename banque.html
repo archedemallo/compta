@@ -399,6 +399,16 @@ const SUIVI_BANK_ONGLETS = {
   Dons:{label:'Dons',cols:{date:2,nom:7,prenom:8,nom_chat:null,num_recu:6,montants:[{col:4,label:'Don'}]}},
   Adhesion:{label:'Adhésions',cols:{date:2,nom:4,prenom:5,nom_chat:null,montants:[{col:12,label:'Bienfaiteur'},{col:13,label:'Sympathisant'},{col:14,label:'Adhésion'}]}},
 };
+// Catégorie utilisée dans la colonne Description de la ligne banque, en fonction de l'onglet Suivi d'origine
+const ONGLET_CATEGORIE_DESCRIPTION = {
+  Adoption: 'adoption',
+  Reservation_Chat: 'reservation',
+  Reservation_Chaton: 'reservation',
+  Contrat_reservation_chat: 'reservation',
+  Dons: 'don',
+  Adhesion: 'adhesion',
+};
+function ongletCategorieDescription(key){ return ONGLET_CATEGORIE_DESCRIPTION[key] || (key||'').toLowerCase(); }
 
 // ============================================================
 // INIT
@@ -1267,17 +1277,18 @@ async function savePanel(){
     // Lier Suivi (une ou plusieurs lignes) → reporter dans banque + archiver dans Import_Rapprochement
     if(linkedSuivis.length){
       const ci = Sheets.cols.importRap;
-      const multi      = linkedSuivis.length > 1;
       const sr0         = linkedSuivis[0].data, onglet0 = linkedSuivis[0].onglet;
       const libelles    = linkedSuivis.map(l=>l.data[ci.libelle]  ||'').filter(Boolean).join(', ');
       const nomsChat    = linkedSuivis.map(l=>l.data[ci.nom_chat] ||'').filter(Boolean).join(', ');
       const numsRecu    = linkedSuivis.map(l=>l.data[ci.num_recu] ||'').filter(Boolean).join(', ');
       const numsCheque  = linkedSuivis.map(l=>l.data[ci.num_cheque]||'').filter(Boolean).join(', ');
       const idsSuivi    = linkedSuivis.map(l=>l.data[ci.id]       ||'').filter(Boolean).join(', ');
+      // Catégorie(s) d'onglet mappée(s) pour la colonne Description (ex: Reservation_Chaton → reservation)
+      const categories  = [...new Set(linkedSuivis.map(l=>ongletCategorieDescription(l.onglet)).filter(Boolean))].join(', ');
 
       // Copier les infos dans la ligne banque (sans écraser date/montant/libellé)
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,    sr0[ci.type_mvt]  || onglet0 || '');
-      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, multi ? libelles : (sr0[ci.type_mvt] || onglet0 || ''));
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, categories || sr0[ci.type_mvt] || onglet0 || '');
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp,   libelles || '');  // nom(s) de la/des personne(s)
       if(nomsChat)   await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.nom_chat,       nomsChat);
       if(numsRecu)   await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.num_don_fiscal, numsRecu);   // N° reçu fiscal → col don fiscal
