@@ -324,7 +324,7 @@
       <!-- LIER À SUIVI -->
       <div class="rap-section">
         <div class="rap-section-title" style="color:var(--purple);"><i class="ti ti-database" style="color:var(--purple);"></i> Lier à une ligne Suivi</div>
-        <div style="font-size:11px;color:var(--text-3);margin-bottom:8px;">Associe cette opération bancaire à une ligne du Google Sheet Suivi.</div>
+        <div style="font-size:11px;color:var(--text-3);margin-bottom:8px;">Associe cette opération bancaire à une ou plusieurs lignes du Google Sheet Suivi (cliquer plusieurs lignes pour un rapprochement groupé, ex : 1 virement = 2 dons).</div>
         <div class="suivi-tabs-bank" id="suivi-tabs-bank"></div>
         <input class="f-input" type="text" id="rap-suivi-search" placeholder="Rechercher…" oninput="renderSuiviBankLines()" style="width:100%;box-sizing:border-box;margin-bottom:6px;font-size:10px;padding:3px 8px;">
         <div id="suivi-bank-lines" style="max-height:200px;overflow-y:auto;"></div>
@@ -387,7 +387,7 @@ let editingIdx  = null;   // index dans allRows de la ligne en cours d'édition
 let sortCol=-1, sortAsc=true;
 let ventItems = [];
 let panelRowIdx = null;
-let linkedCheque = null, linkedFactures = [], linkedRemise = null, linkedCaisse = null, linkedSuivi = null;
+let linkedCheque = null, linkedFactures = [], linkedRemise = null, linkedCaisse = null, linkedSuivis = [];
 let suiviBankData = {};  // données Suivi chargées
 let activeSuiviBankTab = 'Adoption';
 const SUIVI_BANK_ID = '1y6yD4AohP7T10GE7mmguIqNWSnwla9t1mewBpCDej_Y';
@@ -883,7 +883,7 @@ function clearSelection(){
 function openPanel(){
   if (selectedIdx === null) return;
   panelRowIdx   = selectedIdx;
-  linkedCheque  = null; linkedFactures = []; linkedRemise = null; linkedCaisse = null; linkedSuivi = null;
+  linkedCheque  = null; linkedFactures = []; linkedRemise = null; linkedCaisse = null; linkedSuivis = [];
   ventItems     = [];
   const cb = Sheets.cols.banque, r = allRows[panelRowIdx];
   const montant = parseMontant(r[cb.credit]||r[cb.debit]) || 0;
@@ -897,7 +897,7 @@ function openPanel(){
   document.getElementById('rap-remise-linked').innerHTML  = '';
   document.getElementById('rap-caisse-linked').innerHTML  = '';
   document.getElementById('rap-suivi-linked').innerHTML   = '';
-  linkedSuivi = null;
+  linkedSuivis = [];
   ventItems = [{ montant, type_mvt: r[cb.type_mvt]||'' }];
   renderVentRows(montant);
   populateRapSelects();
@@ -953,11 +953,11 @@ function renderSuiviBankLines(){
   if(!lines.length){ wrap.innerHTML='<div style="padding:12px;text-align:center;color:var(--text-3);font-size:11px;">Aucune ligne en attente</div>'; return; }
   wrap.innerHTML = lines.map(r=>{
     const idx = r._sheetIndex;
-    const selected = linkedSuivi?.idx === idx;
+    const selected = linkedSuivis.some(s => s.idx === idx);
     return `<div class="suivi-line-bank ${selected?'selected':''}"
        onclick="selectSuiviBankLine(${idx})">
       <div style="flex:1;">
-        <div style="font-size:11px;font-weight:500;">${escH(r[ci.libelle]||'—')}${r[ci.nom_chat]?' — '+escH(r[ci.nom_chat]):''}</div>
+        <div style="font-size:11px;font-weight:500;">${selected?'<i class="ti ti-check" style="color:var(--purple);margin-right:4px;"></i>':''}${escH(r[ci.libelle]||'—')}${r[ci.nom_chat]?' — '+escH(r[ci.nom_chat]):''}</div>
         <div style="font-size:10px;color:var(--text-3);">${escH(fmtDateFR(r[ci.date]))} · ${escH(r[ci.type_mvt]||'')} · ${escH(r[ci.onglet]||'')}${r[ci.num_recu]?' · <span style="color:var(--purple)">Reçu:'+escH(r[ci.num_recu])+'</span>':''}</div>
       </div>
       <div style="font-size:12px;font-weight:600;color:var(--green);white-space:nowrap;">${fmt(r[ci.montant])}</div>
@@ -965,17 +965,42 @@ function renderSuiviBankLines(){
   }).join('');
 }
 
+function renderSuivisLinked(){
+  const ci = Sheets.cols.importRap;
+  if(!linkedSuivis.length) return '';
+  const total = linkedSuivis.reduce((s,l)=>s+(parseMontant(String(l.data[ci.montant]||''))||0),0);
+  const rows = linkedSuivis.map((l,i)=>{
+    const r = l.data;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--purple-bg);border:0.5px solid rgba(120,60,160,0.2);border-radius:var(--radius-sm);font-size:11px;margin-top:4px;">
+      <i class="ti ti-check" style="color:var(--purple);"></i>
+      <span style="flex:1;color:var(--purple);"><strong>${escH(r[ci.libelle]||'')}</strong>${r[ci.nom_chat]?' — '+escH(r[ci.nom_chat]):''} — ${fmt(r[ci.montant])}${r[ci.num_recu]?' <span style="color:var(--text-3);font-size:9px;">Reçu: '+escH(r[ci.num_recu])+'</span>':''}</span>
+      <button style="background:none;border:none;cursor:pointer;color:var(--red);font-size:13px;" onclick="removeSuiviLinked(${i})"><i class="ti ti-x"></i></button>
+    </div>`;
+  }).join('');
+  const totalRow = linkedSuivis.length>1
+    ? `<div style="font-size:10px;color:var(--text-3);margin-top:4px;">Total des lignes liées : <strong>${fmt(total)}</strong></div>`
+    : '';
+  return rows + totalRow;
+}
+
 function selectSuiviBankLine(idx){
   const ci = Sheets.cols.importRap;
   const r = (allImportRap||[]).find(x => x._sheetIndex === idx);
   if(!r) return;
-  linkedSuivi = {idx, data:r, onglet:r[ci.onglet]||''};
-  document.getElementById('rap-suivi-linked').innerHTML=`
-    <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--purple-bg);border:0.5px solid rgba(120,60,160,0.2);border-radius:var(--radius-sm);font-size:11px;margin-top:4px;">
-      <i class="ti ti-check" style="color:var(--purple);"></i>
-      <span style="flex:1;color:var(--purple);"><strong>${escH(r[ci.libelle]||'')}</strong>${r[ci.nom_chat]?' — '+escH(r[ci.nom_chat]):''} — ${fmt(r[ci.montant])}${r[ci.num_recu]?' <span style="color:var(--text-3);font-size:9px;">Reçu: '+escH(r[ci.num_recu])+'</span>':''}</span>
-      <button style="background:none;border:none;cursor:pointer;color:var(--red);font-size:13px;" onclick="linkedSuivi=null;document.getElementById('rap-suivi-linked').innerHTML='';renderSuiviBankLines();"><i class="ti ti-x"></i></button>
-    </div>`;
+  const already = linkedSuivis.findIndex(s => s.idx === idx);
+  if(already >= 0){
+    // Re-cliquer sur une ligne déjà liée la retire de la sélection
+    linkedSuivis.splice(already, 1);
+  } else {
+    linkedSuivis.push({idx, data:r, onglet:r[ci.onglet]||''});
+  }
+  document.getElementById('rap-suivi-linked').innerHTML = renderSuivisLinked();
+  renderSuiviBankLines();
+}
+
+function removeSuiviLinked(i){
+  linkedSuivis.splice(i,1);
+  document.getElementById('rap-suivi-linked').innerHTML = renderSuivisLinked();
   renderSuiviBankLines();
 }
 function closePanel(){ document.getElementById('panel-overlay').classList.add('hidden'); panelRowIdx=null; }
@@ -1149,7 +1174,7 @@ async function savePanel(){
       if(chq[cc.nom_chat]) await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.nom_chat, chq[cc.nom_chat]);
       await Sheets.encaisserCheque(linkedCheque.idx, r[cb.date]||Sheets.todayFR(), r[cb.libelle]||'Encaissement');
       // Synchronisation Suivi : archiver la ligne Import_Rapprochement correspondante si elle existe
-      if(!linkedSuivi){
+      if(!linkedSuivis.length){
         const ci=Sheets.cols.importRap, numChq=chq[cc.num_cheque];
         const suiviMatch=(allImportRap||[]).find(s=>s[ci.num_cheque]&&String(s[ci.num_cheque])===String(numChq));
         if(suiviMatch) await Sheets.archiverImportRapprochement(suiviMatch._sheetIndex, r[cb.date]||Sheets.todayFR());
@@ -1239,24 +1264,36 @@ async function savePanel(){
       await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp,      'Caisse ' + (lig[cc.source]||''));
     }
 
-    // Lier Suivi → reporter dans banque + archiver dans Import_Rapprochement
-    if(linkedSuivi){
+    // Lier Suivi (une ou plusieurs lignes) → reporter dans banque + archiver dans Import_Rapprochement
+    if(linkedSuivis.length){
       const ci = Sheets.cols.importRap;
-      const sr = linkedSuivi.data; // ligne Import_Rapprochement
+      const multi      = linkedSuivis.length > 1;
+      const sr0         = linkedSuivis[0].data, onglet0 = linkedSuivis[0].onglet;
+      const libelles    = linkedSuivis.map(l=>l.data[ci.libelle]  ||'').filter(Boolean).join(', ');
+      const nomsChat    = linkedSuivis.map(l=>l.data[ci.nom_chat] ||'').filter(Boolean).join(', ');
+      const numsRecu    = linkedSuivis.map(l=>l.data[ci.num_recu] ||'').filter(Boolean).join(', ');
+      const numsCheque  = linkedSuivis.map(l=>l.data[ci.num_cheque]||'').filter(Boolean).join(', ');
+      const idsSuivi    = linkedSuivis.map(l=>l.data[ci.id]       ||'').filter(Boolean).join(', ');
+
       // Copier les infos dans la ligne banque (sans écraser date/montant/libellé)
-      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,    sr[ci.type_mvt]      || linkedSuivi.onglet || '');
-      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, sr[ci.type_mvt]      || linkedSuivi.onglet || '');
-      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp,   sr[ci.libelle]       || '');  // nom de la personne
-      if(sr[ci.nom_chat])    await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.nom_chat,       sr[ci.nom_chat]);
-      if(sr[ci.num_recu])    await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.num_don_fiscal, sr[ci.num_recu]);   // N° reçu fiscal → col don fiscal
-      if(sr[ci.num_cheque])  await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.ref_cheque,     sr[ci.num_cheque]);
-      // Archiver la ligne dans Import_historique
-      await Sheets.archiverImportRapprochement(linkedSuivi.idx, r[cb.date] || Sheets.todayFR());
-      // Synchronisation Chèques : encaisser le chèque correspondant si num_cheque présent et non déjà lié
-      if(!linkedCheque && sr[ci.num_cheque]){
-        const cc2=Sheets.cols.cheque;
-        const chqMatch=(allCheques||[]).find(ch=>String(ch[cc2.num_cheque])===String(sr[ci.num_cheque]));
-        if(chqMatch) await Sheets.encaisserCheque(chqMatch._sheetIndex, r[cb.date]||Sheets.todayFR(), r[cb.libelle]||'Encaissement');
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_mvt,    sr0[ci.type_mvt]  || onglet0 || '');
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.description, multi ? libelles : (sr0[ci.type_mvt] || onglet0 || ''));
+      await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.type_comp,   libelles || '');  // nom(s) de la/des personne(s)
+      if(nomsChat)   await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.nom_chat,       nomsChat);
+      if(numsRecu)   await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.num_don_fiscal, numsRecu);   // N° reçu fiscal → col don fiscal
+      if(numsCheque) await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.ref_cheque,     numsCheque);
+      if(idsSuivi)   await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.suivi_ref,      idsSuivi);
+
+      // Archiver chaque ligne dans Import_historique + synchro chèques
+      for(const l of linkedSuivis){
+        const sr = l.data;
+        await Sheets.archiverImportRapprochement(l.idx, r[cb.date] || Sheets.todayFR());
+        // Synchronisation Chèques : encaisser le chèque correspondant si num_cheque présent et non déjà lié
+        if(!linkedCheque && sr[ci.num_cheque]){
+          const cc2=Sheets.cols.cheque;
+          const chqMatch=(allCheques||[]).find(ch=>String(ch[cc2.num_cheque])===String(sr[ci.num_cheque]));
+          if(chqMatch) await Sheets.encaisserCheque(chqMatch._sheetIndex, r[cb.date]||Sheets.todayFR(), r[cb.libelle]||'Encaissement');
+        }
       }
     }
 
@@ -1422,11 +1459,11 @@ async function delierBanqueSuivi(ri) {
   const r = allRows.find(x => x._sheetIndex === ri) || allRows[ri];
   if (!r) return;
   const sheetRow = (r._sheetIndex !== undefined ? r._sheetIndex : ri) + 2;
-  const suiviRef = r[cb.suivi_ref] || '';
+  const suiviRefs = (r[cb.suivi_ref] || '').split(',').map(s => s.trim()).filter(Boolean);
   try {
     await Sheets.updateCell(Sheets.config.sheets.banque, sheetRow, cb.suivi_ref, '');
     r[cb.suivi_ref] = '';
-    if (suiviRef) await reactiverRapprochement(suiviRef);
+    for (const ref of suiviRefs) await reactiverRapprochement(ref);
     showToast("Rapprochement Suivi supprime"); renderTable();
   } catch(e) { alert('Erreur : '+(e.message||e)); }
 }
