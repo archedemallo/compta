@@ -969,6 +969,19 @@ function getCurrentPeriode() {
   const d = new Date(), y = d.getFullYear(), m = d.getMonth()+1;
   return m >= 11 ? `${y} - ${y+1}` : `${y-1} - ${y}`;
 }
+
+// Calcule la période ("YYYY - YYYY+1") correspondant à une date donnée,
+// selon la même règle de bascule (novembre) que getCurrentPeriode().
+// Retourne '' si la date est vide ou illisible.
+function getPeriodeForDate(dateStr) {
+  if (!dateStr) return '';
+  const norm = normalizeDate(dateStr); // -> dd/mm/yyyy
+  const parts = norm.split('/');
+  if (parts.length !== 3) return '';
+  const m = parseInt(parts[1], 10), y = parseInt(parts[2], 10);
+  if (!y || !m) return '';
+  return m >= 11 ? `${y} - ${y+1}` : `${y-1} - ${y}`;
+}
 async function setCurrentPeriode(p) {
   localStorage.setItem('arche_periode', p);
   await saveConfigKey('periode_active', p);
@@ -1110,7 +1123,7 @@ window.Sheets = {
   // Calculs
   calculerTotalCaisse, detectDoublons,
   // Paramètres
-  getPeriodes, savePeriodes, getPreviousPeriode, getCurrentPeriode, setCurrentPeriode,
+  getPeriodes, savePeriodes, getPreviousPeriode, getCurrentPeriode, setCurrentPeriode, getPeriodeForDate,
   getTypesMouvement, saveTypesMouvement,
   getTypesComplementaires, saveTypesComplementaires,
   getModesReglement, saveModesReglement,
