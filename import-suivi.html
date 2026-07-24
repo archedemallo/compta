@@ -914,6 +914,7 @@ function openImportModal(){
     const modeRaw=getCellVal(row,cfg.cols.mode_reglement)||'Chèque';
     const nom=getNom(row,cfg), chat=cfg.cols.nom_chat!==null?getCellVal(row,cfg.cols.nom_chat):'';
     const date=formatDateISO(getCellVal(row,cfg.cols.date));
+    const perForRow=Sheets.getPeriodeForDate(date)||per;
     const numCheque=getCellVal(row,cfg.cols.num_cheque);
     const numRecu=cfg.cols.num_recu!==undefined?getCellVal(row,cfg.cols.num_recu):'';
     html+=`<div style="background:var(--surface-2);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px;" data-selkey="${sk}">
@@ -926,7 +927,7 @@ function openImportModal(){
           <input type="date" class="imp-date" value="${date}" style="font-size:11px;padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);width:100%;font-family:'DM Sans',sans-serif;"></div>
         <div class="form-group"><label class="form-label">Période</label>
           <select class="imp-per" style="font-size:11px;padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);width:100%;font-family:'DM Sans',sans-serif;">
-            ${Sheets.getPeriodes().map(p=>`<option ${p===per?'selected':''}>${p}</option>`).join('')}
+            ${Sheets.getPeriodes().map(p=>`<option ${p===perForRow?'selected':''}>${p}</option>`).join('')}
           </select></div>
       </div>
       <div class="form-row-2" style="gap:8px;">
