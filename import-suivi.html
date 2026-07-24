@@ -181,6 +181,7 @@
           <option value="caisse">Caisse uniquement</option>
           <option value="banque">Banque uniquement</option>
         </select>
+        <select class="f-select" id="fl-periode-imp" onchange="renderCurrentImportTab()"></select>
         <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-2);cursor:pointer;">
           <input type="checkbox" id="fl-hide-imp" onchange="renderCurrentImportTab()" style="accent-color:var(--orange);"> Masquer déjà importés
         </label>
@@ -457,6 +458,10 @@ Auth.requireAuth(async () => {
   document.getElementById('ed-type').innerHTML = types.map(t=>`<option>${t}</option>`).join('');
   const periodes = Sheets.getPeriodes();
   document.getElementById('ed-periode').innerHTML = periodes.map(p=>`<option>${p}</option>`).join('');
+  document.getElementById('fl-periode-imp').innerHTML =
+    `<option value="">Toutes périodes</option>` +
+    periodes.map(p=>`<option value="${p}">${p}</option>`).join('');
+  document.getElementById('fl-periode-imp').value = Sheets.getCurrentPeriode();
 
   renderRefreshGrid();
   loadLastRefreshInfo();
@@ -771,6 +776,7 @@ function renderCurrentImportTab() {
   const key=activeImportTab, cfg=ONGLETS[key], rows=allImportData[key]||[];
   const search=(document.getElementById('fl-search-imp')?.value||'').toLowerCase();
   const destF=document.getElementById('fl-dest-imp')?.value||'';
+  const periodeF=document.getElementById('fl-periode-imp')?.value||'';
   const hideImp=document.getElementById('fl-hide-imp')?.checked||false;
   if(!rows.length){
     document.getElementById('imp-table-wrap').innerHTML=
@@ -781,6 +787,7 @@ function renderCurrentImportTab() {
     const nom=getNom(row,cfg), chat=getCellVal(row,cfg.cols.nom_chat), date=getCellVal(row,cfg.cols.date);
     if(search&&![nom,chat,date].join(' ').toLowerCase().includes(search))return false;
     if(destF&&getDestination(getCellVal(row,cfg.cols.mode_reglement))!==destF)return false;
+    if(periodeF&&Sheets.getPeriodeForDate(date)!==periodeF)return false;
     if(hideImp){
       const allDone=getVisibleMontants(cfg,row).every(({m,mi})=>{
         const montant=m.fixed!==undefined?m.fixed:parseFloat(row[m.col]||0)||0;
@@ -886,6 +893,7 @@ function updateImportSelectionInfo(){
 function clearImportFilters(){
   document.getElementById('fl-search-imp').value='';
   document.getElementById('fl-dest-imp').selectedIndex=0;
+  document.getElementById('fl-periode-imp').value=Sheets.getCurrentPeriode();
   document.getElementById('fl-hide-imp').checked=false;
   renderCurrentImportTab();
 }
