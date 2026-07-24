@@ -223,6 +223,7 @@
           <select class="f-select" id="fl-mode-rap" onchange="renderRapTable()" style="width:100px;">
             <option value="">Tous modes</option>
           </select>
+          <select class="f-select" id="fl-periode-rap" onchange="renderRapTable()" style="width:120px;"></select>
           <button class="btn btn-secondary btn-sm" onclick="clearRapFilters()"><i class="ti ti-x"></i> Effacer</button>
           <span id="rap-result-count" style="font-size:10px;color:var(--text-3);"></span>
           <div style="margin-left:auto;">
@@ -462,6 +463,10 @@ Auth.requireAuth(async () => {
     `<option value="">Toutes périodes</option>` +
     periodes.map(p=>`<option value="${p}">${p}</option>`).join('');
   document.getElementById('fl-periode-imp').value = Sheets.getCurrentPeriode();
+  document.getElementById('fl-periode-rap').innerHTML =
+    `<option value="">Toutes périodes</option>` +
+    periodes.map(p=>`<option value="${p}">${p}</option>`).join('');
+  document.getElementById('fl-periode-rap').value = Sheets.getCurrentPeriode();
 
   renderRefreshGrid();
   loadLastRefreshInfo();
@@ -1052,10 +1057,12 @@ function getRapFiltered(){
   const dest=document.getElementById('fl-dest-rap')?.value||'';
   const onglet=document.getElementById('fl-onglet-rap')?.value||'';
   const mode=document.getElementById('fl-mode-rap')?.value||'';
+  const periodeF=document.getElementById('fl-periode-rap')?.value||'';
   let rows=[...allRapRows];
   if(dest)  rows=rows.filter(r=>r[ci.destination]===dest);
   if(onglet)rows=rows.filter(r=>r[ci.onglet]===onglet);
   if(mode)  rows=rows.filter(r=>r[ci.mode_reglement]===mode);
+  if(periodeF)rows=rows.filter(r=>r[ci.periode]===periodeF);
   if(search)rows=rows.filter(r=>[r[ci.libelle],r[ci.nom_chat],r[ci.type_mvt],r[ci.id]].join(' ').toLowerCase().includes(search));
   rows.sort((a,b)=>{
     const va=dateToISO(String(a[ci.date]||'')),vb=dateToISO(String(b[ci.date]||''));
@@ -1120,6 +1127,7 @@ function rapToggleSelect(idx){
 function clearRapFilters(){
   document.getElementById('fl-search-rap').value='';
   ['fl-dest-rap','fl-onglet-rap','fl-mode-rap'].forEach(id=>{const e=document.getElementById(id);if(e)e.selectedIndex=0;});
+  document.getElementById('fl-periode-rap').value=Sheets.getCurrentPeriode();
   renderRapTable();
 }
 
