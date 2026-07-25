@@ -1009,12 +1009,35 @@ function chatShareForName(nomChatCol, montant, chatName) {
   return montant / diviseur;
 }
 
+// Regroupe les noms de chats en ignorant la casse (ex. "alba" et "Alba" = le même chat).
+// La casse retenue pour l'affichage est celle qui revient le plus souvent dans les données.
+function canonicalChatNames() {
+  const counts = new Map(); // clé (minuscule) -> Map(casse originale -> nb d'occurrences)
+  const add = raw => {
+    if (!raw || !raw.trim()) return;
+    raw.trim().split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>{
+      const key = x.toLowerCase();
+      if (!counts.has(key)) counts.set(key, new Map());
+      const casings = counts.get(key);
+      casings.set(x, (casings.get(x)||0)+1);
+    });
+  };
+  getChatRows('caisse').forEach(r => add(r[getCaisseCol('nom_chat')]));
+  getChatRows('banque').forEach(r => add(r[getBanqueCol('nom_chat')]));
+  getChatRows('cheques').forEach(r => add(r[getChequeCol('nom_chat')]));
+  getChatRows('remises').forEach(r => add(r.nom_chat));
+
+  const map = new Map(); // clé (minuscule) -> nom canonique à afficher
+  counts.forEach((casings, key) => {
+    let best = null, bestN = -1;
+    casings.forEach((n, casing) => { if (n > bestN) { bestN = n; best = casing; } });
+    map.set(key, best);
+  });
+  return map;
+}
+
 function buildChatSelect() {
-  const names = new Set();
-  getChatRows('caisse').forEach(r => { const n=r[getCaisseCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>names.add(x)); });
-  getChatRows('banque').forEach(r => { const n=r[getBanqueCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>names.add(x)); });
-  getChatRows('cheques').forEach(r => { const n=r[getChequeCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>names.add(x)); });
-  getChatRows('remises').forEach(r => { const n=r.nom_chat; if(n&&n.trim()) n.trim().split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>names.add(x)); });
+  const names = new Set(canonicalChatNames().values());
 
   const sel = document.getElementById('chat-select');
   const current = sel.value;
@@ -1060,12 +1083,9 @@ function renderChatGlobal() {
 
   const total = depC + depB + depF;
 
-  // Chats avec nom
-  const nChats = new Set();
-  caisse.forEach(r => { const n=r[getCaisseCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>nChats.add(x)); });
-  banque.forEach(r => { const n=r[getBanqueCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>nChats.add(x)); });
-  getChatRows('cheques').forEach(r => { const n=r[getChequeCol('nom_chat')]; if(n&&n.trim()) n.trim().split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>nChats.add(x)); });
-  getChatRows('remises').forEach(r => { const n=r.nom_chat; if(n&&n.trim()) n.trim().split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>nChats.add(x)); });
+  // Chats avec nom (regroupés en ignorant la casse)
+  const canonNames = canonicalChatNames();
+  const nChats = new Set(canonNames.values());
 
   const perStr = chatPeriodes.length===0 ? 'Aucune période' : chatPeriodes.join(', ');
   document.getElementById('chat-global-badge').textContent = perStr;
@@ -1083,13 +1103,8 @@ function renderChatGlobal() {
   );
 
   // ── Tableau récap par chat ──────────────────────────────────────────
-  // Collecter tous les noms de chats individuels (split multi-chats)
-  const allChatNames = new Set();
-  const addNames = col => { if(col&&col.trim()) col.trim().split(/[\/,|]|\s+-\s+/).map(x=>x.trim()).filter(x=>x&&x.toLowerCase()!=='medicament').forEach(x=>allChatNames.add(x)); };
-  caisse.forEach(r => addNames(r[getCaisseCol('nom_chat')]));
-  banque.forEach(r => addNames(r[getBanqueCol('nom_chat')]));
-  getChatRows('cheques').forEach(r => addNames(r[getChequeCol('nom_chat')]));
-  getChatRows('remises').forEach(r => addNames(r.nom_chat));
+  // Noms de chats individuels, regroupés en ignorant la casse (canonNames calculé ci-dessus)
+  const allChatNames = new Set(canonNames.values());
 
   // Pour chaque chat, calculer dépenses et recettes via chatShareForName
   const chatRecap = [...allChatNames].sort((a,b)=>a.localeCompare(b,'fr')).map(name => {
