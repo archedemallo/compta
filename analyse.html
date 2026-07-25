@@ -1096,27 +1096,10 @@ function renderChatGlobal() {
   // Chats avec nom (regroupés en ignorant la casse)
   const canonNames = canonicalChatNames();
   const nChats = new Set(canonNames.values());
-
-  const perStr = chatPeriodes.length===0 ? 'Aucune période' : chatPeriodes.join(', ');
-  document.getElementById('chat-global-badge').textContent = perStr;
-
-  document.getElementById('chat-global-kpis').innerHTML = `
-    <div class="kpi"><div class="kpi-label">Coût total</div><div class="kpi-value v-red">${fmt(total)}</div><div class="kpi-sub">Toutes sources</div></div>
-    <div class="kpi"><div class="kpi-label">Caisse</div><div class="kpi-value v-orange">${fmt(depC)}</div><div class="kpi-sub">Opérations caisse</div></div>
-    <div class="kpi"><div class="kpi-label">Banque</div><div class="kpi-value v-orange">${fmt(depB)}</div><div class="kpi-sub">Opérations banque</div></div>
-    <div class="kpi"><div class="kpi-label">Chats suivis</div><div class="kpi-value v-blue">${nChats.size}</div><div class="kpi-sub">Avec nom renseigné</div></div>
-  `;
-
-  renderBars('chat-global-bars',
-    Object.entries(byType).map(([label, val]) => ({label, val})),
-    'bar-red', total
-  );
-
-  // ── Tableau récap par chat ──────────────────────────────────────────
-  // Noms de chats individuels, regroupés en ignorant la casse (canonNames calculé ci-dessus)
-  const allChatNames = new Set(canonNames.values());
+  const allChatNames = nChats;
 
   // Pour chaque chat, calculer dépenses et recettes via chatShareForName
+  // (recettes = dons/adoptions fléchés vers un chat nommé — permet de voir si on est en gain ou en perte)
   const chatRecap = [...allChatNames].sort((a,b)=>a.localeCompare(b,'fr')).map(name => {
     let dep = 0, rec = 0;
     caisse.forEach(r => {
@@ -1139,6 +1122,23 @@ function renderChatGlobal() {
   const totDep = chatRecap.reduce((s,r)=>s+r.dep,0);
   const totRec = chatRecap.reduce((s,r)=>s+r.rec,0);
   const totNet = totRec - totDep;
+
+  const perStr = chatPeriodes.length===0 ? 'Aucune période' : chatPeriodes.join(', ');
+  document.getElementById('chat-global-badge').textContent = perStr;
+
+  document.getElementById('chat-global-kpis').innerHTML = `
+    <div class="kpi"><div class="kpi-label">Coût total</div><div class="kpi-value v-red">${fmt(total)}</div><div class="kpi-sub">Toutes sources</div></div>
+    <div class="kpi"><div class="kpi-label">Caisse</div><div class="kpi-value v-orange">${fmt(depC)}</div><div class="kpi-sub">Opérations caisse</div></div>
+    <div class="kpi"><div class="kpi-label">Banque</div><div class="kpi-value v-orange">${fmt(depB)}</div><div class="kpi-sub">Opérations banque</div></div>
+    <div class="kpi"><div class="kpi-label">Chats suivis</div><div class="kpi-value v-blue">${nChats.size}</div><div class="kpi-sub">Avec nom renseigné</div></div>
+    <div class="kpi"><div class="kpi-label">Recettes fléchées</div><div class="kpi-value v-green">${fmt(totRec)}</div><div class="kpi-sub">Dons/adoptions liés à un chat nommé</div></div>
+    <div class="kpi"><div class="kpi-label">Solde</div><div class="kpi-value ${totNet>=0?'v-green':'v-red'}">${fmt(totNet)}</div><div class="kpi-sub">${totNet>=0?'Gain (recettes > dépenses)':'Perte (dépenses > recettes)'}</div></div>
+  `;
+
+  renderBars('chat-global-bars',
+    Object.entries(byType).map(([label, val]) => ({label, val})),
+    'bar-red', total
+  );
 
   const recapWrap = document.getElementById('chat-recap-wrap');
   if (recapWrap) {
