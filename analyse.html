@@ -354,6 +354,16 @@ const TYPES_CHATS = [
   "Produits d'entretien",'Assurance','Protection juridique association'
 ];
 
+// Compare en ignorant casse ET accents (ex. "Veterinaire" saisi sans accent
+// doit correspondre à "Vétérinaire" dans TYPES_CHATS)
+function normFold(s) {
+  return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+}
+function isTypeChat(t) {
+  const nt = normFold(t);
+  return TYPES_CHATS.some(tc => normFold(tc) === nt);
+}
+
 // ============================================================
 // ÉTAT GLOBAL
 // ============================================================
@@ -1057,7 +1067,7 @@ function renderChatGlobal() {
 
   caisse.forEach(r => {
     const t = (r[getCaisseCol('type_mvt')]||'').trim();
-    if (TYPES_CHATS.some(tc=>tc.toLowerCase()===t.toLowerCase())) {
+    if (isTypeChat(t)) {
       const d = fmtN(r[getCaisseCol('debit')]);
       depC += d;
       byType[t] = (byType[t]||0) + d;
@@ -1065,7 +1075,7 @@ function renderChatGlobal() {
   });
   banque.forEach(r => {
     const t = (r[getBanqueCol('type_mvt')]||'').trim();
-    if (TYPES_CHATS.some(tc=>tc.toLowerCase()===t.toLowerCase())) {
+    if (isTypeChat(t)) {
       const d = fmtN(r[getBanqueCol('debit')]);
       depB += d;
       byType[t] = (byType[t]||0) + d;
@@ -1074,7 +1084,7 @@ function renderChatGlobal() {
   // Factures sans nom_chat mais liées aux chats (par catégorie = type qui est dans TYPES_CHATS)
   factures.forEach(r => {
     const cat = (r[getFactureCol('categorie')]||'').trim();
-    if (TYPES_CHATS.some(tc=>tc.toLowerCase()===cat.toLowerCase())) {
+    if (isTypeChat(cat)) {
       const m = fmtN(r[getFactureCol('montant')]);
       depF += m;
       byType[cat] = (byType[cat]||0) + m;
