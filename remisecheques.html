@@ -930,6 +930,8 @@ async function saveRapprochement() {
   const suiviRow = (allImportRap||[]).find(rr => rr._sheetIndex === sheetIndex) || {};
   const suiviNomChat = suiviRow[ci.nom_chat] || '';
   const suiviNumRecu = suiviRow[ci.num_recu] || '';
+  const suiviTypeMvt = SUIVI_LABELS[suiviRow[ci.onglet]] || '';
+  const suiviDescription = suiviRow[ci.description] || suiviRow[ci.libelle] || '';
 
   // Reconstruire l'objet remise complet avec le suivi_ref écrit dans le chèque concerné
   const nb = parseInt(r[cr.nb_cheques]) || 0;
@@ -940,8 +942,8 @@ async function saveRapprochement() {
       donateur:    r[base]   || '',
       montant:     r[base+1] || '',
       num_cheque:  r[base+2] || '',
-      type_mvt:    r[base+3] || '',
-      description: r[base+4] || '',
+      type_mvt:    i === chequeIdx ? (suiviTypeMvt || r[base+3] || '') : (r[base+3] || ''),
+      description: i === chequeIdx ? (suiviDescription || r[base+4] || '') : (r[base+4] || ''),
       type_comp:   r[base+5] || '',
       nom_chat:    i === chequeIdx ? (suiviNomChat || r[base+6] || '') : (r[base+6] || ''),
       recu_fiscal: i === chequeIdx ? (suiviNumRecu || r[base+7] || '') : (r[base+7] || ''),
