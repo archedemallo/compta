@@ -374,6 +374,7 @@ function renderDetailCheques() {
     const statut = r[cr.statut] || '';
     for (let i = 0; i < nb; i++) {
       const base = cr.detail_start + i * 8;
+      const suiviRef = r[cr.suivi_ref_start+i] || '';
       allCheques.push({
         date:       dateRemise,
         bordereau:  numBord,
@@ -384,6 +385,8 @@ function renderDetailCheques() {
         type_mvt:   r[base+3] || '',
         description:r[base+4] || '',
         nom_chat:   r[base+6] || '',
+        suiviRef,
+        rapproche:  !!suiviRef,
       });
     }
   });
@@ -429,6 +432,9 @@ function renderDetailCheques() {
     <td>${c.statut === 'encaissee'
       ? '<span class="chip" style="background:var(--green-bg);color:var(--green);">Encaissé</span>'
       : '<span class="chip" style="background:var(--amber-bg);color:var(--amber);">En attente</span>'}</td>
+    <td style="text-align:center;">${c.rapproche
+      ? `<span class="chip-suivi" title="${escH(c.suiviRef)}">⇄ Suivi ✓</span>`
+      : '<span style="color:var(--text-3);">—</span>'}</td>
   </tr>`).join('');
 
   document.getElementById('detail-cheques-wrap').innerHTML = `
@@ -443,12 +449,13 @@ function renderDetailCheques() {
         <th>Nom chat</th>
         <th>N° bordereau</th>
         <th>Statut</th>
+        <th>Rapproché</th>
       </tr></thead>
       <tbody>${trs}</tbody>
       <tfoot><tr>
         <td colspan="3" style="font-size:10px;color:var(--text-3);padding:6px 8px;">${filtered.length} chèque(s)</td>
         <td class="r" style="font-weight:600;padding:6px 8px;">${fmt(totalMontant)}</td>
-        <td colspan="5"></td>
+        <td colspan="6"></td>
       </tr></tfoot>
     </table>`;
 }
