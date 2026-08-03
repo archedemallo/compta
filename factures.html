@@ -137,7 +137,7 @@
 
           <div class="form-group">
             <label class="form-label req">Fournisseur</label>
-            <input type="text" id="f-fourn" placeholder="Nom du fournisseur">
+            <select id="f-fourn"></select>
           </div>
           <div class="form-row-2">
             <div class="form-group">
@@ -238,6 +238,14 @@ Auth.requireAuth(async()=>{
   cats.forEach(c=>{
     sc.innerHTML+=`<option>${c}</option>`;
     document.getElementById('fl-cat').innerHTML+=`<option value="${escH(c)}">${c}</option>`;
+  });
+
+  // Fournisseurs
+  const fourns=Sheets.getFournisseurs();
+  const sf=document.getElementById('f-fourn');
+  sf.innerHTML='<option value="">— Choisir —</option>';
+  fourns.forEach(f=>{
+    sf.innerHTML+=`<option>${escH(f)}</option>`;
   });
 
   // Descriptions
@@ -376,9 +384,10 @@ function clearFilters(){
 }
 
 function reset(){
-  ['f-fourn','f-num','f-montant','f-date-reg','f-lien-pdf','f-comment','f-nom-chat'].forEach(id=>{
+  ['f-num','f-montant','f-date-reg','f-lien-pdf','f-comment','f-nom-chat'].forEach(id=>{
     const e=document.getElementById(id);if(e)e.value='';
   });
+  setFournSelectValue('');
   document.getElementById('f-date').value=Sheets.todayISO();
   document.getElementById('f-cat').selectedIndex=0;
   document.getElementById('f-desc').selectedIndex=0;
@@ -441,7 +450,7 @@ function openEdit(ri){
   const cf=Sheets.cols.facture, r=allRows[ri];
   editIdx=ri;
 
-  document.getElementById('f-fourn').value      = r[cf.fournisseur]    ||'';
+  setFournSelectValue(r[cf.fournisseur] || '');
   document.getElementById('f-num').value         = r[cf.num_facture]    ||'';
   document.getElementById('f-montant').value     = r[cf.montant_ttc]   ||'';
   // Correction : convertir DD/MM/YYYY → YYYY-MM-DD pour l'input type=date
@@ -548,6 +557,18 @@ function chipCat(t){if(!t)return'depense';const l=t.toLowerCase();if(l.includes(
 function fmt(v){if(!v&&v!==0)return'—';return parseFloat(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
 function showErr(m){const e=document.getElementById('form-err');e.textContent=m;e.classList.remove('hidden');}
 function showToast(m){const t=document.createElement('div');t.className='success-toast';t.innerHTML=`<i class="ti ti-check"></i> ${m}`;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
+function setFournSelectValue(val){
+  const sf=document.getElementById('f-fourn');
+  // Retirer une éventuelle option "hors liste" ajoutée précédemment
+  const old=sf.querySelector('option[data-extra="1"]');
+  if(old) old.remove();
+  if(val && ![...sf.options].some(o=>o.value===val)){
+    const opt=document.createElement('option');
+    opt.value=val; opt.textContent=val; opt.dataset.extra='1';
+    sf.appendChild(opt);
+  }
+  sf.value=val;
+}
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
 </script>
 </body>
