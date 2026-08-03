@@ -3,6 +3,14 @@
    Arche de Mallo — Comptabilité
    ============================================================ */
 
+// Coerce toute valeur en chaîne sûre pour l'écriture Sheets.
+// Empêche un booléen (ex: true || '' === true) ou tout autre type
+// de se retrouver écrit tel quel dans une colonne texte (ex: Donateur).
+function toSafeText(v) {
+  if (v === null || v === undefined || v === false) return '';
+  return typeof v === 'string' ? v : String(v);
+}
+
 // ---- CONFIGURATION ----
 const SHEETS_CONFIG = {
   spreadsheetId:   '1KOuX0XnccyjPOPntOJUYzivk2jGn07y7tp__gRIN3F0',
@@ -617,15 +625,15 @@ async function saveRemise(remise) {
   mainRow[COLS_REMISE.verified]      = 'FALSE';
   remise.cheques.forEach((c, i) => {
     const base = COLS_REMISE.detail_start + i * 8;
-    mainRow[base]     = c.donateur    || '';
+    mainRow[base]     = toSafeText(c.donateur);
     mainRow[base + 1] = c.montant     || '';
-    mainRow[base + 2] = c.num_cheque  || '';
-    mainRow[base + 3] = c.type_mvt    || '';
-    mainRow[base + 4] = c.description || '';
-    mainRow[base + 5] = c.type_comp   || '';
-    mainRow[base + 6] = c.nom_chat    || '';
-    mainRow[base + 7] = c.recu_fiscal || '';
-    mainRow[COLS_REMISE.suivi_ref_start + i] = c.suivi_ref || '';
+    mainRow[base + 2] = toSafeText(c.num_cheque);
+    mainRow[base + 3] = toSafeText(c.type_mvt);
+    mainRow[base + 4] = toSafeText(c.description);
+    mainRow[base + 5] = toSafeText(c.type_comp);
+    mainRow[base + 6] = toSafeText(c.nom_chat);
+    mainRow[base + 7] = toSafeText(c.recu_fiscal);
+    mainRow[COLS_REMISE.suivi_ref_start + i] = toSafeText(c.suivi_ref);
   });
   await appendRows(SHEETS_CONFIG.sheets.remises, [mainRow]);
   await logAction('AJOUT', 'Remises', id, `${remise.cheques.length} chèque(s) — ${mainRow[COLS_REMISE.montant_total]}€`);
@@ -656,15 +664,15 @@ async function updateRemise(rowIndex, remise) {
   mainRow[COLS_REMISE.verified]      = remise.verified      || 'FALSE';
   remise.cheques.forEach((c, i) => {
     const base = COLS_REMISE.detail_start + i * 8;
-    mainRow[base]     = c.donateur    || '';
+    mainRow[base]     = toSafeText(c.donateur);
     mainRow[base + 1] = c.montant     || '';
-    mainRow[base + 2] = c.num_cheque  || '';
-    mainRow[base + 3] = c.type_mvt    || '';
-    mainRow[base + 4] = c.description || '';
-    mainRow[base + 5] = c.type_comp   || '';
-    mainRow[base + 6] = c.nom_chat    || '';
-    mainRow[base + 7] = c.recu_fiscal || '';
-    mainRow[COLS_REMISE.suivi_ref_start + i] = c.suivi_ref || '';
+    mainRow[base + 2] = toSafeText(c.num_cheque);
+    mainRow[base + 3] = toSafeText(c.type_mvt);
+    mainRow[base + 4] = toSafeText(c.description);
+    mainRow[base + 5] = toSafeText(c.type_comp);
+    mainRow[base + 6] = toSafeText(c.nom_chat);
+    mainRow[base + 7] = toSafeText(c.recu_fiscal);
+    mainRow[COLS_REMISE.suivi_ref_start + i] = toSafeText(c.suivi_ref);
   });
   await updateRange(SHEETS_CONFIG.sheets.remises, sheetRow, 0, [mainRow]);
   await logAction('MODIF', 'Remises', id, `Modifié le ${todayFR()}`);
