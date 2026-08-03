@@ -95,6 +95,8 @@
   .suivi-line:hover{background:var(--warm);border-color:var(--orange);}
   .suivi-line.selected{background:rgba(201,107,42,0.08);border-color:var(--orange);}
   .suivi-line.already-linked{opacity:0.45;cursor:default;text-decoration:line-through;}
+  .suivi-line.montant-match{border-color:var(--green);background:rgba(59,109,17,0.06);}
+  .suivi-line-match-badge{font-size:9px;font-weight:600;color:var(--green);background:var(--green-bg);border-radius:var(--radius-sm);padding:1px 5px;margin-left:6px;white-space:nowrap;}
   .suivi-line-info{flex:1;}
   .suivi-line-nom{font-size:11px;font-weight:500;}
   .suivi-line-detail{font-size:10px;color:var(--text-3);margin-top:1px;}
@@ -807,9 +809,14 @@ async function confirmDel(){
 // import-suivi.html / import-rapprochement.html / banque.html), pas des feuilles Suivi brutes.
 // Ainsi le rapprochement fait ici bascule bien la ligne dans Import_historique.
 const SUIVI_LABELS = { Adoption:'Adoptions', Reservation_Chat:'Rés. Chat', Reservation_Chaton:'Rés. Chaton', Contrat_reservation_chat:'Contrats Rés.', Dons:'Dons', Adhesion:'Adhésions' };
+// Catégorie comptable (Type de mouvement) associée à chaque formulaire Suivi.
+// Adoption, réservation et contrat de réservation (= clôture d'adoption) sont
+// tous comptabilisés comme "Adoption" — on ne copie jamais le nom du formulaire.
+const SUIVI_TYPE_MVT = { Adoption:'Adoption', Reservation_Chat:'Adoption', Reservation_Chaton:'Adoption', Contrat_reservation_chat:'Adoption', Dons:'Dons', Adhesion:'Adhesion' };
 
 let activeSuiviTab = 'Adoption';
 let rapTarget = null;        // { remiseIdx, chequeIdx }
+let rapTargetInfo = null;    // { montant, dateISO } du chèque en cours de rapprochement
 let selectedSuiviLine = null;
 
 // Ouvre le panneau pour un chèque donné (remiseIdx = index dans allRemises, chequeIdx = index du chèque dans la remise)
@@ -930,7 +937,7 @@ async function saveRapprochement() {
   const suiviRow = (allImportRap||[]).find(rr => rr._sheetIndex === sheetIndex) || {};
   const suiviNomChat = suiviRow[ci.nom_chat] || '';
   const suiviNumRecu = suiviRow[ci.num_recu] || '';
-  const suiviTypeMvt = SUIVI_LABELS[suiviRow[ci.onglet]] || '';
+  const suiviTypeMvt = SUIVI_TYPE_MVT[suiviRow[ci.onglet]] || '';
   const suiviDescription = suiviRow[ci.description] || suiviRow[ci.libelle] || '';
 
   // Reconstruire l'objet remise complet avec le suivi_ref écrit dans le chèque concerné
