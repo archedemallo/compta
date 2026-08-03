@@ -577,7 +577,7 @@ async function confirmAnnuler() {
         found = true;
       }
     }
-    // 4. Effacer suivi_ref dans Remises (colonne base+8 de chaque chèque)
+    // 4. Effacer suivi_ref dans Remises (colonne dédiée suivi_ref_start + i)
     if (!found) {
       const remises = await Sheets.getRemises();
       const cr = Sheets.cols.remise;
@@ -585,8 +585,8 @@ async function confirmAnnuler() {
         const rem = remises[ri];
         const nb = parseInt(rem[cr.nb_cheques])||0;
         for (let i = 0; i < nb; i++) {
-          if ((rem[cr.detail_start + i*8 + 8]||'') === suiviRef) {
-            await Sheets.updateCell(Sheets.config.sheets.remises, ri+2, cr.detail_start + i*8 + 8, '');
+          if ((rem[cr.suivi_ref_start + i]||'') === suiviRef) {
+            await Sheets.updateCell(Sheets.config.sheets.remises, ri+2, cr.suivi_ref_start + i, '');
             found = true;
           }
         }
