@@ -387,6 +387,7 @@ function renderDetailCheques() {
         type_mvt:   r[base+3] || '',
         description:r[base+4] || '',
         nom_chat:   r[base+6] || '',
+        recu_fiscal:r[base+7] || '',
         suiviRef,
         rapproche:  !!suiviRef,
       });
@@ -430,6 +431,7 @@ function renderDetailCheques() {
     <td><span class="chip chip-${chipType(c.type_mvt)}">${escH(c.type_mvt)||'—'}</span></td>
     <td style="color:var(--text-3);">${escH(c.description)||'—'}</td>
     <td style="color:var(--text-3);">${escH(c.nom_chat)||'—'}</td>
+    <td style="color:var(--text-3);">${escH(c.recu_fiscal)||'—'}</td>
     <td style="color:var(--text-3);">${escH(c.bordereau)}</td>
     <td>${c.statut === 'encaissee'
       ? '<span class="chip" style="background:var(--green-bg);color:var(--green);">Encaissé</span>'
@@ -449,6 +451,7 @@ function renderDetailCheques() {
         <th>Type</th>
         <th>Description</th>
         <th>Nom chat</th>
+        <th>N° reçu fiscal</th>
         <th>N° bordereau</th>
         <th>Statut</th>
         <th>Rapproché</th>
@@ -457,7 +460,7 @@ function renderDetailCheques() {
       <tfoot><tr>
         <td colspan="3" style="font-size:10px;color:var(--text-3);padding:6px 8px;">${filtered.length} chèque(s)</td>
         <td class="r" style="font-weight:600;padding:6px 8px;">${fmt(totalMontant)}</td>
-        <td colspan="6"></td>
+        <td colspan="7"></td>
       </tr></tfoot>
     </table>`;
 }
