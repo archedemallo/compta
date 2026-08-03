@@ -397,7 +397,15 @@ if (!rows.length) {
   );
 
   // Solde cumulé en ordre chronologique puis réappliqué
-  const chronoRows = [...allRows.filter(r => r[cc.periode] === (document.getElementById('fl-per')?.value || Sidebar.getActivePeriode()))];
+  const chronoRows = [...allRows.filter(r => r[cc.periode] === (document.getElementById('fl-per')?.value || Sidebar.getActivePeriode()))]
+    .sort((a, b) => {
+      const da = dateToISO(a[cc.date]) || '';
+      const db = dateToISO(b[cc.date]) || '';
+      if (da !== db) return da < db ? -1 : 1;
+      const ia = a._sheetIndex !== undefined ? a._sheetIndex : allRows.indexOf(a);
+      const ib = b._sheetIndex !== undefined ? b._sheetIndex : allRows.indexOf(b);
+      return ia - ib;
+    });
   let running = soldInit;
   const soldeMap = new Map();
   chronoRows.forEach(r => {
