@@ -1191,10 +1191,10 @@ function renderChatDetail() {
   caisse.forEach(r => { totalDep += chatShareForName(r[getCaisseCol('nom_chat')], fmtN(r[getCaisseCol('debit')]), chatName); });
   banque.forEach(r => { totalDep += chatShareForName(r[getBanqueCol('nom_chat')], fmtN(r[getBanqueCol('debit')]), chatName); });
   cheques.forEach(r => { totalDep += chatShareForName(r[getChequeCol('nom_chat')], fmtN(r[getChequeCol('montant')]), chatName); });
-  remises.forEach(r => { totalDep += chatShareForName(r.nom_chat, fmtN(r.montant), chatName); });
-  // Recettes (dons, adoptions…)
+  // Recettes (dons, adoptions…) — les remises de chèque sont des encaissements, donc des recettes
   caisse.forEach(r => { totalRec += chatShareForName(r[getCaisseCol('nom_chat')], fmtN(r[getCaisseCol('credit')]), chatName); });
   banque.forEach(r => { totalRec += chatShareForName(r[getBanqueCol('nom_chat')], fmtN(r[getBanqueCol('credit')]), chatName); });
+  remises.forEach(r => { totalRec += chatShareForName(r.nom_chat, fmtN(r.montant), chatName); });
 
   const net = totalRec - totalDep;
 
@@ -1232,8 +1232,8 @@ function renderChatDetail() {
     ...remises.map(r => ({
       source:'Remise', date:'', libelle:r.donateur,
       type:r.type_mvt, desc:r.description,
-      debit:chatShareForName(r.nom_chat, fmtN(r.montant), chatName),
-      credit:0,
+      debit:0,
+      credit:chatShareForName(r.nom_chat, fmtN(r.montant), chatName),
       multi: (r.nom_chat||'').includes('/') || (r.nom_chat||'').includes(','),
     })),
   ].sort((a,b) => (a.date||'').localeCompare(b.date||''));
