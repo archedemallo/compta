@@ -319,6 +319,27 @@
   </div>
 </div>
 
+<div class="modal-overlay hidden" id="modal-ignorer">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <span class="modal-title"><i class="ti ti-circle-x" style="color:var(--text-3)"></i> Ignorer cette ligne</span>
+      <button class="modal-close" onclick="closeIgnorer()">×</button>
+    </div>
+    <div class="modal-body">
+      <div>Cette ligne sera retirée de la file d'attente et archivée sans rapprochement.</div>
+      <div class="detail-box" id="ignorer-detail"></div>
+      <div class="form-group" style="margin-top:10px;">
+        <label class="form-label">Motif (optionnel)</label>
+        <input type="text" id="ignorer-motif" class="form-control" placeholder="Ex : doublon, hors période, ligne test…">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeIgnorer()">Annuler</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmIgnorer()" id="btn-confirm-ignorer"><i class="ti ti-circle-x"></i> Ignorer</button>
+    </div>
+  </div>
+</div>
+
 <script src="auth.js"></script>
 <script src="sheets.js"></script>
 <script src="sidebar.js"></script>
@@ -1109,6 +1130,7 @@ function renderRapTable(){
       <td style="white-space:nowrap;">
         <button class="btn-icon btn-edit" onclick="event.stopPropagation();openEdit(${idx})" title="Modifier"><i class="ti ti-pencil"></i></button>
         ${btnTransfer}
+        <button class="btn-icon" onclick="event.stopPropagation();openIgnorer(${idx})" title="Ignorer (ne pas rapprocher)"><i class="ti ti-circle-x"></i></button>
       </td>
     </tr>`;
   }).join('');
@@ -1240,6 +1262,32 @@ async function transfertSelectionCaisse(){
   if(ok>0)showToast(`${ok} ligne(s) transférée(s) en Caisse !`);
   if(errors.length)alert('Erreurs :\n'+errors.join('\n'));
   await loadRapData();
+}
+
+let rapIgnorerIdx = null;
+function openIgnorer(idx){
+  const ci=Sheets.cols.importRap, r=allRapRows.find(x=>x._sheetIndex===idx);
+  if(!r)return;
+  rapIgnorerIdx=idx;
+  document.getElementById('ignorer-motif').value='';
+  document.getElementById('ignorer-detail').innerHTML=
+    `<strong>${escH(r[ci.libelle]||'')}</strong><br>
+     ${escH(r[ci.date]||'')} — ${fmt(r[ci.montant])} — ${escH(r[ci.type_mvt]||'')}<br>
+     Mode : ${escH(r[ci.mode_reglement]||'')} | Chat : ${escH(r[ci.nom_chat]||'—')}`;
+  document.getElementById('modal-ignorer').classList.remove('hidden');
+}
+function closeIgnorer(){document.getElementById('modal-ignorer').classList.add('hidden');rapIgnorerIdx=null;}
+
+async function confirmIgnorer(){
+  if(rapIgnorerIdx===null)return;
+  const btn=document.getElementById('btn-confirm-ignorer');
+  btn.disabled=true; btn.innerHTML='<i class="ti ti-loader-2 spinner"></i>';
+  const motif=document.getElementById('ignorer-motif').value.trim();
+  try{
+    await Sheets.ignorerImportRapprochement(rapIgnorerIdx, motif);
+    closeIgnorer(); showToast('Ligne ignorée et archivée !'); await loadRapData();
+  }catch(e){alert('Erreur : '+(e.message||e));}
+  finally{btn.disabled=false;btn.innerHTML='<i class="ti ti-circle-x"></i> Ignorer';}
 }
 
 // ============================================================
