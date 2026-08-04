@@ -258,9 +258,11 @@ async function loadData() {
 
   // Lignes Import_historique — uniquement destination "banque" : les destinations
   // "caisse" ont déjà une ligne réelle dans Caisse (via caisseImp ci-dessus), les reprendre
-  // ici créerait un doublon. idx = index réel dans Import_historique (pour "Annuler").
+  // ici créerait un doublon. Exception : les lignes "ignoree" n'ont jamais généré de
+  // ligne réelle en Caisse (peu importe leur destination), donc on les garde toutes.
+  // idx = index réel dans Import_historique (pour "Annuler").
   const histImp = importHist
-    .filter(r => (r[ci.destination] || '') !== 'caisse')
+    .filter(r => (r[ci.destination] || '') !== 'caisse' || r[ci.statut] === 'ignoree')
     .map(r => ({
       row: {
         // On adapte les colonnes pour l'affichage uniforme
@@ -274,6 +276,7 @@ async function loadData() {
         _dest:           r[ci.destination]    || '',
         _mode:           r[ci.mode_reglement] || '',
         _date_rap:       r[ci.date_rapprochement] || '',
+        _statut:         r[ci.statut]         || '',
       },
       idx: r._sheetIndex, source: 'banque', isHist: true, cols: cc,
     }));
@@ -346,18 +349,23 @@ function renderTable() {
     const ongletRef = (row[cols.suivi_ref] || '').split(':')[0] || '';
     const ongletLabel = ONGLET_LABELS[ongletRef] || ongletRef;
     const isEdit = editIdx === idx && editSource === source;
-    // Les lignes issues de Import_historique (banque rapprochée) n'ont pas de ligne
-    // propre dans Caisse/Banque à cet idx : Modifier/Supprimer ne sont pas sûrs ici,
-    // seul "Annuler le rapprochement" (qui retrouve la vraie ligne via suivi_ref) l'est.
+    const isIgnoree = row._statut === 'ignoree';
+    // Les lignes issues de Import_historique n'ont pas de ligne propre dans Caisse/Banque
+    // à cet idx : Modifier/Supprimer ne sont pas sûrs ici, seul "Annuler" (qui pour une
+    // ligne rapprochée retrouve la vraie ligne via suivi_ref, et pour une ligne ignorée
+    // remet juste la ligne en file d'attente) l'est.
+    const annulerLabel = isIgnoree ? 'Remettre en file d\'attente' : 'Annuler le rapprochement';
     const actions = isHist
-      ? `<button class="btn-icon" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;color:var(--amber);" onclick="openAnnuler(${idx},'${source}')" title="Annuler le rapprochement"><i class="ti ti-arrow-back-up"></i></button>`
+      ? `<button class="btn-icon" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;color:var(--amber);" onclick="openAnnuler(${idx},'${source}')" title="${annulerLabel}"><i class="ti ti-arrow-back-up"></i></button>`
       : `<button class="edit-btn" onclick="openEdit(${idx},'${source}')" title="Modifier"><i class="ti ti-pencil"></i></button>
         <button class="btn-icon" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;color:var(--amber);" onclick="openAnnuler(${idx},'${source}')" title="Annuler le rapprochement"><i class="ti ti-arrow-back-up"></i></button>
         <button class="del-btn" onclick="openDel(${idx},'${source}')" title="Supprimer définitivement"><i class="ti ti-trash"></i></button>`;
     return `<tr class="${isEdit ? 'editing' : ''}">
       <td style="color:var(--text-3);white-space:nowrap;">${row[cols.date] || ''}</td>
       <td style="font-weight:500;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row[cols.libelle] || ''}</td>
-      <td><span class="chip chip-${source === 'caisse' ? 'caisse1' : 'banque'}">${source === 'caisse' ? 'Caisse' : 'Banque'}</span></td>
+      <td>${isIgnoree
+          ? '<span class="chip" style="background:var(--text-3);color:#fff;">Ignorée</span>'
+          : `<span class="chip chip-${source === 'caisse' ? 'caisse1' : 'banque'}">${source === 'caisse' ? 'Caisse' : 'Banque'}</span>`}</td>
       <td><span class="chip chip-${chipType(row[cols.type_mvt])}">${row[cols.type_mvt] || ''}</span></td>
       <td style="font-size:10px;color:var(--text-3);">${ongletLabel}</td>
       <td class="r amount-c">${row[cols.credit] ? fmt(row[cols.credit]) : ''}</td>
@@ -545,6 +553,7 @@ async function confirmAnnuler() {
     const histRows = await Sheets.getImportHistorique();
     const ci = Sheets.cols.importRap;
     const histRow = histRows.find(r => (r[ci.id]||'') === suiviRef);
+    const isIgnoree = !!histRow && histRow[ci.statut] === 'ignoree';
     if (histRow) {
       await Sheets.saveImportRapprochement({
         id: histRow[ci.id]||'', onglet: histRow[ci.onglet]||'', statut: 'en_attente',
@@ -557,6 +566,14 @@ async function confirmAnnuler() {
         date_rapprochement: '',
       });
       await Sheets.deleteRow('Import_historique', histRow._sheetIndex);
+    }
+    // Une ligne "ignoree" n'a jamais généré de vraie ligne en Caisse/Banque/Remises :
+    // pas de déliaison à faire, on s'arrête là.
+    if (isIgnoree) {
+      closeAnnuler();
+      showToast('Ligne remise en file d\'attente');
+      await loadData();
+      return;
     }
     // 2. Effacer suivi_ref dans Caisse
     let found = false;
