@@ -823,6 +823,22 @@ async function archiverImportRapprochement(rowIndex, datRapprochement) {
   await logAction('MODIF', 'Import_Rapprochement', r[COLS_IMPORT_RAP.id] || '', 'Archivé');
 }
 
+async function ignorerImportRapprochement(rowIndex, motif) {
+  const rows = await readSheet(SHEETS_CONFIG.sheets.import_rap);
+  const r = rows[rowIndex + 1];
+  if (!r) return;
+  const hist = [...r];
+  hist[COLS_IMPORT_RAP.statut]             = 'ignoree';
+  hist[COLS_IMPORT_RAP.date_rapprochement] = todayFR();
+  if (motif) {
+    const desc = hist[COLS_IMPORT_RAP.description] || '';
+    hist[COLS_IMPORT_RAP.description] = desc ? `${desc} — Ignoré : ${motif}` : `Ignoré : ${motif}`;
+  }
+  await appendRows(SHEETS_CONFIG.sheets.import_hist, [hist]);
+  await updateRange(SHEETS_CONFIG.sheets.import_rap, rowIndex + 2, 0, [new Array(16).fill('')]);
+  await logAction('MODIF', 'Import_Rapprochement', r[COLS_IMPORT_RAP.id] || '', `Ignoré${motif ? ' — ' + motif : ''}`);
+}
+
 async function importRapExistsId(id) {
   try {
     const [rap, hist] = await Promise.all([
@@ -1123,7 +1139,7 @@ window.Sheets = {
   saveRemise, encaisserRemise, updateRemise,
   saveFacture, updateFacture,
   saveImportRapprochement, updateImportRapprochement,
-  archiverImportRapprochement, importRapExistsId,
+  archiverImportRapprochement, ignorerImportRapprochement, importRapExistsId,
   updateFlag, toggleVerified, appendRows, updateCell, updateRange, deleteRow,
   logAction, rapprocheCaisseOperation,
   // Soldes
