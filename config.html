@@ -360,6 +360,7 @@ const PAGES_RIGHTS = [
   { section: 'Import' },
   { id:'import-suivi-refresh',  label:'Rafraîchir Suivi',        levels:['aucun','acces'] },
   { id:'import-suivi',          label:'Import Suivi - Formulaires', levels:['aucun','acces'] },
+  { id:'import-suivi-archive',  label:'Import Suivi - Archive',  levels:['aucun','acces'] },
   { id:'import-rapprochement',  label:'Import Rapprochement',    levels:['aucun','acces'] },
   { section: 'Analyses & Outils' },
   { id:'analyse',        label:'Analyse / AG',             levels:['aucun','acces'] },
@@ -379,6 +380,7 @@ let nonAdminUsers = [];   // emails hors admin
 // INIT
 // ============================================================
 Auth.requireAuth(async () => {
+  if (!Auth.isAdmin()) { window.location.href = 'index.html'; return; }
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
   Sidebar.build('config');
 
