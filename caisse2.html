@@ -558,7 +558,7 @@ async function submitForm() {
 
   const cc = Sheets.cols.caisse;
   if (editIdx !== null) {
-    const r = allRows.find(x => x._sheetIndex === editIdx) || allRows[editIdx];
+    const r = allRows.find(x => (x._sheetIndex !== undefined ? x._sheetIndex : allRows.indexOf(x)) === editIdx);
     if (r[cc.flag_check] === 'VERIFIE') { showErr('Ligne verrouillée — décochez "Vérifié" pour modifier.'); return; }
   }
 
@@ -584,7 +584,7 @@ async function submitForm() {
   btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader-2 spinner"></i>';
   try {
     if (editIdx !== null) {
-      const r = allRows.find(x => x._sheetIndex === editIdx) || allRows[editIdx];
+      const r = allRows.find(x => (x._sheetIndex !== undefined ? x._sheetIndex : allRows.indexOf(x)) === editIdx);
       op.flag_check   = r[cc.flag_check]   || 'FALSE';
       op.flag_comment = r[cc.flag_comment] || '';
       op.suivi_ref    = r[cc.suivi_ref]    || '';
@@ -600,7 +600,7 @@ async function submitForm() {
 }
 
 function openEdit(ri) {
-  const cc = Sheets.cols.caisse, r = allRows.find(x => x._sheetIndex === ri) || allRows[ri];
+  const cc = Sheets.cols.caisse, r = allRows.find(x => (x._sheetIndex !== undefined ? x._sheetIndex : allRows.indexOf(x)) === ri);
   if (r[cc.flag_check] === 'VERIFIE') { showToast('⚠️ Ligne vérifiée — décochez pour modifier'); return; }
   editIdx = ri;
   document.getElementById('f-date').value      = dateToISO(r[cc.date] || '');
@@ -627,7 +627,7 @@ function openEdit(ri) {
 // SUPPRIMER
 // ============================================================
 function openDel(ri) {
-  const cc = Sheets.cols.caisse, r = allRows.find(x => x._sheetIndex === ri) || allRows[ri];
+  const cc = Sheets.cols.caisse, r = allRows.find(x => (x._sheetIndex !== undefined ? x._sheetIndex : allRows.indexOf(x)) === ri);
   if (r[cc.flag_check] === 'VERIFIE') { showToast('⚠️ Ligne vérifiée — impossible de supprimer'); return; }
   delIdx = ri;
   document.getElementById('del-detail').innerHTML =
@@ -698,7 +698,7 @@ async function reactiverRapprochement(suiviRef) {
 async function delierCaisse2Suivi(ri) {
   if (!confirm("Supprimer le rapprochement Suivi et remettre en file d'attente ?")) return;
   const cc = Sheets.cols.caisse;
-  const r = allRows.find(x => x._sheetIndex === ri) || allRows[ri];
+  const r = allRows.find(x => (x._sheetIndex !== undefined ? x._sheetIndex : allRows.indexOf(x)) === ri);
   if (!r) return;
   const sheetRow = (r._sheetIndex !== undefined ? r._sheetIndex : ri) + 2;
   const suiviRef = r[cc.suivi_ref] || '';
@@ -713,7 +713,7 @@ async function delierCaisse2Suivi(ri) {
 async function delierCaisse2Bordereau(ri) {
   if (!confirm("Supprimer le rapprochement avec le bordereau de remise ?")) return;
   const cc = Sheets.cols.caisse;
-  const r = allRows.find(x => x._sheetIndex === ri) || allRows[ri];
+  const r = allRows.find(x => (x._sheetIndex !== undefined ? x._sheetIndex : allRows.indexOf(x)) === ri);
   if (!r) return;
   const sheetRow = (r._sheetIndex !== undefined ? r._sheetIndex : ri) + 2;
   try {
