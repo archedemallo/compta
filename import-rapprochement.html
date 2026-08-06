@@ -238,6 +238,7 @@ Auth.requireAuth(async (user) => {
     return;
   }
   Sidebar.build('import-rapprochement');
+  await Auth.applyUserRights('import-rapprochement');
   document.getElementById('topbar-per').textContent = Sidebar.getActivePeriode();
 
   // Populer les selects
