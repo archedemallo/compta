@@ -25,6 +25,8 @@ function buildSidebar(activePage) {
     { section: 'Import' },
     { id: 'import-suivi',         label: 'Import Suivi',  icon: 'ti-database-import', href: 'import-suivi.html' },
     { id: 'import-suivi-archive',  label: 'Archive Suivi', icon: 'ti-history',         href: 'import-suivi-archive.html' },
+    { id: 'import-suivi-refresh',  label: 'Rafraîchir Suivi', icon: 'ti-refresh',       href: 'import-suivi-refresh.html' },
+    { id: 'import-rapprochement',  label: 'Import Rapprochement', icon: 'ti-arrows-join', href: 'import-rapprochement.html' },
 
     { section: 'Analyses' },
     { id: 'analyse', label: 'Analyse / AG', icon: 'ti-chart-pie', href: 'analyse.html' },
