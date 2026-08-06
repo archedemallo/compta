@@ -474,6 +474,7 @@ Auth.requireAuth(async () => {
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
   await Sheets.loadConfigFromSheet();
   Sidebar.build('import-suivi');
+  await Auth.applyUserRights('import-suivi');
 
   // Types et périodes pour le panel édition
   const types = Sheets.getTypesMouvement();
