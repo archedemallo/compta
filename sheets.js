@@ -15,7 +15,6 @@ function toSafeText(v) {
 const SHEETS_CONFIG = {
   spreadsheetId:   '1KOuX0XnccyjPOPntOJUYzivk2jGn07y7tp__gRIN3F0',
   formulairesId:   '1y6yD4AohP7T10GE7mmguIqNWSnwla9t1mewBpCDej_Y',
-  facturesDriveId: 'VOTRE_DOSSIER_DRIVE_ID',
   sheets: {
     caisse:       'Caisse',
     caisse_2:     'Caisse2',
@@ -47,7 +46,6 @@ const SHEETS_CONFIG = {
     const cfg = JSON.parse(localStorage.getItem('arche_sheets_config') || '{}');
     if (cfg.spreadsheetId)   SHEETS_CONFIG.spreadsheetId   = cfg.spreadsheetId;
     if (cfg.formulairesId)   SHEETS_CONFIG.formulairesId   = cfg.formulairesId;
-    if (cfg.facturesDriveId) SHEETS_CONFIG.facturesDriveId = cfg.facturesDriveId;
   } catch(e) {}
 })();
 
@@ -875,7 +873,12 @@ async function logAction(action, onglet, reference, detail) {
 async function sendAlert(user, source, operation) {
   const cfg = JSON.parse(localStorage.getItem('arche_sheets_config') || '{}');
   const url = cfg.webhookUrl;
-  if (!url || url.includes('VOTRE')) return;
+  if (!url || url.includes('VOTRE')) {
+    // Alertes email désactivées tant que webhookUrl n'est pas renseigné en Config.
+    // (Comportement volontaire — on ne l'active pas automatiquement.)
+    console.info('sendAlert: webhookUrl non configuré, alerte non envoyée.');
+    return;
+  }
   try {
     await fetch(url, {
       method: 'POST',
