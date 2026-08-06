@@ -100,10 +100,13 @@ async function handleTokenResponse(response) {
     });
     const userInfo = await userResp.json();
 
-    // Vérifier si l'utilisateur est autorisé
-    if (!AUTH_CONFIG.authorizedUsers.includes(userInfo.email)) {
+    // Vérifier si l'utilisateur est autorisé (liste statique de secours + liste
+    // dynamique "users_list" gérée depuis la page Config, mise à jour sans redéploiement)
+    const authorized = await isEmailAuthorized(userInfo.email, response);
+    if (!authorized) {
       showAuthError(`Accès refusé. Ce compte (${userInfo.email}) n'est pas autorisé.`);
       google.accounts.oauth2.revoke(response.access_token);
+      gapi.client.setToken(null);
       return;
     }
 
@@ -133,6 +136,33 @@ async function handleTokenResponse(response) {
     console.error('Erreur récupération profil:', e);
     showAuthError('Impossible de récupérer le profil Google.');
   }
+}
+
+// Vérifie si un email est autorisé à se connecter :
+// 1) email admin, 2) liste statique de secours (bootstrap), 3) liste dynamique
+// "users_list" gérée depuis config.html (nécessite sheets.js chargé sur la page).
+async function isEmailAuthorized(email, tokenResponse) {
+  if (email === AUTH_CONFIG.adminEmail) return true;
+  if (AUTH_CONFIG.authorizedUsers.includes(email)) return true;
+
+  if (typeof readSheet !== 'function' || typeof SHEETS_CONFIG === 'undefined') {
+    console.warn('sheets.js non chargé : impossible de vérifier la liste dynamique users_list.');
+    return false;
+  }
+
+  try {
+    gapi.client.setToken(tokenResponse);
+    await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
+    const rows = await readSheet(SHEETS_CONFIG.sheets.config);
+    const row  = rows.find(r => String(r[0]).trim() === 'users_list');
+    if (row && row[1]) {
+      const dynamicUsers = JSON.parse(String(row[1]));
+      if (Array.isArray(dynamicUsers) && dynamicUsers.includes(email)) return true;
+    }
+  } catch(e) {
+    console.warn('Impossible de vérifier users_list dynamique:', e);
+  }
+  return false;
 }
 
 // ---- DÉCONNEXION ----
