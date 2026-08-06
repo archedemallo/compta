@@ -118,6 +118,7 @@ Auth.requireAuth(async () => {
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
   await Sheets.loadConfigFromSheet();
   Sidebar.build('import-suivi-refresh');
+  await Auth.applyUserRights('import-suivi-refresh');
   renderGrid();
   loadLastRefreshInfo();
 });
