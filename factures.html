@@ -220,6 +220,7 @@ let allRows=[], editIdx=null, delIdx=null;
 Auth.requireAuth(async()=>{
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
   Sidebar.build('factures');
+  await Auth.applyUserRights('factures');
   const pers=Sheets.getPeriodes(), ap=Sidebar.getActivePeriode();
   document.getElementById('topbar-per').textContent=ap;
 
