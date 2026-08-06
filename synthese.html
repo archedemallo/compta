@@ -152,6 +152,7 @@ let charts={};
 Auth.requireAuth(async(user)=>{
   await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
   Sidebar.build('synthese');
+  await Auth.applyUserRights('synthese');
   activePer=Sidebar.getActivePeriode();
   buildPeriodPicker();
 
