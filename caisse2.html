@@ -125,6 +125,10 @@
                 <option value="flagged">À vérifier</option>
                 <option value="verifie">Vérifiées</option>
               </select>
+              <select class="f-select" id="fl-desc" onchange="renderTable()"><option value="">Toutes descriptions</option></select>
+              <select class="f-select" id="fl-chat" onchange="renderTable()"><option value="">Tous les chats</option></select>
+              <select class="f-select" id="fl-recu" onchange="renderTable()"><option value="">Tous reçus</option></select>
+              <select class="f-select" id="fl-bordereau" onchange="renderTable()"><option value="">Tous bordereaux</option></select>
               <button class="btn btn-secondary btn-sm" onclick="clearFilters()"><i class="ti ti-x"></i> Effacer</button>
             </div>
           </div>
@@ -300,6 +304,18 @@ function updateDynamicFilters() {
   if (!flt) return;
   flt.innerHTML = '<option value="">Tous types</option>';
   types.forEach(t => flt.innerHTML += `<option ${t===cur?'selected':''}>${escH(t)}</option>`);
+
+  const fillSelect = (id, col, emptyLabel) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const curVal = el.value || '';
+    const values = [...new Set(rows.map(r => r[col]).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'fr'));
+    el.innerHTML = `<option value="">${emptyLabel}</option>` + values.map(v => `<option ${v===curVal?'selected':''}>${escH(v)}</option>`).join('');
+  };
+  fillSelect('fl-desc',      cc.description,   'Toutes descriptions');
+  fillSelect('fl-chat',      cc.nom_chat,       'Tous les chats');
+  fillSelect('fl-recu',      cc.num_recu,       'Tous reçus');
+  fillSelect('fl-bordereau', cc.num_bordereau,  'Tous bordereaux');
 }
 
 async function loadData() {
@@ -355,6 +371,10 @@ function renderTable() {
   const dateFrom= document.getElementById('fl-date-from')?.value || '';
   const dateTo  = document.getElementById('fl-date-to')?.value   || '';
   const flagF   = document.getElementById('fl-flag')?.value   || '';
+  const descF   = document.getElementById('fl-desc')?.value   || '';
+  const chatF   = document.getElementById('fl-chat')?.value   || '';
+  const recuF   = document.getElementById('fl-recu')?.value   || '';
+  const bordF   = document.getElementById('fl-bordereau')?.value || '';
 
   let rows = allRows.filter(r => r[cc.periode] === per);
   if (typeF)              rows = rows.filter(r => r[cc.type_mvt] === typeF);
@@ -364,6 +384,10 @@ function renderTable() {
   if (dateTo)             rows = rows.filter(r => dateToISO(r[cc.date]) <= dateTo);
   if (flagF === 'flagged') rows = rows.filter(r => r[cc.flag_check] !== 'VERIFIE');
   if (flagF === 'verifie') rows = rows.filter(r => r[cc.flag_check] === 'VERIFIE');
+  if (descF)               rows = rows.filter(r => r[cc.description]   === descF);
+  if (chatF)                rows = rows.filter(r => r[cc.nom_chat]      === chatF);
+  if (recuF)                rows = rows.filter(r => r[cc.num_recu]      === recuF);
+  if (bordF)                rows = rows.filter(r => r[cc.num_bordereau] === bordF);
   if (search) rows = rows.filter(r =>
     [r[cc.libelle],r[cc.type_mvt],r[cc.type_comp],r[cc.description],r[cc.num_bordereau]]
     .join(' ').toLowerCase().includes(search)
@@ -492,7 +516,7 @@ function setSort(col) {
 
 function clearFilters() {
   ['fl-search','fl-date-from','fl-date-to'].forEach(id => { const e=document.getElementById(id);if(e)e.value=''; });
-  ['fl-type','fl-sens','fl-flag'].forEach(id => { const e=document.getElementById(id);if(e)e.selectedIndex=0; });
+  ['fl-type','fl-sens','fl-flag','fl-desc','fl-chat','fl-recu','fl-bordereau'].forEach(id => { const e=document.getElementById(id);if(e)e.selectedIndex=0; });
   sortCol = -1; sortAsc = true; renderTable();
 }
 
