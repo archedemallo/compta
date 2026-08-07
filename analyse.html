@@ -158,6 +158,9 @@
       <button class="tab-btn" onclick="switchTab('fournisseurs')" id="tab-btn-fournisseurs">
         <i class="ti ti-truck"></i> Fournisseurs
       </button>
+      <button class="tab-btn" onclick="switchTab('moyennes')" id="tab-btn-moyennes">
+        <i class="ti ti-chart-arrows"></i> Moyennes
+      </button>
     </div>
 
     <!-- CHARGEMENT -->
@@ -322,6 +325,66 @@
       </div>
     </div>
 
+    <!-- ============================================================ -->
+    <!-- ONGLET 4 : MOYENNES (coût moyen / prix de cession moyen)     -->
+    <!-- ============================================================ -->
+    <div id="tab-moyennes" class="tab-pane" style="display:none;">
+
+      <!-- Sélection des périodes -->
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-head">
+          <div class="card-title"><i class="ti ti-calendar"></i> Périodes prises en compte</div>
+          <div style="display:flex;gap:6px;">
+            <button class="per-check-all" onclick="selectAllMoyPeriodes(true)">Tout</button>
+            <button class="per-check-all" onclick="selectAllMoyPeriodes(false)">Aucune</button>
+          </div>
+        </div>
+        <div class="periode-checks" id="moy-periode-checks"></div>
+      </div>
+
+      <!-- Boutons de config -->
+      <div style="margin-bottom:14px;display:flex;gap:8px;">
+        <button class="btn btn-secondary btn-sm" onclick="toggleMoyConfig('cout')"><i class="ti ti-settings"></i> Catégories de coût</button>
+        <button class="btn btn-secondary btn-sm" onclick="toggleMoyConfig('adopt')"><i class="ti ti-settings"></i> Statuts d'adoption</button>
+      </div>
+
+      <!-- Config catégories de coût -->
+      <div class="ag-config-panel" id="moy-cout-config-panel" style="display:none;">
+        <div class="ag-config-header">
+          <strong><i class="ti ti-settings" style="font-size:13px;margin-right:5px;"></i>Catégories de dépense incluses dans le coût moyen</strong>
+          <button class="btn-ag-save" onclick="saveMoyCostConfig()"><i class="ti ti-device-floppy"></i> Sauvegarder</button>
+        </div>
+        <div class="ag-config-hint">Décoche les catégories à exclure. Basé sur les types de mouvement (Caisse/Banque) et catégories de facture réellement présents sur les périodes cochées ci-dessus. Sauvegardé dans le Google Sheet — s'applique sur tous les appareils.</div>
+        <div id="moy-cout-cb-list" class="ag-cb-grid"></div>
+      </div>
+
+      <!-- Config statuts d'adoption -->
+      <div class="ag-config-panel" id="moy-adopt-config-panel" style="display:none;">
+        <div class="ag-config-header">
+          <strong><i class="ti ti-settings" style="font-size:13px;margin-right:5px;"></i>Statuts d'adoption inclus dans le prix de cession moyen</strong>
+          <button class="btn-ag-save" onclick="saveMoyAdoptionConfig()"><i class="ti ti-device-floppy"></i> Sauvegarder</button>
+        </div>
+        <div class="ag-config-hint">Pour chaque statut trouvé dans les mouvements de type "Adoption" : coche pour l'inclure, et choisis s'il s'ajoute au total ou s'il doit être soustrait (cas d'un remboursement). Sauvegardé dans le Google Sheet.</div>
+        <div id="moy-adopt-cb-list"></div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-row" id="moy-kpis"></div>
+
+      <!-- Détail -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="card">
+          <div class="card-head"><div class="card-title"><i class="ti ti-paw"></i> Chats pris en compte</div></div>
+          <div class="card-body" id="moy-detail-chats"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title"><i class="ti ti-home-heart"></i> Détail par statut d'adoption</div></div>
+          <div class="card-body" id="moy-detail-adoptions"></div>
+        </div>
+      </div>
+
+    </div>
+
   </div><!-- /page-content -->
 </div><!-- /main -->
 
@@ -432,12 +495,13 @@ function renderAll() {
 // ONGLETS
 // ============================================================
 function switchTab(tab) {
-  ['ag','chat','fournisseurs'].forEach(t => {
+  ['ag','chat','fournisseurs','moyennes'].forEach(t => {
     document.getElementById('tab-btn-' + t).classList.toggle('active', t === tab);
     document.getElementById('tab-' + t).classList.toggle('active', t === tab);
     document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
   });
   if (tab === 'fournisseurs') initFournisseurs();
+  if (tab === 'moyennes') renderMoyennesInit();
 }
 
 // ============================================================
@@ -1275,6 +1339,267 @@ function renderChatDetail() {
   }
 
   wrap.innerHTML = html;
+}
+
+// ============================================================
+// ONGLET 4 : MOYENNES — coût moyen par chat / prix de cession moyen
+// ============================================================
+let moyPeriodes = [];        // périodes cochées pour cet onglet (indépendant de chatPeriodes)
+let moyInitialized = false;
+let moyCostTypes = null;     // Set des types de dépense inclus dans le coût moyen — persisté
+let moyAdoptStatuts = null;  // Map(description -> {on, remb}) — persisté
+const MOY_COST_DEFAUT = ['Vétérinaire', 'Soins', 'Pharmacie', 'Nourriture', 'Litiere'];
+
+// Lignes filtrées sur moyPeriodes (même logique que getChatRows, mais période propre à cet onglet)
+function getMoyRows(source) {
+  if (source === 'caisse')  return allCaisse.slice(1).filter(r => r && moyPeriodes.includes(r[getCaisseCol('periode')]));
+  if (source === 'banque')  return allBanque.slice(1).filter(r => r && moyPeriodes.includes(r[getBanqueCol('periode')]));
+  if (source === 'factures') return allFactures.slice(1).filter(r => r && moyPeriodes.includes(r[getFactureCol('periode')]));
+  if (source === 'cheques') return allCheques.slice(1).filter(r => r && moyPeriodes.includes(r[getChequeCol('periode')]));
+  if (source === 'remises') {
+    const result = [];
+    allRemises.slice(1).filter(r => r && moyPeriodes.includes(r[COLS_REMISE.periode])).forEach(rem => {
+      const nb = parseInt(rem[COLS_REMISE.nb_cheques]) || 0;
+      for (let i = 0; i < nb; i++) {
+        const base = COLS_REMISE.detail_start + i * 8;
+        result.push({
+          nom_chat: rem[base + 6] || '', montant: rem[base + 1] || 0,
+          type_mvt: rem[base + 3] || '', description: rem[base + 4] || '',
+        });
+      }
+    });
+    return result;
+  }
+  return [];
+}
+
+// Noms de chats canoniques sur moyPeriodes (même logique que canonicalChatNames, période indépendante)
+function _moyCanonicalChatNames() {
+  const counts = new Map();
+  const add = raw => {
+    if (!raw || !raw.trim()) return;
+    splitChatTokens(raw).filter(x => x.toLowerCase() !== 'medicament').forEach(x => {
+      const key = x.toLowerCase();
+      if (!counts.has(key)) counts.set(key, new Map());
+      counts.get(key).set(x, (counts.get(key).get(x) || 0) + 1);
+    });
+  };
+  getMoyRows('caisse').forEach(r => add(r[getCaisseCol('nom_chat')]));
+  getMoyRows('banque').forEach(r => add(r[getBanqueCol('nom_chat')]));
+  getMoyRows('cheques').forEach(r => add(r[getChequeCol('nom_chat')]));
+  getMoyRows('remises').forEach(r => add(r.nom_chat));
+  const map = new Map();
+  counts.forEach((casings, key) => {
+    let best = null, bestN = -1;
+    casings.forEach((n, c) => { if (n > bestN) { bestN = n; best = c; } });
+    map.set(key, best);
+  });
+  return map;
+}
+
+// ---- Catégories de coût : découverte + config persistée (même pattern que la config AG) ----
+function _moyCostTypesDisponibles() {
+  const set = new Set();
+  getMoyRows('caisse').forEach(r => { const t=(r[getCaisseCol('type_mvt')]||'').trim(); if(t) set.add(t); });
+  getMoyRows('banque').forEach(r => { const t=(r[getBanqueCol('type_mvt')]||'').trim(); if(t) set.add(t); });
+  getMoyRows('factures').forEach(r => { const t=(r[getFactureCol('categorie')]||'').trim(); if(t) set.add(t); });
+  return [...set].sort((a,b)=>a.localeCompare(b,'fr'));
+}
+function loadMoyCostConfig() {
+  try {
+    const stored = localStorage.getItem('arche_moy_cout_types');
+    if (stored) { moyCostTypes = new Set(JSON.parse(stored)); return; }
+  } catch(e) {}
+  moyCostTypes = new Set(MOY_COST_DEFAUT);
+}
+async function saveMoyCostConfig() {
+  const checked = [...document.querySelectorAll('.moy-cout-cb:checked')].map(c => c.value);
+  moyCostTypes = new Set(checked);
+  localStorage.setItem('arche_moy_cout_types', JSON.stringify(checked));
+  try { await saveConfigKey('moy_cout_types', checked); showToast('Catégories enregistrées !'); }
+  catch(e) { showToast('Sauvegardé localement (erreur sheet)', true); }
+  renderMoyennes();
+}
+
+// ---- Statuts d'adoption : découverte + config persistée (inclusion + sens ajout/soustraction) ----
+function _moyAdoptRows() {
+  const isAdopt = t => normFold(t||'').includes('adopt');
+  return {
+    caisse:  getMoyRows('caisse').filter(r => isAdopt(r[getCaisseCol('type_mvt')])),
+    banque:  getMoyRows('banque').filter(r => isAdopt(r[getBanqueCol('type_mvt')])),
+    remises: getMoyRows('remises').filter(r => isAdopt(r.type_mvt)),
+  };
+}
+function _moyAdoptStatutsDisponibles() {
+  const { caisse, banque, remises } = _moyAdoptRows();
+  const set = new Set();
+  caisse.forEach(r => { const d=(r[getCaisseCol('description')]||r[getCaisseCol('libelle')]||'').trim(); if(d) set.add(d); });
+  banque.forEach(r => { const d=(r[getBanqueCol('description')]||r[getBanqueCol('libelle')]||'').trim(); if(d) set.add(d); });
+  remises.forEach(r => { const d=(r.description||'').trim(); if(d) set.add(d); });
+  return [...set].sort((a,b)=>a.localeCompare(b,'fr'));
+}
+function loadMoyAdoptConfig() {
+  try {
+    const stored = localStorage.getItem('arche_moy_adopt_statuts');
+    if (stored) { moyAdoptStatuts = new Map(Object.entries(JSON.parse(stored))); return; }
+  } catch(e) {}
+  moyAdoptStatuts = new Map();
+}
+// Statut jamais vu -> valeurs par défaut (inclus ; traité comme remboursement si le nom le suggère)
+function _moyAdoptStatutState(name) {
+  if (moyAdoptStatuts.has(name)) return moyAdoptStatuts.get(name);
+  return { on: true, remb: normFold(name).includes('rembours') };
+}
+async function saveMoyAdoptionConfig() {
+  const obj = {};
+  document.querySelectorAll('.moy-adopt-row').forEach(row => {
+    const name = row.dataset.name;
+    const on = row.querySelector('.moy-adopt-on').checked;
+    const remb = row.querySelector('.moy-adopt-remb').value === 'remb';
+    obj[name] = { on, remb };
+  });
+  moyAdoptStatuts = new Map(Object.entries(obj));
+  localStorage.setItem('arche_moy_adopt_statuts', JSON.stringify(obj));
+  try { await saveConfigKey('moy_adopt_statuts', obj); showToast('Statuts enregistrés !'); }
+  catch(e) { showToast('Sauvegardé localement (erreur sheet)', true); }
+  renderMoyennes();
+}
+
+// ---- Affichage / repli des panneaux de config ----
+let moyConfigOpen = null; // null | 'cout' | 'adopt'
+function toggleMoyConfig(which) {
+  moyConfigOpen = moyConfigOpen === which ? null : which;
+  document.getElementById('moy-cout-config-panel').style.display = moyConfigOpen === 'cout' ? 'block' : 'none';
+  document.getElementById('moy-adopt-config-panel').style.display = moyConfigOpen === 'adopt' ? 'block' : 'none';
+  if (moyConfigOpen === 'cout') renderMoyCoutConfigPanel();
+  if (moyConfigOpen === 'adopt') renderMoyAdoptConfigPanel();
+}
+function renderMoyCoutConfigPanel() {
+  const types = _moyCostTypesDisponibles();
+  document.getElementById('moy-cout-cb-list').innerHTML = types.length ? types.map(t => `
+    <label class="ag-cb-item"><input type="checkbox" class="moy-cout-cb" value="${escH(t)}" ${moyCostTypes.has(t)?'checked':''}> ${escH(t)}</label>
+  `).join('') : '<span style="color:var(--text-3);">Aucune catégorie de dépense trouvée sur les périodes cochées.</span>';
+}
+function renderMoyAdoptConfigPanel() {
+  const statuts = _moyAdoptStatutsDisponibles();
+  document.getElementById('moy-adopt-cb-list').innerHTML = statuts.length ? statuts.map(name => {
+    const st = _moyAdoptStatutState(name);
+    return `<div class="moy-adopt-row" data-name="${escH(name)}" style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:0.5px solid var(--border);">
+      <label class="ag-cb-item" style="flex:1;"><input type="checkbox" class="moy-adopt-on" ${st.on?'checked':''}> ${escH(name)}</label>
+      <select class="moy-adopt-remb" style="font-size:11px;padding:4px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);background:var(--surface-2);color:var(--text);font-family:'DM Sans',sans-serif;">
+        <option value="ajout" ${!st.remb?'selected':''}>Ajouter au total</option>
+        <option value="remb" ${st.remb?'selected':''}>Soustraire (remboursement)</option>
+      </select>
+    </div>`;
+  }).join('') : '<span style="color:var(--text-3);">Aucun mouvement de type "Adoption" trouvé sur les périodes cochées.</span>';
+}
+
+// ---- Sélecteur de périodes (même pattern que l'onglet Chat, état indépendant) ----
+function renderMoyennesInit() {
+  if (!moyInitialized) {
+    moyInitialized = true;
+    const periodes = getPeriodes();
+    moyPeriodes = [activePer];
+    document.getElementById('moy-periode-checks').innerHTML = periodes.map(p => `
+      <label class="per-check">
+        <input type="checkbox" value="${p}" ${p===activePer?'checked':''} onchange="onMoyPeriodeChange()">
+        ${p}
+      </label>
+    `).join('');
+    if (moyCostTypes === null) loadMoyCostConfig();
+    if (moyAdoptStatuts === null) loadMoyAdoptConfig();
+  }
+  renderMoyennes();
+}
+function onMoyPeriodeChange() {
+  moyPeriodes = [...document.querySelectorAll('#moy-periode-checks input:checked')].map(i=>i.value);
+  renderMoyennes();
+}
+function selectAllMoyPeriodes(all) {
+  document.querySelectorAll('#moy-periode-checks input').forEach(i => i.checked = all);
+  onMoyPeriodeChange();
+}
+
+// ---- Calculs ----
+// Choix validé : dénominateur = TOUTES les dépenses liées aux chats (nominatives + générales),
+// divisées par le nombre de chats nommés trouvés sur la période (pas seulement ceux ayant une dépense nominative).
+function calcMoyCout() {
+  const types = moyCostTypes;
+  let total = 0;
+  const byType = {};
+  const add = (t, v) => { if (types.has(t)) { total += v; byType[t] = (byType[t]||0) + v; } };
+  getMoyRows('caisse').forEach(r => add((r[getCaisseCol('type_mvt')]||'').trim(), fmtN(r[getCaisseCol('debit')])));
+  getMoyRows('banque').forEach(r => add((r[getBanqueCol('type_mvt')]||'').trim(), fmtN(r[getBanqueCol('debit')])));
+  getMoyRows('factures').forEach(r => add((r[getFactureCol('categorie')]||'').trim(), fmtN(r[getFactureCol('montant')])));
+
+  const noms = [...(_moyCanonicalChatNames()).values()].sort((a,b)=>a.localeCompare(b,'fr'));
+  const nbChats = noms.length;
+  const moyenne = nbChats > 0 ? total / nbChats : 0;
+  return { total, byType, nbChats, moyenne, noms };
+}
+// Choix validé : un remboursement d'adoption est soustrait du total (montant négatif) et ne
+// compte pas comme une adoption supplémentaire au dénominateur.
+function calcMoyCession() {
+  const { caisse, banque, remises } = _moyAdoptRows();
+  let total = 0, nb = 0;
+  const detail = {};
+  const process = (rows, getDesc, getMontant) => {
+    rows.forEach(r => {
+      const desc = (getDesc(r) || 'Adoption').trim() || 'Adoption';
+      const st = _moyAdoptStatutState(desc);
+      if (!st.on) return;
+      const montant = fmtN(getMontant(r));
+      if (montant <= 0) return;
+      if (!detail[desc]) detail[desc] = { somme: 0, nb: 0, remb: st.remb };
+      if (st.remb) { total -= montant; detail[desc].somme -= montant; }
+      else { total += montant; nb++; detail[desc].somme += montant; detail[desc].nb++; }
+    });
+  };
+  process(caisse,  r => r[getCaisseCol('description')] || r[getCaisseCol('libelle')], r => r[getCaisseCol('credit')]);
+  process(banque,  r => r[getBanqueCol('description')] || r[getBanqueCol('libelle')], r => r[getBanqueCol('credit')]);
+  process(remises, r => r.description, r => r.montant);
+  const moyenne = nb > 0 ? total / nb : 0;
+  return { total, nb, moyenne, detail };
+}
+
+// ---- Rendu principal ----
+function renderMoyennes() {
+  if (moyCostTypes === null) loadMoyCostConfig();
+  if (moyAdoptStatuts === null) loadMoyAdoptConfig();
+
+  const cout = calcMoyCout();
+  const cession = calcMoyCession();
+  const solde = cession.moyenne - cout.moyenne;
+
+  document.getElementById('moy-kpis').innerHTML = `
+    <div class="kpi"><div class="kpi-label">Coût moyen par chat</div><div class="kpi-value v-red">${fmt(cout.moyenne)}</div><div class="kpi-sub">${fmt(cout.total)} ÷ ${cout.nbChats} chat(s) nommé(s)</div></div>
+    <div class="kpi"><div class="kpi-label">Coût total (sélection)</div><div class="kpi-value v-orange">${fmt(cout.total)}</div><div class="kpi-sub">Catégories cochées, périodes cochées</div></div>
+    <div class="kpi"><div class="kpi-label">Prix de cession moyen</div><div class="kpi-value v-green">${fmt(cession.moyenne)}</div><div class="kpi-sub">${fmt(cession.total)} ÷ ${cession.nb} adoption(s)</div></div>
+    <div class="kpi"><div class="kpi-label">Solde moyen par chat</div><div class="kpi-value ${solde>=0?'v-green':'v-red'}">${fmt(solde)}</div><div class="kpi-sub">Cession − coût</div></div>
+  `;
+
+  document.getElementById('moy-detail-chats').innerHTML = cout.noms.length ? `
+    <div style="font-size:11px;color:var(--text-3);margin-bottom:10px;">${cout.noms.length} chat(s) nommé(s) — dénominateur du coût moyen :</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;">${cout.noms.map(n=>`<span class="badge badge-grey">${escH(n)}</span>`).join('')}</div>
+  ` : '<div class="empty-state"><i class="ti ti-paw"></i>Aucun chat nommé sur ces périodes</div>';
+
+  const statutsList = Object.entries(cession.detail);
+  document.getElementById('moy-detail-adoptions').innerHTML = statutsList.length ? `
+    <table style="width:100%;border-collapse:collapse;font-size:11px;">
+      <thead><tr>
+        <th style="text-align:left;padding:6px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);">Statut</th>
+        <th style="text-align:right;padding:6px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);">Nb</th>
+        <th style="text-align:right;padding:6px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);">Montant</th>
+      </tr></thead>
+      <tbody>${statutsList.map(([name,d])=>`
+        <tr style="border-bottom:0.5px solid var(--border);">
+          <td style="padding:5px 10px;">${escH(name)}${d.remb?' <span style="color:var(--red);font-size:9px;">(remboursement)</span>':''}</td>
+          <td style="text-align:right;padding:5px 10px;">${d.nb || '—'}</td>
+          <td style="text-align:right;padding:5px 10px;color:${d.somme>=0?'inherit':'var(--red)'};">${fmt(d.somme)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  ` : '<div class="empty-state"><i class="ti ti-home-heart"></i>Aucune adoption sur ces périodes</div>';
 }
 
 // ============================================================
