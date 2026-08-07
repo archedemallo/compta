@@ -995,8 +995,8 @@ let evenementsSelection=null;      // Set des événements cochés dans la vue G
 
 function _evenementsData(){
   const allOps=[...caisseRows(),...banqueRows()].filter(r=>{
-    const t=(rf(r,'type_mvt')||'').toLowerCase();
-    return t.includes('vén')||t.includes('event')||t.includes('evén');
+    const t=_normCat(rf(r,'type_mvt')); // accents/casse normalisés (ex: "Événement"/"Evenement" -> "evenement")
+    return t.includes('evenement');
   });
   const map={}; // nom événement -> {entrees, sorties, mouvements:[]}
   allOps.forEach(r=>{
@@ -1007,6 +1007,13 @@ function _evenementsData(){
     map[name].mouvements.push(r);
   });
   return map;
+}
+function _typesDiagnostic(){
+  // Utilisé uniquement pour le message d'état vide : liste les types réellement
+  // présents dans la période, pour diagnostiquer rapidement si le libellé "Événement"
+  // utilisé dans le tableur diffère de ce qui est attendu.
+  const set=new Set([...caisseRows(),...banqueRows()].map(r=>rf(r,'type_mvt')).filter(Boolean));
+  return [...set].sort((a,b)=>a.localeCompare(b,'fr'));
 }
 
 function renderEvenements(){
@@ -1023,7 +1030,11 @@ function renderEvenements(){
   </div>`;
 
   if(!names.length){
-    return `${tabs}<div class="card"><div class="card-body" style="text-align:center;padding:30px;color:var(--text-3);">Aucun événement pour la période ${activePer}.</div></div>`;
+    const typesPresents=_typesDiagnostic();
+    return `${tabs}<div class="card"><div class="card-body" style="text-align:center;padding:30px;color:var(--text-3);">
+      Aucun mouvement de type "Événement" trouvé pour la période ${activePer}.
+      ${typesPresents.length?`<div style="margin-top:14px;font-size:11px;">Types de mouvement présents sur cette période : <em>${typesPresents.map(escH).join(', ')}</em></div>`:''}
+    </div></div>`;
   }
   return tabs + (evenementActif==='global' ? _renderEvenementGlobal(data,names) : _renderEvenementDetail(evenementActif,data[evenementActif]));
 }
