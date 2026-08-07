@@ -352,11 +352,11 @@ function renderKPIs() {
   const soldInit = Sheets.getSoldeInitial(per, CAISSE_NUM);
   const soldActuel = soldInit + inn - out;
   document.getElementById('kpi-bar').innerHTML = `
-    <div class="kpi"><div class="kpi-label">Solde initial</div><div class="kpi-value" style="color:var(--blue)">${fmt(soldInit)}</div><div class="kpi-sub">Configuré dans Config</div></div>
+    <div class="kpi"><div class="kpi-label">Solde actuel</div><div class="kpi-value" style="color:${soldActuel>=0?'var(--green)':'var(--red)'}">${fmt(soldActuel)}</div></div>
     <div class="kpi"><div class="kpi-label">Entrées</div><div class="kpi-value" style="color:var(--green)">${fmt(inn)}</div><div class="kpi-sub">${rows.filter(r=>parseFloat(r[cc.credit])>0).length} op.</div></div>
     <div class="kpi"><div class="kpi-label">Sorties</div><div class="kpi-value" style="color:var(--red)">${fmt(out)}</div><div class="kpi-sub">${rows.filter(r=>parseFloat(r[cc.debit])>0).length} op.</div></div>
     <div class="kpi"><div class="kpi-label">Net période</div><div class="kpi-value" style="color:${inn-out>=0?'var(--green)':'var(--red)'}">${fmt(inn-out)}</div></div>
-    <div class="kpi"><div class="kpi-label">Solde actuel</div><div class="kpi-value" style="color:${soldActuel>=0?'var(--green)':'var(--red)'}">${fmt(soldActuel)}</div></div>`;
+    <div class="kpi"><div class="kpi-label">Solde initial</div><div class="kpi-value" style="color:var(--blue)">${fmt(soldInit)}</div><div class="kpi-sub">Configuré dans Config</div></div>`;
 }
 
 // ============================================================
