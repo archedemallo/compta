@@ -26,7 +26,7 @@
   .f-input-search{width:130px;}
   .f-input-date{width:118px;}
   /* KPIs 4 colonnes */
-  .kpi-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+  .kpi-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
   .kpi{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;}
   .kpi-label{font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
   .kpi-value{font-size:18px;font-weight:600;}
@@ -324,7 +324,7 @@ function onPeriodeChange(p) {
 function onFilterPeriodeChange() { updateDynamicFilters(); renderKPIs(); renderTable(); }
 
 // ============================================================
-// KPIs — 4 cases
+// KPIs — 5 cases
 // ============================================================
 function renderKPIs() {
   const cc  = Sheets.cols.caisse;
@@ -334,11 +334,13 @@ function renderKPIs() {
   const inn  = sum(rows, cc.credit);
   const out  = sum(rows, cc.debit);
   const soldInit = Sheets.getSoldeInitial(per, CAISSE_NUM);
+  const soldActuel = soldInit + inn - out;
   document.getElementById('kpi-bar').innerHTML = `
     <div class="kpi"><div class="kpi-label">Entrées</div><div class="kpi-value" style="color:var(--green)">${fmt(inn)}</div><div class="kpi-sub">${rows.filter(r=>parseFloat(r[cc.credit])>0).length} op.</div></div>
     <div class="kpi"><div class="kpi-label">Sorties</div><div class="kpi-value" style="color:var(--red)">${fmt(out)}</div><div class="kpi-sub">${rows.filter(r=>parseFloat(r[cc.debit])>0).length} op.</div></div>
     <div class="kpi"><div class="kpi-label">Net période</div><div class="kpi-value" style="color:${inn-out>=0?'var(--green)':'var(--red)'}">${fmt(inn-out)}</div></div>
-    <div class="kpi"><div class="kpi-label">Solde initial</div><div class="kpi-value" style="color:var(--blue)">${fmt(soldInit)}</div><div class="kpi-sub">Configuré dans Config</div></div>`;
+    <div class="kpi"><div class="kpi-label">Solde initial</div><div class="kpi-value" style="color:var(--blue)">${fmt(soldInit)}</div><div class="kpi-sub">Configuré dans Config</div></div>
+    <div class="kpi"><div class="kpi-label">Solde actuel</div><div class="kpi-value" style="color:${soldActuel>=0?'var(--green)':'var(--red)'}">${fmt(soldActuel)}</div></div>`;
 }
 
 // ============================================================
@@ -499,7 +501,7 @@ function clearFilters() {
 // ============================================================
 async function toggleVerified(ri, checked) {
   const cc = Sheets.cols.caisse;
-  const r  = allRows.find(x => (x._sheetIndex !== undefined ? x._sheetIndex : allRows.indexOf(x)) === ri);
+  const r  = allRows.find(x => x._sheetIndex === ri) || allRows[ri];
   if (!r) return;
   // Mise à jour immédiate en mémoire → case reste cochée sans attendre le sheet
   r[cc.flag_check] = checked ? 'VERIFIE' : 'FALSE';
@@ -558,7 +560,7 @@ async function submitForm() {
 
   const cc = Sheets.cols.caisse;
   if (editIdx !== null) {
-    const r = allRows.find(x => (x._sheetIndex !== undefined ? x._sheetIndex : allRows.indexOf(x)) === editIdx);
+    const r = allRows.find(x => x._sheetIndex === editIdx) || allRows[editIdx];
     if (r[cc.flag_check] === 'VERIFIE') { showErr('Ligne verrouillée — décochez "Vérifié" pour modifier.'); return; }
   }
 
@@ -584,7 +586,7 @@ async function submitForm() {
   btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader-2 spinner"></i>';
   try {
     if (editIdx !== null) {
-      const r = allRows.find(x => (x._sheetIndex !== undefined ? x._sheetIndex : allRows.indexOf(x)) === editIdx);
+      const r = allRows.find(x => x._sheetIndex === editIdx) || allRows[editIdx];
       op.flag_check   = r[cc.flag_check]   || 'FALSE';
       op.flag_comment = r[cc.flag_comment] || '';
       op.suivi_ref    = r[cc.suivi_ref]    || '';
@@ -600,7 +602,7 @@ async function submitForm() {
 }
 
 function openEdit(ri) {
-  const cc = Sheets.cols.caisse, r = allRows.find(x => (x._sheetIndex !== undefined ? x._sheetIndex : allRows.indexOf(x)) === ri);
+  const cc = Sheets.cols.caisse, r = allRows.find(x => x._sheetIndex === ri) || allRows[ri];
   if (r[cc.flag_check] === 'VERIFIE') { showToast('⚠️ Ligne vérifiée — décochez pour modifier'); return; }
   editIdx = ri;
   document.getElementById('f-date').value      = dateToISO(r[cc.date] || '');
@@ -627,7 +629,7 @@ function openEdit(ri) {
 // SUPPRIMER
 // ============================================================
 function openDel(ri) {
-  const cc = Sheets.cols.caisse, r = allRows.find(x => (x._sheetIndex !== undefined ? x._sheetIndex : allRows.indexOf(x)) === ri);
+  const cc = Sheets.cols.caisse, r = allRows.find(x => x._sheetIndex === ri) || allRows[ri];
   if (r[cc.flag_check] === 'VERIFIE') { showToast('⚠️ Ligne vérifiée — impossible de supprimer'); return; }
   delIdx = ri;
   document.getElementById('del-detail').innerHTML =
@@ -698,7 +700,7 @@ async function reactiverRapprochement(suiviRef) {
 async function delierCaisseSuivi(ri) {
   if (!confirm("Supprimer le rapprochement Suivi et remettre en file d'attente ?")) return;
   const cc = Sheets.cols.caisse;
-  const r = allRows.find(x => (x._sheetIndex !== undefined ? x._sheetIndex : allRows.indexOf(x)) === ri);
+  const r = allRows.find(x => x._sheetIndex === ri) || allRows[ri];
   if (!r) return;
   const sheetRow = (r._sheetIndex !== undefined ? r._sheetIndex : ri) + 2;
   const suiviRef = r[cc.suivi_ref] || '';
@@ -713,7 +715,7 @@ async function delierCaisseSuivi(ri) {
 async function delierCaisseBordereau(ri) {
   if (!confirm("Supprimer le rapprochement avec le bordereau de remise ?")) return;
   const cc = Sheets.cols.caisse;
-  const r = allRows.find(x => (x._sheetIndex !== undefined ? x._sheetIndex : allRows.indexOf(x)) === ri);
+  const r = allRows.find(x => x._sheetIndex === ri) || allRows[ri];
   if (!r) return;
   const sheetRow = (r._sheetIndex !== undefined ? r._sheetIndex : ri) + 2;
   try {
