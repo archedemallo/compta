@@ -117,6 +117,12 @@
   .card-cfg-btn{background:none;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);width:24px;height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-3);flex-shrink:0;}
   .card-cfg-btn:hover{background:var(--warm);color:var(--text-2);}
 
+  /* Panneau config événements — repris du panneau catégories AG (analyse.html) */
+  .evt-config-panel{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;font-size:11px;}
+  .evt-config-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .evt-config-hint{font-size:10px;color:var(--text-3);margin-bottom:12px;}
+  .btn-evt-save{font-size:11px;padding:5px 14px;border-radius:var(--radius-sm);border:none;background:var(--blue);color:white;cursor:pointer;font-family:'DM Sans',sans-serif;}
+
   /* Sous-onglets Événements */
   .evt-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
   .evt-tab{font-size:11px;padding:5px 12px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:transparent;color:var(--text-2);cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:6px;}
@@ -990,8 +996,9 @@ function initTresoChart(){
 // ============================================================
 // 15. ÉVÉNEMENTS
 // ============================================================
-let evenementActif='global';       // 'global' ou nom de l'événement
-let evenementsSelection=null;      // Set des événements cochés dans la vue Globalité (null = tous, initialisé au 1er rendu)
+let evenementActif='global';           // 'global' ou nom de l'événement
+let evenementsConfig=null;             // Set des événements à afficher — persisté (comme les catégories AG), pas remis à zéro à chaque session
+let evenementsConfigVisible=false;     // affichage du panneau de sélection
 
 function _evenementsData(){
   const allOps=[...caisseRows(),...banqueRows()].filter(r=>{
@@ -1015,56 +1022,103 @@ function _typesDiagnostic(){
   const set=new Set([...caisseRows(),...banqueRows()].map(r=>rf(r,'type_mvt')).filter(Boolean));
   return [...set].sort((a,b)=>a.localeCompare(b,'fr'));
 }
+// Liste des événements connus toutes périodes confondues (comme les catégories AG,
+// qui ne dépendent pas non plus de la période active) — base de la config.
+function _tousLesEvenementsConnus(){
+  const set=new Set();
+  [...allCaisse,...allBanque].forEach(r=>{
+    if(_normCat(rf(r,'type_mvt')).includes('evenement')){
+      set.add(rf(r,'description')||rf(r,'libelle')||'Événement');
+    }
+  });
+  return [...set].sort((a,b)=>a.localeCompare(b,'fr'));
+}
+
+// ---- Config sélection (checkboxes, persistée en Config sheet + localStorage — même pattern que Répartition/AG) ----
+function loadEvenementsConfig(){
+  try{
+    const stored=localStorage.getItem('arche_evenements_selection');
+    if(stored){evenementsConfig=new Set(JSON.parse(stored));return;}
+  }catch(e){}
+  evenementsConfig=new Set(_tousLesEvenementsConnus()); // tout affiché par défaut la première fois
+}
+async function saveEvenementsConfig(){
+  const arr=[...evenementsConfig];
+  localStorage.setItem('arche_evenements_selection',JSON.stringify(arr));
+  try{await Sheets.saveConfigKey('evenements_selection',arr);showToast('Sélection enregistrée !');}
+  catch(e){showToast('Sauvegardé localement (erreur sheet)');}
+}
+function toggleEvenementsConfig(){evenementsConfigVisible=!evenementsConfigVisible;renderSection('evenements');}
+function toggleEvenementConfigCb(name,checked){if(checked)evenementsConfig.add(name);else evenementsConfig.delete(name);}
+function evenementsConfigSelectAll(all){
+  evenementsConfig = all ? new Set(_tousLesEvenementsConnus()) : new Set();
+  renderSection('evenements');
+}
+
+function _renderEvenementsConfigPanel(){
+  const tous=_tousLesEvenementsConnus();
+  return `<div class="evt-config-panel" id="evt-config-panel">
+    <div class="evt-config-header">
+      <strong><i class="ti ti-settings" style="font-size:13px;margin-right:5px;"></i>Sélection des événements affichés</strong>
+      <button class="btn-evt-save" onclick="saveEvenementsConfig()"><i class="ti ti-device-floppy"></i> Sauvegarder</button>
+    </div>
+    <div class="evt-config-hint">Décoche les événements à masquer (anciens, tests…). Sauvegardé dans le Google Sheet (onglet Config) — s'applique sur tous les appareils, comme la config des catégories AG.</div>
+    <div style="display:flex;gap:12px;font-size:10px;margin-bottom:8px;">
+      <a href="#" onclick="evenementsConfigSelectAll(true);return false;" style="color:var(--blue);">Tout cocher</a>
+      <a href="#" onclick="evenementsConfigSelectAll(false);return false;" style="color:var(--blue);">Tout décocher</a>
+    </div>
+    <div class="cb-grid">${tous.length?tous.map(n=>`<label class="cb-item"><input type="checkbox" ${evenementsConfig.has(n)?'checked':''} onchange="toggleEvenementConfigCb('${n.replace(/'/g,"\\'")}',this.checked)"> ${escH(n)}</label>`).join(''):'<span style="color:var(--text-3);">Aucun événement connu pour l\'instant.</span>'}</div>
+  </div>`;
+}
 
 function renderEvenements(){
+  if(evenementsConfig===null) loadEvenementsConfig();
   const data=_evenementsData();
-  const names=Object.keys(data).sort((a,b)=>a.localeCompare(b,'fr'));
-
-  if(evenementsSelection===null) evenementsSelection=new Set(names); // tout coché par défaut
-  evenementsSelection=new Set([...evenementsSelection].filter(n=>names.includes(n))); // purge des noms disparus (changement de période)
+  const allNames=Object.keys(data).sort((a,b)=>a.localeCompare(b,'fr'));
+  const names=allNames.filter(n=>evenementsConfig.has(n)); // seuls les événements cochés en config s'affichent
   if(evenementActif!=='global' && !names.includes(evenementActif)) evenementActif='global';
+
+  const configBtn=`<div style="margin-bottom:10px;">
+    <button class="btn btn-secondary btn-sm" onclick="toggleEvenementsConfig()"><i class="ti ti-settings"></i> Sélection des événements</button>
+  </div>`;
+  const configPanel=evenementsConfigVisible?_renderEvenementsConfigPanel():'';
 
   const tabs=`<div class="evt-tabs">
     <button class="evt-tab ${evenementActif==='global'?'active':''}" onclick="selectEvenementTab('global')"><i class="ti ti-layout-grid"></i> Globalité <span class="badge">${names.length}</span></button>
     ${names.map(n=>`<button class="evt-tab ${evenementActif===n?'active':''}" onclick="selectEvenementTab('${n.replace(/'/g,"\\'")}')">${escH(n)} <span class="badge">${data[n].mouvements.length}</span></button>`).join('')}
   </div>`;
 
-  if(!names.length){
+  if(!allNames.length){
     const typesPresents=_typesDiagnostic();
-    return `${tabs}<div class="card"><div class="card-body" style="text-align:center;padding:30px;color:var(--text-3);">
+    return `${configBtn}${configPanel}${tabs}<div class="card"><div class="card-body" style="text-align:center;padding:30px;color:var(--text-3);">
       Aucun mouvement de type "Événement" trouvé pour la période ${activePer}.
       ${typesPresents.length?`<div style="margin-top:14px;font-size:11px;">Types de mouvement présents sur cette période : <em>${typesPresents.map(escH).join(', ')}</em></div>`:''}
     </div></div>`;
   }
-  return tabs + (evenementActif==='global' ? _renderEvenementGlobal(data,names) : _renderEvenementDetail(evenementActif,data[evenementActif]));
+  if(!names.length){
+    return `${configBtn}${configPanel}<div class="card"><div class="card-body" style="text-align:center;padding:30px;color:var(--text-3);">Tous les événements de cette période sont masqués par la sélection actuelle. <a href="#" onclick="toggleEvenementsConfig();return false;" style="color:var(--blue);">Ouvrir la sélection</a> pour en réafficher.</div></div>`;
+  }
+  return configBtn+configPanel+tabs + (evenementActif==='global' ? _renderEvenementsGlobalTable(data,names) : _renderEvenementDetail(evenementActif,data[evenementActif]));
 }
 
 function selectEvenementTab(name){evenementActif=name;renderSection('evenements');}
 
-function _renderEvenementGlobal(data,names){
-  const selected=names.filter(n=>evenementsSelection.has(n));
-  const totalEntrees=selected.reduce((s,n)=>s+data[n].entrees,0);
-  const totalSorties=selected.reduce((s,n)=>s+data[n].sorties,0);
+function _renderEvenementsGlobalTable(data,names){
+  const totalEntrees=names.reduce((s,n)=>s+data[n].entrees,0);
+  const totalSorties=names.reduce((s,n)=>s+data[n].sorties,0);
   const net=totalEntrees-totalSorties;
   return `
   <div class="kpi-top">
-    <div class="kpi"><div class="kpi-label">Entrées</div><div class="kpi-value v-green">${fmt(totalEntrees)}</div><div class="kpi-sub">${selected.length}/${names.length} événement(s) cochés</div></div>
-    <div class="kpi"><div class="kpi-label">Sorties</div><div class="kpi-value v-red">${fmt(totalSorties)}</div><div class="kpi-sub">${selected.length}/${names.length} événement(s) cochés</div></div>
+    <div class="kpi"><div class="kpi-label">Entrées</div><div class="kpi-value v-green">${fmt(totalEntrees)}</div><div class="kpi-sub">${names.length} événement(s) sélectionné(s)</div></div>
+    <div class="kpi"><div class="kpi-label">Sorties</div><div class="kpi-value v-red">${fmt(totalSorties)}</div><div class="kpi-sub">${names.length} événement(s) sélectionné(s)</div></div>
     <div class="kpi"><div class="kpi-label">Net</div><div class="kpi-value ${net>=0?'v-green':'v-red'}">${fmt(net)}</div><div class="kpi-sub">Sélection actuelle</div></div>
   </div>
   <div class="card" style="margin-top:14px;">
-    <div class="card-head">
-      <div class="card-title"><i class="ti ti-confetti"></i> Tous les événements — ${activePer}</div>
-      <div style="display:flex;gap:12px;font-size:10px;">
-        <a href="#" onclick="evtSelectAll(true);return false;" style="color:var(--blue);">Tout cocher</a>
-        <a href="#" onclick="evtSelectAll(false);return false;" style="color:var(--blue);">Tout décocher</a>
-      </div>
-    </div>
-    <table><thead><tr><th style="width:26px;"></th><th>Événement</th><th class="r">Entrées</th><th class="r">Sorties</th><th class="r">Net</th><th class="r">Mouvements</th></tr></thead>
+    <div class="card-head"><div class="card-title"><i class="ti ti-confetti"></i> Événements sélectionnés — ${activePer}</div></div>
+    <table><thead><tr><th>Événement</th><th class="r">Entrées</th><th class="r">Sorties</th><th class="r">Net</th><th class="r">Mouvements</th></tr></thead>
     <tbody>${names.map(n=>{
       const d=data[n];const evNet=d.entrees-d.sorties;
       return `<tr>
-        <td onclick="event.stopPropagation();"><input type="checkbox" ${evenementsSelection.has(n)?'checked':''} onchange="toggleEvenementCb('${n.replace(/'/g,"\\'")}',this.checked)"></td>
         <td style="font-weight:500;cursor:pointer;" onclick="selectEvenementTab('${n.replace(/'/g,"\\'")}')">${escH(n)}</td>
         <td class="r amount-c">${fmt(d.entrees)}</td>
         <td class="r amount-d">${fmt(d.sorties)}</td>
@@ -1073,16 +1127,6 @@ function _renderEvenementGlobal(data,names){
       </tr>`;
     }).join('')}</tbody></table>
   </div>`;
-}
-
-function toggleEvenementCb(name,checked){
-  if(checked)evenementsSelection.add(name);else evenementsSelection.delete(name);
-  renderSection('evenements');
-}
-function evtSelectAll(all){
-  const names=Object.keys(_evenementsData());
-  evenementsSelection = all ? new Set(names) : new Set();
-  renderSection('evenements');
 }
 
 function _renderEvenementDetail(name,d){
