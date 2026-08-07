@@ -35,6 +35,21 @@
   .kpi-sub{font-size:10px;color:var(--text-3);margin-top:3px;}
   .v-green{color:var(--green);} .v-blue{color:var(--blue);} .v-orange{color:var(--orange);} .v-red{color:var(--red);}
 
+  /* Cases à cocher — config catégories / sélection événements */
+  .cb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px 10px;max-height:260px;overflow-y:auto;padding:4px 0;}
+  .cb-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-2);padding:2px 0;cursor:pointer;}
+  .cb-item input{width:13px;height:13px;cursor:pointer;accent-color:var(--orange);flex-shrink:0;}
+  .card-cfg-btn{background:none;border:0.5px solid var(--border);border-radius:6px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-3);font-size:13px;}
+  .card-cfg-btn:hover{background:var(--warm);color:var(--text-2);}
+
+  /* Sous-onglets Événements */
+  .evt-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+  .evt-tab{font-size:11px;padding:6px 12px;border-radius:8px;border:0.5px solid var(--border);background:var(--surface);color:var(--text-2);cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;}
+  .evt-tab:hover{background:var(--warm);}
+  .evt-tab.active{background:var(--orange);color:#fff;border-color:var(--orange);}
+  .evt-tab .badge{background:var(--warm);border-radius:8px;padding:0 6px;font-size:9px;color:var(--text-3);}
+  .evt-tab.active .badge{background:rgba(255,255,255,0.28);color:#fff;}
+
   /* Grid 2 colonnes */
   .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
   .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
@@ -95,6 +110,21 @@
   .list-head{position:sticky;top:0;z-index:10;background:var(--surface);}
   .selection-bar{position:sticky;top:0;z-index:9;}
 
+  /* Checkboxes catégories (Répartition) / événements */
+  .cb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px 10px;max-height:260px;overflow-y:auto;padding:4px 0;}
+  .cb-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-2);padding:2px 0;cursor:pointer;}
+  .cb-item input{width:13px;height:13px;cursor:pointer;accent-color:var(--orange);flex-shrink:0;}
+  .card-cfg-btn{background:none;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);width:24px;height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-3);flex-shrink:0;}
+  .card-cfg-btn:hover{background:var(--warm);color:var(--text-2);}
+
+  /* Sous-onglets Événements */
+  .evt-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+  .evt-tab{font-size:11px;padding:5px 12px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:transparent;color:var(--text-2);cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:6px;}
+  .evt-tab:hover{background:var(--warm);}
+  .evt-tab.active{background:var(--orange);color:#fff;border-color:var(--orange);}
+  .evt-tab .badge{background:rgba(255,255,255,0.25);border-radius:8px;padding:0 5px;font-size:9px;}
+  .evt-tab:not(.active) .badge{background:var(--warm);color:var(--text-3);}
+
 </style>
 </head>
 <body>
@@ -131,6 +161,21 @@
     <!-- CONTENU DYNAMIQUE -->
     <div id="synth-content" style="display:none;"></div>
 
+  </div>
+</div>
+
+<!-- MODAL CONFIG CATÉGORIES RÉPARTITION -->
+<div class="modal-overlay" id="modal-repart-overlay" style="display:none;">
+  <div class="modal" id="modal-repart">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-repart-title">Catégories</div>
+      <button class="modal-close" onclick="closeRepartitionConfig()">×</button>
+    </div>
+    <div class="modal-body" id="modal-repart-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeRepartitionConfig()">Annuler</button>
+      <button class="btn btn-primary btn-sm" onclick="saveRepartitionConfigFromModal()">Enregistrer</button>
+    </div>
   </div>
 </div>
 
@@ -215,6 +260,24 @@ function caisseRows(){return allCaisse.filter(r=>r[cc().periode]===activePer);}
 function banqueRows(){return allBanque.filter(r=>r[cb().periode]===activePer);}
 function c1rows(){return caisseRows().filter(r=>r[cc().source]!=='C2');}
 function c2rows(){return caisseRows().filter(r=>r[cc().source]==='C2');}
+
+// Getter de champ "origin-aware". Les colonnes Caisse et Banque n'ont pas les
+// mêmes index (COLS_BANQUE n'a par ex. pas de colonne "source", et son "date"
+// est en position 0 alors que Caisse a "source" en 0 et "date" en 1). Piocher
+// à l'aveugle avec cc() sur un tableau mêlant Caisse+Banque fait donc lire la
+// mauvaise colonne pour les lignes Banque (ex: cc().credit sur une ligne
+// Banque retombe sur sa colonne "solde", cc().debit sur sa colonne "credit").
+// C'est la cause des libellés/dates faux et des montants inversés observés
+// en Répartition et Adoptions. rf() choisit la bonne table de colonnes par ligne.
+function rf(r, field) {
+  const map = _isCaisse(r) ? cc() : cb();
+  const idx = map[field];
+  return idx !== undefined ? r[idx] : '';
+}
+
+function escH(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
 function sum(rows,col){return rows.reduce((s,r)=>s+(parseFloat(r[col])||0),0);}
 function sumCredit(rows,col){return sum(rows,col);}
@@ -416,25 +479,86 @@ function initEvolutionChart(){
 // ============================================================
 // 4. RÉPARTITION
 // ============================================================
+// ---- Config catégories (checkboxes, persistée en Config sheet + localStorage) ----
+let repartitionConfig=null; // {entrees:[...types exclus], sorties:[...types exclus]}
+const REPARTITION_EXCL_DEFAUT=['depot en banque']; // comparaison normalisée (accents/casse ignorés)
+
+function _normCat(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();}
+
+function loadRepartitionConfig(){
+  try{
+    const stored=localStorage.getItem('arche_repartition_excl');
+    if(stored){repartitionConfig=JSON.parse(stored);return;}
+  }catch(e){}
+  repartitionConfig={entrees:[...REPARTITION_EXCL_DEFAUT],sorties:[...REPARTITION_EXCL_DEFAUT]};
+}
+
+async function saveRepartitionConfig(){
+  localStorage.setItem('arche_repartition_excl',JSON.stringify(repartitionConfig));
+  try{await Sheets.saveConfigKey('repartition_excl',repartitionConfig);showToast('Catégories enregistrées !');}
+  catch(e){showToast('Sauvegardé localement (erreur sheet)');}
+}
+
+function _typesDisponibles(colMontant){
+  const ops=[...caisseRows(),...banqueRows()];
+  const set=new Set();
+  ops.forEach(r=>{
+    const v=parseFloat(rf(r,colMontant))||0;
+    if(v>0) set.add(rf(r,'type_mvt')||'Autre');
+  });
+  return [...set].sort((a,b)=>a.localeCompare(b,'fr'));
+}
+
+function openRepartitionConfig(sens){ // sens: 'entrees' ou 'sorties'
+  if(!repartitionConfig) loadRepartitionConfig();
+  const colMontant = sens==='entrees' ? 'credit' : 'debit';
+  const types=_typesDisponibles(colMontant);
+  const excl=repartitionConfig[sens]||[];
+  const isExcluded=t=>excl.some(e=>_normCat(e)===_normCat(t));
+  document.getElementById('modal-repart-title').textContent = sens==='entrees' ? 'Catégories affichées — Entrées' : 'Catégories affichées — Sorties';
+  document.getElementById('modal-repart-body').innerHTML = `
+    <p style="font-size:11px;color:var(--text-3);margin-bottom:10px;">Décoche les catégories à exclure du graphique (ex. un mouvement interne comme un dépôt en banque, qui n'est ni une vraie entrée ni une vraie sortie).</p>
+    <div class="cb-grid">${types.map(t=>`<label class="cb-item"><input type="checkbox" class="repart-cb" value="${escH(t)}" ${isExcluded(t)?'':'checked'}> ${escH(t)}</label>`).join('')}</div>`;
+  document.getElementById('modal-repart').dataset.sens=sens;
+  document.getElementById('modal-repart-overlay').style.display='flex';
+}
+function closeRepartitionConfig(){document.getElementById('modal-repart-overlay').style.display='none';}
+async function saveRepartitionConfigFromModal(){
+  const sens=document.getElementById('modal-repart').dataset.sens;
+  const all=[...document.querySelectorAll('.repart-cb')].map(c=>c.value);
+  const checked=[...document.querySelectorAll('.repart-cb:checked')].map(c=>c.value);
+  repartitionConfig[sens]=all.filter(t=>!checked.includes(t));
+  await saveRepartitionConfig();
+  closeRepartitionConfig();
+  initRepartitionCharts();
+}
+
 function renderRepartition(){
   return `<div class="grid-2">
-    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des entrées</div></div><div class="card-body"><canvas id="chart-entrees"></canvas></div></div>
-    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des sorties</div></div><div class="card-body"><canvas id="chart-sorties"></canvas></div></div>
+    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des entrées</div><button class="card-cfg-btn" title="Choisir les catégories affichées" onclick="openRepartitionConfig('entrees')"><i class="ti ti-settings"></i></button></div><div class="card-body"><canvas id="chart-entrees"></canvas></div></div>
+    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des sorties</div><button class="card-cfg-btn" title="Choisir les catégories affichées" onclick="openRepartitionConfig('sorties')"><i class="ti ti-settings"></i></button></div><div class="card-body"><canvas id="chart-sorties"></canvas></div></div>
   </div>`;
 }
 function initRepartitionCharts(){
+  if(!repartitionConfig) loadRepartitionConfig();
   const allOps=[...caisseRows(),...banqueRows()];
-  const byType=(ops,colType,colMontant)=>{
+  const isExcl=(sens,type)=>(repartitionConfig[sens]||[]).some(e=>_normCat(e)===_normCat(type));
+  const byType=(sens,colMontant)=>{
     const map={};
-    ops.forEach(r=>{const t=r[colType]||'Autre';const v=parseFloat(r[colMontant])||0;if(v>0)map[t]=(map[t]||0)+v;});
-    return Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    allOps.forEach(r=>{
+      const t=rf(r,'type_mvt')||'Autre';
+      if(isExcl(sens,t))return;
+      const v=parseFloat(rf(r,colMontant))||0;
+      if(v>0)map[t]=(map[t]||0)+v;
+    });
+    return Object.entries(map).sort((a,b)=>b[1]-a[1]); // pas de plafond : toute catégorie cochée s'affiche
   };
-  const entrees=byType(allOps,cc().type_mvt,cc().credit);
-  const sorties=byType(allOps,cc().type_mvt,cc().debit);
-  const colors=['#3B6D11','#c96b2a','#185FA5','#854F0B','#3C3489','#993C1D','#5c3d28','#8a7968'];
+  const entrees=byType('entrees','credit');
+  const sorties=byType('sorties','debit');
+  const palette=n=>Array.from({length:n},(_,i)=>`hsl(${(i*47)%360} 55% 45%)`);
   const mkChart=(id,data)=>{
     const ctx=document.getElementById(id);if(!ctx)return;
-    charts[id]=new Chart(ctx,{type:'doughnut',data:{labels:data.map(d=>d[0]),datasets:[{data:data.map(d=>d[1]),backgroundColor:colors,borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,plugins:{legend:{position:'right'},tooltip:{callbacks:{label:c=>`${c.label}: ${fmt(c.raw)}`}}}}});
+    charts[id]=new Chart(ctx,{type:'doughnut',data:{labels:data.map(d=>d[0]),datasets:[{data:data.map(d=>d[1]),backgroundColor:palette(data.length),borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,plugins:{legend:{position:'right'},tooltip:{callbacks:{label:c=>`${c.label}: ${fmt(c.raw)}`}}}}});
   };
   mkChart('chart-entrees',entrees);mkChart('chart-sorties',sorties);
 }
@@ -479,22 +603,27 @@ function renderTopDonateurs(){
 // 7. ADOPTIONS
 // ============================================================
 function renderAdoptions(){
+  const rows=[...caisseRows(),...banqueRows()]
+    .filter(r=>(rf(r,'type_mvt')||'').toLowerCase().includes('adopt'))
+    .sort((a,b)=>(parseDateFR(rf(b,'date')||'')||0)-(parseDateFR(rf(a,'date')||'')||0)); // plus récent d'abord
   return `<div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-home"></i> Suivi des adoptions — 12 mois</div></div><div class="card-body"><canvas id="chart-adoptions"></canvas></div></div>
   <div class="card" style="margin-top:14px;"><div class="card-head"><div class="card-title"><i class="ti ti-list"></i> Détail des adoptions — période ${activePer}</div></div>
   <table><thead><tr><th>Date</th><th>Libellé</th><th>Chat</th><th>Source</th><th class="r">Montant</th></tr></thead>
-  <tbody>${[...caisseRows(),...banqueRows()].filter(r=>(r[cc().type_mvt]||r[cb().type_mvt]||'').toLowerCase().includes('adopt'))
-    .sort((a,b)=>(parseDateFR(a[cc().date]||a[cb().date]||'')||0)-(parseDateFR(b[cc().date]||b[cb().date]||'')||0)*-1)
-    .map(r=>`<tr>
-      <td style="color:var(--text-3);">${r[cc().date]||r[cb().date]||'—'}</td>
-      <td>${r[cc().libelle]||r[cb().libelle]||'—'}</td>
-      <td style="color:var(--text-3);">${r[cc().nom_chat]||'—'}</td>
-      <td><span class="chip chip-${r[cc().source]?'caisse1':'banque'}">${r[cc().source]?('Caisse '+r[cc().source].replace('C','')):'Banque'}</span></td>
-      <td class="r amount-c">${fmt(r[cc().credit]||r[cb().credit])}</td>
-    </tr>`).join('')}</tbody></table></div>`;
+  <tbody>${rows.map(r=>{
+      const isC=_isCaisse(r);
+      const src=isC?('Caisse '+String(r[cc().source]||'').replace('C','')):'Banque';
+      const chipCls=isC?('chip-'+(r[cc().source]==='C2'?'caisse2':'caisse1')):'chip-banque';
+      return `<tr>
+      <td style="color:var(--text-3);">${rf(r,'date')||'—'}</td>
+      <td>${rf(r,'libelle')||'—'}</td>
+      <td style="color:var(--text-3);">${rf(r,'nom_chat')||'—'}</td>
+      <td><span class="chip ${chipCls}">${src}</span></td>
+      <td class="r amount-c">${fmt(rf(r,'credit'))}</td>
+    </tr>`;}).join('')}</tbody></table></div>`;
 }
 function initAdoptionsChart(){
   const mois12=get12Mois();
-  const counts=mois12.map(m=>([...allCaisse,...allBanque].filter(r=>{const t=(r[cc().type_mvt]||r[cb().type_mvt]||'').toLowerCase();const d=r[cc().date]||r[cb().date]||'';return t.includes('adopt')&&rowInMonth(d,m.full);}).length));
+  const counts=mois12.map(m=>([...allCaisse,...allBanque].filter(r=>{const t=(rf(r,'type_mvt')||'').toLowerCase();const d=rf(r,'date')||'';return t.includes('adopt')&&rowInMonth(d,m.full);}).length));
   const ctx=document.getElementById('chart-adoptions');if(!ctx)return;
   charts.adoptions=new Chart(ctx,{type:'line',data:{labels:mois12.map(m=>m.label),datasets:[{label:'Adoptions',data:counts,borderColor:'var(--orange)',backgroundColor:'rgba(201,107,42,0.1)',tension:0.3,fill:true}]},options:{responsive:true,scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
 }
@@ -861,14 +990,116 @@ function initTresoChart(){
 // ============================================================
 // 15. ÉVÉNEMENTS
 // ============================================================
+let evenementActif='global';       // 'global' ou nom de l'événement
+let evenementsSelection=null;      // Set des événements cochés dans la vue Globalité (null = tous, initialisé au 1er rendu)
+
+function _evenementsData(){
+  const allOps=[...caisseRows(),...banqueRows()].filter(r=>{
+    const t=(rf(r,'type_mvt')||'').toLowerCase();
+    return t.includes('vén')||t.includes('event')||t.includes('evén');
+  });
+  const map={}; // nom événement -> {entrees, sorties, mouvements:[]}
+  allOps.forEach(r=>{
+    const name=rf(r,'description')||rf(r,'libelle')||'Événement';
+    if(!map[name]) map[name]={entrees:0,sorties:0,mouvements:[]};
+    map[name].entrees+=parseFloat(rf(r,'credit'))||0;
+    map[name].sorties+=parseFloat(rf(r,'debit'))||0;
+    map[name].mouvements.push(r);
+  });
+  return map;
+}
+
 function renderEvenements(){
-  const allOps=[...caisseRows(),...banqueRows()].filter(r=>(r[cc().type_mvt]||r[cb().type_mvt]||'').toLowerCase().includes('vén')||(r[cc().type_mvt]||r[cb().type_mvt]||'').toLowerCase().includes('event'));
-  const map={};
-  allOps.forEach(r=>{const k=r[cc().description]||r[cb().description]||r[cc().libelle]||r[cb().libelle]||'Événement';const v=parseFloat(r[cc().credit]||r[cb().credit])||0;map[k]=(map[k]||0)+v;});
-  const sorted=Object.entries(map).sort((a,b)=>b[1]-a[1]);
-  return `<div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-confetti"></i> Recettes par événement — ${activePer}</div></div>
-  <table><thead><tr><th>Événement</th><th class="r">Recettes</th></tr></thead>
-  <tbody>${sorted.length?sorted.map(([e,v])=>`<tr><td>${e}</td><td class="r amount-c">${fmt(v)}</td></tr>`).join(''):'<tr><td colspan="2" style="text-align:center;padding:20px;color:var(--text-3);">Aucun événement pour cette période</td></tr>'}</tbody></table></div>`;
+  const data=_evenementsData();
+  const names=Object.keys(data).sort((a,b)=>a.localeCompare(b,'fr'));
+
+  if(evenementsSelection===null) evenementsSelection=new Set(names); // tout coché par défaut
+  evenementsSelection=new Set([...evenementsSelection].filter(n=>names.includes(n))); // purge des noms disparus (changement de période)
+  if(evenementActif!=='global' && !names.includes(evenementActif)) evenementActif='global';
+
+  const tabs=`<div class="evt-tabs">
+    <button class="evt-tab ${evenementActif==='global'?'active':''}" onclick="selectEvenementTab('global')"><i class="ti ti-layout-grid"></i> Globalité <span class="badge">${names.length}</span></button>
+    ${names.map(n=>`<button class="evt-tab ${evenementActif===n?'active':''}" onclick="selectEvenementTab('${n.replace(/'/g,"\\'")}')">${escH(n)} <span class="badge">${data[n].mouvements.length}</span></button>`).join('')}
+  </div>`;
+
+  if(!names.length){
+    return `${tabs}<div class="card"><div class="card-body" style="text-align:center;padding:30px;color:var(--text-3);">Aucun événement pour la période ${activePer}.</div></div>`;
+  }
+  return tabs + (evenementActif==='global' ? _renderEvenementGlobal(data,names) : _renderEvenementDetail(evenementActif,data[evenementActif]));
+}
+
+function selectEvenementTab(name){evenementActif=name;renderSection('evenements');}
+
+function _renderEvenementGlobal(data,names){
+  const selected=names.filter(n=>evenementsSelection.has(n));
+  const totalEntrees=selected.reduce((s,n)=>s+data[n].entrees,0);
+  const totalSorties=selected.reduce((s,n)=>s+data[n].sorties,0);
+  const net=totalEntrees-totalSorties;
+  return `
+  <div class="kpi-top">
+    <div class="kpi"><div class="kpi-label">Entrées</div><div class="kpi-value v-green">${fmt(totalEntrees)}</div><div class="kpi-sub">${selected.length}/${names.length} événement(s) cochés</div></div>
+    <div class="kpi"><div class="kpi-label">Sorties</div><div class="kpi-value v-red">${fmt(totalSorties)}</div><div class="kpi-sub">${selected.length}/${names.length} événement(s) cochés</div></div>
+    <div class="kpi"><div class="kpi-label">Net</div><div class="kpi-value ${net>=0?'v-green':'v-red'}">${fmt(net)}</div><div class="kpi-sub">Sélection actuelle</div></div>
+  </div>
+  <div class="card" style="margin-top:14px;">
+    <div class="card-head">
+      <div class="card-title"><i class="ti ti-confetti"></i> Tous les événements — ${activePer}</div>
+      <div style="display:flex;gap:12px;font-size:10px;">
+        <a href="#" onclick="evtSelectAll(true);return false;" style="color:var(--blue);">Tout cocher</a>
+        <a href="#" onclick="evtSelectAll(false);return false;" style="color:var(--blue);">Tout décocher</a>
+      </div>
+    </div>
+    <table><thead><tr><th style="width:26px;"></th><th>Événement</th><th class="r">Entrées</th><th class="r">Sorties</th><th class="r">Net</th><th class="r">Mouvements</th></tr></thead>
+    <tbody>${names.map(n=>{
+      const d=data[n];const evNet=d.entrees-d.sorties;
+      return `<tr>
+        <td onclick="event.stopPropagation();"><input type="checkbox" ${evenementsSelection.has(n)?'checked':''} onchange="toggleEvenementCb('${n.replace(/'/g,"\\'")}',this.checked)"></td>
+        <td style="font-weight:500;cursor:pointer;" onclick="selectEvenementTab('${n.replace(/'/g,"\\'")}')">${escH(n)}</td>
+        <td class="r amount-c">${fmt(d.entrees)}</td>
+        <td class="r amount-d">${fmt(d.sorties)}</td>
+        <td class="r" style="font-weight:600;color:${evNet>=0?'var(--green)':'var(--red)'};">${fmt(evNet)}</td>
+        <td class="r">${d.mouvements.length}</td>
+      </tr>`;
+    }).join('')}</tbody></table>
+  </div>`;
+}
+
+function toggleEvenementCb(name,checked){
+  if(checked)evenementsSelection.add(name);else evenementsSelection.delete(name);
+  renderSection('evenements');
+}
+function evtSelectAll(all){
+  const names=Object.keys(_evenementsData());
+  evenementsSelection = all ? new Set(names) : new Set();
+  renderSection('evenements');
+}
+
+function _renderEvenementDetail(name,d){
+  const net=d.entrees-d.sorties;
+  const rows=[...d.mouvements].sort((a,b)=>(parseDateFR(rf(b,'date')||'')||0)-(parseDateFR(rf(a,'date')||'')||0));
+  return `
+  <div class="kpi-top">
+    <div class="kpi"><div class="kpi-label">Entrées</div><div class="kpi-value v-green">${fmt(d.entrees)}</div><div class="kpi-sub">${escH(name)}</div></div>
+    <div class="kpi"><div class="kpi-label">Sorties</div><div class="kpi-value v-red">${fmt(d.sorties)}</div><div class="kpi-sub">${escH(name)}</div></div>
+    <div class="kpi"><div class="kpi-label">Net</div><div class="kpi-value ${net>=0?'v-green':'v-red'}">${fmt(net)}</div><div class="kpi-sub">${d.mouvements.length} mouvement(s)</div></div>
+  </div>
+  <div class="card" style="margin-top:14px;">
+    <div class="card-head"><div class="card-title"><i class="ti ti-list"></i> Mouvements liés — ${escH(name)}</div></div>
+    <table><thead><tr><th>Date</th><th>Libellé</th><th>Source</th><th class="r">Entrée</th><th class="r">Sortie</th></tr></thead>
+    <tbody>${rows.map(r=>{
+      const isC=_isCaisse(r);
+      const src=isC?('Caisse '+String(r[cc().source]||'').replace('C','')):'Banque';
+      const chipCls=isC?('chip-'+(r[cc().source]==='C2'?'caisse2':'caisse1')):'chip-banque';
+      const cr=parseFloat(rf(r,'credit'))||0, db=parseFloat(rf(r,'debit'))||0;
+      return `<tr>
+        <td style="color:var(--text-3);">${rf(r,'date')||'—'}</td>
+        <td>${rf(r,'libelle')||'—'}</td>
+        <td><span class="chip ${chipCls}">${src}</span></td>
+        <td class="r amount-c">${cr>0?fmt(cr):'—'}</td>
+        <td class="r amount-d">${db>0?fmt(db):'—'}</td>
+      </tr>`;
+    }).join('')||'<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-3);">Aucun mouvement</td></tr>'}</tbody></table>
+  </div>`;
 }
 
 // ============================================================
