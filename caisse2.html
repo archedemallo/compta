@@ -103,12 +103,15 @@
 
     <div class="kpi-bar" id="kpi-bar"></div>
 
-    <div class="split-layout">
-      <!-- GAUCHE : tableau -->
+    <div>
+      <!-- Tableau des opérations -->
       <div>
         <div class="list-card">
           <div class="list-head">
-            <div class="list-title">Opérations — Caisse 2</div>
+            <div class="list-title" style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+              <span>Opérations — Caisse 2</span>
+              <button class="btn btn-primary btn-sm edit-action" onclick="openNewOp()"><i class="ti ti-plus"></i> Nouvelle opération</button>
+            </div>
             <div class="filters-bar">
               <select class="f-select" id="fl-per" onchange="onFilterPeriodeChange()"></select>
               <input class="f-input f-input-search" type="text" id="fl-search" placeholder="Rechercher…" oninput="renderTable()">
@@ -140,67 +143,70 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
 
-      <!-- DROITE : formulaire sticky -->
-      <div>
-        <div class="form-card">
-          <div class="form-title">
-            <span><i class="ti ti-plus"></i> <span id="form-mode-lbl">Nouvelle opération</span></span>
-            <button class="btn btn-secondary btn-sm" id="btn-cancel-edit" onclick="cancelEdit()" style="display:none;"><i class="ti ti-x"></i> Annuler</button>
-          </div>
-          <div id="edit-banner" class="edit-banner" style="display:none;">
-            <span><i class="ti ti-pencil"></i> Modification — <strong id="edit-line-label"></strong></span>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Sens</label>
-            <div class="sens-toggle">
-              <button class="sens-btn credit active" id="btn-credit" onclick="setSens('credit')"><i class="ti ti-arrow-down-left"></i> Entrée</button>
-              <button class="sens-btn debit"         id="btn-debit"  onclick="setSens('debit')"><i class="ti ti-arrow-up-right"></i> Sortie</button>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Période</label>
-            <select id="f-per"></select>
-          </div>
-          <div class="form-row-2">
-            <div class="form-group"><label class="form-label req">Date</label><input type="date" id="f-date"></div>
-            <div class="form-group"><label class="form-label req">Montant (€)</label><input type="number" id="f-montant" step="0.01" min="0" placeholder="0,00"></div>
-          </div>
-          <div class="form-group"><label class="form-label req">Libellé</label><input type="text" id="f-libelle" placeholder="Nom, description courte"></div>
-          <div class="form-group">
-            <label class="form-label req">Type mouvement</label>
-            <select id="f-type"></select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Description</label>
-            <select id="f-desc"></select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Fournisseur</label>
-            <select id="f-fourn"></select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Libellé complémentaire</label>
-            <input type="text" id="f-type-comp" placeholder="Précisions libres…">
-          </div>
-          <div class="form-row-2">
-            <div class="form-group"><label class="form-label">Nom du chat</label><input type="text" id="f-chat" placeholder="Si adoption"></div>
-            <div class="form-group"><label class="form-label">N° reçu fiscal</label><input type="text" id="f-recu"></div>
-          </div>
-          <div class="bordereau-box">
-            <div class="form-group" style="margin-bottom:0;">
-              <label class="form-label"><i class="ti ti-building-bank" style="font-size:11px;"></i> N° bordereau remise banque</label>
-              <input type="text" id="f-bordereau" placeholder="Ex: RB-2026-001" style="width:100%;box-sizing:border-box;">
-              <div style="font-size:9px;color:var(--blue);margin-top:3px;opacity:0.8;">À renseigner lors d'un dépôt d'espèces en banque</div>
-            </div>
-          </div>
-          <div id="form-err" class="hidden" style="color:var(--red);font-size:11px;padding:6px 0;margin-top:4px;"></div>
-          <div class="form-actions">
-            <button class="btn btn-primary" style="flex:1;" id="btn-submit" class="edit-action" onclick="submitForm()"><i class="ti ti-device-floppy"></i> Enregistrer</button>
-            <button class="btn btn-secondary" onclick="resetForm()"><i class="ti ti-refresh"></i> Vider</button>
-          </div>
+<!-- MODAL NOUVELLE OPÉRATION / MODIFIER -->
+<div class="modal-overlay hidden" id="modal-newop">
+  <div class="modal" style="width:640px;">
+    <div class="modal-header">
+      <span class="modal-title"><i class="ti ti-plus"></i> <span id="form-mode-lbl">Nouvelle opération</span></span>
+      <button class="modal-close" onclick="closeNewOp()">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="edit-banner" class="edit-banner" style="display:none;">
+        <span><i class="ti ti-pencil"></i> Modification — <strong id="edit-line-label"></strong></span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sens</label>
+        <div class="sens-toggle">
+          <button class="sens-btn credit active" id="btn-credit" onclick="setSens('credit')"><i class="ti ti-arrow-down-left"></i> Entrée</button>
+          <button class="sens-btn debit"         id="btn-debit"  onclick="setSens('debit')"><i class="ti ti-arrow-up-right"></i> Sortie</button>
         </div>
       </div>
+      <div class="form-group">
+        <label class="form-label">Période</label>
+        <select id="f-per"></select>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group"><label class="form-label req">Date</label><input type="date" id="f-date"></div>
+        <div class="form-group"><label class="form-label req">Montant (€)</label><input type="number" id="f-montant" step="0.01" min="0" placeholder="0,00"></div>
+      </div>
+      <div class="form-group"><label class="form-label req">Libellé</label><input type="text" id="f-libelle" placeholder="Nom, description courte"></div>
+      <div class="form-group">
+        <label class="form-label req">Type mouvement</label>
+        <select id="f-type"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <select id="f-desc"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fournisseur</label>
+        <select id="f-fourn"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Libellé complémentaire</label>
+        <input type="text" id="f-type-comp" placeholder="Précisions libres…">
+      </div>
+      <div class="form-row-2">
+        <div class="form-group"><label class="form-label">Nom du chat</label><input type="text" id="f-chat" placeholder="Si adoption"></div>
+        <div class="form-group"><label class="form-label">N° reçu fiscal</label><input type="text" id="f-recu"></div>
+      </div>
+      <div class="bordereau-box">
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label"><i class="ti ti-building-bank" style="font-size:11px;"></i> N° bordereau remise banque</label>
+          <input type="text" id="f-bordereau" placeholder="Ex: RB-2026-001" style="width:100%;box-sizing:border-box;">
+          <div style="font-size:9px;color:var(--blue);margin-top:3px;opacity:0.8;">À renseigner lors d'un dépôt d'espèces en banque</div>
+        </div>
+      </div>
+      <div id="form-err" class="hidden" style="color:var(--red);font-size:11px;padding:6px 0;margin-top:4px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" id="btn-cancel-edit" onclick="cancelEdit()" style="display:none;"><i class="ti ti-x"></i> Annuler la modification</button>
+      <button class="btn btn-secondary" onclick="resetForm()"><i class="ti ti-refresh"></i> Vider</button>
+      <button class="btn btn-primary" id="btn-submit" class="edit-action" onclick="submitForm()"><i class="ti ti-device-floppy"></i> Enregistrer</button>
     </div>
   </div>
 </div>
@@ -551,6 +557,16 @@ function setSens(s) {
   document.getElementById('btn-debit').classList.toggle('active',  s === 'debit');
 }
 
+function openNewOp() {
+  resetForm();
+  document.getElementById('modal-newop').classList.remove('hidden');
+}
+
+function closeNewOp() {
+  document.getElementById('modal-newop').classList.add('hidden');
+  cancelEdit();
+}
+
 function resetForm() {
   ['f-date','f-montant','f-libelle','f-type-comp','f-chat','f-recu','f-bordereau'].forEach(id => {
     const e = document.getElementById(id); if(e) e.value = id==='f-date' ? Sheets.todayISO() : '';
@@ -621,6 +637,7 @@ async function submitForm() {
       showToast('Opération enregistrée !');
     }
     resetForm(); await loadData();
+    document.getElementById('modal-newop').classList.add('hidden');
   } catch(e) { showErr('Erreur : ' + (e.message||'?')); }
   finally { btn.disabled = false; btn.innerHTML = '<i class="ti ti-device-floppy"></i> Enregistrer'; }
 }
@@ -645,7 +662,7 @@ function openEdit(ri) {
   document.getElementById('btn-cancel-edit').style.display = '';
   document.getElementById('edit-banner').style.display = '';
   document.getElementById('edit-line-label').textContent = `${r[cc.date]||''} — ${r[cc.libelle]||''}`;
-  document.querySelector('.form-card').scrollIntoView({ behavior:'smooth' });
+  document.getElementById('modal-newop').classList.remove('hidden');
   renderTable();
 }
 
