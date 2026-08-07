@@ -354,7 +354,7 @@
           <strong><i class="ti ti-settings" style="font-size:13px;margin-right:5px;"></i>Catégories de dépense incluses dans le coût moyen</strong>
           <button class="btn-ag-save" onclick="saveMoyCostConfig()"><i class="ti ti-device-floppy"></i> Sauvegarder</button>
         </div>
-        <div class="ag-config-hint">Décoche les catégories à exclure. Basé sur les types de mouvement (Caisse/Banque) et catégories de facture réellement présents sur les périodes cochées ci-dessus. Sauvegardé dans le Google Sheet — s'applique sur tous les appareils.</div>
+        <div class="ag-config-hint">Décoche les descriptions à exclure. Liste construite à partir des "description" (Caisse/Banque/Factures) réellement présentes sur les périodes cochées ci-dessus — pré-cochées si elles ressemblent à du vétérinaire/alimentation/litière, à ajuster librement. Sauvegardé dans le Google Sheet — s'applique sur tous les appareils.</div>
         <div id="moy-cout-cb-list" class="ag-cb-grid"></div>
       </div>
 
@@ -1348,7 +1348,6 @@ let moyPeriodes = [];        // périodes cochées pour cet onglet (indépendant
 let moyInitialized = false;
 let moyCostTypes = null;     // Set des types de dépense inclus dans le coût moyen — persisté
 let moyAdoptStatuts = null;  // Map(description -> {on, remb}) — persisté
-const MOY_COST_DEFAUT = ['Vétérinaire', 'Soins', 'Pharmacie', 'Nourriture', 'Litiere'];
 
 // Lignes filtrées sur moyPeriodes (même logique que getChatRows, mais période propre à cet onglet)
 function getMoyRows(source) {
@@ -1398,19 +1397,27 @@ function _moyCanonicalChatNames() {
 }
 
 // ---- Catégories de coût : découverte + config persistée (même pattern que la config AG) ----
+// Choisi dans les "description" (pas les "type de mouvement") — plus précis.
 function _moyCostTypesDisponibles() {
   const set = new Set();
-  getMoyRows('caisse').forEach(r => { const t=(r[getCaisseCol('type_mvt')]||'').trim(); if(t) set.add(t); });
-  getMoyRows('banque').forEach(r => { const t=(r[getBanqueCol('type_mvt')]||'').trim(); if(t) set.add(t); });
-  getMoyRows('factures').forEach(r => { const t=(r[getFactureCol('categorie')]||'').trim(); if(t) set.add(t); });
+  getMoyRows('caisse').forEach(r => { const t=(r[getCaisseCol('description')]||'').trim(); if(t) set.add(t); });
+  getMoyRows('banque').forEach(r => { const t=(r[getBanqueCol('description')]||'').trim(); if(t) set.add(t); });
+  getMoyRows('factures').forEach(r => { const t=(r[getFactureCol('description')]||'').trim(); if(t) set.add(t); });
   return [...set].sort((a,b)=>a.localeCompare(b,'fr'));
+}
+// Au tout premier chargement (aucune config sauvegardée), pré-coche les descriptions qui
+// ressemblent à vétérinaire/alimentation/litière — à ajuster ensuite librement via les cases à cocher.
+const MOY_COST_MOTS_CLES = ['veterinaire','veto','soin','pharmacie','nourriture','alimentation','croquette','patee','litiere','pellet'];
+function _moyCostDefautMatch(desc) {
+  const n = normFold(desc);
+  return MOY_COST_MOTS_CLES.some(k => n.includes(k));
 }
 function loadMoyCostConfig() {
   try {
     const stored = localStorage.getItem('arche_moy_cout_types');
     if (stored) { moyCostTypes = new Set(JSON.parse(stored)); return; }
   } catch(e) {}
-  moyCostTypes = new Set(MOY_COST_DEFAUT);
+  moyCostTypes = new Set(_moyCostTypesDisponibles().filter(_moyCostDefautMatch));
 }
 async function saveMoyCostConfig() {
   const checked = [...document.querySelectorAll('.moy-cout-cb:checked')].map(c => c.value);
@@ -1528,9 +1535,9 @@ function calcMoyCout() {
   let total = 0;
   const byType = {};
   const add = (t, v) => { if (types.has(t)) { total += v; byType[t] = (byType[t]||0) + v; } };
-  getMoyRows('caisse').forEach(r => add((r[getCaisseCol('type_mvt')]||'').trim(), fmtN(r[getCaisseCol('debit')])));
-  getMoyRows('banque').forEach(r => add((r[getBanqueCol('type_mvt')]||'').trim(), fmtN(r[getBanqueCol('debit')])));
-  getMoyRows('factures').forEach(r => add((r[getFactureCol('categorie')]||'').trim(), fmtN(r[getFactureCol('montant')])));
+  getMoyRows('caisse').forEach(r => add((r[getCaisseCol('description')]||'').trim(), fmtN(r[getCaisseCol('debit')])));
+  getMoyRows('banque').forEach(r => add((r[getBanqueCol('description')]||'').trim(), fmtN(r[getBanqueCol('debit')])));
+  getMoyRows('factures').forEach(r => add((r[getFactureCol('description')]||'').trim(), fmtN(r[getFactureCol('montant_ttc')])));
 
   const noms = [...(_moyCanonicalChatNames()).values()].sort((a,b)=>a.localeCompare(b,'fr'));
   const nbChats = noms.length;
