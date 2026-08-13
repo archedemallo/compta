@@ -621,7 +621,7 @@ function renderAdoptions(){
       const chipCls=isC?('chip-'+(r[cc().source]==='C2'?'caisse2':'caisse1')):'chip-banque';
       return `<tr>
       <td style="color:var(--text-3);">${rf(r,'date')||'—'}</td>
-      <td>${rf(r,'libelle')||'—'}</td>
+      <td>${isC ? (rf(r,'libelle')||'—') : (r[cb().type_comp]||r[cb().libelle]||'—')}</td>
       <td style="color:var(--text-3);">${rf(r,'nom_chat')||'—'}</td>
       <td><span class="chip ${chipCls}">${src}</span></td>
       <td class="r amount-c">${fmt(rf(r,'credit'))}</td>
