@@ -1074,14 +1074,21 @@ function splitChatTokens(raw) {
     .filter(Boolean);
 }
 
+// 'medicament' représente un traitement partagé, pas un chat individuel: on
+// exclut le singulier et le pluriel ('medicament'/'medicaments').
+function isMedicamentToken(n) {
+  const t = (n || '').toLowerCase();
+  return t === 'medicament' || t === 'medicaments';
+}
+
 // Calcule la part d'un chat sur une ligne: si la col nom_chat contient plusieurs noms
 // séparés par '/' ou ',' ou '|', on divise le montant par le nombre de vrais chats
-// (hors 'medicament' qui représente un traitement partagé, pas un chat individuel)
+// (hors 'medicament'/'medicaments' qui représente un traitement partagé, pas un chat individuel)
 function chatShare(nomChatCol, montant) {
   const raw = (nomChatCol || '').trim();
   if (!raw) return 0;
   const noms = splitChatTokens(raw);
-  const vraiChats = noms.filter(n => n.toLowerCase() !== 'medicament');
+  const vraiChats = noms.filter(n => !isMedicamentToken(n));
   const diviseur = Math.max(1, vraiChats.length);
   return montant / diviseur;
 }
@@ -1092,7 +1099,7 @@ function chatShareForName(nomChatCol, montant, chatName) {
   if (!raw) return 0;
   const noms = splitChatTokens(raw);
   if (!noms.some(n => n.toLowerCase() === chatName.toLowerCase())) return 0;
-  const vraiChats = noms.filter(n => n.toLowerCase() !== 'medicament');
+  const vraiChats = noms.filter(n => !isMedicamentToken(n));
   const diviseur = Math.max(1, vraiChats.length);
   return montant / diviseur;
 }
@@ -1103,7 +1110,7 @@ function canonicalChatNames() {
   const counts = new Map(); // clé (minuscule) -> Map(casse originale -> nb d'occurrences)
   const add = raw => {
     if (!raw || !raw.trim()) return;
-    splitChatTokens(raw).filter(x=>x.toLowerCase()!=='medicament').forEach(x=>{
+    splitChatTokens(raw).filter(x=>!isMedicamentToken(x)).forEach(x=>{
       const key = x.toLowerCase();
       if (!counts.has(key)) counts.set(key, new Map());
       const casings = counts.get(key);
@@ -1377,7 +1384,7 @@ function _moyCanonicalChatNames() {
   const counts = new Map();
   const add = raw => {
     if (!raw || !raw.trim()) return;
-    splitChatTokens(raw).filter(x => x.toLowerCase() !== 'medicament').forEach(x => {
+    splitChatTokens(raw).filter(x => !isMedicamentToken(x)).forEach(x => {
       const key = x.toLowerCase();
       if (!counts.has(key)) counts.set(key, new Map());
       counts.get(key).set(x, (counts.get(key).get(x) || 0) + 1);
