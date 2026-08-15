@@ -131,6 +131,36 @@
   .evt-tab .badge{background:rgba(255,255,255,0.25);border-radius:8px;padding:0 5px;font-size:9px;}
   .evt-tab:not(.active) .badge{background:var(--warm);color:var(--text-3);}
 
+  /* Config catégories partagées Répartition / Chiffres AG — repris d'analyse.html */
+  #modal-repart{max-width:820px;width:92vw;}
+  .ag-acc-item{border:0.5px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;overflow:hidden;}
+  .ag-acc-head{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;background:var(--surface-2);user-select:none;}
+  .ag-acc-head:hover{background:var(--surface-3);}
+  .ag-acc-chevron{font-size:13px;color:var(--text-3);transition:transform 0.15s;flex-shrink:0;}
+  .ag-acc-chevron.open{transform:rotate(90deg);}
+  .ag-acc-name{font-size:12px;font-weight:600;color:var(--text);flex:1;min-width:0;}
+  .ag-acc-chips{display:flex;gap:4px;flex-wrap:wrap;margin-right:8px;}
+  .ag-acc-chip{font-size:10px;padding:1px 6px;border-radius:4px;background:var(--blue-bg);color:var(--blue);border:0.5px solid rgba(24,95,165,0.3);}
+  .ag-acc-sens{font-size:10px;padding:2px 8px;border-radius:12px;flex-shrink:0;}
+  .ag-acc-sens.rec{background:var(--green-bg);color:var(--green);}
+  .ag-acc-sens.dep{background:var(--red-bg);color:var(--red);}
+  .ag-acc-del{font-size:13px;color:var(--text-3);background:none;border:none;cursor:pointer;padding:2px 4px;margin-left:4px;border-radius:4px;flex-shrink:0;}
+  .ag-acc-del:hover{background:var(--red-bg);color:var(--red);}
+  .ag-acc-body{padding:12px 14px;border-top:0.5px solid var(--border);background:var(--surface);}
+  .ag-section{margin-bottom:10px;}
+  .ag-section-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-3);margin-bottom:6px;}
+  .ag-cb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:3px 8px;max-height:160px;overflow-y:auto;}
+  .ag-cb-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2);padding:2px 0;cursor:pointer;}
+  .ag-cb-item input{width:13px;height:13px;cursor:pointer;accent-color:var(--blue);flex-shrink:0;}
+  .ag-sens-row{display:flex;align-items:center;gap:12px;margin-top:4px;}
+  .ag-sens-row span{font-size:10px;color:var(--text-3);}
+  .ag-sens-row select{font-size:11px;padding:4px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);background:var(--surface-2);color:var(--text);font-family:'DM Sans',sans-serif;}
+  .ag-new-row{display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);}
+  .ag-new-row input{flex:1;font-size:11px;padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);background:var(--surface-2);color:var(--text);font-family:'DM Sans',sans-serif;}
+  .ag-new-row input:focus{outline:none;border-color:var(--blue);}
+  .ag-new-row select{flex:0 0 110px;width:110px;font-size:11px;padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);background:var(--surface-2);color:var(--text);font-family:'DM Sans',sans-serif;}
+  .ag-new-row button{font-size:11px;padding:5px 12px;border-radius:var(--radius-sm);border:none;background:var(--blue);color:white;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+
 </style>
 </head>
 <body>
@@ -486,85 +516,262 @@ function initEvolutionChart(){
 // 4. RÉPARTITION
 // ============================================================
 // ---- Config catégories (checkboxes, persistée en Config sheet + localStorage) ----
-let repartitionConfig=null; // {entrees:[...types exclus], sorties:[...types exclus]}
-const REPARTITION_EXCL_DEFAUT=['depot en banque']; // comparaison normalisée (accents/casse ignorés)
+// Catégories partagées avec l'onglet Analyse (Chiffres AG) — mêmes clés de
+// stockage (localStorage 'arche_ag_categories' + Config sheet 'ag_categories')
+// afin que Répartition et Chiffres AG utilisent exactement les mêmes catégories.
+// Avant : les graphiques groupaient par type_mvt brut, donc "Dons"/"Don libre"/
+// "Don fléché" formaient 3 parts séparées et chacune semblait trop petite.
+// Maintenant : une catégorie ("Dons") regroupe plusieurs types_mvt → montant correct.
+const AG_CONFIG_DEFAULT=[
+  { cat:'Dons',               sens:'recette', types:['Dons','Don libre','Don fléché'] },
+  { cat:'Événements',         sens:'recette', types:['Evenement','Brocante','Vide-grenier','Loto','Marche de Noel','Soirée Paela'] },
+  { cat:'Ventes',             sens:'recette', types:['Ventes diverses'] },
+  { cat:'Subventions',        sens:'recette', types:['Subventions','VIE ENERGY','Laboratoires FENIOUX'] },
+  { cat:'Commissions',        sens:'recette', types:['Commissions'] },
+  { cat:'Frais vétérinaires', sens:'depense', types:['Vétérinaire','Soins','Pharmacie'] },
+  { cat:'Frais de bureau',    sens:'depense', types:['Fourniture de bureau'] },
+  { cat:'Frais bancaires',    sens:'depense', types:['Frais de compte'] },
+  { cat:'Équipement',         sens:'depense', types:['Equipement'] },
+  { cat:'Produits entretien', sens:'depense', types:["Produits d'entretien"] },
+  { cat:'Litière',            sens:'depense', types:['Litiere'] },
+  { cat:'Travaux',            sens:'depense', types:['travaux'] },
+  { cat:'Alimentation',       sens:'depense', types:['Nourriture'] },
+  { cat:'Assurance',          sens:'depense', types:['Assurance','Protection juridique association'] },
+];
+const AG_SOURCES=[
+  {key:'banque',label:'Banque'},{key:'caisse',label:'Caisse 1'},{key:'caisse2',label:'Caisse 2'},
+  {key:'cheques',label:'Chèques'},{key:'remises',label:'Remise de chèque'},{key:'factures',label:'Factures'},
+];
 
 function _normCat(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();}
 
-function loadRepartitionConfig(){
+let agConfig=null;
+
+function loadAgConfig(){
   try{
-    const stored=localStorage.getItem('arche_repartition_excl');
-    if(stored){repartitionConfig=JSON.parse(stored);return;}
+    const stored=localStorage.getItem('arche_ag_categories');
+    if(stored)agConfig=JSON.parse(stored);
   }catch(e){}
-  repartitionConfig={entrees:[...REPARTITION_EXCL_DEFAUT],sorties:[...REPARTITION_EXCL_DEFAUT]};
+  if(!agConfig||!agConfig.length)agConfig=JSON.parse(JSON.stringify(AG_CONFIG_DEFAULT));
+  agConfig=agConfig.map(c=>({
+    cat:c.cat,sens:c.sens||'recette',
+    sources:c.sources||['banque','caisse'],
+    types:c.types||[],descriptions:c.descriptions||[],fournisseurs:c.fournisseurs||[],
+  }));
 }
 
-async function saveRepartitionConfig(){
-  localStorage.setItem('arche_repartition_excl',JSON.stringify(repartitionConfig));
-  try{await Sheets.saveConfigKey('repartition_excl',repartitionConfig);showToast('Catégories enregistrées !');}
-  catch(e){showToast('Sauvegardé localement (erreur sheet)');}
+function _renderAgAccordeonPanel(){
+  const allTypes=Sheets.getTypesMouvement?Sheets.getTypesMouvement():[];
+  const allDescs=Sheets.getDescriptions?Sheets.getDescriptions():[];
+  const allFours=Sheets.getFournisseurs?Sheets.getFournisseurs():[];
+  const items=agConfig.map((cat,idx)=>{
+    const srcLabels=AG_SOURCES.filter(s=>(cat.sources||[]).includes(s.key)).map(s=>s.label);
+    const sensClass=cat.sens==='recette'?'rec':'dep';
+    const sensLabel=cat.sens==='recette'?'recette':'dépense';
+    const srcChips=srcLabels.map(l=>`<span class="ag-acc-chip">${l}</span>`).join('');
+    const srcCbs=AG_SOURCES.map(s=>{
+      const checked=(cat.sources||[]).includes(s.key)?'checked':'';
+      return `<label class="ag-cb-item"><input type="checkbox" class="ag-cb-source" value="${s.key}" ${checked}> ${s.label}</label>`;
+    }).join('');
+    const typeCbs=allTypes.length?allTypes.map(t=>{
+      const checked=(cat.types||[]).some(x=>x.toLowerCase()===t.toLowerCase())?'checked':'';
+      return `<label class="ag-cb-item"><input type="checkbox" class="ag-cb-type" value="${t}" ${checked}> ${escH(t)}</label>`;
+    }).join(''):'<span style="font-size:11px;color:var(--text-3);">Aucun type disponible</span>';
+    const descCbs=allDescs.length?allDescs.map(d=>{
+      const checked=(cat.descriptions||[]).some(x=>x.toLowerCase()===d.toLowerCase())?'checked':'';
+      return `<label class="ag-cb-item"><input type="checkbox" class="ag-cb-desc" value="${d}" ${checked}> ${escH(d)}</label>`;
+    }).join(''):'<span style="font-size:11px;color:var(--text-3);">Aucune description disponible</span>';
+    const fourCbs=allFours.length?allFours.map(f=>{
+      const checked=(cat.fournisseurs||[]).some(x=>x.toLowerCase()===f.toLowerCase())?'checked':'';
+      return `<label class="ag-cb-item"><input type="checkbox" class="ag-cb-four" value="${f}" ${checked}> ${escH(f)}</label>`;
+    }).join(''):'<span style="font-size:11px;color:var(--text-3);">Aucun fournisseur disponible</span>';
+    return `<div class="ag-acc-item" data-idx="${idx}">
+      <div class="ag-acc-head" onclick="toggleAgAcc(this.closest('.ag-acc-item'))">
+        <i class="ti ti-chevron-right ag-acc-chevron"></i>
+        <span class="ag-acc-name">${escH(cat.cat)}</span>
+        <div class="ag-acc-chips">${srcChips}</div>
+        <span class="ag-acc-sens ${sensClass}">${sensLabel}</span>
+        <button class="ag-acc-del" title="Supprimer" onclick="event.stopPropagation();deleteAgCategorie(${idx})"><i class="ti ti-trash"></i></button>
+      </div>
+      <div class="ag-acc-body" style="display:none;">
+        <div class="ag-section"><div class="ag-section-label">Sources</div><div class="ag-cb-grid">${srcCbs}</div></div>
+        <div class="ag-section"><div class="ag-section-label">Types de mouvement</div><div class="ag-cb-grid">${typeCbs}</div></div>
+        <div class="ag-section"><div class="ag-section-label">Descriptions</div><div class="ag-cb-grid">${descCbs}</div></div>
+        <div class="ag-section"><div class="ag-section-label">Fournisseurs</div><div class="ag-cb-grid">${fourCbs}</div></div>
+        <div class="ag-sens-row"><span>Sens :</span>
+          <select class="ag-sel-sens">
+            <option value="recette" ${cat.sens==='recette'?'selected':''}>recette</option>
+            <option value="depense" ${cat.sens==='depense'?'selected':''}>dépense</option>
+          </select>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  return `<p style="font-size:11px;color:var(--text-3);margin-bottom:10px;">Ces catégories sont partagées avec l'onglet Analyse (Chiffres AG) — les modifier ici les modifie aussi là-bas. Les graphiques de Répartition utilisent les montants Caisse 1, Caisse 2, Banque et Remises de chèque.</p>
+    <div id="ag-acc-list">${items}</div>
+    <div class="ag-new-row">
+      <input type="text" id="ag-new-name" placeholder="Nom de la nouvelle catégorie…" onkeydown="if(event.key==='Enter')addAgCategorie()">
+      <select id="ag-new-sens"><option value="recette">recette</option><option value="depense">dépense</option></select>
+      <button onclick="addAgCategorie()"><i class="ti ti-plus"></i> Ajouter</button>
+    </div>`;
+}
+function toggleAgAcc(item){
+  const body=item.querySelector('.ag-acc-body');
+  const chev=item.querySelector('.ag-acc-chevron');
+  const isOpen=body.style.display!=='none';
+  body.style.display=isOpen?'none':'block';
+  chev.classList.toggle('open',!isOpen);
+}
+function addAgCategorie(){
+  const nameEl=document.getElementById('ag-new-name');
+  const sensEl=document.getElementById('ag-new-sens');
+  const name=(nameEl.value||'').trim();
+  if(!name){nameEl.focus();return;}
+  agConfig.push({cat:name,sens:sensEl.value,sources:['banque','caisse'],types:[],descriptions:[],fournisseurs:[]});
+  document.getElementById('modal-repart-body').innerHTML=_renderAgAccordeonPanel();
+  const items=document.querySelectorAll('.ag-acc-item');
+  if(items.length)toggleAgAcc(items[items.length-1]);
+}
+function deleteAgCategorie(idx){
+  if(!confirm(`Supprimer la catégorie "${agConfig[idx].cat}" ?`))return;
+  agConfig.splice(idx,1);
+  document.getElementById('modal-repart-body').innerHTML=_renderAgAccordeonPanel();
 }
 
-function _typesDisponibles(colMontant){
-  const ops=[...caisseRows(),...banqueRows()];
-  const set=new Set();
-  ops.forEach(r=>{
-    const v=parseFloat(rf(r,colMontant))||0;
-    if(v>0) set.add(rf(r,'type_mvt')||'Autre');
-  });
-  return [...set].sort((a,b)=>a.localeCompare(b,'fr'));
-}
-
-function openRepartitionConfig(sens){ // sens: 'entrees' ou 'sorties'
-  if(!repartitionConfig) loadRepartitionConfig();
-  const colMontant = sens==='entrees' ? 'credit' : 'debit';
-  const types=_typesDisponibles(colMontant);
-  const excl=repartitionConfig[sens]||[];
-  const isExcluded=t=>excl.some(e=>_normCat(e)===_normCat(t));
-  document.getElementById('modal-repart-title').textContent = sens==='entrees' ? 'Catégories affichées — Entrées' : 'Catégories affichées — Sorties';
-  document.getElementById('modal-repart-body').innerHTML = `
-    <p style="font-size:11px;color:var(--text-3);margin-bottom:10px;">Décoche les catégories à exclure du graphique (ex. un mouvement interne comme un dépôt en banque, qui n'est ni une vraie entrée ni une vraie sortie).</p>
-    <div class="cb-grid">${types.map(t=>`<label class="cb-item"><input type="checkbox" class="repart-cb" value="${escH(t)}" ${isExcluded(t)?'':'checked'}> ${escH(t)}</label>`).join('')}</div>`;
-  document.getElementById('modal-repart').dataset.sens=sens;
+function openRepartitionConfig(){
+  if(!agConfig)loadAgConfig();
+  document.getElementById('modal-repart-title').textContent='Catégories (partagées avec Chiffres AG)';
+  document.getElementById('modal-repart-body').innerHTML=_renderAgAccordeonPanel();
   document.getElementById('modal-repart-overlay').style.display='flex';
 }
 function closeRepartitionConfig(){document.getElementById('modal-repart-overlay').style.display='none';}
 async function saveRepartitionConfigFromModal(){
-  const sens=document.getElementById('modal-repart').dataset.sens;
-  const all=[...document.querySelectorAll('.repart-cb')].map(c=>c.value);
-  const checked=[...document.querySelectorAll('.repart-cb:checked')].map(c=>c.value);
-  repartitionConfig[sens]=all.filter(t=>!checked.includes(t));
-  await saveRepartitionConfig();
+  document.querySelectorAll('.ag-acc-item').forEach(item=>{
+    const idx=parseInt(item.dataset.idx);
+    if(isNaN(idx)||!agConfig[idx])return;
+    const cfg=agConfig[idx];
+    cfg.sources=[...item.querySelectorAll('.ag-cb-source:checked')].map(cb=>cb.value);
+    cfg.types=[...item.querySelectorAll('.ag-cb-type:checked')].map(cb=>cb.value);
+    cfg.descriptions=[...item.querySelectorAll('.ag-cb-desc:checked')].map(cb=>cb.value);
+    cfg.fournisseurs=[...item.querySelectorAll('.ag-cb-four:checked')].map(cb=>cb.value);
+    const selSens=item.querySelector('.ag-sel-sens');
+    if(selSens)cfg.sens=selSens.value;
+  });
+  localStorage.setItem('arche_ag_categories',JSON.stringify(agConfig));
+  try{await Sheets.saveConfigKey('ag_categories',agConfig);showToast('Catégories enregistrées !');}
+  catch(e){showToast('Sauvegardé localement (erreur sheet)');}
   closeRepartitionConfig();
   initRepartitionCharts();
 }
 
 function renderRepartition(){
   return `<div class="grid-2">
-    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des entrées</div><button class="card-cfg-btn" title="Choisir les catégories affichées" onclick="openRepartitionConfig('entrees')"><i class="ti ti-settings"></i></button></div><div class="card-body"><canvas id="chart-entrees"></canvas></div></div>
-    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des sorties</div><button class="card-cfg-btn" title="Choisir les catégories affichées" onclick="openRepartitionConfig('sorties')"><i class="ti ti-settings"></i></button></div><div class="card-body"><canvas id="chart-sorties"></canvas></div></div>
+    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des entrées</div><button class="card-cfg-btn" title="Configurer les catégories" onclick="openRepartitionConfig()"><i class="ti ti-settings"></i></button></div><div class="card-body"><canvas id="chart-entrees" height="340"></canvas></div></div>
+    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des sorties</div><button class="card-cfg-btn" title="Configurer les catégories" onclick="openRepartitionConfig()"><i class="ti ti-settings"></i></button></div><div class="card-body"><canvas id="chart-sorties" height="340"></canvas></div></div>
   </div>`;
 }
-function initRepartitionCharts(){
-  if(!repartitionConfig) loadRepartitionConfig();
-  const allOps=[...caisseRows(),...banqueRows()];
-  const isExcl=(sens,type)=>(repartitionConfig[sens]||[]).some(e=>_normCat(e)===_normCat(type));
-  const byType=(sens,colMontant)=>{
-    const map={};
-    allOps.forEach(r=>{
-      const t=rf(r,'type_mvt')||'Autre';
-      if(isExcl(sens,t))return;
-      const v=parseFloat(rf(r,colMontant))||0;
-      if(v>0)map[t]=(map[t]||0)+v;
+
+// Plugin Chart.js — étiquette (nom + montant) reliée à chaque part par un
+// trait à l'extérieur du graphique, façon étiquettes "à l'extérieur" d'Excel.
+const leaderLabelsPlugin={
+  id:'leaderLabels',
+  afterDraw(chart){
+    const meta=chart.getDatasetMeta(0);
+    if(!meta||!meta.data.length)return;
+    const ds=chart.data.datasets[0];
+    const {ctx}=chart;
+    ctx.save();
+    ctx.font="10px 'DM Sans',sans-serif";
+    meta.data.forEach((arc,i)=>{
+      const val=ds.data[i];
+      if(!val)return;
+      const angle=(arc.startAngle+arc.endAngle)/2;
+      const cx=arc.x,cy=arc.y,outerR=arc.outerRadius;
+      const sx=cx+Math.cos(angle)*outerR, sy=cy+Math.sin(angle)*outerR;
+      const mx=cx+Math.cos(angle)*(outerR+12), my=cy+Math.sin(angle)*(outerR+12);
+      const isRight=Math.cos(angle)>=0;
+      const ex=mx+(isRight?18:-18);
+      ctx.strokeStyle='rgba(120,120,120,0.55)';
+      ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(mx,my);ctx.lineTo(ex,my);ctx.stroke();
+      ctx.fillStyle='#444';
+      ctx.textAlign=isRight?'left':'right';
+      ctx.textBaseline='middle';
+      ctx.fillText(`${chart.data.labels[i]} : ${fmt(val)}`,ex+(isRight?3:-3),my);
     });
-    return Object.entries(map).sort((a,b)=>b[1]-a[1]); // pas de plafond : toute catégorie cochée s'affiche
-  };
-  const entrees=byType('entrees','credit');
-  const sorties=byType('sorties','debit');
+    ctx.restore();
+  }
+};
+
+function initRepartitionCharts(){
+  if(!agConfig)loadAgConfig();
+  function matchRow(types,descs,fours,typeMvt,desc,four){
+    const hasFilter=types.length||descs.length||fours.length;
+    if(!hasFilter)return true;
+    const tN=_normCat(typeMvt),dN=_normCat(desc),fN=_normCat(four);
+    if(types.length&&types.some(t=>_normCat(t)===tN))return true;
+    if(descs.length&&descs.some(d=>_normCat(d)===dN))return true;
+    if(fours.length&&fours.some(f=>_normCat(f)===fN))return true;
+    return false;
+  }
+  const c1=c1rows(),c2=c2rows(),bq=banqueRows();
+  const cr=Sheets.cols.remise;
+  const DS=cr?cr.detail_start:null;
+  const remisesPer=DS?allRemises.filter(r=>r[cr.periode]===activePer):[];
+
+  function totalCategorie(cat){
+    const srcs=cat.sources||[];
+    const types=cat.types||[],descs=cat.descriptions||[],fours=cat.fournisseurs||[];
+    let total=0;
+    if(srcs.includes('caisse')){
+      c1.forEach(r=>{if(matchRow(types,descs,fours,rf(r,'type_mvt'),rf(r,'description'),rf(r,'fournisseur')))total+=(parseFloat(rf(r,'credit'))||0)-(parseFloat(rf(r,'debit'))||0);});
+    }
+    if(srcs.includes('caisse2')){
+      c2.forEach(r=>{if(matchRow(types,descs,fours,rf(r,'type_mvt'),rf(r,'description'),rf(r,'fournisseur')))total+=(parseFloat(rf(r,'credit'))||0)-(parseFloat(rf(r,'debit'))||0);});
+    }
+    if(srcs.includes('banque')){
+      bq.forEach(r=>{if(matchRow(types,descs,fours,rf(r,'type_mvt'),rf(r,'description'),rf(r,'fournisseur')))total+=(parseFloat(rf(r,'credit'))||0)-(parseFloat(rf(r,'debit'))||0);});
+    }
+    if(srcs.includes('remises')&&DS){
+      remisesPer.forEach(r=>{
+        const nb=parseInt(r[cr.nb_cheques])||0;
+        for(let i=0;i<nb;i++){
+          const base=DS+i*8;
+          if(matchRow(types,descs,fours,r[base+3]||'','',''))total+=parseFloat(r[base+1])||0;
+        }
+      });
+    }
+    // Chèques et Factures : sélectionnables (config partagée avec Chiffres AG)
+    // mais non comptabilisés ici — Répartition ne porte que sur les flux
+    // Caisse/Banque/Remises déjà encaissés.
+    return total;
+  }
+
+  const entrees=agConfig.filter(c=>c.sens==='recette').map(c=>[c.cat,totalCategorie(c)]).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  const sorties=agConfig.filter(c=>c.sens==='depense').map(c=>[c.cat,Math.abs(totalCategorie(c))]).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+
   const palette=n=>Array.from({length:n},(_,i)=>`hsl(${(i*47)%360} 55% 45%)`);
   const mkChart=(id,data)=>{
     const ctx=document.getElementById(id);if(!ctx)return;
-    charts[id]=new Chart(ctx,{type:'doughnut',data:{labels:data.map(d=>d[0]),datasets:[{data:data.map(d=>d[1]),backgroundColor:palette(data.length),borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,plugins:{legend:{position:'right'},tooltip:{callbacks:{label:c=>`${c.label}: ${fmt(c.raw)}`}}}}});
+    const total=data.reduce((s,d)=>s+d[1],0)||1;
+    charts[id]=new Chart(ctx,{
+      type:'doughnut',
+      data:{labels:data.map(d=>d[0]),datasets:[{data:data.map(d=>d[1]),backgroundColor:palette(data.length),borderWidth:2,borderColor:'#fff'}]},
+      options:{
+        responsive:true,
+        layout:{padding:{left:80,right:80,top:20,bottom:20}},
+        plugins:{
+          legend:{position:'right',labels:{boxWidth:12,font:{size:10},generateLabels:(chart)=>chart.data.labels.map((lbl,i)=>({
+            text:`${lbl} — ${fmt(chart.data.datasets[0].data[i])} (${Math.round(chart.data.datasets[0].data[i]/total*100)}%)`,
+            fillStyle:chart.data.datasets[0].backgroundColor[i],
+            strokeStyle:chart.data.datasets[0].backgroundColor[i],
+            index:i,
+          }))}},
+          tooltip:{callbacks:{label:c=>`${c.label}: ${fmt(c.raw)}`}},
+        },
+      },
+      plugins:[leaderLabelsPlugin],
+    });
   };
   mkChart('chart-entrees',entrees);mkChart('chart-sorties',sorties);
 }
