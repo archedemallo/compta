@@ -6,6 +6,7 @@
 <title>Analyse — Arche de Mallo</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   /* ---- ONGLETS ---- */
   .tab-bar{display:flex;gap:0;border-bottom:0.5px solid var(--border);margin-bottom:20px;background:var(--surface);}
@@ -136,6 +137,26 @@
   .bar-value{font-variant-numeric:tabular-nums;text-align:right;font-size:10px;}
   .bar-green{background:var(--green);} .bar-red{background:var(--red);opacity:0.75;}
   .bar-orange{background:var(--orange);}
+
+  /* ---- Ajouts fusion Synthèse ---- */
+  .kpi-top{display:grid;gap:10px;margin-bottom:14px;}
+  .card-cfg-btn{background:none;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);width:24px;height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-3);flex-shrink:0;}
+  .card-cfg-btn:hover{background:var(--warm);color:var(--text-2);}
+  .cb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px 10px;max-height:260px;overflow-y:auto;padding:4px 0;}
+  .cb-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-2);padding:2px 0;cursor:pointer;}
+  .cb-item input{width:13px;height:13px;cursor:pointer;accent-color:var(--orange);flex-shrink:0;}
+  .evt-config-panel{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;font-size:11px;}
+  .evt-config-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .evt-config-hint{font-size:10px;color:var(--text-3);margin-bottom:12px;}
+  .btn-evt-save{font-size:11px;padding:5px 14px;border-radius:var(--radius-sm);border:none;background:var(--blue);color:white;cursor:pointer;font-family:'DM Sans',sans-serif;}
+  .evt-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+  .evt-tab{font-size:11px;padding:5px 12px;border-radius:var(--radius-sm);border:0.5px solid var(--border-mid);background:transparent;color:var(--text-2);cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:6px;}
+  .evt-tab:hover{background:var(--warm);}
+  .evt-tab.active{background:var(--orange);color:#fff;border-color:var(--orange);}
+  .evt-tab .badge{background:rgba(255,255,255,0.25);border-radius:8px;padding:0 5px;font-size:9px;}
+  .evt-tab:not(.active) .badge{background:var(--warm);color:var(--text-3);}
+  .v-amber{color:var(--amber);}
+  .tab-bar{flex-wrap:wrap;}
 </style>
 </head>
 <body>
@@ -160,6 +181,30 @@
       </button>
       <button class="tab-btn" onclick="switchTab('moyennes')" id="tab-btn-moyennes">
         <i class="ti ti-chart-arrows"></i> Moyennes
+      </button>
+      <button class="tab-btn" onclick="switchTab('repartition')" id="tab-btn-repartition">
+        <i class="ti ti-chart-pie"></i> Répartition
+      </button>
+      <button class="tab-btn" onclick="switchTab('adoptions')" id="tab-btn-adoptions">
+        <i class="ti ti-home"></i> Adoptions
+      </button>
+      <button class="tab-btn" onclick="switchTab('dons')" id="tab-btn-dons">
+        <i class="ti ti-coin"></i> Dons
+      </button>
+      <button class="tab-btn" onclick="switchTab('subventions')" id="tab-btn-subventions">
+        <i class="ti ti-award"></i> Subventions
+      </button>
+      <button class="tab-btn" onclick="switchTab('adhesions')" id="tab-btn-adhesions">
+        <i class="ti ti-id-badge"></i> Adhésions
+      </button>
+      <button class="tab-btn" onclick="switchTab('cheques-att')" id="tab-btn-cheques-att">
+        <i class="ti ti-writing"></i> Chèques en attente
+      </button>
+      <button class="tab-btn" onclick="switchTab('remises-att')" id="tab-btn-remises-att">
+        <i class="ti ti-stack"></i> Remises en attente
+      </button>
+      <button class="tab-btn" onclick="switchTab('evenements')" id="tab-btn-evenements">
+        <i class="ti ti-confetti"></i> Événements
       </button>
     </div>
 
@@ -385,6 +430,18 @@
 
     </div>
 
+    <!-- ============================================================ -->
+    <!-- ONGLETS ISSUS DE SYNTHÈSE (fusionnés)                        -->
+    <!-- ============================================================ -->
+    <div id="tab-repartition" class="tab-pane" style="display:none;"><div id="synth-repartition-inner"></div></div>
+    <div id="tab-adoptions" class="tab-pane" style="display:none;"><div id="synth-adoptions-inner"></div></div>
+    <div id="tab-dons" class="tab-pane" style="display:none;"><div id="synth-dons-inner"></div></div>
+    <div id="tab-subventions" class="tab-pane" style="display:none;"><div id="synth-subventions-inner"></div></div>
+    <div id="tab-adhesions" class="tab-pane" style="display:none;"><div id="synth-adhesions-inner"></div></div>
+    <div id="tab-cheques-att" class="tab-pane" style="display:none;"><div id="synth-cheques-att-inner"></div></div>
+    <div id="tab-remises-att" class="tab-pane" style="display:none;"><div id="synth-remises-att-inner"></div></div>
+    <div id="tab-evenements" class="tab-pane" style="display:none;"><div id="synth-evenements-inner"></div></div>
+
   </div><!-- /page-content -->
 </div><!-- /main -->
 
@@ -432,6 +489,7 @@ function isTypeChat(t) {
 // ÉTAT GLOBAL
 // ============================================================
 let allCaisse=[], allBanque=[], allFactures=[], allCheques=[], allCaisse2Data=[], allRemises=[];
+let charts={}; // registre des graphiques Chart.js des onglets fusionnés (Répartition/Adoptions/Dons/Subventions/Adhésions)
 let activePer='';
 let agOpenCats = new Set(); // catégories dont le détail est ouvert
 let agConfig = [];
@@ -494,14 +552,41 @@ function renderAll() {
 // ============================================================
 // ONGLETS
 // ============================================================
+const SYNTH_TABS = ['repartition','adoptions','dons','subventions','adhesions','cheques-att','remises-att','evenements'];
+const ALL_TABS = ['ag','chat','fournisseurs','moyennes', ...SYNTH_TABS];
+
 function switchTab(tab) {
-  ['ag','chat','fournisseurs','moyennes'].forEach(t => {
+  ALL_TABS.forEach(t => {
     document.getElementById('tab-btn-' + t).classList.toggle('active', t === tab);
     document.getElementById('tab-' + t).classList.toggle('active', t === tab);
     document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
   });
   if (tab === 'fournisseurs') initFournisseurs();
   if (tab === 'moyennes') renderMoyennesInit();
+  if (SYNTH_TABS.includes(tab)) refreshSynthSection(tab);
+}
+
+// Dispatcher pour les onglets issus de Synth\u00e8se (fusionn\u00e9s) \u2014 rendu paresseux,
+// comme Fournisseurs/Moyennes ci-dessus : on ne (re)calcule que l'onglet actif.
+function refreshSynthSection(id) {
+  const containers = {
+    'repartition':'synth-repartition-inner', 'adoptions':'synth-adoptions-inner',
+    'dons':'synth-dons-inner', 'subventions':'synth-subventions-inner',
+    'adhesions':'synth-adhesions-inner', 'cheques-att':'synth-cheques-att-inner',
+    'remises-att':'synth-remises-att-inner', 'evenements':'synth-evenements-inner',
+  };
+  const el = document.getElementById(containers[id]);
+  if (!el) return;
+  switch (id) {
+    case 'repartition': el.innerHTML = renderRepartition(); setTimeout(initRepartitionCharts, 50); break;
+    case 'adoptions':   el.innerHTML = renderAdoptions();    setTimeout(initAdoptionsChart, 50);   break;
+    case 'dons':         el.innerHTML = renderDons();         setTimeout(initDonsChart, 50);         break;
+    case 'subventions':  el.innerHTML = renderSubventions();  setTimeout(initSubventionsChart, 50);  break;
+    case 'adhesions':    el.innerHTML = renderAdhesions();    setTimeout(initAdhesionsChart, 50);    break;
+    case 'cheques-att':  el.innerHTML = renderChequesAtt();   break;
+    case 'remises-att':  el.innerHTML = renderRemisesAtt();   break;
+    case 'evenements':   el.innerHTML = renderEvenements();   break;
+  }
 }
 
 // ============================================================
@@ -694,18 +779,15 @@ function escH(s) {
 // ============================================================
 // ONGLET AG
 // ============================================================
-function renderAG() {
+function computeAgResults() {
   const caisse = allCaisse.slice(1).filter(r => r && r[6] === activePer);
   const banque  = allBanque.slice(1).filter(r => r && r[5] === activePer);
-
-  document.getElementById('ag-periode-label').textContent = 'Période : ' + activePer;
-  document.getElementById('ag-periode-badge').textContent = activePer;
 
   // Données disponibles par source
   const allCaisse2 = allCaisse2Data ? allCaisse2Data.slice(1).filter(r => r && r[6] === activePer) : [];
 
   // Calcul par catégorie (en tenant compte des sources et types/descriptions/fournisseurs sélectionnés)
-  const results = agConfig.map(cat => {
+  return agConfig.map(cat => {
     const srcs    = cat.sources || ['banque','caisse'];
     const types   = (cat.types || []).map(t => t.toLowerCase().trim());
     const descs   = (cat.descriptions || []).map(d => d.toLowerCase().trim());
@@ -883,6 +965,12 @@ function renderAG() {
 
     return { ...cat, totalCaisse: totalCaisse + totalCaisse2, totalBanque: totalBanque + totalCheques + totalRemises + totalFactures, total, ops };
   }).filter(c => Math.abs(c.total) > 0.001 || agConfig.indexOf(agConfig.find(x=>x.cat===c.cat)) >= 0);
+}
+
+function renderAG() {
+  document.getElementById('ag-periode-label').textContent = 'Période : ' + activePer;
+  document.getElementById('ag-periode-badge').textContent = activePer;
+  const results = computeAgResults();
 
   // KPIs
   const recettes  = results.filter(r=>r.sens==='recette').reduce((s,r)=>s+r.total,0);
@@ -1906,6 +1994,623 @@ function initFournisseurs() {
   renderFourCategories();
   buildFourSelect();
 }
+
+
+// ============================================================
+// ============================================================
+// ONGLETS FUSIONNÉS DEPUIS SYNTHÈSE (synthese.html)
+// Même allCaisse/allBanque/allFactures/allCheques/allRemises/activePer
+// que Chiffres AG ci-dessus (chargés une seule fois par loadData()).
+// ============================================================
+// ============================================================
+
+// ---- État / données filtrées (convention propre à ces sections : cc()/cb()/rf()) ----
+const cc=()=>Sheets.cols.caisse;
+const cb=()=>Sheets.cols.banque;
+const cp=()=>Sheets.cols.caissePhysique;
+
+function caisseRows(){return allCaisse.filter(r=>r[cc().periode]===activePer);}
+function banqueRows(){return allBanque.filter(r=>r[cb().periode]===activePer);}
+function c1rows(){return caisseRows().filter(r=>r[cc().source]!=='C2');}
+function c2rows(){return caisseRows().filter(r=>r[cc().source]==='C2');}
+
+// Getter de champ "origin-aware". Les colonnes Caisse et Banque n'ont pas les
+// mêmes index (COLS_BANQUE n'a par ex. pas de colonne "source", et son "date"
+// est en position 0 alors que Caisse a "source" en 0 et "date" en 1). Piocher
+// à l'aveugle avec cc() sur un tableau mêlant Caisse+Banque fait donc lire la
+// mauvaise colonne pour les lignes Banque (ex: cc().credit sur une ligne
+// Banque retombe sur sa colonne "solde", cc().debit sur sa colonne "credit").
+// C'est la cause des libellés/dates faux et des montants inversés observés
+// en Répartition et Adoptions. rf() choisit la bonne table de colonnes par ligne.
+function rf(r, field) {
+  const map = _isCaisse(r) ? cc() : cb();
+  const idx = map[field];
+  return idx !== undefined ? r[idx] : '';
+}
+
+function sum(rows,col){return rows.reduce((s,r)=>s+(parseFloat(r[col])||0),0);}
+function sumCredit(rows,col){return sum(rows,col);}
+
+function calcFlux(rows,colD,colC,moisLabel){
+  let inn=0,out=0;
+  rows.forEach(r=>{
+    if(moisLabel&&!rowInMonth(r[colD],moisLabel))return;
+    inn+=(parseFloat(r[colC])||0);
+    out+=(parseFloat(r[colD])||0);
+  });
+  return{in:inn,out};
+}
+
+function rowInMonth(dateStr,moisLabel){
+  const d=parseDateFR(String(dateStr||''));
+  if(!d)return false;
+  return d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}).toLowerCase()===moisLabel.toLowerCase();
+}
+
+function parseDateFR(s){
+  const p=s.split(/[\/\-]/);
+  if(p.length!==3)return null;
+  if(p[0].length===4)return new Date(p[0],p[1]-1,p[2]);
+  return new Date(p[2],p[1]-1,p[0]);
+}
+
+function getMoisCourant(){return new Date().toLocaleDateString('fr-FR',{month:'long',year:'numeric'});}
+
+function get12MoisPeriode(per){
+  // per = "2025 - 2026" → nov 2025 … oct 2026
+  const parts=(per||'').split(' - ').map(Number);
+  if(parts.length!==2||!parts[0])return get12Mois();
+  const [y1,y2]=parts;
+  const mois=[];
+  for(let i=0;i<12;i++){
+    const mMonth=(10+i)%12; // 10=nov, 11=déc, 0=jan … 9=oct
+    const mYear=i<2?y1:y2;  // nov+déc = y1, jan…oct = y2
+    const d=new Date(mYear,mMonth,1);
+    mois.push({label:d.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'}),full:d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}),date:d});
+  }
+  return mois;
+}
+function getPrevPeriode(per){
+  const parts=(per||'').split(' - ').map(Number);
+  if(parts.length!==2||!parts[0])return '';
+  return `${parts[0]-1} - ${parts[1]-1}`;
+}
+function get12Mois(){
+  const mois=[];
+  const now=new Date();
+  for(let i=11;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    mois.push({label:d.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'}),full:d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}),date:d});
+  }
+  return mois;
+}
+
+// fmtS : formatage montétaire propre à ces sections (affiche — si vide/NaN,
+// différent du fmt() de Chiffres AG qui affiche 0,00 €) — comportement d'origine préservé.
+function fmtS(v){if(!v&&v!==0)return'—';const n=parseFloat(v);if(isNaN(n))return'—';return n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
+
+function chipType(t){if(!t)return'depense';const l=t.toLowerCase();if(l.includes('adopt'))return'adoption';if(l.includes('don'))return'don';if(l.includes('adh'))return'adhesion';if(l.includes('vén')||l.includes('ment'))return'evenement';return'depense';}
+
+function _normCat(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();}
+
+// ============================================================
+// RÉPARTITION — réutilise agConfig / computeAgResults() de Chiffres AG
+// (mêmes catégories, montées depuis le même calcul — "Configurer les
+// catégories" renvoie sur l'onglet Chiffres AG, source unique de vérité).
+// ============================================================
+function renderRepartition(){
+  return `<div class="grid-2">
+    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des entrées</div><button class="card-cfg-btn" title="Configurer les catégories" onclick="switchTab('ag');if(!agConfigVisible)toggleAgConfig();"><i class="ti ti-settings"></i></button></div><div class="card-body"><canvas id="chart-entrees" height="340"></canvas></div></div>
+    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des sorties</div><button class="card-cfg-btn" title="Configurer les catégories" onclick="switchTab('ag');if(!agConfigVisible)toggleAgConfig();"><i class="ti ti-settings"></i></button></div><div class="card-body"><canvas id="chart-sorties" height="340"></canvas></div></div>
+  </div>`;
+}
+
+// Plugin Chart.js — étiquette (nom + montant) reliée à chaque part par un
+// trait à l'extérieur du graphique, façon étiquettes "à l'extérieur" d'Excel.
+// Les étiquettes sont alignées sur une colonne fixe à gauche/à droite et
+// espacées verticalement (comme Excel) pour ne jamais se chevaucher, même
+// quand plusieurs petites parts sont regroupées au même endroit du camembert.
+const leaderLabelsPlugin={
+  id:'leaderLabels',
+  afterDraw(chart){
+    const meta=chart.getDatasetMeta(0);
+    if(!meta||!meta.data.length)return;
+    const ds=chart.data.datasets[0];
+    const {ctx}=chart;
+    ctx.save();
+    ctx.font="10px 'DM Sans',sans-serif";
+    const arc0=meta.data[0];
+    const cx=arc0.x, cy=arc0.y, outerR=arc0.outerRadius;
+    const minGap=15;          // écart vertical minimum entre deux étiquettes du même côté
+    const colOffset=outerR+34; // distance horizontale de la colonne de texte par rapport au centre
+
+    const pts=meta.data.map((arc,i)=>{
+      const val=ds.data[i];
+      if(!val)return null;
+      const angle=(arc.startAngle+arc.endAngle)/2;
+      const sx=cx+Math.cos(angle)*outerR, sy=cy+Math.sin(angle)*outerR;
+      const isRight=Math.cos(angle)>=0;
+      const bx=cx+Math.cos(angle)*(outerR+10), by=cy+Math.sin(angle)*(outerR+10);
+      return {sx,sy,bx,by,isRight,ty:by,text:`${chart.data.labels[i]} : ${fmtS(val)}`};
+    }).filter(Boolean);
+
+    ['left','right'].forEach(side=>{
+      const group=pts.filter(p=>(side==='right')===p.isRight).sort((a,b)=>a.ty-b.ty);
+      for(let k=1;k<group.length;k++){
+        if(group[k].ty-group[k-1].ty<minGap) group[k].ty=group[k-1].ty+minGap;
+      }
+      if(group.length){
+        // Recentre le groupe pour ne pas tout pousser vers le bas
+        const spanOrig=group[group.length-1].by-group[0].by;
+        const spanNew=group[group.length-1].ty-group[0].ty;
+        const shift=(group[0].by+spanOrig/2)-(group[0].ty+spanNew/2);
+        group.forEach(p=>p.ty+=shift);
+      }
+    });
+
+    pts.forEach(p=>{
+      const tx=cx+(p.isRight?colOffset:-colOffset);
+      ctx.strokeStyle='rgba(120,120,120,0.55)';
+      ctx.lineWidth=1;
+      ctx.beginPath();
+      ctx.moveTo(p.sx,p.sy);
+      ctx.lineTo(p.bx,p.ty);
+      ctx.lineTo(tx+(p.isRight?-4:4),p.ty);
+      ctx.stroke();
+      ctx.fillStyle='#444';
+      ctx.textAlign=p.isRight?'left':'right';
+      ctx.textBaseline='middle';
+      ctx.fillText(p.text,tx,p.ty);
+    });
+    ctx.restore();
+  }
+};
+
+function initRepartitionCharts(){
+  const results=computeAgResults();
+  const entrees=results.filter(r=>r.sens==='recette'&&r.total>0).map(r=>[r.cat,r.total]).sort((a,b)=>b[1]-a[1]);
+  const sorties=results.filter(r=>r.sens==='depense'&&r.total<0).map(r=>[r.cat,Math.abs(r.total)]).sort((a,b)=>b[1]-a[1]);
+  const palette=n=>Array.from({length:n},(_,i)=>`hsl(${(i*47)%360} 55% 45%)`);
+  const mkChart=(id,data)=>{
+    const ctx=document.getElementById(id);if(!ctx)return;
+    const total=data.reduce((s,d)=>s+d[1],0)||1;
+    charts[id]=new Chart(ctx,{
+      type:'doughnut',
+      data:{labels:data.map(d=>d[0]),datasets:[{data:data.map(d=>d[1]),backgroundColor:palette(data.length),borderWidth:2,borderColor:'#fff'}]},
+      options:{
+        responsive:true,
+        layout:{padding:{left:110,right:110,top:40,bottom:40}},
+        plugins:{
+          legend:{position:'right',labels:{boxWidth:12,font:{size:10},generateLabels:(chart)=>chart.data.labels.map((lbl,i)=>({
+            text:`${lbl} — ${fmtS(chart.data.datasets[0].data[i])} (${Math.round(chart.data.datasets[0].data[i]/total*100)}%)`,
+            fillStyle:chart.data.datasets[0].backgroundColor[i],
+            strokeStyle:chart.data.datasets[0].backgroundColor[i],
+            index:i,
+          }))}},
+          tooltip:{callbacks:{label:c=>`${c.label}: ${fmtS(c.raw)}`}},
+        },
+      },
+      plugins:[leaderLabelsPlugin],
+    });
+  };
+  mkChart('chart-entrees',entrees);mkChart('chart-sorties',sorties);
+}
+
+// ============================================================
+// ADOPTIONS
+// ============================================================
+// ============================================================
+// 7. ADOPTIONS
+// ============================================================
+function renderAdoptions(){
+  const rows=[...caisseRows(),...banqueRows()]
+    .filter(r=>(rf(r,'type_mvt')||'').toLowerCase().includes('adopt'))
+    .sort((a,b)=>(parseDateFR(rf(b,'date')||'')||0)-(parseDateFR(rf(a,'date')||'')||0)); // plus récent d'abord
+  return `<div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-home"></i> Suivi des adoptions — 12 mois</div></div><div class="card-body"><canvas id="chart-adoptions"></canvas></div></div>
+  <div class="card" style="margin-top:14px;"><div class="card-head"><div class="card-title"><i class="ti ti-list"></i> Détail des adoptions — période ${activePer}</div></div>
+  <table><thead><tr><th>Date</th><th>Libellé</th><th>Chat</th><th>Source</th><th class="r">Montant</th></tr></thead>
+  <tbody>${rows.map(r=>{
+      const isC=_isCaisse(r);
+      const src=isC?('Caisse '+String(r[cc().source]||'').replace('C','')):'Banque';
+      const chipCls=isC?('chip-'+(r[cc().source]==='C2'?'caisse2':'caisse1')):'chip-banque';
+      return `<tr>
+      <td style="color:var(--text-3);">${rf(r,'date')||'—'}</td>
+      <td>${isC ? (rf(r,'libelle')||'—') : (r[cb().type_comp]||r[cb().libelle]||'—')}</td>
+      <td style="color:var(--text-3);">${rf(r,'nom_chat')||'—'}</td>
+      <td><span class="chip ${chipCls}">${src}</span></td>
+      <td class="r amount-c">${fmtS(rf(r,'credit'))}</td>
+    </tr>`;}).join('')}</tbody></table></div>`;
+}
+function initAdoptionsChart(){
+  const mois12=get12Mois();
+  const counts=mois12.map(m=>([...allCaisse,...allBanque].filter(r=>{const t=(rf(r,'type_mvt')||'').toLowerCase();const d=rf(r,'date')||'';return t.includes('adopt')&&rowInMonth(d,m.full);}).length));
+  const ctx=document.getElementById('chart-adoptions');if(!ctx)return;
+  charts.adoptions=new Chart(ctx,{type:'line',data:{labels:mois12.map(m=>m.label),datasets:[{label:'Adoptions',data:counts,borderColor:'var(--orange)',backgroundColor:'rgba(201,107,42,0.1)',tension:0.3,fill:true}]},options:{responsive:true,scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+}
+
+// ============================================================
+// DONS / SUBVENTIONS / ADHÉSIONS
+// ============================================================
+// ============================================================
+// 8. DONS
+// ============================================================
+
+// Discriminateur : col 0 = 'C1'/'C2' → caisse, sinon → banque
+function _isCaisse(r){const v=String(r[0]||'');return v==='C1'||v==='C2';}
+
+// ── Extraction des entrées des Remises de chèques pour un keyword/periode ──
+// Chaque chèque est un bloc de 8 colonnes à partir de detail_start (col 10)
+// base+0=donateur, base+1=montant, base+2=num_cheque, base+3=type_mvt …
+function _entreesRemises(keyword,per){
+  const cr=Sheets.cols.remise;
+  const DS=cr.detail_start; // 10
+  const entries=[];
+  allRemises.forEach(r=>{
+    if((r[cr.periode]||'')!==per)return;
+    const nb=parseInt(r[cr.nb_cheques])||0;
+    for(let i=0;i<nb;i++){
+      const base=DS+i*8;
+      const t=(r[base+3]||'').toLowerCase();
+      if(!t.includes(keyword))continue;
+      const montant=parseFloat(r[base+1])||0;
+      const donateur=String(r[base]||'Anonyme').trim()||'Anonyme';
+      entries.push({nom:donateur,montant,date:r[cr.date_remise]||''});
+    }
+  });
+  return entries;
+}
+
+// ── Lignes Caisse/Banque filtrées par keyword + periode ──
+function _rowsTypePer(keyword,per){
+  const fromCaisse=allCaisse.filter(r=>
+    (r[cc().type_mvt]||'').toLowerCase().includes(keyword)&&(r[cc().periode]||'')===per);
+  const fromBanque=allBanque.filter(r=>
+    (r[cb().type_mvt]||'').toLowerCase().includes(keyword)&&(r[cb().periode]||'')===per);
+  return[...fromCaisse,...fromBanque];
+}
+
+// ── Montants par mois pour le graphique (Caisse+Banque+Remises) ──
+function _montantsParMois(keyword,mois12){
+  const cr=Sheets.cols.remise;
+  const DS=cr.detail_start;
+  return mois12.map(m=>{
+    let tot=0;
+    allCaisse.forEach(r=>{if((r[cc().type_mvt]||'').toLowerCase().includes(keyword)&&rowInMonth(r[cc().date]||'',m.full))tot+=parseFloat(r[cc().credit])||0;});
+    allBanque.forEach(r=>{if((r[cb().type_mvt]||'').toLowerCase().includes(keyword)&&rowInMonth(r[cb().date]||'',m.full))tot+=parseFloat(r[cb().credit])||0;});
+    allRemises.forEach(r=>{
+      if(!rowInMonth(r[cr.date_remise]||'',m.full))return;
+      const nb=parseInt(r[cr.nb_cheques])||0;
+      for(let i=0;i<nb;i++){const base=DS+i*8;if((r[base+3]||'').toLowerCase().includes(keyword))tot+=parseFloat(r[base+1])||0;}
+    });
+    return tot;
+  });
+}
+
+// ── Somme totale (Caisse+Banque) ──
+function _sumCredit(rows){
+  return rows.reduce((s,r)=>s+(parseFloat(_isCaisse(r)?r[cc().credit]:r[cb().credit])||0),0);
+}
+
+// ── Construction du classement : {nom → {total, nb}} ──
+// cfg.getNomCaisse(r), cfg.getNomBanque(r) : fonctions d'extraction du nom
+function _listePersonnes(keyword,per,cfg){
+  const map={};
+  const add=(nom,v)=>{nom=nom||'Anonyme';if(!map[nom])map[nom]={total:0,nb:0};map[nom].total+=v;map[nom].nb++;};
+
+  // Caisse
+  allCaisse.filter(r=>(r[cc().type_mvt]||'').toLowerCase().includes(keyword)&&(r[cc().periode]||'')===per)
+    .forEach(r=>add(cfg.getNomCaisse(r),parseFloat(r[cc().credit])||0));
+
+  // Banque
+  allBanque.filter(r=>(r[cb().type_mvt]||'').toLowerCase().includes(keyword)&&(r[cb().periode]||'')===per)
+    .forEach(r=>add(cfg.getNomBanque(r),parseFloat(r[cb().credit])||0));
+
+  // Remises de chèques
+  _entreesRemises(keyword,per).forEach(e=>add(e.nom,e.montant));
+
+  return Object.entries(map).sort((a,b)=>b[1].total-a[1].total);
+}
+
+// ── Rendu HTML d'un tableau de personnes ──
+function _tablePersonnes(personnes,startIdx){
+  return`<table><thead><tr><th>#</th><th>Nom / Libellé</th><th class="r">Nb</th><th class="r">Total</th></tr></thead><tbody>
+  ${personnes.map(([nom,d],i)=>`<tr>
+    <td style="color:var(--text-3);width:24px;">${startIdx+i}</td>
+    <td style="font-size:11px;">${nom}</td>
+    <td class="r" style="color:var(--text-3);width:30px;">${d.nb}</td>
+    <td class="r amount-c" style="width:80px;white-space:nowrap;">${fmtS(d.total)}</td>
+  </tr>`).join('')}
+  </tbody></table>`;
+}
+
+// ── Rendu générique dons/subventions ──
+// cfg.getNomCaisse, cfg.getNomBanque, cfg.multiColonne (bool)
+function _renderDonSection(keyword,icon,label,chartId,cfg){
+  const prevPer=getPrevPeriode(activePer);
+  const rows=_rowsTypePer(keyword,activePer);
+  const totCaisseBanque=_sumCredit(rows);
+  const totRemises=_entreesRemises(keyword,activePer).reduce((s,e)=>s+e.montant,0);
+  const totCur=totCaisseBanque+totRemises;
+  const totPrevCB=_sumCredit(_rowsTypePer(keyword,prevPer));
+  const totPrevRem=_entreesRemises(keyword,prevPer).reduce((s,e)=>s+e.montant,0);
+  const totPrev=totPrevCB+totPrevRem;
+  const evol=totPrev>0?((totCur-totPrev)/totPrev*100):null;
+
+  const personnes=_listePersonnes(keyword,activePer,cfg);
+
+  let listeHtml='';
+  if(personnes.length===0){
+    listeHtml=`<div style="color:var(--text-3);font-size:12px;padding:8px 0;">Aucun enregistrement pour la période ${activePer}</div>`;
+  } else if(cfg.multiColonne){
+    // Blocs de 10 côte à côte (Dons)
+    const BLOC=10;
+    const nbBlocs=Math.ceil(personnes.length/BLOC)||1;
+    const gridCols=Math.min(nbBlocs,4);
+    const blocs=[];
+    for(let b=0;b<nbBlocs;b++){
+      blocs.push(`<div>${_tablePersonnes(personnes.slice(b*BLOC,(b+1)*BLOC),b*BLOC+1)}</div>`);
+    }
+    listeHtml=`<div style="display:grid;grid-template-columns:repeat(${gridCols},1fr);gap:16px;align-items:start;">${blocs.join('')}</div>`;
+  } else {
+    // Colonne unique taille du 1er bloc (Subventions)
+    listeHtml=`<div style="max-width:480px;">${_tablePersonnes(personnes,1)}</div>`;
+  }
+
+  return `
+  <div class="kpi-top" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px;">
+    <div class="kpi"><div class="kpi-label">${label} — ${activePer}</div><div class="kpi-value v-green">${fmtS(totCur)}</div><div class="kpi-sub">${cfg.kpiSub(personnes)}</div></div>
+    <div class="kpi"><div class="kpi-label">Période précédente (${prevPer||'N/A'})</div><div class="kpi-value" style="color:var(--text-3);">${fmtS(totPrev)}</div></div>
+    <div class="kpi"><div class="kpi-label">Évolution</div><div class="kpi-value ${evol===null?'':evol>=0?'v-green':'v-red'}">${evol===null?'—':(evol>=0?'+':'')+evol.toFixed(1)+' %'}</div></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="card-title"><i class="${icon}"></i> Suivi mensuel — ${activePer} vs ${prevPer||'N-1'}</div></div>
+    <div class="card-body"><canvas id="${chartId}" style="max-height:260px;"></canvas></div>
+  </div>
+  <div class="card" style="margin-top:14px;">
+    <div class="card-head"><div class="card-title"><i class="ti ti-users"></i> Liste — ${activePer} <span style="font-weight:400;color:var(--text-3);margin-left:8px;">${cfg.listeLabel?cfg.listeLabel(personnes):personnes.length+' personne'+(personnes.length>1?'s':'')}</span></div></div>
+    <div class="card-body">${listeHtml}</div>
+  </div>`;
+}
+
+function _initGroupChart(keyword,chartId,colorCur,colorPrev){
+  const mois12=get12MoisPeriode(activePer);
+  const prevPer=getPrevPeriode(activePer);
+  const prevMois12=get12MoisPeriode(prevPer);
+  const ctx=document.getElementById(chartId);if(!ctx)return;
+  return new Chart(ctx,{type:'bar',data:{
+    labels:mois12.map(m=>m.label),
+    datasets:[
+      {label:`${activePer}`,data:_montantsParMois(keyword,mois12),backgroundColor:colorCur.bg,borderColor:colorCur.border,borderWidth:1,borderRadius:3},
+      {label:`${prevPer||'N-1'}`,data:_montantsParMois(keyword,prevMois12),backgroundColor:colorPrev.bg,borderColor:colorPrev.border,borderWidth:1,borderRadius:3}
+    ]
+  },options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true,ticks:{callback:v=>v+'€'}},x:{stacked:false}}}});
+}
+
+// DONS : Caisse→libelle, Banque→type_comp (libellé complémentaire), multi-colonnes
+const CFG_DONS={
+  getNomCaisse: r=>String(r[cc().libelle]||'').trim()||'Anonyme',
+  getNomBanque: r=>String(r[cb().type_comp]||r[cb().libelle]||'').trim()||'Anonyme',
+  multiColonne: true,
+  kpiSub: p=>`${p.length} personne${p.length>1?'s':''}`,
+};
+function renderDons(){return _renderDonSection('don','ti ti-coin','Total dons','chart-dons',CFG_DONS);}
+function initDonsChart(){charts.dons=_initGroupChart('don','chart-dons',{bg:'rgba(59,109,17,0.75)',border:'rgb(59,109,17)'},{bg:'rgba(59,109,17,0.2)',border:'rgba(59,109,17,0.5)'})||charts.dons;}
+
+
+// ============================================================
+// CHÈQUES / REMISES EN ATTENTE
+// ============================================================
+// ============================================================
+// 9. CHÈQUES EN ATTENTE
+// ============================================================
+function renderChequesAtt(){
+  const att=allCheques.filter(r=>r[Sheets.cols.cheque.statut]==='en_attente');
+  const tot=att.reduce((s,r)=>s+(parseFloat(r[Sheets.cols.cheque.montant])||0),0);
+  return `<div class="kpi-top" style="grid-template-columns:repeat(3,1fr);">
+    <div class="kpi"><div class="kpi-label">Chèques en attente</div><div class="kpi-value v-amber">${att.length}</div></div>
+    <div class="kpi"><div class="kpi-label">Montant total</div><div class="kpi-value v-orange">${fmtS(tot)}</div></div>
+    <div class="kpi"><div class="kpi-label">Encaissés total</div><div class="kpi-value v-green">${allCheques.filter(r=>r[Sheets.cols.cheque.statut]==='encaisse').length}</div></div>
+  </div>
+  <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-writing"></i> Chèques en attente d'encaissement</div></div>
+  <table><thead><tr><th>Date émission</th><th>N° chèque</th><th>Bénéficiaire</th><th>Nom chat</th><th>Type</th><th class="r">Montant</th></tr></thead>
+  <tbody>${att.length?att.map(r=>`<tr>
+    <td style="color:var(--text-3);">${r[Sheets.cols.cheque.date_emission]||'—'}</td>
+    <td style="font-weight:500;">N°${r[Sheets.cols.cheque.num_cheque]||'—'}</td>
+    <td>${r[Sheets.cols.cheque.beneficiaire]||'—'}</td>
+    <td style="color:var(--text-3);font-size:11px;">${r[Sheets.cols.cheque.nom_chat]||'—'}</td>
+    <td><span class="chip chip-${chipType(r[Sheets.cols.cheque.type_mvt])}">${r[Sheets.cols.cheque.type_mvt]||'—'}</span></td>
+    <td class="r amount-d">${fmtS(r[Sheets.cols.cheque.montant])}</td>
+  </tr>`).join(''):'<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-3);">Aucun chèque en attente</td></tr>'}</tbody></table></div>`;
+}
+
+// ============================================================
+// 10. REMISES EN ATTENTE
+// ============================================================
+function renderRemisesAtt(){
+  const cr=Sheets.cols.remise;
+  const att=allRemises.filter(r=>r[cr.statut]==='en_attente');
+  const tot=att.reduce((s,r)=>s+(parseFloat(r[cr.montant_total])||0),0);
+  return `<div class="kpi-top" style="grid-template-columns:repeat(3,1fr);">
+    <div class="kpi"><div class="kpi-label">Remises en attente</div><div class="kpi-value v-orange">${att.length}</div></div>
+    <div class="kpi"><div class="kpi-label">Montant total</div><div class="kpi-value v-orange">${fmtS(tot)}</div></div>
+    <div class="kpi"><div class="kpi-label">Encaissées total</div><div class="kpi-value v-green">${allRemises.filter(r=>r[cr.statut]==='encaissee').length}</div></div>
+  </div>
+  <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-stack"></i> Remises en attente</div></div>
+  <table><thead><tr><th>Date</th><th>N° bordereau</th><th class="r">Nb chèques</th><th class="r">Total</th></tr></thead>
+  <tbody>${att.length?att.map(r=>`<tr>
+    <td style="color:var(--text-3);">${r[cr.date_remise]||'—'}</td>
+    <td style="font-weight:500;">${r[cr.num_bordereau]||'—'}</td>
+    <td class="r">${r[cr.nb_cheques]||0}</td>
+    <td class="r amount-c">${fmtS(r[cr.montant_total])}</td>
+  </tr>`).join(''):'<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-3);">Aucune remise en attente</td></tr>'}</tbody></table></div>`;
+}
+
+// ============================================================
+// ÉVÉNEMENTS
+// ============================================================
+// 15. ÉVÉNEMENTS
+// ============================================================
+let evenementActif='global';           // 'global' ou nom de l'événement
+let evenementsConfig=null;             // Set des événements à afficher — persisté (comme les catégories AG), pas remis à zéro à chaque session
+let evenementsConfigVisible=false;     // affichage du panneau de sélection
+
+function _evenementsData(){
+  const allOps=[...caisseRows(),...banqueRows()].filter(r=>{
+    const t=_normCat(rf(r,'type_mvt')); // accents/casse normalisés (ex: "Événement"/"Evenement" -> "evenement")
+    return t.includes('evenement');
+  });
+  const map={}; // nom événement -> {entrees, sorties, mouvements:[]}
+  allOps.forEach(r=>{
+    const name=rf(r,'description')||rf(r,'libelle')||'Événement';
+    if(!map[name]) map[name]={entrees:0,sorties:0,mouvements:[]};
+    map[name].entrees+=parseFloat(rf(r,'credit'))||0;
+    map[name].sorties+=parseFloat(rf(r,'debit'))||0;
+    map[name].mouvements.push(r);
+  });
+  return map;
+}
+function _typesDiagnostic(){
+  // Utilisé uniquement pour le message d'état vide : liste les types réellement
+  // présents dans la période, pour diagnostiquer rapidement si le libellé "Événement"
+  // utilisé dans le tableur diffère de ce qui est attendu.
+  const set=new Set([...caisseRows(),...banqueRows()].map(r=>rf(r,'type_mvt')).filter(Boolean));
+  return [...set].sort((a,b)=>a.localeCompare(b,'fr'));
+}
+// Liste des événements connus toutes périodes confondues (comme les catégories AG,
+// qui ne dépendent pas non plus de la période active) — base de la config.
+function _tousLesEvenementsConnus(){
+  const set=new Set();
+  [...allCaisse,...allBanque].forEach(r=>{
+    if(_normCat(rf(r,'type_mvt')).includes('evenement')){
+      set.add(rf(r,'description')||rf(r,'libelle')||'Événement');
+    }
+  });
+  return [...set].sort((a,b)=>a.localeCompare(b,'fr'));
+}
+
+// ---- Config sélection (checkboxes, persistée en Config sheet + localStorage — même pattern que Répartition/AG) ----
+function loadEvenementsConfig(){
+  try{
+    const stored=localStorage.getItem('arche_evenements_selection');
+    if(stored){evenementsConfig=new Set(JSON.parse(stored));return;}
+  }catch(e){}
+  evenementsConfig=new Set(_tousLesEvenementsConnus()); // tout affiché par défaut la première fois
+}
+async function saveEvenementsConfig(){
+  const arr=[...evenementsConfig];
+  localStorage.setItem('arche_evenements_selection',JSON.stringify(arr));
+  try{await Sheets.saveConfigKey('evenements_selection',arr);showToast('Sélection enregistrée !');}
+  catch(e){showToast('Sauvegardé localement (erreur sheet)');}
+}
+function toggleEvenementsConfig(){evenementsConfigVisible=!evenementsConfigVisible;refreshSynthSection('evenements');}
+function toggleEvenementConfigCb(name,checked){if(checked)evenementsConfig.add(name);else evenementsConfig.delete(name);}
+function evenementsConfigSelectAll(all){
+  evenementsConfig = all ? new Set(_tousLesEvenementsConnus()) : new Set();
+  refreshSynthSection('evenements');
+}
+
+function _renderEvenementsConfigPanel(){
+  const tous=_tousLesEvenementsConnus();
+  return `<div class="evt-config-panel" id="evt-config-panel">
+    <div class="evt-config-header">
+      <strong><i class="ti ti-settings" style="font-size:13px;margin-right:5px;"></i>Sélection des événements affichés</strong>
+      <button class="btn-evt-save" onclick="saveEvenementsConfig()"><i class="ti ti-device-floppy"></i> Sauvegarder</button>
+    </div>
+    <div class="evt-config-hint">Décoche les événements à masquer (anciens, tests…). Sauvegardé dans le Google Sheet (onglet Config) — s'applique sur tous les appareils, comme la config des catégories AG.</div>
+    <div style="display:flex;gap:12px;font-size:10px;margin-bottom:8px;">
+      <a href="#" onclick="evenementsConfigSelectAll(true);return false;" style="color:var(--blue);">Tout cocher</a>
+      <a href="#" onclick="evenementsConfigSelectAll(false);return false;" style="color:var(--blue);">Tout décocher</a>
+    </div>
+    <div class="cb-grid">${tous.length?tous.map(n=>`<label class="cb-item"><input type="checkbox" ${evenementsConfig.has(n)?'checked':''} onchange="toggleEvenementConfigCb('${n.replace(/'/g,"\\'")}',this.checked)"> ${escH(n)}</label>`).join(''):'<span style="color:var(--text-3);">Aucun événement connu pour l\'instant.</span>'}</div>
+  </div>`;
+}
+
+function renderEvenements(){
+  if(evenementsConfig===null) loadEvenementsConfig();
+  const data=_evenementsData();
+  const allNames=Object.keys(data).sort((a,b)=>a.localeCompare(b,'fr'));
+  const names=allNames.filter(n=>evenementsConfig.has(n)); // seuls les événements cochés en config s'affichent
+  if(evenementActif!=='global' && !names.includes(evenementActif)) evenementActif='global';
+
+  const configBtn=`<div style="margin-bottom:10px;">
+    <button class="btn btn-secondary btn-sm" onclick="toggleEvenementsConfig()"><i class="ti ti-settings"></i> Sélection des événements</button>
+  </div>`;
+  const configPanel=evenementsConfigVisible?_renderEvenementsConfigPanel():'';
+
+  const tabs=`<div class="evt-tabs">
+    <button class="evt-tab ${evenementActif==='global'?'active':''}" onclick="selectEvenementTab('global')"><i class="ti ti-layout-grid"></i> Globalité <span class="badge">${names.length}</span></button>
+    ${names.map(n=>`<button class="evt-tab ${evenementActif===n?'active':''}" onclick="selectEvenementTab('${n.replace(/'/g,"\\'")}')">${escH(n)} <span class="badge">${data[n].mouvements.length}</span></button>`).join('')}
+  </div>`;
+
+  if(!allNames.length){
+    const typesPresents=_typesDiagnostic();
+    return `${configBtn}${configPanel}${tabs}<div class="card"><div class="card-body" style="text-align:center;padding:30px;color:var(--text-3);">
+      Aucun mouvement de type "Événement" trouvé pour la période ${activePer}.
+      ${typesPresents.length?`<div style="margin-top:14px;font-size:11px;">Types de mouvement présents sur cette période : <em>${typesPresents.map(escH).join(', ')}</em></div>`:''}
+    </div></div>`;
+  }
+  if(!names.length){
+    return `${configBtn}${configPanel}<div class="card"><div class="card-body" style="text-align:center;padding:30px;color:var(--text-3);">Tous les événements de cette période sont masqués par la sélection actuelle. <a href="#" onclick="toggleEvenementsConfig();return false;" style="color:var(--blue);">Ouvrir la sélection</a> pour en réafficher.</div></div>`;
+  }
+  return configBtn+configPanel+tabs + (evenementActif==='global' ? _renderEvenementsGlobalTable(data,names) : _renderEvenementDetail(evenementActif,data[evenementActif]));
+}
+
+function selectEvenementTab(name){evenementActif=name;refreshSynthSection('evenements');}
+
+function _renderEvenementsGlobalTable(data,names){
+  const totalEntrees=names.reduce((s,n)=>s+data[n].entrees,0);
+  const totalSorties=names.reduce((s,n)=>s+data[n].sorties,0);
+  const net=totalEntrees-totalSorties;
+  return `
+  <div class="kpi-top">
+    <div class="kpi"><div class="kpi-label">Entrées</div><div class="kpi-value v-green">${fmtS(totalEntrees)}</div><div class="kpi-sub">${names.length} événement(s) sélectionné(s)</div></div>
+    <div class="kpi"><div class="kpi-label">Sorties</div><div class="kpi-value v-red">${fmtS(totalSorties)}</div><div class="kpi-sub">${names.length} événement(s) sélectionné(s)</div></div>
+    <div class="kpi"><div class="kpi-label">Net</div><div class="kpi-value ${net>=0?'v-green':'v-red'}">${fmtS(net)}</div><div class="kpi-sub">Sélection actuelle</div></div>
+  </div>
+  <div class="card" style="margin-top:14px;">
+    <div class="card-head"><div class="card-title"><i class="ti ti-confetti"></i> Événements sélectionnés — ${activePer}</div></div>
+    <table><thead><tr><th>Événement</th><th class="r">Entrées</th><th class="r">Sorties</th><th class="r">Net</th><th class="r">Mouvements</th></tr></thead>
+    <tbody>${names.map(n=>{
+      const d=data[n];const evNet=d.entrees-d.sorties;
+      return `<tr>
+        <td style="font-weight:500;cursor:pointer;" onclick="selectEvenementTab('${n.replace(/'/g,"\\'")}')">${escH(n)}</td>
+        <td class="r amount-c">${fmtS(d.entrees)}</td>
+        <td class="r amount-d">${fmtS(d.sorties)}</td>
+        <td class="r" style="font-weight:600;color:${evNet>=0?'var(--green)':'var(--red)'};">${fmtS(evNet)}</td>
+        <td class="r">${d.mouvements.length}</td>
+      </tr>`;
+    }).join('')}</tbody></table>
+  </div>`;
+}
+
+function _renderEvenementDetail(name,d){
+  const net=d.entrees-d.sorties;
+  const rows=[...d.mouvements].sort((a,b)=>(parseDateFR(rf(b,'date')||'')||0)-(parseDateFR(rf(a,'date')||'')||0));
+  return `
+  <div class="kpi-top">
+    <div class="kpi"><div class="kpi-label">Entrées</div><div class="kpi-value v-green">${fmtS(d.entrees)}</div><div class="kpi-sub">${escH(name)}</div></div>
+    <div class="kpi"><div class="kpi-label">Sorties</div><div class="kpi-value v-red">${fmtS(d.sorties)}</div><div class="kpi-sub">${escH(name)}</div></div>
+    <div class="kpi"><div class="kpi-label">Net</div><div class="kpi-value ${net>=0?'v-green':'v-red'}">${fmtS(net)}</div><div class="kpi-sub">${d.mouvements.length} mouvement(s)</div></div>
+  </div>
+  <div class="card" style="margin-top:14px;">
+    <div class="card-head"><div class="card-title"><i class="ti ti-list"></i> Mouvements liés — ${escH(name)}</div></div>
+    <table><thead><tr><th>Date</th><th>Libellé</th><th>Source</th><th class="r">Entrée</th><th class="r">Sortie</th></tr></thead>
+    <tbody>${rows.map(r=>{
+      const isC=_isCaisse(r);
+      const src=isC?('Caisse '+String(r[cc().source]||'').replace('C','')):'Banque';
+      const chipCls=isC?('chip-'+(r[cc().source]==='C2'?'caisse2':'caisse1')):'chip-banque';
+      const cr=parseFloat(rf(r,'credit'))||0, db=parseFloat(rf(r,'debit'))||0;
+      return `<tr>
+        <td style="color:var(--text-3);">${rf(r,'date')||'—'}</td>
+        <td>${rf(r,'libelle')||'—'}</td>
+        <td><span class="chip ${chipCls}">${src}</span></td>
+        <td class="r amount-c">${cr>0?fmtS(cr):'—'}</td>
+        <td class="r amount-d">${db>0?fmtS(db):'—'}</td>
+      </tr>`;
+    }).join('')||'<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-3);">Aucun mouvement</td></tr>'}</tbody></table>
+  </div>`;
+}
+
 </script>
 </body>
 </html>
