@@ -35,7 +35,6 @@ function buildSidebar(activePage) {
     { id: 'notes', label: 'Notes', icon: 'ti-notes', href: 'notes.html' },
 
     { section: 'Partage' },
-    { id: 'synthese', label: 'Vue synthèse',     icon: 'ti-eye',      href: 'synthese.html' },
     { id: 'alertes',  label: 'Journal / Alertes', icon: 'ti-bell',    href: 'alertes.html', badge: true, adminOnly: true },
 
     { section: 'Administration' },
