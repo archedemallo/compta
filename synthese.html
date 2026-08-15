@@ -673,6 +673,9 @@ function renderRepartition(){
 
 // Plugin Chart.js — étiquette (nom + montant) reliée à chaque part par un
 // trait à l'extérieur du graphique, façon étiquettes "à l'extérieur" d'Excel.
+// Les étiquettes sont alignées sur une colonne fixe à gauche/à droite et
+// espacées verticalement (comme Excel) pour ne jamais se chevaucher, même
+// quand plusieurs petites parts sont regroupées au même endroit du camembert.
 const leaderLabelsPlugin={
   id:'leaderLabels',
   afterDraw(chart){
@@ -682,22 +685,48 @@ const leaderLabelsPlugin={
     const {ctx}=chart;
     ctx.save();
     ctx.font="10px 'DM Sans',sans-serif";
-    meta.data.forEach((arc,i)=>{
+    const arc0=meta.data[0];
+    const cx=arc0.x, cy=arc0.y, outerR=arc0.outerRadius;
+    const minGap=15;          // écart vertical minimum entre deux étiquettes du même côté
+    const colOffset=outerR+34; // distance horizontale de la colonne de texte par rapport au centre
+
+    const pts=meta.data.map((arc,i)=>{
       const val=ds.data[i];
-      if(!val)return;
+      if(!val)return null;
       const angle=(arc.startAngle+arc.endAngle)/2;
-      const cx=arc.x,cy=arc.y,outerR=arc.outerRadius;
       const sx=cx+Math.cos(angle)*outerR, sy=cy+Math.sin(angle)*outerR;
-      const mx=cx+Math.cos(angle)*(outerR+12), my=cy+Math.sin(angle)*(outerR+12);
       const isRight=Math.cos(angle)>=0;
-      const ex=mx+(isRight?18:-18);
+      const bx=cx+Math.cos(angle)*(outerR+10), by=cy+Math.sin(angle)*(outerR+10);
+      return {sx,sy,bx,by,isRight,ty:by,text:`${chart.data.labels[i]} : ${fmt(val)}`};
+    }).filter(Boolean);
+
+    ['left','right'].forEach(side=>{
+      const group=pts.filter(p=>(side==='right')===p.isRight).sort((a,b)=>a.ty-b.ty);
+      for(let k=1;k<group.length;k++){
+        if(group[k].ty-group[k-1].ty<minGap) group[k].ty=group[k-1].ty+minGap;
+      }
+      if(group.length){
+        // Recentre le groupe pour ne pas tout pousser vers le bas
+        const spanOrig=group[group.length-1].by-group[0].by;
+        const spanNew=group[group.length-1].ty-group[0].ty;
+        const shift=(group[0].by+spanOrig/2)-(group[0].ty+spanNew/2);
+        group.forEach(p=>p.ty+=shift);
+      }
+    });
+
+    pts.forEach(p=>{
+      const tx=cx+(p.isRight?colOffset:-colOffset);
       ctx.strokeStyle='rgba(120,120,120,0.55)';
       ctx.lineWidth=1;
-      ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(mx,my);ctx.lineTo(ex,my);ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(p.sx,p.sy);
+      ctx.lineTo(p.bx,p.ty);
+      ctx.lineTo(tx+(p.isRight?-4:4),p.ty);
+      ctx.stroke();
       ctx.fillStyle='#444';
-      ctx.textAlign=isRight?'left':'right';
+      ctx.textAlign=p.isRight?'left':'right';
       ctx.textBaseline='middle';
-      ctx.fillText(`${chart.data.labels[i]} : ${fmt(val)}`,ex+(isRight?3:-3),my);
+      ctx.fillText(p.text,tx,p.ty);
     });
     ctx.restore();
   }
@@ -759,7 +788,7 @@ function initRepartitionCharts(){
       data:{labels:data.map(d=>d[0]),datasets:[{data:data.map(d=>d[1]),backgroundColor:palette(data.length),borderWidth:2,borderColor:'#fff'}]},
       options:{
         responsive:true,
-        layout:{padding:{left:80,right:80,top:20,bottom:20}},
+        layout:{padding:{left:110,right:110,top:40,bottom:40}},
         plugins:{
           legend:{position:'right',labels:{boxWidth:12,font:{size:10},generateLabels:(chart)=>chart.data.labels.map((lbl,i)=>({
             text:`${lbl} — ${fmt(chart.data.datasets[0].data[i])} (${Math.round(chart.data.datasets[0].data[i]/total*100)}%)`,
