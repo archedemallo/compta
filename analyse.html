@@ -1167,6 +1167,7 @@ function getChatRows(source) {
           type_mvt:   rem[base + 3] || '',
           description:rem[base + 4] || '',
           periode:    rem[COLS_REMISE.periode] || '',
+          date:       rem[COLS_REMISE.date_remise] || '',
         });
       }
     });
@@ -1435,7 +1436,7 @@ function _renderChatDetailHTML(chatName) {
       multi: (r[getChequeCol('nom_chat')]||'').includes('/') || (r[getChequeCol('nom_chat')]||'').includes(','),
     })),
     ...remises.map(r => ({
-      source:'Remise', date:'', libelle:r.donateur,
+      source:'Remise', date:r.date||'', libelle:r.donateur,
       type:r.type_mvt, desc:r.description,
       debit:0,
       credit:chatShareForName(r.nom_chat, fmtN(r.montant), chatName),
@@ -2188,8 +2189,8 @@ function _normCat(s){return String(s||'').toLowerCase().normalize('NFD').replace
 // ============================================================
 function renderRepartition(){
   return `<div class="grid-2">
-    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des entrées</div><button class="card-cfg-btn" title="Configurer les catégories" onclick="switchTab('ag');if(!agConfigVisible)toggleAgConfig();"><i class="ti ti-settings"></i></button></div><div class="card-body"><canvas id="chart-entrees" style="max-height:320px;"></canvas></div></div>
-    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des sorties</div><button class="card-cfg-btn" title="Configurer les catégories" onclick="switchTab('ag');if(!agConfigVisible)toggleAgConfig();"><i class="ti ti-settings"></i></button></div><div class="card-body"><canvas id="chart-sorties" style="max-height:320px;"></canvas></div></div>
+    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des entrées</div><button class="card-cfg-btn" title="Configurer les catégories" onclick="switchTab('ag');if(!agConfigVisible)toggleAgConfig();"><i class="ti ti-settings"></i></button></div><div class="card-body"><canvas id="chart-entrees" style="max-height:640px;"></canvas></div></div>
+    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des sorties</div><button class="card-cfg-btn" title="Configurer les catégories" onclick="switchTab('ag');if(!agConfigVisible)toggleAgConfig();"><i class="ti ti-settings"></i></button></div><div class="card-body"><canvas id="chart-sorties" style="max-height:640px;"></canvas></div></div>
   </div>`;
 }
 
@@ -2267,7 +2268,7 @@ function initRepartitionCharts(){
       data:{labels:data.map(d=>d[0]),datasets:[{data:data.map(d=>d[1]),backgroundColor:palette(data.length),borderWidth:2,borderColor:'#fff'}]},
       options:{
         responsive:true,
-        layout:{padding:{left:100,right:100,top:36,bottom:36}},
+        layout:{padding:{left:130,right:130,top:50,bottom:50}},
         plugins:{
           legend:{position:'right',labels:{boxWidth:12,font:{size:10},generateLabels:(chart)=>chart.data.labels.map((lbl,i)=>({
             text:`${lbl} — ${fmtS(chart.data.datasets[0].data[i])} (${Math.round(chart.data.datasets[0].data[i]/total*100)}%)`,
