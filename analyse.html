@@ -2174,8 +2174,8 @@ function _normCat(s){return String(s||'').toLowerCase().normalize('NFD').replace
 // ============================================================
 function renderRepartition(){
   return `<div class="grid-2">
-    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des entrées</div><button class="card-cfg-btn" title="Configurer les catégories" onclick="switchTab('ag');if(!agConfigVisible)toggleAgConfig();"><i class="ti ti-settings"></i></button></div><div class="card-body"><canvas id="chart-entrees" height="170"></canvas></div></div>
-    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des sorties</div><button class="card-cfg-btn" title="Configurer les catégories" onclick="switchTab('ag');if(!agConfigVisible)toggleAgConfig();"><i class="ti ti-settings"></i></button></div><div class="card-body"><canvas id="chart-sorties" height="170"></canvas></div></div>
+    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des entrées</div><button class="card-cfg-btn" title="Configurer les catégories" onclick="switchTab('ag');if(!agConfigVisible)toggleAgConfig();"><i class="ti ti-settings"></i></button></div><div class="card-body"><canvas id="chart-entrees" style="max-height:190px;"></canvas></div></div>
+    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des sorties</div><button class="card-cfg-btn" title="Configurer les catégories" onclick="switchTab('ag');if(!agConfigVisible)toggleAgConfig();"><i class="ti ti-settings"></i></button></div><div class="card-body"><canvas id="chart-sorties" style="max-height:190px;"></canvas></div></div>
   </div>`;
 }
 
@@ -2276,25 +2276,45 @@ function initRepartitionCharts(){
 // ============================================================
 // 7. ADOPTIONS
 // ============================================================
-function renderAdoptions(){
-  const rows=[...caisseRows(),...banqueRows()]
-    .filter(r=>(rf(r,'type_mvt')||'').toLowerCase().includes('adopt'))
-    .sort((a,b)=>(parseDateFR(rf(b,'date')||'')||0)-(parseDateFR(rf(a,'date')||'')||0)); // plus récent d'abord
-  return `<div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-home"></i> Suivi des adoptions — 12 mois</div></div><div class="card-body"><canvas id="chart-adoptions" height="120"></canvas></div></div>
-  <div class="card" style="margin-top:14px;"><div class="card-head"><div class="card-title"><i class="ti ti-list"></i> Détail des adoptions — période ${activePer}</div></div>
-  <table><thead><tr><th>Date</th><th>Libellé</th><th>Chat</th><th>Source</th><th class="r">Montant</th></tr></thead>
-  <tbody>${rows.map(r=>{
+function _tableAdoptions(rows,startIdx){
+  return`<table><thead><tr><th>#</th><th>Date</th><th>Libellé</th><th>Chat</th><th>Source</th><th class="r">Montant</th></tr></thead>
+  <tbody>${rows.map((r,i)=>{
       const isC=_isCaisse(r);
       const src=isC?('Caisse '+String(r[cc().source]||'').replace('C','')):'Banque';
       const chipCls=isC?('chip-'+(r[cc().source]==='C2'?'caisse2':'caisse1')):'chip-banque';
       const cr=parseFloat(rf(r,'credit'))||0, db=parseFloat(rf(r,'debit'))||0;
       return `<tr>
-      <td style="color:var(--text-3);">${rf(r,'date')||'—'}</td>
-      <td>${isC ? (rf(r,'libelle')||'—') : (r[cb().type_comp]||r[cb().libelle]||'—')}</td>
-      <td style="color:var(--text-3);">${rf(r,'nom_chat')||'—'}</td>
+      <td style="color:var(--text-3);width:20px;">${startIdx+i}</td>
+      <td style="color:var(--text-3);white-space:nowrap;">${rf(r,'date')||'—'}</td>
+      <td style="font-size:11px;">${isC ? (rf(r,'libelle')||'—') : (r[cb().type_comp]||r[cb().libelle]||'—')}</td>
+      <td style="color:var(--text-3);font-size:11px;">${rf(r,'nom_chat')||'—'}</td>
       <td><span class="chip ${chipCls}">${src}</span></td>
-      <td class="r ${cr>0?'amount-c':db>0?'amount-d':''}">${cr>0?fmtS(cr):db>0?'-'+fmtS(db):'—'}</td>
-    </tr>`;}).join('')}</tbody></table></div>`;
+      <td class="r ${cr>0?'amount-c':db>0?'amount-d':''}" style="white-space:nowrap;">${cr>0?fmtS(cr):db>0?'-'+fmtS(db):'—'}</td>
+    </tr>`;}).join('')}</tbody></table>`;
+}
+function renderAdoptions(){
+  const rows=[...caisseRows(),...banqueRows()]
+    .filter(r=>(rf(r,'type_mvt')||'').toLowerCase().includes('adopt'))
+    .sort((a,b)=>(parseDateFR(rf(b,'date')||'')||0)-(parseDateFR(rf(a,'date')||'')||0)); // plus récent d'abord
+
+  let listeHtml;
+  if(!rows.length){
+    listeHtml=`<div style="color:var(--text-3);font-size:12px;padding:8px 0;">Aucune adoption pour la période ${activePer}</div>`;
+  } else {
+    // Blocs côte à côte, comme pour Dons, mais plafonné à 2 colonnes
+    const BLOC=15;
+    const nbBlocs=Math.ceil(rows.length/BLOC)||1;
+    const gridCols=Math.min(nbBlocs,2);
+    const blocs=[];
+    for(let b=0;b<nbBlocs;b++){
+      blocs.push(`<div>${_tableAdoptions(rows.slice(b*BLOC,(b+1)*BLOC),b*BLOC+1)}</div>`);
+    }
+    listeHtml=`<div style="display:grid;grid-template-columns:repeat(${gridCols},1fr);gap:16px;align-items:start;">${blocs.join('')}</div>`;
+  }
+
+  return `<div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-home"></i> Suivi des adoptions — 12 mois</div></div><div class="card-body"><canvas id="chart-adoptions" style="max-height:170px;"></canvas></div></div>
+  <div class="card" style="margin-top:14px;"><div class="card-head"><div class="card-title"><i class="ti ti-list"></i> Détail des adoptions — période ${activePer}</div></div>
+  <div class="card-body">${listeHtml}</div></div>`;
 }
 function initAdoptionsChart(){
   const mois12=get12Mois();
