@@ -343,10 +343,8 @@
     <!-- ============================================================ -->
     <div id="tab-chat" class="tab-pane" style="display:none;">
 
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;align-items:start;">
-
       <!-- Sélection des périodes -->
-      <div class="card">
+      <div class="card" style="margin-bottom:14px;">
         <div class="card-head">
           <div class="card-title"><i class="ti ti-calendar"></i> Périodes affichées</div>
           <div style="display:flex;gap:6px;">
@@ -374,7 +372,7 @@
       </div>
 
       <!-- SECTION : Détail par chat -->
-      <div class="card">
+      <div class="card" style="margin-top:14px;">
         <div class="card-head">
           <div class="card-title"><i class="ti ti-paw"></i> Détail par chat</div>
         </div>
@@ -390,7 +388,6 @@
         </div>
       </div>
 
-      </div>
     </div>
 
     <!-- ============================================================ -->
@@ -1347,39 +1344,45 @@ function renderChatGlobal() {
     if (!chatRecap.length) {
       recapWrap.innerHTML = '<div class="empty-state" style="padding:12px;"><i class="ti ti-paw"></i> Aucun chat avec nom renseigné</div>';
     } else {
-      recapWrap.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:11px;">
+      const rowHtml = r => '<tr style="border-bottom:0.5px solid var(--border);cursor:pointer;" onclick="document.getElementById(\'chat-select\').value=\'' + escH(r.name) + '\';renderChatDetail();" title="Voir le détail de ' + escH(r.name) + '">'+
+            '<td style="padding:5px 10px;font-weight:500;">' + escH(r.name) + '</td>'+
+            '<td style="text-align:right;padding:5px 10px;color:var(--red);">' + (r.dep>0?fmt(r.dep):'—') + '</td>'+
+            '<td style="text-align:right;padding:5px 10px;color:var(--green);">' + (r.rec>0?fmt(r.rec):'—') + '</td>'+
+            '<td style="text-align:right;padding:5px 10px;font-weight:600;color:' + (r.net>=0?'var(--green)':'var(--red)') + ';">' + fmt(r.net) + '</td>'+
+          '</tr>';
+      const blockTable = rows => `<table style="width:100%;border-collapse:collapse;font-size:11px;">
         <thead><tr>
           <th style="text-align:left;padding:6px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-3);">Chat</th>
           <th style="text-align:right;padding:6px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-3);">Dépenses</th>
           <th style="text-align:right;padding:6px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-3);">Recettes</th>
           <th style="text-align:right;padding:6px 10px;border-bottom:0.5px solid var(--border);background:var(--surface-2);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-3);">Net</th>
         </tr></thead>
-        <tbody>
-          ${chatRecap.map(r => '<tr style="border-bottom:0.5px solid var(--border);cursor:pointer;" onclick="document.getElementById(\'chat-select\').value=\'' + escH(r.name) + '\';renderChatDetail();" title="Voir le détail de ' + escH(r.name) + '">'+
-            '<td style="padding:5px 10px;font-weight:500;">' + escH(r.name) + '</td>'+
-            '<td style="text-align:right;padding:5px 10px;color:var(--red);">' + (r.dep>0?fmt(r.dep):'—') + '</td>'+
-            '<td style="text-align:right;padding:5px 10px;color:var(--green);">' + (r.rec>0?fmt(r.rec):'—') + '</td>'+
-            '<td style="text-align:right;padding:5px 10px;font-weight:600;color:' + (r.net>=0?'var(--green)':'var(--red)') + ';">' + fmt(r.net) + '</td>'+
-          '</tr>').join('')}
-          <tr style="border-top:1.5px solid var(--border);background:var(--surface-2);font-weight:700;">
-            <td style="padding:6px 10px;">TOTAL</td>
-            <td style="text-align:right;padding:6px 10px;color:var(--red);">${fmt(totDep)}</td>
-            <td style="text-align:right;padding:6px 10px;color:var(--green);">${fmt(totRec)}</td>
-            <td style="text-align:right;padding:6px 10px;color:${totNet>=0?'var(--green)':'var(--red)'}">${fmt(totNet)}</td>
-          </tr>
-        </tbody>
+        <tbody>${rows.map(rowHtml).join('')}</tbody>
       </table>`;
+
+      // Blocs de 25 lignes côte à côte, plafonné à 3 colonnes
+      const BLOC = 25;
+      const nbBlocs = Math.ceil(chatRecap.length / BLOC) || 1;
+      const gridCols = Math.min(nbBlocs, 3);
+      const blocs = [];
+      for (let b = 0; b < nbBlocs; b++) blocs.push(`<div>${blockTable(chatRecap.slice(b*BLOC,(b+1)*BLOC))}</div>`);
+
+      recapWrap.innerHTML = `
+        <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:12px;">
+          <tbody><tr style="background:var(--surface-2);font-weight:700;">
+            <td style="padding:6px 10px;width:25%;">TOTAL — ${chatRecap.length} chat(s)</td>
+            <td style="text-align:right;padding:6px 10px;color:var(--red);width:25%;">${fmt(totDep)}</td>
+            <td style="text-align:right;padding:6px 10px;color:var(--green);width:25%;">${fmt(totRec)}</td>
+            <td style="text-align:right;padding:6px 10px;color:${totNet>=0?'var(--green)':'var(--red)'};width:25%;">${fmt(totNet)}</td>
+          </tr></tbody>
+        </table>
+        <div style="display:grid;grid-template-columns:repeat(${gridCols},1fr);gap:16px;align-items:start;">${blocs.join('')}</div>`;
     }
   }
 }
 
-function renderChatDetail() {
-  const chatName = document.getElementById('chat-select').value;
-  const wrap = document.getElementById('chat-detail-wrap');
-  if (!chatName) {
-    wrap.innerHTML = '<div class="empty-state"><i class="ti ti-paw"></i>Sélectionne un chat pour voir son détail</div>';
-    return;
-  }
+function _renderChatDetailHTML(chatName) {
+  if (!chatName) return '<div class="empty-state"><i class="ti ti-paw"></i>Sélectionne un chat pour voir son détail</div>';
 
   // Lignes directes (nom_chat = exactement chatName) ou multi-chats incluant chatName
   const caisse  = getChatRows('caisse').filter(r => { const n=r[getCaisseCol('nom_chat')]||''; return splitChatTokens(n).some(x=>x.toLowerCase()===chatName.toLowerCase()); });
@@ -1462,7 +1465,11 @@ function renderChatDetail() {
     html += '</tbody></table>';
   }
 
-  wrap.innerHTML = html;
+  return html;
+}
+function renderChatDetail() {
+  const chatName = document.getElementById('chat-select').value;
+  document.getElementById('chat-detail-wrap').innerHTML = _renderChatDetailHTML(chatName);
 }
 
 // ============================================================
@@ -1712,8 +1719,8 @@ function renderMoyennes() {
   `;
 
   document.getElementById('moy-detail-chats').innerHTML = cout.noms.length ? `
-    <div style="font-size:11px;color:var(--text-3);margin-bottom:10px;">${cout.noms.length} chat(s) nommé(s) — dénominateur du coût moyen :</div>
-    <div style="display:flex;flex-direction:column;gap:4px;">${cout.noms.map(n=>`<span class="badge badge-grey" style="text-align:left;">${escH(n)}</span>`).join('')}</div>
+    <div style="font-size:11px;color:var(--text-3);margin-bottom:10px;">${cout.noms.length} chat(s) nommé(s) — dénominateur du coût moyen. Cliquer sur un nom pour voir son détail :</div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px 8px;">${cout.noms.map(n=>`<span class="badge badge-grey" style="text-align:left;cursor:pointer;" onclick="showMoyChatDetail('${n.replace(/'/g,"\\'")}')">${escH(n)}</span>`).join('')}</div>
   ` : '<div class="empty-state"><i class="ti ti-paw"></i>Aucun chat nommé sur ces périodes</div>';
 
   const statutsList = Object.entries(cession.detail);
@@ -1735,6 +1742,13 @@ function renderMoyennes() {
   ` : '<div class="empty-state"><i class="ti ti-home-heart"></i>Aucune adoption sur ces périodes</div>';
 }
 
+function showMoyChatDetail(chatName) {
+  const card = document.getElementById('moy-detail-click-card');
+  document.getElementById('moy-detail-click-title').textContent = `Détail — ${chatName}`;
+  document.getElementById('moy-detail-click-body').innerHTML = _renderChatDetailHTML(chatName);
+  card.style.display = 'block';
+  card.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
 function showMoyDetailClick(which) {
   const card = document.getElementById('moy-detail-click-card');
   const title = document.getElementById('moy-detail-click-title');
@@ -2174,8 +2188,8 @@ function _normCat(s){return String(s||'').toLowerCase().normalize('NFD').replace
 // ============================================================
 function renderRepartition(){
   return `<div class="grid-2">
-    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des entrées</div><button class="card-cfg-btn" title="Configurer les catégories" onclick="switchTab('ag');if(!agConfigVisible)toggleAgConfig();"><i class="ti ti-settings"></i></button></div><div class="card-body"><canvas id="chart-entrees" style="max-height:190px;"></canvas></div></div>
-    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des sorties</div><button class="card-cfg-btn" title="Configurer les catégories" onclick="switchTab('ag');if(!agConfigVisible)toggleAgConfig();"><i class="ti ti-settings"></i></button></div><div class="card-body"><canvas id="chart-sorties" style="max-height:190px;"></canvas></div></div>
+    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des entrées</div><button class="card-cfg-btn" title="Configurer les catégories" onclick="switchTab('ag');if(!agConfigVisible)toggleAgConfig();"><i class="ti ti-settings"></i></button></div><div class="card-body"><canvas id="chart-entrees" style="max-height:320px;"></canvas></div></div>
+    <div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-chart-pie"></i> Répartition des sorties</div><button class="card-cfg-btn" title="Configurer les catégories" onclick="switchTab('ag');if(!agConfigVisible)toggleAgConfig();"><i class="ti ti-settings"></i></button></div><div class="card-body"><canvas id="chart-sorties" style="max-height:320px;"></canvas></div></div>
   </div>`;
 }
 
@@ -2192,11 +2206,11 @@ const leaderLabelsPlugin={
     const ds=chart.data.datasets[0];
     const {ctx}=chart;
     ctx.save();
-    ctx.font="9px 'DM Sans',sans-serif";
+    ctx.font="10px 'DM Sans',sans-serif";
     const arc0=meta.data[0];
     const cx=arc0.x, cy=arc0.y, outerR=arc0.outerRadius;
-    const minGap=13;          // écart vertical minimum entre deux étiquettes du même côté
-    const colOffset=outerR+24; // distance horizontale de la colonne de texte par rapport au centre
+    const minGap=15;          // écart vertical minimum entre deux étiquettes du même côté
+    const colOffset=outerR+32; // distance horizontale de la colonne de texte par rapport au centre
 
     const pts=meta.data.map((arc,i)=>{
       const val=ds.data[i];
@@ -2253,7 +2267,7 @@ function initRepartitionCharts(){
       data:{labels:data.map(d=>d[0]),datasets:[{data:data.map(d=>d[1]),backgroundColor:palette(data.length),borderWidth:2,borderColor:'#fff'}]},
       options:{
         responsive:true,
-        layout:{padding:{left:60,right:60,top:26,bottom:26}},
+        layout:{padding:{left:100,right:100,top:36,bottom:36}},
         plugins:{
           legend:{position:'right',labels:{boxWidth:12,font:{size:10},generateLabels:(chart)=>chart.data.labels.map((lbl,i)=>({
             text:`${lbl} — ${fmtS(chart.data.datasets[0].data[i])} (${Math.round(chart.data.datasets[0].data[i]/total*100)}%)`,
@@ -2312,7 +2326,7 @@ function renderAdoptions(){
     listeHtml=`<div style="display:grid;grid-template-columns:repeat(${gridCols},1fr);gap:16px;align-items:start;">${blocs.join('')}</div>`;
   }
 
-  return `<div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-home"></i> Suivi des adoptions — 12 mois</div></div><div class="card-body"><canvas id="chart-adoptions" style="max-height:170px;"></canvas></div></div>
+  return `<div class="card"><div class="card-head"><div class="card-title"><i class="ti ti-home"></i> Suivi des adoptions — 12 mois</div></div><div class="card-body"><canvas id="chart-adoptions" style="max-height:260px;"></canvas></div></div>
   <div class="card" style="margin-top:14px;"><div class="card-head"><div class="card-title"><i class="ti ti-list"></i> Détail des adoptions — période ${activePer}</div></div>
   <div class="card-body">${listeHtml}</div></div>`;
 }
