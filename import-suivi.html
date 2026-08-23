@@ -382,29 +382,29 @@ const ONGLETS = {
     label:'Adoptions', icon:'ti-heart', compta:'Suivi_Adoption',
     fieldNames:{ date:'dateAdoption', nom:'nom', prenom:'prenom', nom_chat:'nomAdoption',
       mode_reglement:'check_paiement', num_cheque:'numeroPaiement',
-      montants:[{field:'totalParticipation',label:'Total participation'},{field:'resteAPayer',label:'Reste à payer'}] },
+      montants:[{field:'totalParticipation',label:'Total participation',desc:'Adoption'},{field:'resteAPayer',label:'Reste à payer',desc:'Cloture'}] },
     type_mvt:'Adoption', description:'Adoption',
   },
   Reservation_Chaton: {
     label:'Rés. Chaton', icon:'ti-cat', compta:'Suivi_Reservation_Chaton',
     fieldNames:{ date:'dateReservation', nom:'nom', prenom:'prenom', nom_chat:'nomChat',
       mode_reglement:'check_paiement', num_cheque:'numeroPaiement',
-      montants:[{field:null,label:'Réservation',fixed:50}] },
+      montants:[{field:null,label:'Réservation',fixed:50,desc:'Reservation'}] },
     type_mvt:'Adoption', description:'Reservation',
   },
   Contrat_reservation_chat: {
     label:'Contrat rés.', icon:'ti-file-text', compta:'Suivi_Contrat_reservation_chat',
     fieldNames:{ date:'dateReservation', nom:'nom', prenom:'prenom', nom_chat:'nomChat',
       mode_reglement:'check_paiement', num_cheque:'numeroPaiement',
-      montants:[{field:null,label:'Réservation',fixed:50}] },
+      montants:[{field:null,label:'Réservation',fixed:50,desc:'Reservation'}] },
     type_mvt:'Adoption', description:'Reservation',
   },
   Contrat_reservation_autre_animal: {
     label:'Rés. autre animal', icon:'ti-paw', compta:'Suivi_Contrat_reservation_autre_animal',
     fieldNames:{ date:'dateAdoption', nom:'nom', prenom:'prenom', nom_chat:'nomChat',
       mode_reglement:'check_paiement', num_cheque:'numeroPaiement',
-      montants:[{field:null,label:'Réservation',fixed:50}] },
-    type_mvt:'Adoption', description:'Reservation autre animal',
+      montants:[{field:null,label:'Réservation',fixed:50,desc:'Reservation'}] },
+    type_mvt:'Adoption', description:'Reservation',
   },
   Retour_Materiel: {
     label:'Retour matériel', icon:'ti-box', compta:'Suivi_Retour_Materiel',
@@ -447,8 +447,8 @@ function resolveCols(cfg, headerRow) {
     date: get(fn.date), nom: get(fn.nom), prenom: get(fn.prenom), nom_chat: get(fn.nom_chat),
     mode_reglement: get(fn.mode_reglement), num_cheque: get(fn.num_cheque),
     montants: fn.montants.map(m => m.field == null
-      ? { col: null, label: m.label, fixed: m.fixed }
-      : { col: get(m.field), label: m.label }),
+      ? { col: null, label: m.label, fixed: m.fixed, desc: m.desc || cfg.description || '' }
+      : { col: get(m.field), label: m.label, desc: m.desc || cfg.description || '' }),
   };
   if (fn.raison_sociale !== undefined) resolved.raison_sociale = get(fn.raison_sociale);
   if (fn.num_recu !== undefined) resolved.num_recu = get(fn.num_recu);
@@ -843,7 +843,7 @@ function renderCurrentImportTab() {
       if(multiMontants){
         return `<div class="montant-line">
           <input type="checkbox" class="row-check" data-key="${selKey}" ${checked?'checked':''} ${alreadyDone?'disabled':''}
-            onchange="toggleImportLine('${selKey}','${key}',${ri},${mi},${montant},'${escH(m.label)}')">
+            onchange="toggleImportLine('${selKey}','${key}',${ri},${mi},${montant},'${escH(m.label)}','${escH(m.desc)}')">
           <span class="montant-lbl">${m.label} :</span>
           <span class="montant-val">${fmt(montant)}</span>
           ${alreadyDone?'<span style="font-size:9px;background:var(--green-bg);color:var(--green);padding:1px 5px;border-radius:8px;">✓ Importé</span>':''}
@@ -851,7 +851,7 @@ function renderCurrentImportTab() {
       } else {
         return `<div style="display:flex;align-items:center;gap:6px;">
           <input type="checkbox" class="row-check" data-key="${selKey}" ${checked?'checked':''} ${alreadyDone?'disabled':''}
-            onchange="toggleImportLine('${selKey}','${key}',${ri},${mi},${montant},'${escH(m.label)}')">
+            onchange="toggleImportLine('${selKey}','${key}',${ri},${mi},${montant},'${escH(m.label)}','${escH(m.desc)}')">
           <span class="montant-val" style="font-weight:500;">${fmt(montant)}</span>
           ${alreadyDone?'<span style="font-size:9px;background:var(--green-bg);color:var(--green);padding:1px 5px;border-radius:8px;">✓ Importé</span>':''}
         </div>`;
@@ -880,12 +880,12 @@ function renderCurrentImportTab() {
   updateImportSelectionInfo();
 }
 
-function toggleImportLine(selKey, onglet, ri, mi, montant, label) {
+function toggleImportLine(selKey, onglet, ri, mi, montant, label, desc) {
   const cb=document.querySelector(`input[data-key="${selKey}"]`);
   if(!cb)return;
   if(cb.checked){
     const cfg=ONGLETS[onglet], row=allImportData[onglet][ri];
-    importSelection[selKey]={checked:true,onglet,ri,mi,montant,label,row,cfg};
+    importSelection[selKey]={checked:true,onglet,ri,mi,montant,label,desc:desc||cfg.description||'',row,cfg};
   } else { delete importSelection[selKey]; }
   updateImportSelectionInfo();
 }
@@ -897,7 +897,7 @@ function selectAllImport(){
       const montant=m.fixed!==undefined?m.fixed:parseFloat(row[m.col]||0)||0;
       if(!montant||isImported(key,row,ri,mi))return;
       const selKey=`${key}:${ri}:${mi}`;
-      importSelection[selKey]={checked:true,onglet:key,ri,mi,montant,label:m.label,row,cfg};
+      importSelection[selKey]={checked:true,onglet:key,ri,mi,montant,label:m.label,desc:m.desc||cfg.description||'',row,cfg};
     });
   });
   renderCurrentImportTab();
@@ -1014,7 +1014,7 @@ async function confirmImport(){
       await Sheets.saveImportRapprochement({id,onglet:s.onglet,statut:'en_attente',destination:dest,
         date:Sheets.normalizeDate(date),periode,libelle,montant,type_mvt,
         mode_reglement:mode,nom_chat:chat,num_cheque:bordereau,num_recu:recu,
-        description:s.label||ONGLETS[s.onglet].description||'',
+        description:s.desc||ONGLETS[s.onglet].description||'',
       });
       importedIds.add(id); ok++;
     }catch(e){errors.push(`${libelle} : ${e.message||JSON.stringify(e)}`);}
