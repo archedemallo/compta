@@ -713,7 +713,7 @@ function renderTable(){
       <td style="font-size:10px;color:var(--text-3);">${escH(r[cb.fournisseur]||'')||'—'}</td>
       <td><span class="chip chip-${chipType(r[cb.type_mvt])}">${r[cb.type_mvt]||''}</span></td>
       <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--text-3);" title="${escH(descVal)}">${escH(descVal)}</td>
-      <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--text-3);">${escH(typeComp)}</td>
+      <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--text-3);" title="${escH(typeComp)}">${escH(typeComp)}</td>
       <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:var(--text-3);" title="${escH(nomChat)}">${escH(nomChat)}</td>
       <td style="font-size:10px;color:var(--text-3);">${escH(numDonFiscal)}</td>
       <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--text-3);">
@@ -963,7 +963,8 @@ function renderSuiviBankLines(){
   if(!lines.length){ wrap.innerHTML='<div style="padding:12px;text-align:center;color:var(--text-3);font-size:11px;">Aucune ligne en attente</div>'; return; }
   wrap.innerHTML = lines.map(r=>{
     const idx = r._sheetIndex;
-    const selected = linkedSuivis.some(s => s.idx === idx);
+    const key = `${r[ci.onglet]||''}:${idx}`;
+    const selected = linkedSuivis.some(s => (s.key||`${s.onglet||''}:${s.idx}`) === key);
     return `<div class="suivi-line-bank ${selected?'selected':''}"
        onclick="selectSuiviBankLine(${idx})">
       <div style="flex:1;">
@@ -997,12 +998,14 @@ function selectSuiviBankLine(idx){
   const ci = Sheets.cols.importRap;
   const r = (allImportRap||[]).find(x => x._sheetIndex === idx);
   if(!r) return;
-  const already = linkedSuivis.findIndex(s => s.idx === idx);
+  // Clé composite (onglet + idx) pour éviter toute collision entre onglets Suivi différents
+  const key = `${r[ci.onglet]||''}:${idx}`;
+  const already = linkedSuivis.findIndex(s => s.key === key);
   if(already >= 0){
     // Re-cliquer sur une ligne déjà liée la retire de la sélection
     linkedSuivis.splice(already, 1);
   } else {
-    linkedSuivis.push({idx, data:r, onglet:r[ci.onglet]||''});
+    linkedSuivis.push({idx, key, data:r, onglet:r[ci.onglet]||''});
   }
   document.getElementById('rap-suivi-linked').innerHTML = renderSuivisLinked();
   renderSuiviBankLines();
