@@ -381,7 +381,11 @@ const ONGLETS = {
   Adoption: {
     label:'Adoptions', icon:'ti-heart', compta:'Suivi_Adoption',
     fieldNames:{ date:'dateAdoption', nom:'nom', prenom:'prenom', nom_chat:'nomAdoption',
-      mode_reglement:'check_paiement', num_cheque:'numeroPaiement',
+      // ⚠️ PATCH : la feuille Suivi_Adoption a un décalage d'1 colonne à partir de "nomAttestation".
+      // La vraie donnée de règlement (Chèque/Espèces/Virement/CB) se trouve sous l'en-tête
+      // "montantAdhesion" et non sous "check_paiement" (qui contient en fait le sexe de l'animal).
+      // À corriger dans le Google Sheet source dès que possible ; revenir alors à 'check_paiement'.
+      mode_reglement:'montantAdhesion', num_cheque:'numeroPaiement',
       montants:[{field:'totalParticipation',label:'Total participation',desc:'Adoption'},{field:'resteAPayer',label:'Reste à payer',desc:'Cloture'}] },
     type_mvt:'Adoption', description:'Adoption',
   },
@@ -964,9 +968,11 @@ function openImportModal(){
             ${Sheets.getTypesMouvement().map(t=>`<option ${t===cfg.type_mvt?'selected':''}>${t}</option>`).join('')}
           </select></div>
         <div class="form-group"><label class="form-label">Mode règlement</label>
-          <select class="imp-mode" style="font-size:11px;padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);width:100%;font-family:'DM Sans',sans-serif;">
+          <select class="imp-mode" style="font-size:11px;padding:5px 8px;border:0.5px solid ${['Espèces','Chèque','Virement','CB'].includes(modeRaw)?'var(--border-mid)':'var(--red)'};border-radius:var(--radius-sm);width:100%;font-family:'DM Sans',sans-serif;">
             ${['Espèces','Chèque','Virement','CB'].map(m=>`<option ${m===modeRaw?'selected':''}>${m}</option>`).join('')}
-          </select></div>
+          </select>
+          ${!['Espèces','Chèque','Virement','CB'].includes(modeRaw)?`<div style="font-size:9px;color:var(--red);margin-top:2px;">⚠️ Valeur brute inattendue ("${escH(modeRaw)}") — vérifie le mode avant de valider.</div>`:''}
+          </div>
       </div>
       ${chat?`<div class="form-group"><label class="form-label">Nom du chat</label>
         <input type="text" class="imp-chat" value="${escHVal(chat)}" style="font-size:11px;padding:5px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-sm);width:100%;font-family:'DM Sans',sans-serif;"></div>`
