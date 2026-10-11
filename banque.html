@@ -505,8 +505,8 @@ function updateSoldeBanner(){
   if (rows.length) {
     const total = rows.reduce((s,r) => s + (parseMontant(r[cb.credit])||0) - (parseMontant(r[cb.debit])||0), 0);
     document.getElementById('solde-val').textContent = fmt(soldInit + total);
-    const last = rows[rows.length-1];
-    document.getElementById('solde-sub').textContent = `Dernière op. : ${last[cb.date]||'—'} — Solde initial : ${fmt(soldInit)}`;
+    const last = sortChrono(rows).slice(-1)[0];
+    document.getElementById('solde-sub').textContent = `Dernière op. : ${fmtDateFR(last[cb.date])||'—'} — Solde initial : ${fmt(soldInit)}`;
   } else if (soldInit > 0) {
     document.getElementById('solde-val').textContent = fmt(soldInit);
     document.getElementById('solde-sub').textContent = 'Solde initial (aucune opération)';
@@ -600,7 +600,8 @@ function renderTable(){
     rows = [...rows].sort((a,b)=>{
       const va=dateToISO(String(a[cb.date]||'')), vb=dateToISO(String(b[cb.date]||''));
       if(!va&&!vb)return 0; if(!va)return 1; if(!vb)return -1;
-      return va<vb?1:va>vb?-1:0;
+      if(va!==vb) return va<vb?1:-1;
+      return (b._sheetIndex||0)-(a._sheetIndex||0);
     });
   }
 
@@ -613,7 +614,7 @@ function renderTable(){
 
   // Calcul solde cumulé (chronologique sur toutes les lignes de la période)
   const per = Sidebar.getActivePeriode();
-  const allPerRows = [...allRows.filter(r=>r[cb.periode]===per)]; // ordre naturel (chronologique)
+  const allPerRows = sortChrono(allRows.filter(r=>r[cb.periode]===per)); // tri chronologique par date (l'ordre de la feuille n'est pas fiable)
   let soldeCumul = Sheets.getSoldeInitial(per, 'banque');
   const soldeMap = new Map();
   allPerRows.forEach(r => {
@@ -1417,6 +1418,15 @@ function chipType(t){if(!t)return'depense';const l=t.toLowerCase();if(l.includes
 function dateToISO(d){if(!d)return'';const s=String(d).trim();const p=s.split('/');if(p.length===3){let y=p[2];if(y.length===2)y=(parseInt(y,10)<50?'20':'19')+y;return y+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);const n=parseFloat(s);if(!isNaN(n)&&n>40000&&n<60000){const dt=new Date(Math.round((n-25569)*86400*1000));return dt.toISOString().slice(0,10);}return s;}
 // Reformate une date (chaîne jj/mm/aaaa, ISO, ou numéro de série Google Sheets) en jj/mm/aaaa lisible.
 function fmtDateFR(d){const iso=dateToISO(d);if(!/^\d{4}-\d{2}-\d{2}/.test(iso))return String(d||'');const[y,m,day]=iso.slice(0,10).split('-');return`${day}/${m}/${y}`;}
+// Tri chronologique croissant (date, puis ordre de la feuille à date égale). Ne modifie pas le tableau d'origine.
+function sortChrono(rows){
+  const cb=Sheets.cols.banque;
+  return [...rows].sort((a,b)=>{
+    const va=dateToISO(String(a[cb.date]||'')), vb=dateToISO(String(b[cb.date]||''));
+    if(va!==vb){ if(!va)return -1; if(!vb)return 1; return va<vb?-1:1; }
+    return (a._sheetIndex||0)-(b._sheetIndex||0);
+  });
+}
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
 function showTableSpinner(){document.getElementById('table-wrap').innerHTML='<div style="padding:32px;text-align:center;color:var(--text-3);"><i class="ti ti-loader-2 spinner"></i> Chargement…</div>';}
 function showTableError(msg){document.getElementById('table-wrap').innerHTML=`<div style="padding:32px;text-align:center;color:var(--red);font-size:12px;"><i class="ti ti-alert-circle" style="font-size:20px;display:block;margin-bottom:8px;"></i>${msg}</div>`;}
