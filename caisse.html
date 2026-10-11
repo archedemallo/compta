@@ -406,7 +406,11 @@ function renderTable() {
       if (isDate) { va = dateToISO(va) || ''; vb = dateToISO(vb) || ''; }
       if (isDate) {
         if(!va&&!vb) return 0; if(!va) return 1; if(!vb) return -1;
-        const cmp = va<vb?-1:va>vb?1:0;
+        let cmp = va<vb?-1:va>vb?1:0;
+        if (cmp === 0) { // même jour : même ordre que le calcul du solde (entrées d'abord, puis ordre de la feuille)
+          const ca = (parseFloat(a[cc.credit])||0) > 0 ? 0 : 1, cb2 = (parseFloat(b[cc.credit])||0) > 0 ? 0 : 1;
+          cmp = ca !== cb2 ? ca - cb2 : (a._sheetIndex||0) - (b._sheetIndex||0);
+        }
         return sortAsc ? cmp : -cmp;
       }
       const na = parseFloat(va), nb = parseFloat(vb);
@@ -434,6 +438,10 @@ function renderTable() {
       const da = dateToISO(a[cc.date]) || '';
       const db = dateToISO(b[cc.date]) || '';
       if (da !== db) return da < db ? -1 : 1;
+      // Même jour : les entrées avant les sorties (une caisse ne peut pas payer avant d'avoir encaissé)
+      const ca = (parseFloat(a[cc.credit])||0) > 0 ? 0 : 1;
+      const cb2 = (parseFloat(b[cc.credit])||0) > 0 ? 0 : 1;
+      if (ca !== cb2) return ca - cb2;
       const ia = a._sheetIndex !== undefined ? a._sheetIndex : allRows.indexOf(a);
       const ib = b._sheetIndex !== undefined ? b._sheetIndex : allRows.indexOf(b);
       return ia - ib;
