@@ -357,6 +357,7 @@ const ONGLETS_MAP = [
   { suivi: 'Contrat_reservation_autre_animal', compta: 'Suivi_Contrat_reservation_autre_animal', label: 'Rés. autre animal' },
   { suivi: 'Depot_Chat',               compta: 'Suivi_Depot_Chat',              label: 'Dépôt chat' },
   { suivi: 'Abandon',                  compta: 'Suivi_Abandon',                 label: 'Abandons' },
+  { suivi: 'Pret_Materiel',            compta: 'Suivi_Pret_Materiel',           label: 'Prêt matériel' },
   { suivi: 'Retour_Materiel',          compta: 'Suivi_Retour_Materiel',         label: 'Retour matériel' },
   { suivi: 'CBS_Absent',               compta: 'Suivi_CBS_Absent',              label: 'CBS Absent' },
   { suivi: 'Decharge_Vaccin',          compta: 'Suivi_Decharge_Vaccin',         label: 'Décharge vaccin' },
@@ -409,6 +410,13 @@ const ONGLETS = {
       mode_reglement:'check_paiement', num_cheque:'numeroPaiement',
       montants:[{field:null,label:'Réservation',fixed:50,desc:'Reservation'}] },
     type_mvt:'Adoption', description:'Reservation',
+  },
+  Pret_Materiel: {
+    label:'Prêt matériel', icon:'ti-box', compta:'Suivi_Pret_Materiel',
+    fieldNames:{ date:'datePriseEnCharge', nom:'nomEmprunteur', prenom:'prenomEmprunteur', nom_chat:null,
+      mode_reglement:'check_paiement', num_cheque:'numeroPaiement',
+      montants:[{field:'montant_cb',label:'Caution CB'},{field:'montant_cheque',label:'Caution chèque'},{field:'montant_espece',label:'Caution espèces'},{field:'montant_virement',label:'Caution virement'}] },
+    type_mvt:'Adoption', description:'Prêt matériel',
   },
   Retour_Materiel: {
     label:'Retour matériel', icon:'ti-box', compta:'Suivi_Retour_Materiel',
