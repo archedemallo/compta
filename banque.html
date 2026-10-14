@@ -398,6 +398,9 @@ const SUIVI_BANK_ONGLETS = {
   Contrat_reservation_chat:{label:'Contrat rés.',cols:{date:2,nom:10,prenom:null,nom_chat:5,montants:[{col:null,label:'Réservation',fixed:50}]}},
   Dons:{label:'Dons',cols:{date:2,nom:7,prenom:8,nom_chat:null,num_recu:6,montants:[{col:4,label:'Don'}]}},
   Adhesion:{label:'Adhésions',cols:{date:2,nom:4,prenom:5,nom_chat:null,montants:[{col:12,label:'Bienfaiteur'},{col:13,label:'Sympathisant'},{col:14,label:'Adhésion'}]}},
+
+  Pret_Materiel:{label:'Prêt matériel',cols:{date:null,nom:null,prenom:null,nom_chat:null,montants:[]}},
+  Retour_Materiel:{label:'Retour matériel',cols:{date:null,nom:null,prenom:null,nom_chat:null,montants:[]}},
 };
 // Catégorie utilisée dans la colonne Description de la ligne banque, en fonction de l'onglet Suivi d'origine
 const ONGLET_CATEGORIE_DESCRIPTION = {
@@ -407,6 +410,8 @@ const ONGLET_CATEGORIE_DESCRIPTION = {
   Contrat_reservation_chat: 'reservation',
   Dons: 'don',
   Adhesion: 'adhesion',
+  Pret_Materiel: 'pret materiel',
+  Retour_Materiel: 'retour materiel',
 };
 function ongletCategorieDescription(key){ return ONGLET_CATEGORIE_DESCRIPTION[key] || (key||'').toLowerCase(); }
 
