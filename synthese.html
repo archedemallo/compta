@@ -243,6 +243,7 @@ Auth.requireAuth(async(user)=>{
     document.getElementById('readonly-banner').style.color='var(--green)';
   }
 
+  await Sheets.loadConfigFromSheet(); // recharge la config AG (ag_categories) depuis le Sheet
   await loadData();
 });
 
