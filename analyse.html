@@ -806,11 +806,11 @@ function escH(s) {
 // ONGLET AG
 // ============================================================
 function computeAgResults() {
-  const caisse = allCaisse.slice(1).filter(r => r && r[6] === activePer);
-  const banque  = allBanque.slice(1).filter(r => r && r[5] === activePer);
+  const caisse = allCaisse.filter(r => r && r[6] === activePer);
+  const banque  = allBanque.filter(r => r && r[5] === activePer);
 
   // Données disponibles par source
-  const allCaisse2 = allCaisse2Data ? allCaisse2Data.slice(1).filter(r => r && r[6] === activePer) : [];
+  const allCaisse2 = allCaisse2Data ? allCaisse2Data.filter(r => r && r[6] === activePer) : [];
 
   // Calcul par catégorie (en tenant compte des sources et types/descriptions/fournisseurs sélectionnés)
   return agConfig.map(cat => {
@@ -861,14 +861,14 @@ function computeAgResults() {
     }
     if (srcs.includes('cheques')) {
       // Chèques émis → toujours une dépense (montant soustrait)
-      allCheques.slice(1).filter(r => r && r[COLS_CHEQUE.periode] === activePer).forEach(r => {
+      allCheques.filter(r => r && r[COLS_CHEQUE.periode] === activePer).forEach(r => {
         if (matchRow(r[COLS_CHEQUE.type_mvt], r[COLS_CHEQUE.description], r[COLS_CHEQUE.fournisseur]))
           totalCheques -= fmtN(r[COLS_CHEQUE.montant]);
       });
     }
     if (srcs.includes('remises')) {
       // Remises : filtrer chèque par chèque avec matchRow (même logique que ops)
-      allRemises.slice(1).filter(r => r && r[COLS_REMISE.periode] === activePer).forEach(rem => {
+      allRemises.filter(r => r && r[COLS_REMISE.periode] === activePer).forEach(rem => {
         const nb = parseInt(rem[COLS_REMISE.nb_cheques]) || 0;
         for (let i = 0; i < nb; i++) {
           const base = COLS_REMISE.detail_start + i * 8;
@@ -884,7 +884,7 @@ function computeAgResults() {
     }
     if (srcs.includes('factures')) {
       // Factures → toujours une dépense (montant soustrait)
-      allFactures.slice(1).filter(r => r && r[COLS_FACTURE.periode] === activePer).forEach(r => {
+      allFactures.filter(r => r && r[COLS_FACTURE.periode] === activePer).forEach(r => {
         if (matchRow(r[COLS_FACTURE.categorie], r[COLS_FACTURE.description], r[COLS_FACTURE.fournisseur]))
           totalFactures -= fmtN(r[COLS_FACTURE.montant_ttc]);
       });
@@ -953,7 +953,7 @@ function computeAgResults() {
       });
     }
     if (srcs.includes('cheques')) {
-      allCheques.slice(1).filter(r => r && r[COLS_CHEQUE.periode] === activePer).forEach(r => {
+      allCheques.filter(r => r && r[COLS_CHEQUE.periode] === activePer).forEach(r => {
         if (matchRow(r[COLS_CHEQUE.type_mvt], r[COLS_CHEQUE.description], r[COLS_CHEQUE.fournisseur])) {
           const val = -fmtN(r[COLS_CHEQUE.montant]);
           if (val !== 0) ops.push({ src:'Chèque', date:r[COLS_CHEQUE.date_emission]||'', libelle:r[COLS_CHEQUE.beneficiaire]||'', type:r[COLS_CHEQUE.type_mvt]||'', montant:val });
@@ -962,7 +962,7 @@ function computeAgResults() {
     }
     if (srcs.includes('remises')) {
       // Remises : détailler chaque chèque individuel avec son libellé selon catégorie
-      allRemises.slice(1).filter(r => r && r[COLS_REMISE.periode] === activePer).forEach(rem => {
+      allRemises.filter(r => r && r[COLS_REMISE.periode] === activePer).forEach(rem => {
         const nb = parseInt(rem[COLS_REMISE.nb_cheques]) || 0;
         for (let i = 0; i < nb; i++) {
           const base = COLS_REMISE.detail_start + i * 8;
@@ -980,7 +980,7 @@ function computeAgResults() {
       });
     }
     if (srcs.includes('factures')) {
-      allFactures.slice(1).filter(r => r && r[COLS_FACTURE.periode] === activePer).forEach(r => {
+      allFactures.filter(r => r && r[COLS_FACTURE.periode] === activePer).forEach(r => {
         if (matchRow(r[COLS_FACTURE.categorie], r[COLS_FACTURE.description], r[COLS_FACTURE.fournisseur])) {
           const val = -fmtN(r[COLS_FACTURE.montant_ttc]);
           // Libellé facture : description
@@ -1141,21 +1141,21 @@ function selectAllPeriodes(all) {
 function getChatRows(source) {
   // Filtre multi-périodes
   if (source === 'caisse') {
-    return allCaisse.slice(1).filter(r => r && chatPeriodes.includes(r[getCaisseCol('periode')]));
+    return allCaisse.filter(r => r && chatPeriodes.includes(r[getCaisseCol('periode')]));
   }
   if (source === 'banque') {
-    return allBanque.slice(1).filter(r => r && chatPeriodes.includes(r[getBanqueCol('periode')]));
+    return allBanque.filter(r => r && chatPeriodes.includes(r[getBanqueCol('periode')]));
   }
   if (source === 'factures') {
-    return allFactures.slice(1).filter(r => r && chatPeriodes.includes(r[getFactureCol('periode')]));
+    return allFactures.filter(r => r && chatPeriodes.includes(r[getFactureCol('periode')]));
   }
   if (source === 'cheques') {
-    return allCheques.slice(1).filter(r => r && chatPeriodes.includes(r[getChequeCol('periode')]));
+    return allCheques.filter(r => r && chatPeriodes.includes(r[getChequeCol('periode')]));
   }
   if (source === 'remises') {
     // Exploser les chèques détails de chaque remise
     const result = [];
-    allRemises.slice(1).filter(r => r && chatPeriodes.includes(r[COLS_REMISE.periode])).forEach(rem => {
+    allRemises.filter(r => r && chatPeriodes.includes(r[COLS_REMISE.periode])).forEach(rem => {
       const nb = parseInt(rem[COLS_REMISE.nb_cheques]) || 0;
       for (let i = 0; i < nb; i++) {
         const base = COLS_REMISE.detail_start + i * 8;
@@ -1483,13 +1483,13 @@ let moyAdoptStatuts = null;  // Map(description -> {on, remb}) — persisté
 
 // Lignes filtrées sur moyPeriodes (même logique que getChatRows, mais période propre à cet onglet)
 function getMoyRows(source) {
-  if (source === 'caisse')  return allCaisse.slice(1).filter(r => r && moyPeriodes.includes(r[getCaisseCol('periode')]));
-  if (source === 'banque')  return allBanque.slice(1).filter(r => r && moyPeriodes.includes(r[getBanqueCol('periode')]));
-  if (source === 'factures') return allFactures.slice(1).filter(r => r && moyPeriodes.includes(r[getFactureCol('periode')]));
-  if (source === 'cheques') return allCheques.slice(1).filter(r => r && moyPeriodes.includes(r[getChequeCol('periode')]));
+  if (source === 'caisse')  return allCaisse.filter(r => r && moyPeriodes.includes(r[getCaisseCol('periode')]));
+  if (source === 'banque')  return allBanque.filter(r => r && moyPeriodes.includes(r[getBanqueCol('periode')]));
+  if (source === 'factures') return allFactures.filter(r => r && moyPeriodes.includes(r[getFactureCol('periode')]));
+  if (source === 'cheques') return allCheques.filter(r => r && moyPeriodes.includes(r[getChequeCol('periode')]));
   if (source === 'remises') {
     const result = [];
-    allRemises.slice(1).filter(r => r && moyPeriodes.includes(r[COLS_REMISE.periode])).forEach(rem => {
+    allRemises.filter(r => r && moyPeriodes.includes(r[COLS_REMISE.periode])).forEach(rem => {
       const nb = parseInt(rem[COLS_REMISE.nb_cheques]) || 0;
       for (let i = 0; i < nb; i++) {
         const base = COLS_REMISE.detail_start + i * 8;
@@ -1860,7 +1860,7 @@ function switchFourTab(sub) {
 function getFourData() {
   const rows = [];
 
-  allFactures.slice(1).filter(r => r && r[COLS_FACTURE.periode] === activePer).forEach(r => {
+  allFactures.filter(r => r && r[COLS_FACTURE.periode] === activePer).forEach(r => {
     const four = (r[COLS_FACTURE.fournisseur] || '').trim();
     if (!four) return;
     const montantVal = fmtN(r[COLS_FACTURE.montant_ttc]);
