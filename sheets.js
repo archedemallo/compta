@@ -201,6 +201,7 @@ async function loadConfigFromSheet() {
       soldes_initiaux: 'arche_soldes_initiaux',
       periode_active:  'arche_periode',
       types_fourn:     'arche_types_fourn',
+      ag_categories:   'arche_ag_categories',
     };
     rows.forEach(r => {
       if (!r[0] || r[1] === undefined) return;
