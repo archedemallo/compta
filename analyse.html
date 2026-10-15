@@ -506,6 +506,12 @@ const TYPES_CHATS = [
 function normFold(s) {
   return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 }
+// Un chèque encaissé figure déjà dans la Banque (ligne « Chèque emis ») : le compter
+// aussi dans la source « Chèques » ferait un double comptage. Seuls les chèques
+// émis et pas encore encaissés (en attente) s'ajoutent à la Banque.
+function chequeEncaisse(r) {
+  return normFold(r[COLS_CHEQUE.statut]).startsWith('encaiss');
+}
 function isTypeChat(t) {
   const nt = normFold(t);
   return TYPES_CHATS.some(tc => normFold(tc) === nt);
@@ -862,7 +868,7 @@ function computeAgResults() {
     }
     if (srcs.includes('cheques')) {
       // Chèques émis → toujours une dépense (montant soustrait)
-      allCheques.filter(r => r && r[COLS_CHEQUE.periode] === activePer).forEach(r => {
+      allCheques.filter(r => r && r[COLS_CHEQUE.periode] === activePer && !chequeEncaisse(r)).forEach(r => {
         if (matchRow(r[COLS_CHEQUE.type_mvt], r[COLS_CHEQUE.description], r[COLS_CHEQUE.fournisseur]))
           totalCheques -= fmtN(r[COLS_CHEQUE.montant]);
       });
@@ -954,7 +960,7 @@ function computeAgResults() {
       });
     }
     if (srcs.includes('cheques')) {
-      allCheques.filter(r => r && r[COLS_CHEQUE.periode] === activePer).forEach(r => {
+      allCheques.filter(r => r && r[COLS_CHEQUE.periode] === activePer && !chequeEncaisse(r)).forEach(r => {
         if (matchRow(r[COLS_CHEQUE.type_mvt], r[COLS_CHEQUE.description], r[COLS_CHEQUE.fournisseur])) {
           const val = -fmtN(r[COLS_CHEQUE.montant]);
           if (val !== 0) ops.push({ src:'Chèque', date:r[COLS_CHEQUE.date_emission]||'', libelle:r[COLS_CHEQUE.beneficiaire]||'', type:r[COLS_CHEQUE.type_mvt]||'', montant:val });
@@ -990,7 +996,7 @@ function computeAgResults() {
       });
     }
 
-    return { ...cat, totalCaisse: totalCaisse + totalCaisse2, totalBanque: totalBanque + totalCheques + totalRemises + totalFactures, total, ops };
+    return { ...cat, totalCaisse: totalCaisse + totalCaisse2, totalBanque: totalBanque + totalCheques + totalFactures, totalRemises, total, ops };
   }).filter(c => Math.abs(c.total) > 0.001 || agConfig.indexOf(agConfig.find(x=>x.cat===c.cat)) >= 0);
 }
 
@@ -1015,7 +1021,7 @@ function renderAG() {
   // Tableau
   const allResults = agConfig.map(cat => {
     const found = results.find(r=>r.cat===cat.cat);
-    return found || { ...cat, totalCaisse:0, totalBanque:0, total:0 };
+    return found || { ...cat, totalCaisse:0, totalBanque:0, totalRemises:0, total:0 };
   });
 
   const recCats  = allResults.filter(r=>r.sens==='recette');
@@ -1026,13 +1032,14 @@ function renderAG() {
       <th>Catégorie</th>
       <th class="r">Caisse</th>
       <th class="r">Banque</th>
+      <th class="r">Remises chèques</th>
       <th class="r">Total</th>
       <th>Sens</th>
     </tr></thead>
     <tbody>`;
 
-  html += `<tr><td colspan="5" style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:var(--text-3);padding:10px 10px 4px;background:var(--surface-2);">Recettes</td></tr>`;
-  let totRecC=0, totRecB=0, totRec=0;
+  html += `<tr><td colspan="6" style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:var(--text-3);padding:10px 10px 4px;background:var(--surface-2);">Recettes</td></tr>`;
+  let totRecC=0, totRecB=0, totRecR=0, totRec=0;
   recCats.forEach(r => {
     const isOpen = agOpenCats.has(r.cat);
     const catKey = escH(r.cat);
@@ -1042,18 +1049,19 @@ function renderAG() {
       </td>
       <td class="r ${r.totalCaisse>0?'amount-c':r.totalCaisse<0?'amount-d':''}">${r.totalCaisse!==0?fmt(r.totalCaisse):'—'}</td>
       <td class="r ${r.totalBanque>0?'amount-c':r.totalBanque<0?'amount-d':''}">${r.totalBanque!==0?fmt(r.totalBanque):'—'}</td>
+      <td class="r ${r.totalRemises>0?'amount-c':r.totalRemises<0?'amount-d':''}">${r.totalRemises!==0?fmt(r.totalRemises):'—'}</td>
       <td class="r ${r.total>0?'amount-c':r.total<0?'amount-d':''}">${r.total!==0?fmt(r.total):'—'}</td>
       <td><span class="badge badge-green">recette</span></td>
     </tr>
     ${isOpen ? buildAgDetail(r) : ''}`;
-    totRecC+=r.totalCaisse; totRecB+=r.totalBanque; totRec+=r.total;
+    totRecC+=r.totalCaisse; totRecB+=r.totalBanque; totRecR+=r.totalRemises; totRec+=r.total;
   });
-  html += `<tr class="total-row"><td>TOTAL RECETTES</td><td class="r amount-c">${fmt(totRecC)}</td><td class="r amount-c">${fmt(totRecB)}</td><td class="r amount-c">${fmt(totRec)}</td><td></td></tr>`;
+  html += `<tr class="total-row"><td>TOTAL RECETTES</td><td class="r amount-c">${fmt(totRecC)}</td><td class="r amount-c">${fmt(totRecB)}</td><td class="r amount-c">${fmt(totRecR)}</td><td class="r amount-c">${fmt(totRec)}</td><td></td></tr>`;
 
-  html += `<tr><td colspan="5" style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:var(--text-3);padding:10px 10px 4px;background:var(--surface-2);">Dépenses</td></tr>`;
-  let totDepC=0, totDepB=0, totDep=0;
+  html += `<tr><td colspan="6" style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:var(--text-3);padding:10px 10px 4px;background:var(--surface-2);">Dépenses</td></tr>`;
+  let totDepC=0, totDepB=0, totDepR=0, totDep=0;
   depCats.forEach(r => {
-    const absC = Math.abs(r.totalCaisse), absB = Math.abs(r.totalBanque), absT = Math.abs(r.total);
+    const absC = Math.abs(r.totalCaisse), absB = Math.abs(r.totalBanque), absR = Math.abs(r.totalRemises), absT = Math.abs(r.total);
     const isOpen = agOpenCats.has(r.cat);
     const catKey = escH(r.cat);
     html += `<tr class="ag-cat-row" onclick="toggleAgCat('${catKey}')">
@@ -1062,19 +1070,21 @@ function renderAG() {
       </td>
       <td class="r ${absC>0?'amount-d':''}">${absC>0?fmt(absC):'—'}</td>
       <td class="r ${absB>0?'amount-d':''}">${absB>0?fmt(absB):'—'}</td>
+      <td class="r ${absR>0?'amount-d':''}">${absR>0?fmt(absR):'—'}</td>
       <td class="r ${absT>0?'amount-d':''}">${absT>0?fmt(absT):'—'}</td>
       <td><span class="badge badge-red">dépense</span></td>
     </tr>
     ${isOpen ? buildAgDetail(r) : ''}`;
-    totDepC+=absC; totDepB+=absB; totDep+=absT;
+    totDepC+=absC; totDepB+=absB; totDepR+=absR; totDep+=absT;
   });
-  html += `<tr class="total-row"><td>TOTAL DÉPENSES</td><td class="r amount-d">${fmt(totDepC)}</td><td class="r amount-d">${fmt(totDepB)}</td><td class="r amount-d">${fmt(totDep)}</td><td></td></tr>`;
+  html += `<tr class="total-row"><td>TOTAL DÉPENSES</td><td class="r amount-d">${fmt(totDepC)}</td><td class="r amount-d">${fmt(totDepB)}</td><td class="r amount-d">${fmt(totDepR)}</td><td class="r amount-d">${fmt(totDep)}</td><td></td></tr>`;
 
   // Résultat final
   html += `<tr class="total-row" style="font-size:13px;">
     <td>RÉSULTAT NET</td>
     <td class="r ${(totRecC-totDepC)>=0?'amount-c':'amount-d'}">${fmt(totRecC-totDepC)}</td>
     <td class="r ${(totRecB-totDepB)>=0?'amount-c':'amount-d'}">${fmt(totRecB-totDepB)}</td>
+    <td class="r ${(totRecR-totDepR)>=0?'amount-c':'amount-d'}">${fmt(totRecR-totDepR)}</td>
     <td class="r ${resultat>=0?'amount-c':'amount-d'}">${fmt(resultat)}</td>
     <td></td>
   </tr>`;
@@ -1804,7 +1814,7 @@ function toggleAgCat(cat) {
 }
 
 function buildAgDetail(r) {
-  if (!r.ops || !r.ops.length) return `<tr class="ag-detail-row"><td colspan="5"><div class="ag-detail-inner" style="color:var(--text-3);font-size:11px;">Aucune opération trouvée</div></td></tr>`;
+  if (!r.ops || !r.ops.length) return `<tr class="ag-detail-row"><td colspan="6"><div class="ag-detail-inner" style="color:var(--text-3);font-size:11px;">Aucune opération trouvée</div></td></tr>`;
 
   const srcClass = { 'Caisse':'ag-src-caisse', 'Caisse 2':'ag-src-caisse', 'Banque':'ag-src-banque', 'Chèque':'ag-src-cheque', 'Facture':'ag-src-facture', 'Remise':'ag-src-remise' };
   const isRec = r.sens === 'recette';
@@ -1822,7 +1832,7 @@ function buildAgDetail(r) {
   }).join('');
 
   return `<tr class="ag-detail-row">
-    <td colspan="5">
+    <td colspan="6">
       <div class="ag-detail-inner">
         <table>
           <thead><tr><th>Date</th><th>Source</th><th>Libellé</th><th>Type</th><th class="r">${isRec?'Recette':'Dépense'}</th></tr></thead>
