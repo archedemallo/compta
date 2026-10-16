@@ -506,9 +506,9 @@ const TYPES_CHATS = [
 function normFold(s) {
   return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 }
-// Un chèque encaissé figure déjà dans la Banque (ligne « Chèque emis ») : le compter
-// aussi dans la source « Chèques » ferait un double comptage. Seuls les chèques
-// émis et pas encore encaissés (en attente) s'ajoutent à la Banque.
+// Un chèque encaissé figure déjà dans la Banque (ligne « Chèque emis ») : si la
+// catégorie a aussi la source « Banque », on ne le compte pas une 2e fois via « Chèques ».
+// Si la source « Banque » n'est PAS cochée, le chèque encaissé reste compté (sinon il disparaît).
 function chequeEncaisse(r) {
   return normFold(r[COLS_CHEQUE.statut]).startsWith('encaiss');
 }
@@ -868,7 +868,7 @@ function computeAgResults() {
     }
     if (srcs.includes('cheques')) {
       // Chèques émis → toujours une dépense (montant soustrait)
-      allCheques.filter(r => r && r[COLS_CHEQUE.periode] === activePer && !chequeEncaisse(r)).forEach(r => {
+      allCheques.filter(r => r && r[COLS_CHEQUE.periode] === activePer && !(srcs.includes('banque') && chequeEncaisse(r))).forEach(r => {
         if (matchRow(r[COLS_CHEQUE.type_mvt], r[COLS_CHEQUE.description], r[COLS_CHEQUE.fournisseur]))
           totalCheques -= fmtN(r[COLS_CHEQUE.montant]);
       });
@@ -960,7 +960,7 @@ function computeAgResults() {
       });
     }
     if (srcs.includes('cheques')) {
-      allCheques.filter(r => r && r[COLS_CHEQUE.periode] === activePer && !chequeEncaisse(r)).forEach(r => {
+      allCheques.filter(r => r && r[COLS_CHEQUE.periode] === activePer && !(srcs.includes('banque') && chequeEncaisse(r))).forEach(r => {
         if (matchRow(r[COLS_CHEQUE.type_mvt], r[COLS_CHEQUE.description], r[COLS_CHEQUE.fournisseur])) {
           const val = -fmtN(r[COLS_CHEQUE.montant]);
           if (val !== 0) ops.push({ src:'Chèque', date:r[COLS_CHEQUE.date_emission]||'', libelle:r[COLS_CHEQUE.beneficiaire]||'', type:r[COLS_CHEQUE.type_mvt]||'', montant:val });
